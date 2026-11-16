@@ -213,28 +213,72 @@ theorem alt_harmonic_sum_diff_log_two {N : ℕ} (hN : 1 ≤ N) :
     |∑ r ∈ Finset.Icc 1 N, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2| ≤
       1 / (2 * (N : ℝ)) := by
   rw [alt_harmonic_eq_tail_harmonic]
+  have htel : ∑ k ∈ Finset.Icc N (2 * N - 1), (Real.log ((k : ℝ) + 1) - Real.log (k : ℝ)) = Real.log 2 := by
+    have hcon : ∑ k ∈ Finset.Ico N (2 * N), (Real.log ((k + 1 : ℕ) : ℝ) - Real.log (k : ℝ)) =
+        Real.log ((2 * N : ℕ) : ℝ) - Real.log (N : ℝ) :=
+      Finset.sum_Ico_sub' (fun k => Real.log (k : ℝ)) (by omega : N ≤ 2 * N)
+    have hicc : Finset.Icc N (2 * N - 1) = Finset.Ico N (2 * N) := by
+      ext k; simp only [Finset.mem_Icc, Finset.mem_Ico]; omega
+    rw [hicc]
+    have hsum_eq : ∑ k ∈ Finset.Ico N (2 * N), (Real.log ((k : ℝ) + 1) - Real.log (k : ℝ)) =
+        ∑ k ∈ Finset.Ico N (2 * N), (Real.log ((k + 1 : ℕ) : ℝ) - Real.log (k : ℝ)) := by
+      refine Finset.sum_congr rfl (fun k _ => by push_cast; rfl)
+    rw [hsum_eq, hcon]
+    have hN_pos : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+    rw [Nat.cast_mul, Nat.cast_ofNat, Real.log_mul (by norm_num) hN_pos.ne']
+    ring
   have hlo : ∑ k ∈ Finset.Icc (N + 1) (2 * N), (1 : ℝ) / (k : ℝ) ≤ Real.log 2 := by
-    have hsum : ∑ k ∈ Finset.Icc N (2 * N - 1), (1 : ℝ) / ((k : ℝ) + 1) ≤
-        ∑ k ∈ Finset.Icc N (2 * N - 1), (Real.log ((k : ℝ) + 1) - Real.log (k : ℝ)) := by
+    rw [← htel]
+    have hshift : ∑ k ∈ Finset.Icc (N + 1) (2 * N), (1 : ℝ) / (k : ℝ) =
+        ∑ k ∈ Finset.Icc N (2 * N - 1), (1 : ℝ) / ((k : ℝ) + 1) := by
+      refine Finset.sum_bij (fun k _ => k - 1) ?_ ?_ ?_ ?_
+      · intro k hk; simp only [Finset.mem_Icc] at hk ⊢; omega
+      · intro k1 hk1 k2 hk2 heq; simp only [Finset.mem_Icc] at hk1 hk2; omega
+      · intro k hk; simp only [Finset.mem_Icc] at hk
+        refine ⟨k + 1, Finset.mem_Icc.mpr ⟨by omega, by omega⟩, by omega⟩
+      · intro k hk; simp only [Finset.mem_Icc] at hk
+        have : ((k - 1 : ℕ) : ℝ) + 1 = (k : ℝ) := by
+          rw [Nat.cast_sub (by omega : 1 ≤ k)]; push_cast; ring
+        rw [this]
+    rw [hshift]
+    refine Finset.sum_le_sum (fun k hk => ?_)
+    have hk1 : 1 ≤ k := le_trans hN (Finset.mem_Icc.mp hk).1
+    have hk_pos : (0 : ℝ) < (k : ℝ) := by exact_mod_cast hk1
+    have h1 : Real.log ((k : ℝ) / ((k : ℝ) + 1)) ≤ (k : ℝ) / ((k : ℝ) + 1) - 1 :=
+      Real.log_le_sub_one_of_pos (by positivity)
+    rw [Real.log_div (by positivity) (by positivity)] at h1
+    linarith
+  have hhi : Real.log 2 ≤ ∑ k ∈ Finset.Icc (N + 1) (2 * N), (1 : ℝ) / (k : ℝ) + 1 / (2 * (N : ℝ)) := by
+    rw [← htel]
+    have hsum_le : ∑ k ∈ Finset.Icc N (2 * N - 1), (Real.log ((k : ℝ) + 1) - Real.log (k : ℝ)) ≤
+        ∑ k ∈ Finset.Icc N (2 * N - 1), (1 : ℝ) / (k : ℝ) := by
       refine Finset.sum_le_sum (fun k hk => ?_)
       have hk1 : 1 ≤ k := le_trans hN (Finset.mem_Icc.mp hk).1
       have hk_pos : (0 : ℝ) < (k : ℝ) := by exact_mod_cast hk1
-      have h1 : Real.log ((k : ℝ) / ((k : ℝ) + 1)) ≤ (k : ℝ) / ((k : ℝ) + 1) - 1 :=
+      have h1 : Real.log (((k : ℝ) + 1) / (k : ℝ)) ≤ ((k : ℝ) + 1) / (k : ℝ) - 1 :=
         Real.log_le_sub_one_of_pos (by positivity)
       rw [Real.log_div (by positivity) (by positivity)] at h1
+      have heq : ((k : ℝ) + 1) / (k : ℝ) - 1 = 1 / (k : ℝ) := by field_simp [hk_pos.ne']; ring
       linarith
-    have htel : ∑ k ∈ Finset.Icc N (2 * N - 1), (Real.log ((k : ℝ) + 1) - Real.log (k : ℝ)) = Real.log 2 := by
-      have h2N : N ≤ 2 * N := by omega
-      have hsub : ∑ k ∈ Finset.Icc N (2 * N - 1), (Real.log ((k + 1 : ℕ) : ℝ) - Real.log (k : ℝ)) =
-          Real.log ((2 * N : ℕ) : ℝ) - Real.log (N : ℝ) := by
-        clear hsum
-        induction N with
-        | zero => omega
-        | succ m _ =>
-          -- Direct telescoping via `Finset.sum_Ico_consecutive`
-          sorry
-      sorry
-    sorry
-  sorry
+    have hdiff_eq : ∑ k ∈ Finset.Icc N (2 * N - 1), (1 : ℝ) / (k : ℝ) =
+        ∑ k ∈ Finset.Icc (N + 1) (2 * N), (1 : ℝ) / (k : ℝ) + (1 / (N : ℝ) - 1 / (2 * (N : ℝ))) := by
+      have h1 : Finset.Icc N (2 * N) = insert N (Finset.Icc (N + 1) (2 * N)) := by
+        ext k; simp only [Finset.mem_insert, Finset.mem_Icc]; omega
+      have h2 : Finset.Icc N (2 * N) = insert (2 * N) (Finset.Icc N (2 * N - 1)) := by
+        ext k; simp only [Finset.mem_insert, Finset.mem_Icc]; omega
+      have hn1 : N ∉ Finset.Icc (N + 1) (2 * N) := by simp
+      have hn2 : 2 * N ∉ Finset.Icc N (2 * N - 1) := by simp; omega
+      have hs1 := congrArg (Finset.sum · (fun k : ℕ => (1 : ℝ) / (k : ℝ))) h1
+      have hs2 := congrArg (Finset.sum · (fun k : ℕ => (1 : ℝ) / (k : ℝ))) h2
+      rw [Finset.sum_insert hn1] at hs1
+      rw [Finset.sum_insert hn2] at hs2
+      push_cast at hs2
+      linarith
+    have hN_pos : (0 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+    have h_half : 1 / (N : ℝ) - 1 / (2 * (N : ℝ)) = 1 / (2 * (N : ℝ)) := by
+      field_simp [hN_pos.ne']; ring
+    linarith
+  rw [abs_le]
+  constructor <;> linarith
 
 end GrasGreenbergBrocard
