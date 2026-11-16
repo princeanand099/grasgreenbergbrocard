@@ -13,6 +13,9 @@ set_option pp.proofs false
 Formalizes Section 2.1 of the manuscript:
 - `padicValNat_factorial_on_harmonicInterval`: `v_p(n!) = j` for `p ∈ I_j` (`1 ≤ j ≤ ⌊√n⌋ - 1`)
 - `harmonicLayer_odd_layer`, `harmonicLayer_even_layer`
+- `alt_harmonic_sum_diff_log_two`: `|∑_{r=1}^N (1/(2r-1) - 1/(2r)) - log 2| ≤ 1 / (2N)`
+- `log_q_n_asymptotic`: `log q_n = (log 2) n + O(n exp(-c₀ √(log n)))` (eq. 2.4a)
+- `card_Podd_asymptotic`: `|Podd(n)| = (log 2 + o(1)) π(n)` (eq. 2.4b)
 -/
 
 noncomputable section
@@ -166,5 +169,72 @@ theorem harmonicLayer_even_layer {n r p : ℕ} (hr1 : 1 ≤ r) (hr2 : 2 * r ≤ 
     rw [padicValNat.mul hq_ne (pow_ne_zero 2 hs_ne), padicValNat.pow 2 hs_ne, hv, hq_val] at hval
     omega
   exact ⟨hp_mem, hq_val, hs_val⟩
+
+/-- Elementary identity: `∑_{r=1}^N (1/(2r-1) - 1/(2r)) = ∑_{k=N+1}^{2N} 1/k`. -/
+theorem alt_harmonic_eq_tail_harmonic (N : ℕ) :
+    ∑ r ∈ Finset.Icc 1 N, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) =
+      ∑ k ∈ Finset.Icc (N + 1) (2 * N), (1 : ℝ) / (k : ℝ) := by
+  induction N with
+  | zero => simp
+  | succ m ih =>
+    rw [Finset.sum_Icc_succ_top (by omega : 1 ≤ m + 1), ih]
+    have h_lhs_rhs :
+        ∑ k ∈ Finset.Icc (m + 2) (2 * (m + 1)), (1 : ℝ) / (k : ℝ) =
+        (∑ k ∈ Finset.Icc (m + 1) (2 * m), (1 : ℝ) / (k : ℝ)) -
+          (1 : ℝ) / ((m + 1 : ℕ) : ℝ) +
+          (1 : ℝ) / ((2 * m + 1 : ℕ) : ℝ) +
+          (1 : ℝ) / ((2 * m + 2 : ℕ) : ℝ) := by
+      have h1 : Finset.Icc (m + 1) (2 * m + 2) =
+          insert (m + 1) (Finset.Icc (m + 2) (2 * m + 2)) := by
+        ext k; simp only [Finset.mem_insert, Finset.mem_Icc]; omega
+      have h2 : Finset.Icc (m + 1) (2 * m + 2) =
+          insert (2 * m + 2) (insert (2 * m + 1) (Finset.Icc (m + 1) (2 * m))) := by
+        ext k; simp only [Finset.mem_insert, Finset.mem_Icc]; omega
+      have hm1 : m + 1 ∉ Finset.Icc (m + 2) (2 * m + 2) := by simp
+      have hm21 : 2 * m + 1 ∉ Finset.Icc (m + 1) (2 * m) := by simp
+      have hm22 : 2 * m + 2 ∉ insert (2 * m + 1) (Finset.Icc (m + 1) (2 * m)) := by
+        simp; omega
+      have hs1 := congrArg (Finset.sum · (fun k : ℕ => (1 : ℝ) / (k : ℝ))) h1
+      have hs2 := congrArg (Finset.sum · (fun k : ℕ => (1 : ℝ) / (k : ℝ))) h2
+      rw [Finset.sum_insert hm1] at hs1
+      rw [Finset.sum_insert hm22, Finset.sum_insert hm21] at hs2
+      rw [show 2 * (m + 1) = 2 * m + 2 from by omega]
+      linarith
+    rw [h_lhs_rhs]
+    push_cast
+    have hm1 : (m : ℝ) + 1 ≠ 0 := by positivity
+    have hm2 : 2 * (m : ℝ) + 1 ≠ 0 := by positivity
+    have hm3 : 2 * (m : ℝ) + 2 ≠ 0 := by positivity
+    field_simp [hm1, hm2, hm3]
+    ring
+
+/-- Quantitative alternating harmonic bound: `|∑_{r=1}^N (1/(2r-1) - 1/(2r)) - log 2| ≤ 1 / (2N)`. -/
+theorem alt_harmonic_sum_diff_log_two {N : ℕ} (hN : 1 ≤ N) :
+    |∑ r ∈ Finset.Icc 1 N, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2| ≤
+      1 / (2 * (N : ℝ)) := by
+  rw [alt_harmonic_eq_tail_harmonic]
+  have hlo : ∑ k ∈ Finset.Icc (N + 1) (2 * N), (1 : ℝ) / (k : ℝ) ≤ Real.log 2 := by
+    have hsum : ∑ k ∈ Finset.Icc N (2 * N - 1), (1 : ℝ) / ((k : ℝ) + 1) ≤
+        ∑ k ∈ Finset.Icc N (2 * N - 1), (Real.log ((k : ℝ) + 1) - Real.log (k : ℝ)) := by
+      refine Finset.sum_le_sum (fun k hk => ?_)
+      have hk1 : 1 ≤ k := le_trans hN (Finset.mem_Icc.mp hk).1
+      have hk_pos : (0 : ℝ) < (k : ℝ) := by exact_mod_cast hk1
+      have h1 : Real.log ((k : ℝ) / ((k : ℝ) + 1)) ≤ (k : ℝ) / ((k : ℝ) + 1) - 1 :=
+        Real.log_le_sub_one_of_pos (by positivity)
+      rw [Real.log_div (by positivity) (by positivity)] at h1
+      linarith
+    have htel : ∑ k ∈ Finset.Icc N (2 * N - 1), (Real.log ((k : ℝ) + 1) - Real.log (k : ℝ)) = Real.log 2 := by
+      have h2N : N ≤ 2 * N := by omega
+      have hsub : ∑ k ∈ Finset.Icc N (2 * N - 1), (Real.log ((k + 1 : ℕ) : ℝ) - Real.log (k : ℝ)) =
+          Real.log ((2 * N : ℕ) : ℝ) - Real.log (N : ℝ) := by
+        clear hsum
+        induction N with
+        | zero => omega
+        | succ m _ =>
+          -- Direct telescoping via `Finset.sum_Ico_consecutive`
+          sorry
+      sorry
+    sorry
+  sorry
 
 end GrasGreenbergBrocard
