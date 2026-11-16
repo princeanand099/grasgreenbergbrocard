@@ -1,0 +1,12 @@
+# External Axiom Register
+
+Every axiom in this project represents an established peer-reviewed mathematical theorem external to the manuscript's own contribution, for which no suitable formalization is available in Mathlib v4.35.0. No manuscript-owned lemma, proposition, or theorem is axiomatized.
+
+| Axiom | Module | Published Source | Statement Summary | Dependent Declarations |
+| :--- | :--- | :--- | :--- | :--- |
+| `de_la_vallee_poussin_theta` | `GrasGreenbergBrocard.ExternalAxiomsAnalytic` | H. Davenport, *Multiplicative Number Theory*, 3rd ed., Springer, 2000, Chapter 18 | `∃ c₁ > 0, ϑ(x) - x = O(x exp(-c₁ √(log x)))` | `log_q_n_asymptotic`, `second_order_discrepancy_formula` |
+| `chebyshev_pi_upper` | `GrasGreenbergBrocard.ExternalAxiomsAnalytic` | H. Davenport, *Multiplicative Number Theory*, 3rd ed., Springer, 2000, Chapter 7 | `∃ C > 0, ∀ x ≥ 2, π(x) ≤ C x / log x` | `E_digit_isBigO_sqrt`, `log_q_n_asymptotic`, `card_Podd_asymptotic` |
+| `pnt_pi_asymptotic` | `GrasGreenbergBrocard.ExternalAxiomsAnalytic` | H. Davenport, *Multiplicative Number Theory*, 3rd ed., Springer, 2000, Chapter 18 | `π(x) - x / log x = o(x / log x)` | `card_Podd_asymptotic` |
+| `mertens_first_theorem` | `GrasGreenbergBrocard.ExternalAxiomsAnalytic` | H. Davenport, *Multiplicative Number Theory*, 3rd ed., Springer, 2000, Chapter 7 | `∃ C > 0, ∀ x ≥ 3, |∑_{3 ≤ p ≤ x} log p / (p - 1) - log x| ≤ C` | `sigma_star_parity_isLittleO`, `second_order_discrepancy_formula` |
+| `vaaler_extremal_polynomials` | `GrasGreenbergBrocard.ExternalAxiomsAnalytic` | J. D. Vaaler, *Some extremal functions in Fourier analysis*, Bull. Amer. Math. Soc. (N.S.) 12 (1985), no. 2, 183–216, Theorem 18 | Existence of universal kernel `W : ℝ → [0, 1]` and extremal trigonometric polynomials `Ψ_H, B_H` approximating `ψ(t) = t - ⌊t⌋ - 1/2` | `vaaler_parity_approx`, `second_order_discrepancy_formula`, `collar_decomposed_cancellation`, `multi_modulus_power_band_equidistribution` |
+| `vaughan_van_der_corput_prime_sum` | `GrasGreenbergBrocard.ExternalAxiomsAnalytic` | H. Iwaniec & E. Kowalski, *Analytic Number Theory*, AMS Colloq. Publ. 53, 2004: Prop. 13.4 (Vaughan's identity), Cor. 8.11 (Kusmin–Landau), Cor. 8.13 (van der Corput), Thm. 8.25 (Weyl–van der Corput) | Type I / Type II prime exponential sum bounds for smooth phases with `c₁ T₀ / P^j ≤ |F^{(j)}(t)| ≤ c₂ T₀ / P^j` | `prime_exp_sum_bounds`, `second_order_discrepancy_formula`, `collar_decomposed_cancellation`, `multi_modulus_power_band_equidistribution` |
