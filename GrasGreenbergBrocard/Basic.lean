@@ -84,9 +84,8 @@ theorem factorial_eq_q_mul_s_sq (n : ℕ) : Nat.factorial n = q_n n * (s_n n) ^ 
   intro p
   rw [Nat.factorization_mul hq_ne (pow_ne_zero 2 hs_ne), Nat.factorization_pow]
   by_cases hp : p.Prime
-  · haveI : Fact p.Prime := ⟨hp⟩
-    have hfv : (Nat.factorial n).factorization p = padicValNat p (Nat.factorial n) :=
-      (padicValNat_def hfac).symm ▸ rfl
+  · have hfv : (Nat.factorial n).factorization p = padicValNat p (Nat.factorial n) :=
+      Nat.factorization_def (Nat.factorial n) hp
     have hq_val : (q_n n).factorization p = if p ∈ Podd n then 1 else 0 := by
       unfold q_n
       rw [Nat.factorization_prod (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)]
@@ -127,7 +126,7 @@ theorem factorial_eq_q_mul_s_sq (n : ℕ) : Nat.factorial n = q_n n * (s_n n) ^ 
         have hz : x.factorization p = 0 := Nat.factorization_eq_zero_of_not_dvd
           (fun hdvd => hne ((Nat.prime_dvd_prime_iff_eq hp hx_prime).mp hdvd))
         rw [hz, mul_zero]
-    rw [hfv, hq_val, Finsupp.coe_smul, Pi.smul_apply, smul_eq_mul, hs_val]
+    rw [hfv, Finsupp.add_apply, hq_val, Finsupp.coe_smul, Pi.smul_apply, smul_eq_mul, hs_val]
     by_cases hle : p ≤ n
     · have hp_mem : p ∈ (Finset.Icc 2 n).filter Nat.Prime :=
         Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hle⟩, hp⟩
