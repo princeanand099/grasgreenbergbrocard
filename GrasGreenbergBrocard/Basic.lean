@@ -74,56 +74,82 @@ def harmonicInterval (n j : ℕ) : Set ℝ :=
 /-- Basic factorization identity `n! = q_n * s_n^2`. -/
 theorem factorial_eq_q_mul_s_sq (n : ℕ) : Nat.factorial n = q_n n * (s_n n) ^ 2 := by
   have hfac : Nat.factorial n ≠ 0 := Nat.factorial_ne_zero n
-  conv_lhs => rw [← Nat.factorization_prod_pow_eq_self hfac]
-  unfold q_n s_n Podd
-  have hsupp : (Nat.factorial n).factorization.support ⊆ (Finset.Icc 2 n).filter Nat.Prime := by
-    intro p hp
-    simp only [Finsupp.mem_support_iff, ne_eq] at hp
-    have hprime : p.Prime := Nat.prime_of_mem_primeFactors (by simpa [Nat.primeFactors] using hp)
-    have hdvd : p ∣ Nat.factorial n := Nat.dvd_of_mem_primeFactors (by simpa [Nat.primeFactors] using hp)
-    have hle : p ≤ n := hprime.dvd_factorial.mp hdvd
-    exact Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hprime.two_le, hle⟩, hprime⟩
-  rw [Finsupp.prod_of_support_subset _ hsupp _ (fun _ _ => by simp)]
-  have hq : ∏ p ∈ ((Finset.Icc 2 n).filter Nat.Prime).filter (fun p => ¬ 2 ∣ padicValNat p (Nat.factorial n)), p =
-      ∏ p ∈ (Finset.Icc 2 n).filter (fun p => p.Prime ∧ ¬ 2 ∣ padicValNat p (Nat.factorial n)), p := by
-    congr 1
-    ext p
-    simp [and_comm, and_assoc]
-  rw [← hq, ← Finset.prod_pow]
-  rw [← Finset.prod_filter_mul_prod_filter_not ((Finset.Icc 2 n).filter Nat.Prime)
-    (fun p => ¬ 2 ∣ padicValNat p (Nat.factorial n)) (fun p => p ^ (Nat.factorial n).factorization p)]
-  have h1 : ∏ p ∈ ((Finset.Icc 2 n).filter Nat.Prime).filter (fun p => ¬ 2 ∣ padicValNat p (Nat.factorial n)),
-      p ^ (Nat.factorial n).factorization p =
-    (∏ p ∈ ((Finset.Icc 2 n).filter Nat.Prime).filter (fun p => ¬ 2 ∣ padicValNat p (Nat.factorial n)), p) *
-    (∏ p ∈ ((Finset.Icc 2 n).filter Nat.Prime).filter (fun p => ¬ 2 ∣ padicValNat p (Nat.factorial n)),
-      (p ^ (padicValNat p (Nat.factorial n) / 2)) ^ 2) := by
-    rw [← Finset.prod_mul_distrib]
-    refine Finset.prod_congr rfl (fun p hp => ?_)
-    have hprime : p.Prime := (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2
-    have hodd : ¬ 2 ∣ padicValNat p (Nat.factorial n) := (Finset.mem_filter.mp hp).2
-    have hfv : (Nat.factorial n).factorization p = padicValNat p (Nat.factorial n) := by
-      haveI : Fact p.Prime := ⟨hprime⟩
-      exact (padicValNat_def hfac).symm ▸ rfl
-    rw [hfv, ← pow_mul, ← pow_succ']
-    congr 1
-    omega
-  have h2 : ∏ p ∈ ((Finset.Icc 2 n).filter Nat.Prime).filter (fun p => ¬ ¬ 2 ∣ padicValNat p (Nat.factorial n)),
-      p ^ (Nat.factorial n).factorization p =
-    ∏ p ∈ ((Finset.Icc 2 n).filter Nat.Prime).filter (fun p => ¬ ¬ 2 ∣ padicValNat p (Nat.factorial n)),
-      (p ^ (padicValNat p (Nat.factorial n) / 2)) ^ 2 := by
-    refine Finset.prod_congr rfl (fun p hp => ?_)
-    have hprime : p.Prime := (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2
-    have heven : 2 ∣ padicValNat p (Nat.factorial n) := not_not.mp (Finset.mem_filter.mp hp).2
-    have hfv : (Nat.factorial n).factorization p = padicValNat p (Nat.factorial n) := by
-      haveI : Fact p.Prime := ⟨hprime⟩
-      exact (padicValNat_def hfac).symm ▸ rfl
-    rw [hfv, ← pow_mul]
-    congr 1
-    omega
-  rw [h1, h2]
-  have hsplit := Finset.prod_filter_mul_prod_filter_not ((Finset.Icc 2 n).filter Nat.Prime)
-    (fun p => ¬ 2 ∣ padicValNat p (Nat.factorial n)) (fun p => (p ^ (padicValNat p (Nat.factorial n) / 2)) ^ 2)
-  rw [mul_assoc, ← hsplit]
+  have hq_ne : q_n n ≠ 0 := by
+    unfold q_n Podd
+    exact Finset.prod_ne_zero_iff.mpr (fun p hp => (Finset.mem_filter.mp hp).2.1.ne_zero)
+  have hs_ne : s_n n ≠ 0 := by
+    unfold s_n
+    exact Finset.prod_ne_zero_iff.mpr (fun p hp => pow_ne_zero _ (Finset.mem_filter.mp hp).2.ne_zero)
+  apply Nat.eq_of_factorization_eq hfac (mul_ne_zero hq_ne (pow_ne_zero 2 hs_ne))
+  intro p
+  rw [Nat.factorization_mul hq_ne (pow_ne_zero 2 hs_ne), Nat.factorization_pow]
+  by_cases hp : p.Prime
+  · haveI : Fact p.Prime := ⟨hp⟩
+    have hfv : (Nat.factorial n).factorization p = padicValNat p (Nat.factorial n) :=
+      (padicValNat_def hfac).symm ▸ rfl
+    have hq_val : (q_n n).factorization p = if p ∈ Podd n then 1 else 0 := by
+      unfold q_n
+      rw [Nat.factorization_prod (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)]
+      simp only [Finset.sum_apply']
+      split_ifs with hmem
+      · rw [Finset.sum_eq_single p]
+        · exact hp.factorization_self
+        · intro x hx hne
+          have hx_prime : x.Prime := (Finset.mem_filter.mp hx).2.1
+          exact Nat.factorization_eq_zero_of_not_dvd
+            (fun hdvd => hne ((Nat.prime_dvd_prime_iff_eq hp hx_prime).mp hdvd).symm)
+        · intro hnot; exact absurd hmem hnot
+      · refine Finset.sum_eq_zero (fun x hx => ?_)
+        have hx_prime : x.Prime := (Finset.mem_filter.mp hx).2.1
+        have hne : p ≠ x := fun h => hmem (h ▸ hx)
+        exact Nat.factorization_eq_zero_of_not_dvd
+          (fun hdvd => hne ((Nat.prime_dvd_prime_iff_eq hp hx_prime).mp hdvd))
+    have hs_val : (s_n n).factorization p =
+        if p ∈ (Finset.Icc 2 n).filter Nat.Prime then padicValNat p (Nat.factorial n) / 2 else 0 := by
+      unfold s_n
+      rw [Nat.factorization_prod (fun x hx => pow_ne_zero _ (Finset.mem_filter.mp hx).2.ne_zero)]
+      simp only [Finset.sum_apply']
+      split_ifs with hmem
+      · rw [Finset.sum_eq_single p]
+        · rw [Nat.factorization_pow, Finsupp.coe_smul, Pi.smul_apply, smul_eq_mul,
+            hp.factorization_self, mul_one]
+        · intro x hx hne
+          have hx_prime : x.Prime := (Finset.mem_filter.mp hx).2
+          rw [Nat.factorization_pow, Finsupp.coe_smul, Pi.smul_apply, smul_eq_mul]
+          have hz : x.factorization p = 0 := Nat.factorization_eq_zero_of_not_dvd
+            (fun hdvd => hne ((Nat.prime_dvd_prime_iff_eq hp hx_prime).mp hdvd).symm)
+          rw [hz, mul_zero]
+        · intro hnot; exact absurd hmem hnot
+      · refine Finset.sum_eq_zero (fun x hx => ?_)
+        have hx_prime : x.Prime := (Finset.mem_filter.mp hx).2
+        have hne : p ≠ x := fun h => hmem (h ▸ hx)
+        rw [Nat.factorization_pow, Finsupp.coe_smul, Pi.smul_apply, smul_eq_mul]
+        have hz : x.factorization p = 0 := Nat.factorization_eq_zero_of_not_dvd
+          (fun hdvd => hne ((Nat.prime_dvd_prime_iff_eq hp hx_prime).mp hdvd))
+        rw [hz, mul_zero]
+    rw [hfv, hq_val, Finsupp.coe_smul, Pi.smul_apply, smul_eq_mul, hs_val]
+    by_cases hle : p ≤ n
+    · have hp_mem : p ∈ (Finset.Icc 2 n).filter Nat.Prime :=
+        Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hle⟩, hp⟩
+      have hp_odd : p ∈ Podd n ↔ ¬ 2 ∣ padicValNat p (Nat.factorial n) := by
+        unfold Podd
+        simp [hp_mem, hp, hp.two_le, hle]
+      by_cases hodd : 2 ∣ padicValNat p (Nat.factorial n)
+      · have hnot : p ∉ Podd n := fun h => (hp_odd.mp h) hodd
+        simp [hp_mem, hnot]
+        omega
+      · have hyes : p ∈ Podd n := hp_odd.mpr hodd
+        simp [hp_mem, hyes]
+        omega
+    · have hnot1 : p ∉ Podd n := by
+        unfold Podd
+        simp [hle]
+      have hnot2 : p ∉ (Finset.Icc 2 n).filter Nat.Prime := by
+        simp [hle]
+      have hzero : padicValNat p (Nat.factorial n) = 0 :=
+        padicValNat.eq_zero_of_not_dvd (fun hdvd => hle (hp.dvd_factorial.mp hdvd))
+      simp [hnot1, hnot2, hzero]
+  · simp [Nat.factorization_eq_zero_of_not_prime _ hp]
 
 /-- `Delta_parity n = ∑_{3 ≤ p ≤ n} (-1)^{v_p(n!)} v_p(n!) log p` (eq. 2.2). -/
 theorem Delta_parity_eq_sum (n : ℕ) :
@@ -135,8 +161,8 @@ theorem Delta_parity_eq_sum (n : ℕ) :
       (((Finset.Icc 2 n).filter (fun p => p.Prime ∧ 2 ∣ padicValNat p (Nat.factorial n))).filter (fun p => 3 ≤ p)) ∪
       (((Finset.Icc 2 n).filter (fun p => p.Prime ∧ ¬ 2 ∣ padicValNat p (Nat.factorial n))).filter (fun p => 3 ≤ p)) := by
     ext p
-    simp only [Finset.mem_union, Finset.mem_filter, Finset.mem_Icc]
-    omega
+    by_cases hp : p.Prime <;> by_cases hd : 2 ∣ padicValNat p (Nat.factorial n) <;>
+      simp [hp, hd] <;> omega
   have hdisj : Disjoint
       (((Finset.Icc 2 n).filter (fun p => p.Prime ∧ 2 ∣ padicValNat p (Nat.factorial n))).filter (fun p => 3 ≤ p))
       (((Finset.Icc 2 n).filter (fun p => p.Prime ∧ ¬ 2 ∣ padicValNat p (Nat.factorial n))).filter (fun p => 3 ≤ p)) := by
