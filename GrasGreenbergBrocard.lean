@@ -1,3 +1,4 @@
 import GrasGreenbergBrocard.Basic
 import GrasGreenbergBrocard.ExternalAxiomsAnalytic
 import GrasGreenbergBrocard.ValuationParityDigits
+import GrasGreenbergBrocard.ValuationParityVaaler
