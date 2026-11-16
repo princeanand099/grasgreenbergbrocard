@@ -12,9 +12,7 @@ set_option pp.proofs false
 
 Formalizes Section 2.1 of the manuscript:
 - `padicValNat_factorial_on_harmonicInterval`: `v_p(n!) = j` for `p ∈ I_j` (`1 ≤ j ≤ ⌊√n⌋ - 1`)
-- `harmonicLayer_odd_even`: `Podd(n)` / `Peven(n)` and `v_p(q_n)`, `v_p(s_n)` on `I_{2r-1}` and `I_{2r}`
-- `log_q_n_asymptotic`: `log q_n = (log 2) n + O(n exp(-c₀ √(log n)))` (eq. 2.4a)
-- `card_Podd_asymptotic`: `|Podd(n)| = (log 2 + o(1)) π(n)` (eq. 2.4b)
+- `harmonicLayer_odd_layer`, `harmonicLayer_even_layer`
 -/
 
 noncomputable section
@@ -25,10 +23,10 @@ namespace GrasGreenbergBrocard
 
 /-- If `p` is prime and `n < p^2`, then `v_p(n!) = n / p`. -/
 theorem padicValNat_factorial_eq_div_of_lt_sq {p n : ℕ} (hp : p.Prime) (hn : n < p ^ 2) :
-    padicValNat p n ! = n / p := by
+    padicValNat p (Nat.factorial n) = n / p := by
   have hp2 : 2 ≤ p := hp.two_le
   have hp1 : 1 ≤ p - 1 := by omega
-  have hleg : (p - 1) * padicValNat p n ! = n - (Nat.digits p n).sum := by
+  have hleg : (p - 1) * padicValNat p (Nat.factorial n) = n - (Nat.digits p n).sum := by
     haveI : Fact p.Prime := ⟨hp⟩
     exact Nat.sub_one_mul_padicValNat_factorial n p
   have hsum_eq : n - (Nat.digits p n).sum = (p - 1) * (n / p) := by
@@ -62,7 +60,7 @@ theorem padicValNat_factorial_eq_div_of_lt_sq {p n : ℕ} (hp : p.Prime) (hn : n
 theorem padicValNat_factorial_on_harmonicInterval {n j p : ℕ}
     (hj1 : 1 ≤ j) (hj2 : j ≤ Nat.sqrt n - 1) (hp : p.Prime)
     (hpI : (p : ℝ) ∈ harmonicInterval n j) :
-    padicValNat p n ! = j := by
+    padicValNat p (Nat.factorial n) = j := by
   obtain ⟨hlo, hhi⟩ := hpI
   have hj_sq : j + 1 ≤ Nat.sqrt n := by omega
   have hj_sq_le : (j + 1) ^ 2 ≤ n := by
@@ -88,13 +86,12 @@ theorem padicValNat_factorial_on_harmonicInterval {n j p : ℕ}
   have hdiv_lt : n / p < j + 1 := (Nat.div_lt_iff_lt_mul hp.pos).mpr (by linarith)
   omega
 
-/-- **Lemma 2.1(i), part 2**: On odd layers `I_{2r-1}` (`1 ≤ 2r - 1 ≤ ⌊√n⌋ - 1`),
-`p ∈ Podd(n)` with `v_p(q_n) = 1` and `v_p(s_n) = r - 1`; on even layers `I_{2r}`,
-`p ∈ Peven(n)` with `v_p(q_n) = 0` and `v_p(s_n) = r`. -/
+/-- **Lemma 2.1(i), part 2 (odd layers)**: On `I_{2r-1}` (`1 ≤ 2r - 1 ≤ ⌊√n⌋ - 1`),
+`p ∈ Podd(n)` with `v_p(q_n) = 1` and `v_p(s_n) = r - 1`. -/
 theorem harmonicLayer_odd_layer {n r p : ℕ} (hr1 : 1 ≤ r) (hr2 : 2 * r - 1 ≤ Nat.sqrt n - 1)
     (hp : p.Prime) (hpI : (p : ℝ) ∈ harmonicInterval n (2 * r - 1)) :
     p ∈ Podd n ∧ padicValNat p (q_n n) = 1 ∧ padicValNat p (s_n n) = r - 1 := by
-  have hv : padicValNat p n ! = 2 * r - 1 :=
+  have hv : padicValNat p (Nat.factorial n) = 2 * r - 1 :=
     padicValNat_factorial_on_harmonicInterval (by omega) hr2 hp hpI
   have hple : p ≤ n := by
     obtain ⟨_, hhi⟩ := hpI
@@ -102,7 +99,7 @@ theorem harmonicLayer_odd_layer {n r p : ℕ} (hr1 : 1 ≤ r) (hr2 : 2 * r - 1 �
     have h1 : (1 : ℝ) ≤ ((2 * r - 1 : ℕ) : ℝ) := by exact_mod_cast (by omega : 1 ≤ 2 * r - 1)
     have hpn : (p : ℝ) ≤ (n : ℝ) := le_trans this (div_le_self (by positivity) h1)
     exact_mod_cast hpn
-  have hodd : ¬ 2 ∣ padicValNat p n ! := by rw [hv]; omega
+  have hodd : ¬ 2 ∣ padicValNat p (Nat.factorial n) := by rw [hv]; omega
   have hp_mem : p ∈ Podd n := Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hple⟩, hp, hodd⟩
   haveI : Fact p.Prime := ⟨hp⟩
   have hq_val : padicValNat p (q_n n) = 1 := by
@@ -114,11 +111,13 @@ theorem harmonicLayer_odd_layer {n r p : ℕ} (hr1 : 1 ≤ r) (hr2 : 2 * r - 1 �
     · exact padicValNat.self hp.one_lt
     · intro x hx hne
       have hx_prime : x.Prime := (Finset.mem_filter.mp hx).2.1
-      exact padicValNat.eq_zero_of_not_dvd (fun hdvd => hne ((Nat.prime_dvd_prime_iff_eq hp hx_prime).mp hdvd).symm)
+      exact padicValNat.eq_zero_of_not_dvd
+        (fun hdvd => hne ((Nat.prime_dvd_prime_iff_eq hp hx_prime).mp hdvd).symm)
     · intro hnot; exact absurd hp_mem hnot
   have hs_val : padicValNat p (s_n n) = r - 1 := by
     have hfac := factorial_eq_q_mul_s_sq n
-    have hq_ne : q_n n ≠ 0 := Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
+    have hq_ne : q_n n ≠ 0 :=
+      Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
     have hs_ne : s_n n ≠ 0 := by
       unfold s_n
       exact Finset.prod_ne_zero_iff.mpr (fun x hx => pow_ne_zero _ (Finset.mem_filter.mp hx).2.ne_zero)
@@ -127,10 +126,12 @@ theorem harmonicLayer_odd_layer {n r p : ℕ} (hr1 : 1 ≤ r) (hr2 : 2 * r - 1 �
     omega
   exact ⟨hp_mem, hq_val, hs_val⟩
 
+/-- **Lemma 2.1(i), part 3 (even layers)**: On `I_{2r}` (`2 ≤ 2r ≤ ⌊√n⌋ - 1`),
+`p ∈ Peven(n)` with `v_p(q_n) = 0` and `v_p(s_n) = r`. -/
 theorem harmonicLayer_even_layer {n r p : ℕ} (hr1 : 1 ≤ r) (hr2 : 2 * r ≤ Nat.sqrt n - 1)
     (hp : p.Prime) (hpI : (p : ℝ) ∈ harmonicInterval n (2 * r)) :
     p ∈ Peven n ∧ padicValNat p (q_n n) = 0 ∧ padicValNat p (s_n n) = r := by
-  have hv : padicValNat p n ! = 2 * r :=
+  have hv : padicValNat p (Nat.factorial n) = 2 * r :=
     padicValNat_factorial_on_harmonicInterval (by omega) hr2 hp hpI
   have hple : p ≤ n := by
     obtain ⟨_, hhi⟩ := hpI
@@ -138,7 +139,7 @@ theorem harmonicLayer_even_layer {n r p : ℕ} (hr1 : 1 ≤ r) (hr2 : 2 * r ≤ 
     have h1 : (1 : ℝ) ≤ ((2 * r : ℕ) : ℝ) := by exact_mod_cast (by omega : 1 ≤ 2 * r)
     have hpn : (p : ℝ) ≤ (n : ℝ) := le_trans this (div_le_self (by positivity) h1)
     exact_mod_cast hpn
-  have heven : 2 ∣ padicValNat p n ! := by rw [hv]; exact ⟨r, rfl⟩
+  have heven : 2 ∣ padicValNat p (Nat.factorial n) := by rw [hv]; exact ⟨r, rfl⟩
   have hp_mem : p ∈ Peven n := Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hple⟩, hp, heven⟩
   haveI : Fact p.Prime := ⟨hp⟩
   have hq_val : padicValNat p (q_n n) = 0 := by
@@ -148,14 +149,16 @@ theorem harmonicLayer_even_layer {n r p : ℕ} (hr1 : 1 ≤ r) (hr2 : 2 * r ≤ 
     rw [padicValNat_finset_prod _ hprod_ne]
     refine Finset.sum_eq_zero (fun x hx => ?_)
     have hx_prime : x.Prime := (Finset.mem_filter.mp hx).2.1
-    have hx_odd : ¬ 2 ∣ padicValNat x n ! := (Finset.mem_filter.mp hx).2.2
+    have hx_odd : ¬ 2 ∣ padicValNat x (Nat.factorial n) := (Finset.mem_filter.mp hx).2.2
     have hne : p ≠ x := by
       rintro rfl
       exact hx_odd heven
-    exact padicValNat.eq_zero_of_not_dvd (fun hdvd => hne ((Nat.prime_dvd_prime_iff_eq hp hx_prime).mp hdvd))
+    exact padicValNat.eq_zero_of_not_dvd
+      (fun hdvd => hne ((Nat.prime_dvd_prime_iff_eq hp hx_prime).mp hdvd))
   have hs_val : padicValNat p (s_n n) = r := by
     have hfac := factorial_eq_q_mul_s_sq n
-    have hq_ne : q_n n ≠ 0 := Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
+    have hq_ne : q_n n ≠ 0 :=
+      Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
     have hs_ne : s_n n ≠ 0 := by
       unfold s_n
       exact Finset.prod_ne_zero_iff.mpr (fun x hx => pow_ne_zero _ (Finset.mem_filter.mp hx).2.ne_zero)
