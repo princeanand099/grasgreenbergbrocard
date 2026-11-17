@@ -15,3 +15,6 @@ import GrasGreenbergBrocard.ValuationParityModWeight
 import GrasGreenbergBrocard.ValuationParityModCollar
 import GrasGreenbergBrocard.ValuationParityModInterCollar
 import GrasGreenbergBrocard.ValuationParityMod
+import GrasGreenbergBrocard.ExternalAxiomsSec3
+import GrasGreenbergBrocard.ChebyshevLucas
+import GrasGreenbergBrocard.PellFundamental
