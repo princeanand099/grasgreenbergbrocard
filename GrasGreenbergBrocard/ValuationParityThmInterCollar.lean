@@ -308,7 +308,7 @@ theorem interCollar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
       dsimp only [a_fn, b_fn, B_fn, oddH, allH]
       have hpw := h_vaaler_pw ((n : ℝ) / (p : ℝ) ^ s)
       dsimp only at hpw
-      convert hpw using 2 <;> simp only [mul_div_assoc]
+      convert hpw using 2 <;> simp only [mul_div_assoc, Complex.ofReal_zpow, Complex.ofReal_neg, Complex.ofReal_one]
     let S_idx := Finset.Icc 1 r
     have hS_idx_ne : S_idx.Nonempty := ⟨1, Finset.mem_Icc.mpr ⟨le_rfl, by omega⟩⟩
     have hS_idx_card : S_idx.card ≤ R := by rw [Nat.card_Icc]; omega
