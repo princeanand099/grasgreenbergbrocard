@@ -406,9 +406,9 @@ theorem padicValNat_factorial_eq_sum_Icc {p n R : ℕ} (hp : p.Prime)
   have hlog : Nat.log p n < R + 1 := by
     rcases eq_or_ne n 0 with rfl | hn0
     · simp
-    · by_contra h; push_neg at h
+    · by_contra h; push Not at h
       exact absurd (le_trans (Nat.pow_le_pow_right hp.pos h) (Nat.pow_log_le_self p hn0)) (not_le_of_gt hn)
-  rw [padicValNat_factorial (b := R + 1) hlog]
+  rw [padicValNat_factorial (b := R + 1) hlog, Nat.Ico_succ_right]
 
 theorem Mertens_div_p_band_le :
     ∃ C : ℝ, 0 < C ∧ ∀ A B : ℝ, 3 ≤ A → A ≤ B →
