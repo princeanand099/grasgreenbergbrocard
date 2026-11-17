@@ -150,8 +150,7 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
       field_simp [hH0, h2H, h4H]
       ring
     have hC := congrArg Complex.ofReal hR
-    push_cast at hC
-    exact hC
+    simpa using hC
   · intro h
     have hH_pos : (0 : ℝ) < (H : ℝ) + 1 := by positivity
     by_cases hev : Even h
@@ -473,10 +472,12 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
           _ = (∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ)))) +
               (∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ)))) := by
               congr 1
-              · rw [Finset.sum_image (fun k1 _ k2 _ h => Int.ofNat.inj h)]
+              · dsimp only [posSet]
+                rw [Finset.sum_image (fun k1 _ k2 _ h => Int.ofNat.inj h)]
                 refine Finset.sum_congr rfl (fun k _ => ?_)
                 rw [Int.cast_natCast, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
-              · rw [Finset.sum_image (fun k1 _ k2 _ h => Int.ofNat.inj (neg_inj.mp h))]
+              · dsimp only [negSet]
+                rw [Finset.sum_image (fun k1 _ k2 _ h => Int.ofNat.inj (neg_inj.mp h))]
                 refine Finset.sum_congr rfl (fun k _ => ?_)
                 rw [Int.cast_neg, Int.cast_natCast, abs_neg, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
           _ = 2 * ∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ))) := by ring

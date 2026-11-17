@@ -196,13 +196,15 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
   filter_upwards [Filter.eventually_ge_atTop 4, hev1, hev2, hev_log] with n hn hsmall1 hsmall2 hlog2
   dsimp only
   intro P I A h w W₀ hA_nz hP_lo hP_hi hI_prime hA_range hh_bound hPhase hW_bound hW₀
-  set r₀ := (A.filter (fun r => h r ≠ 0)).min' (by
+  have hne_flt : (A.filter (fun r => h r ≠ 0)).Nonempty := by
     obtain ⟨r, hrA, hr0⟩ := hA_nz
-    exact ⟨r, Finset.mem_filter.mpr ⟨hrA, hr0⟩⟩)
+    exact ⟨r, Finset.mem_filter.mpr ⟨hrA, hr0⟩⟩
+  set r₀ := (A.filter (fun r => h r ≠ 0)).min' hne_flt
   set T₀ := |(h r₀ : ℝ)| * (n : ℝ) / P ^ r₀
   set F : ℝ → ℝ := fun t => ∑ r ∈ A, (h r : ℝ) * (n : ℝ) / (2 * t ^ r)
-  have hr₀_mem : r₀ ∈ A := (Finset.mem_filter.mp (Finset.min'_mem _ _)).1
-  have hr₀_ne : h r₀ ≠ 0 := (Finset.mem_filter.mp (Finset.min'_mem _ _)).2
+  have hr₀_flt : r₀ ∈ A.filter (fun r => h r ≠ 0) := Finset.min'_mem _ hne_flt
+  have hr₀_mem : r₀ ∈ A := (Finset.mem_filter.mp hr₀_flt).1
+  have hr₀_ne : h r₀ ≠ 0 := (Finset.mem_filter.mp hr₀_flt).2
   have hr₀_range : 1 ≤ r₀ ∧ r₀ ≤ R := hA_range r₀ hr₀_mem
   have hT₀_ge : (2 : ℝ) ^ (-(R : ℤ)) * (Real.log (n : ℝ)) ^ A_R ≤ T₀ := by
     have hh1 : (1 : ℝ) ≤ |(h r₀ : ℝ)| := by exact_mod_cast Int.one_le_abs hr₀_ne
