@@ -308,7 +308,7 @@ theorem interCollar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
       dsimp only [a_fn, b_fn, B_fn, oddH, allH]
       have hpw := h_vaaler_pw ((n : ℝ) / (p : ℝ) ^ s)
       dsimp only at hpw
-      exact hpw
+      convert hpw using 2 <;> simp only [mul_div_assoc]
     let S_idx := Finset.Icc 1 r
     have hS_idx_ne : S_idx.Nonempty := ⟨1, Finset.mem_Icc.mpr ⟨le_rfl, by omega⟩⟩
     have hS_idx_card : S_idx.card ≤ R := by rw [Nat.card_Icc]; omega
@@ -590,7 +590,7 @@ theorem interCollar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
               have h1 : Real.log (n : ℝ) * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) = (Real.log (n : ℝ)) ^ (-((R : ℝ) + 1)) := by
                 calc Real.log (n : ℝ) * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2))
                     = (Real.log (n : ℝ)) ^ (1 : ℝ) * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := by rw [Real.rpow_one]
-                  _ = (Real.log (n : ℝ)) ^ (1 + -((R : ℝ) + 2)) := (Real.rpow_add hlogn_pos).symm
+                  _ = (Real.log (n : ℝ)) ^ (1 + -((R : ℝ) + 2)) := (Real.rpow_add hlogn_pos 1 (-((R : ℝ) + 2))).symm
                   _ = (Real.log (n : ℝ)) ^ (-((R : ℝ) + 1)) := by congr 1; ring
               rw [h1, show -((R : ℝ) + 1) = -((R + 1 : ℕ) : ℝ) from by push_cast; ring,
                 Real.rpow_neg hlogn_pos.le, Real.rpow_natCast, one_div]

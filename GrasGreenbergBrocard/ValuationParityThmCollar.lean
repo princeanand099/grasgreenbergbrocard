@@ -401,7 +401,10 @@ theorem collar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
                 rw [← Real.rpow_natCast _ r₀, ← Real.rpow_mul hn_pos.le]; congr 1; ring
         have h_n_div : (n : ℝ) ^ δ ≤ (n : ℝ) / P ^ r₀ := by
           have h1 : 1 - (r₀ : ℝ) / (r : ℝ) ≥ 1 / (r : ℝ) := by
-            have : (r₀ : ℝ) ≤ (r : ℝ) - 1 := by exact_mod_cast hr₀_le
+            have : (r₀ : ℝ) ≤ (r : ℝ) - 1 := by
+              have h1 : (r₀ : ℝ) ≤ ((r - 1 : ℕ) : ℝ) := by exact_mod_cast hr₀_le
+              rw [Nat.cast_sub (by omega : 1 ≤ r), Nat.cast_one] at h1
+              exact h1
             rw [ge_iff_le, le_sub_iff_add_le, ← add_div, div_le_one hr_pos]; linarith
           have h2 : δ ≤ 1 / (r : ℝ) := by
             rw [le_div_iff₀ hr_pos]
@@ -445,7 +448,7 @@ theorem collar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
     dsimp only [a_fn, b_fn, B_fn, oddH, allH]
     have hpw := h_vaaler_pw ((n : ℝ) / (p : ℝ) ^ s)
     dsimp only at hpw
-    exact hpw
+    convert hpw using 2 <;> simp only [mul_div_assoc]
   let S_idx := Finset.Icc 1 (r - 1)
   have hS_idx_ne : S_idx.Nonempty := ⟨1, Finset.mem_Icc.mpr ⟨le_rfl, by omega⟩⟩
   have hS_idx_card : S_idx.card ≤ R := by

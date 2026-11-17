@@ -261,7 +261,7 @@ theorem Delta_parity_second_order :
     exact ⟨h_sqrt_lt, h_13_sqrtN, h_div_r1_12, hfl_ge4, hfl5_ge1, h48_le_2fl, h5_le_2fl5,
       h_n34_ge, h_exp_last, h_pow_48, h_2H1_12, h_loglog_4⟩
   let M : ℝ := |C_ed| + (4 * |C₁| + 2) +
-    (Cθ * 2 + (2 + 4 * C₁e * (1 + Real.log 2) + (2 + 2 * Cm + 36 * C₁e)))
+    (Cθ * 2 + (2 + 4 * C₂e * (1 + Real.log 2) + (2 + 2 * Cm + 36 * C₂e)))
   refine Asymptotics.IsBigO.of_bound M ?_
   filter_upwards [Filter.eventually_ge_atTop 16, hlog_ge2, h_main_conds, hExp, hC_ed] with
     n hn hln hconds hexp_n hed_n
@@ -581,9 +581,9 @@ theorem Delta_parity_second_order :
           ∑ r ∈ Finset.Icc 1 (R₁ - 1), (-1 : ℝ) ^ r / ((r : ℝ) + 1) * (n : ℝ)) +
         (∑ r ∈ Finset.Icc 1 (R₁ - 1), (-1 : ℝ) ^ r / ((r : ℝ) + 1) * (n : ℝ) - (Real.log 2 - 1) * (n : ℝ)) := by ring
     rw [heq_sub]
-    linarith [htri, hsum_tri, h_alt_err]
+    linarith [htri, hsum_tri, h_alt_err, abs_nonneg C₁]
   have hmid_bound : |∑ p ∈ S_mid, f_term p| ≤
-      (Cθ * 2 + (2 + 4 * C₁e * (1 + Real.log 2) + (2 + 2 * Cm + 36 * C₁e))) * ((n : ℝ) / Real.log (n : ℝ)) := by
+      (Cθ * 2 + (2 + 4 * C₂e * (1 + Real.log 2) + (2 + 2 * Cm + 36 * C₂e))) * ((n : ℝ) / Real.log (n : ℝ)) := by
     have hp_val_mid : ∀ p ∈ S_mid, padicValNat p (Nat.factorial n) = n / p := by
       intro p hp
       simp only [S_mid, S_all, Finset.mem_filter, Finset.mem_Icc] at hp
@@ -654,7 +654,7 @@ theorem Delta_parity_second_order :
               _ ≤ 2 * ((n : ℝ) / Real.log (n : ℝ)) := by linarith
         _ = Cθ * 2 * ((n : ℝ) / Real.log (n : ℝ)) := by ring
     have hmain_mid : |∑ p ∈ S_mid, (-1 : ℝ) ^ (n / p) * ((n : ℝ) / (p : ℝ)) * Real.log (p : ℝ)| ≤
-        (2 + 4 * C₁e * (1 + Real.log 2) + (2 + 2 * Cm + 36 * C₁e)) * ((n : ℝ) / Real.log (n : ℝ)) := by
+        (2 + 4 * C₂e * (1 + Real.log 2) + (2 + 2 * Cm + 36 * C₂e)) * ((n : ℝ) / Real.log (n : ℝ)) := by
       rcases eq_or_ne S_mid ∅ with h_empty | h_ne
       · rw [h_empty, Finset.sum_empty, abs_zero]; positivity
       · have hA_ge1 : (1 : ℝ) ≤ (Nat.sqrt n : ℝ) := by exact_mod_cast Nat.sqrt_pos.mpr (by omega : 0 < n)
@@ -699,8 +699,9 @@ theorem Delta_parity_second_order :
                     c_tilde h * eExp ((h : ℝ) * ((n : ℝ) / (p : ℝ)) / 2))).re := by
             rw [Complex.add_re, Complex.re_sum, Complex.re_sum, ← Finset.sum_add_distrib]
             refine Finset.sum_congr rfl (fun p hp => ?_)
-            rw [← Complex.add_re, ← mul_add, add_sub_cancel, hfloor_eq p hp]
-            norm_cast
+            rw [← Complex.add_re, ← mul_add, add_sub_cancel, hfloor_eq p hp,
+              ← Complex.ofReal_mul, Complex.ofReal_re]
+            ring
           rw [h_re]
           calc |(mainSum + _).re| ≤ ‖mainSum + _‖ := Complex.abs_re_le_norm _
             _ ≤ ‖mainSum‖ + ‖∑ p ∈ S_mid, (((n : ℝ) / (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) * _‖ := norm_add_le _ _
@@ -726,13 +727,13 @@ theorem Delta_parity_second_order :
                   congr 1
                   · simp [eExp]
                   · congr 1; ext h; simp [Finset.mem_erase, Finset.mem_filter]; tauto
-                dsimp only at hpw; rwa [hsplit0] at hpw
+                dsimp only at hpw; convert hpw using 2; rw [hsplit0]; congr 2; ext h; simp only [mul_div_assoc]
         have h_block_exp : ∀ (k : ℕ) (hk : k ∈ dyadicBlocks (Nat.sqrt n : ℝ) ((n : ℝ) / (R₁ : ℝ)))
             (h : ℤ) (hh0 : h ≠ 0) (hh_le : |h| ≤ 2 * (H : ℤ) + 1),
             ‖∑ p ∈ S_mid.filter (fun p : ℕ => (Nat.sqrt n : ℝ) * (2 : ℝ) ^ k < (p : ℝ) ∧
                 (p : ℝ) ≤ 2 * ((Nat.sqrt n : ℝ) * (2 : ℝ) ^ k)),
               (((n : ℝ) / (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) * eExp ((h : ℝ) * ((n : ℝ) / (p : ℝ)) / 2)‖ ≤
-            C₁e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ) := by
+            C₂e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ) := by
           intro k hk h hh0 hh_le
           let P := (Nat.sqrt n : ℝ) * (2 : ℝ) ^ k
           let Ik := S_mid.filter (fun p : ℕ => P < (p : ℝ) ∧ (p : ℝ) ≤ 2 * P)
@@ -749,7 +750,6 @@ theorem Delta_parity_second_order :
             ⟨1, Finset.mem_singleton_self _, hh0⟩
             hP_lo hP_hi hIk_pr (fun r hr => by rw [Finset.mem_singleton.mp hr]; norm_num)
             (fun r hr => by
-              rw [Finset.mem_singleton.mp hr]
               have h5_eq : Nat.floor (1 / (1 / 3 : ℝ)) + 2 = 5 := by norm_num
               simp_rw [h5_eq]
               exact hh_le)
@@ -767,8 +767,8 @@ theorem Delta_parity_second_order :
               exact div_le_div_of_nonneg_left hn_pos.le (by positivity) ht.1)
             (by positivity)
           dsimp only at hexp_app
-          have h_rhs : C₁e * ((n : ℝ) / P) * P * (Real.log (n : ℝ)) ^ (-((Nat.floor (1 / (1 / 3 : ℝ)) : ℝ) + 2)) =
-              C₁e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ) := by
+          have h_rhs : C₂e * ((n : ℝ) / P) * P * (Real.log (n : ℝ)) ^ (-((Nat.floor (1 / (1 / 3 : ℝ)) : ℝ) + 2)) =
+              C₂e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ) := by
             have hP_pos : P ≠ 0 := by positivity
             have hR3 : (Nat.floor (1 / (1 / 3 : ℝ)) : ℝ) + 2 = 5 := by norm_num
             rw [hR3]
@@ -780,26 +780,26 @@ theorem Delta_parity_second_order :
             refine Finset.sum_congr rfl (fun p _ => ?_)
             congr 2; simp [Finset.sum_singleton]; ring
           rw [h_sum_eq]
-          exact hexp_app.1.1
+          exact hexp_app.1.2
         have hdy_card_le : ((dyadicBlocks (Nat.sqrt n : ℝ) ((n : ℝ) / (R₁ : ℝ))).card : ℝ) ≤
             Real.log (n : ℝ) / Real.log 2 + 2 := by
           calc ((dyadicBlocks (Nat.sqrt n : ℝ) ((n : ℝ) / (R₁ : ℝ))).card : ℝ)
               ≤ Real.log (((n : ℝ) / (R₁ : ℝ)) / (Nat.sqrt n : ℝ)) / Real.log 2 + 2 :=
                 dyadicBlocks_card_le hA_ge1 hAB
             _ ≤ Real.log (n : ℝ) / Real.log 2 + 2 := by
-                refine add_le_add_right (div_le_div_of_nonneg_right (Real.log_le_log (by positivity) ?_) hlog2_pos.le) 2
+                refine add_le_add (div_le_div_of_nonneg_right (Real.log_le_log (by positivity) ?_) hlog2_pos.le) le_rfl
                 rw [div_le_iff₀ (by positivity)]
                 calc (n : ℝ) / (R₁ : ℝ) ≤ (n : ℝ) / 1 :=
                       div_le_div_of_nonneg_left hn_pos.le (by norm_num) (by exact_mod_cast (by omega : 1 ≤ R₁))
                   _ ≤ (n : ℝ) * (Nat.sqrt n : ℝ) := by rw [div_one]; exact le_mul_of_one_le_right hn_pos.le hA_ge1
-        have hmain_le : ‖mainSum‖ ≤ (2 + 4 * C₁e * (1 + Real.log 2)) * ((n : ℝ) / Real.log (n : ℝ)) := by
+        have hmain_le : ‖mainSum‖ ≤ (2 + 4 * C₂e * (1 + Real.log 2)) * ((n : ℝ) / Real.log (n : ℝ)) := by
           let oddH := (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Odd h)
           have h_swap : mainSum = ∑ h ∈ oddH, c_tilde h * ∑ k ∈ dyadicBlocks (Nat.sqrt n : ℝ) ((n : ℝ) / (R₁ : ℝ)),
               ∑ p ∈ S_mid.filter (fun p : ℕ => (Nat.sqrt n : ℝ) * (2 : ℝ) ^ k < (p : ℝ) ∧
                   (p : ℝ) ≤ 2 * ((Nat.sqrt n : ℝ) * (2 : ℝ) ^ k)),
                 (((n : ℝ) / (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) * eExp ((h : ℝ) * ((n : ℝ) / (p : ℝ)) / 2) := by
             unfold mainSum
-            simp_rw [Finset.mul_sum]
+            conv_lhs => simp_rw [Finset.mul_sum]
             rw [Finset.sum_comm]
             refine Finset.sum_congr rfl (fun h _ => ?_)
             simp_rw [show ∀ p : ℕ, (((n : ℝ) / (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
@@ -816,48 +816,48 @@ theorem Delta_parity_second_order :
                 refine le_trans (norm_sum_le _ _) (Finset.sum_le_sum (fun h _ => by rw [norm_mul]))
             _ ≤ ∑ h ∈ oddH, ‖c_tilde h‖ *
                   (((dyadicBlocks (Nat.sqrt n : ℝ) ((n : ℝ) / (R₁ : ℝ))).card : ℝ) *
-                    (C₁e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ))) := by
+                    (C₂e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ))) := by
                 refine Finset.sum_le_sum (fun h hh => ?_)
                 apply mul_le_mul_of_nonneg_left _ (norm_nonneg _)
                 calc ‖∑ k ∈ dyadicBlocks _ _, _‖
                     ≤ ∑ k ∈ dyadicBlocks _ _, ‖∑ p ∈ _, _‖ := norm_sum_le _ _
-                  _ ≤ ∑ _k ∈ dyadicBlocks _ _, (C₁e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ)) := by
+                  _ ≤ ∑ _k ∈ dyadicBlocks _ _, (C₂e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ)) := by
                       refine Finset.sum_le_sum (fun k hk => h_block_exp k hk h
                         (Finset.mem_filter.mp hh).2.1
                         (by have := Finset.mem_Icc.mp (Finset.mem_filter.mp hh).1; rw [abs_le]; omega))
                   _ = _ := by simp [Finset.sum_const, nsmul_eq_mul]
             _ = (∑ h ∈ oddH, ‖c_tilde h‖) *
                   (((dyadicBlocks (Nat.sqrt n : ℝ) ((n : ℝ) / (R₁ : ℝ))).card : ℝ) *
-                    (C₁e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ))) := by rw [← Finset.sum_mul]
+                    (C₂e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ))) := by rw [← Finset.sum_mul]
             _ ≤ ((4 / Real.pi) * (Real.log (2 * (H : ℝ) + 1) + 1)) *
-                  ((Real.log (n : ℝ) / Real.log 2 + 2) * (C₁e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ))) :=
+                  ((Real.log (n : ℝ) / Real.log 2 + 2) * (C₂e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ))) :=
                 mul_le_mul h_L1 (mul_le_mul_of_nonneg_right hdy_card_le (by positivity))
                   (mul_nonneg (Nat.cast_nonneg _) (by positivity))
-                  (mul_nonneg (by norm_num) (add_nonneg (Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ 2 * H + 1))) zero_le_one))
-            _ = (4 / Real.pi) * C₁e * (n : ℝ) *
+                  (mul_nonneg (by positivity) (add_nonneg (Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ 2 * H + 1))) zero_le_one))
+            _ = (4 / Real.pi) * C₂e * (n : ℝ) *
                   (((Real.log (2 * (H : ℝ) + 1) + 1) * (Real.log (n : ℝ) / Real.log 2 + 2)) *
                     (Real.log (n : ℝ)) ^ (-5 : ℝ)) := by ring
-            _ ≤ (4 / Real.pi) * C₁e * (n : ℝ) * ((Real.log (n : ℝ)) ^ 4 * (Real.log (n : ℝ)) ^ (-5 : ℝ)) := by
+            _ ≤ (4 / Real.pi) * C₂e * (n : ℝ) * ((Real.log (n : ℝ)) ^ 4 * (Real.log (n : ℝ)) ^ (-5 : ℝ)) := by
                 apply mul_le_mul_of_nonneg_left _ (by positivity)
                 exact mul_le_mul_of_nonneg_right hloglog4 (by positivity)
-            _ ≤ (2 + 4 * C₁e * (1 + Real.log 2)) * ((n : ℝ) / Real.log (n : ℝ)) := by
+            _ ≤ (2 + 4 * C₂e * (1 + Real.log 2)) * ((n : ℝ) / Real.log (n : ℝ)) := by
                 have hrp : (Real.log (n : ℝ)) ^ 4 * (Real.log (n : ℝ)) ^ (-5 : ℝ) = 1 / Real.log (n : ℝ) := by
                   rw [← Real.rpow_natCast (Real.log (n : ℝ)) 4, ← Real.rpow_add hlogn_pos]
                   norm_num [Real.rpow_neg_one]
                 rw [hrp]
                 have hpi : (1 : ℝ) ≤ Real.pi := by linarith [Real.pi_gt_three]
                 have h4pi : 4 / Real.pi ≤ 4 := div_le_self (by norm_num) hpi
-                calc (4 / Real.pi) * C₁e * (n : ℝ) * (1 / Real.log (n : ℝ))
-                    = ((4 / Real.pi) * C₁e) * ((n : ℝ) / Real.log (n : ℝ)) := by ring
-                  _ ≤ (4 * C₁e) * ((n : ℝ) / Real.log (n : ℝ)) :=
-                      mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_right h4pi hC₁e.le) (by positivity)
-                  _ ≤ (2 + 4 * C₁e * (1 + Real.log 2)) * ((n : ℝ) / Real.log (n : ℝ)) := by
+                calc (4 / Real.pi) * C₂e * (n : ℝ) * (1 / Real.log (n : ℝ))
+                    = ((4 / Real.pi) * C₂e) * ((n : ℝ) / Real.log (n : ℝ)) := by ring
+                  _ ≤ (4 * C₂e) * ((n : ℝ) / Real.log (n : ℝ)) :=
+                      mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_right h4pi hC₂e.le) (by positivity)
+                  _ ≤ (2 + 4 * C₂e * (1 + Real.log 2)) * ((n : ℝ) / Real.log (n : ℝ)) := by
                       apply mul_le_mul_of_nonneg_right _ (by positivity)
                       nlinarith [hlog2_pos]
         have hB_err_le : ∑ p ∈ S_mid, ((n : ℝ) / (p : ℝ) * Real.log (p : ℝ)) *
             (b_tilde 0 + ∑ h ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (· ≠ 0),
               b_tilde h * eExp ((h : ℝ) * ((n : ℝ) / (p : ℝ)) / 2)).re ≤
-            (2 + 2 * Cm + 36 * C₁e) * ((n : ℝ) / Real.log (n : ℝ)) := by
+            (2 + 2 * Cm + 36 * C₂e) * ((n : ℝ) / Real.log (n : ℝ)) := by
           have h_split_re : ∑ p ∈ S_mid, ((n : ℝ) / (p : ℝ) * Real.log (p : ℝ)) *
               (b_tilde 0 + ∑ h ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (· ≠ 0),
                 b_tilde h * eExp ((h : ℝ) * ((n : ℝ) / (p : ℝ)) / 2)).re =
@@ -876,7 +876,8 @@ theorem Delta_parity_second_order :
               (2 + 2 * Cm) * ((n : ℝ) / Real.log (n : ℝ)) := by
             have hb0_re : (b_tilde 0).re = 2 / ((H : ℝ) + 1) := by
               rw [h_btilde0]
-              have : (2 : ℂ) / ((H : ℂ) + 1) = ((2 / ((H : ℝ) + 1) : ℝ) : ℂ) := by push_cast; rfl
+              have : (2 : ℂ) / ((Nat.floor ((Real.log (n : ℝ)) ^ 5) : ℂ) + 1) =
+                  ((2 / ((H : ℝ) + 1) : ℝ) : ℂ) := by push_cast; rfl
               rw [this, Complex.ofReal_re]
             rw [hb0_re]
             have hsub : S_mid ⊆ (Finset.Icc 3 (Nat.floor (n : ℝ))).filter Nat.Prime := by
@@ -891,7 +892,7 @@ theorem Delta_parity_second_order :
                       Real.log (p : ℝ) / (p : ℝ) := by
                     apply mul_le_mul_of_nonneg_left _ hn_pos.le
                     exact Finset.sum_le_sum_of_subset_of_nonneg hsub (fun p hp _ => by
-                      have hp2 : 2 ≤ p := (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).1
+                      have hp2 : 2 ≤ p := by have := (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).1; omega
                       have hlogp : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ p))
                       positivity)
                 _ ≤ (n : ℝ) * (Real.log (n : ℝ) + Cm) := mul_le_mul_of_nonneg_left (hCm n (by exact_mod_cast (by omega : 3 ≤ n))) hn_pos.le
@@ -899,13 +900,14 @@ theorem Delta_parity_second_order :
               have h_2H : (Real.log (n : ℝ)) ^ 2 ≤ (H : ℝ) + 1 := by
                 have h2_le_5 : (Real.log (n : ℝ)) ^ 2 ≤ (Real.log (n : ℝ)) ^ 5 :=
                   pow_le_pow_right₀ (by linarith) (by norm_num)
-                linarith
+                linarith [Nat.lt_floor_add_one ((Real.log (n : ℝ)) ^ 5)]
               have h1 : 2 * (Real.log (n : ℝ) + Cm) / ((H : ℝ) + 1) ≤
                   2 * (Real.log (n : ℝ) + Cm) / (Real.log (n : ℝ)) ^ 2 :=
                 div_le_div_of_nonneg_left (by positivity) (by positivity) h_2H
               have h2 : 2 * (Real.log (n : ℝ) + Cm) / (Real.log (n : ℝ)) ^ 2 ≤ (2 + 2 * Cm) / Real.log (n : ℝ) := by
                 rw [div_le_div_iff₀ (by positivity) hlogn_pos]
-                nlinarith [hln]
+                have hlog_sq : Real.log (n : ℝ) ≤ Real.log (n : ℝ) ^ 2 := by nlinarith [hln]
+                nlinarith [hlog_sq, hCm_pos]
               exact le_trans h1 h2
             calc (2 / ((H : ℝ) + 1)) * ∑ p ∈ S_mid, ((n : ℝ) / (p : ℝ) * Real.log (p : ℝ))
                 ≤ (2 / ((H : ℝ) + 1)) * ((n : ℝ) * (Real.log (n : ℝ) + Cm)) :=
@@ -917,7 +919,7 @@ theorem Delta_parity_second_order :
           have hnz_bound : (∑ p ∈ S_mid, (((n : ℝ) / (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
                 ∑ h ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (· ≠ 0),
                   b_tilde h * eExp ((h : ℝ) * ((n : ℝ) / (p : ℝ)) / 2)).re ≤
-              36 * C₁e * ((n : ℝ) / Real.log (n : ℝ)) := by
+              36 * C₂e * ((n : ℝ) / Real.log (n : ℝ)) := by
             let nzH := (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (· ≠ 0)
             have h_swap : ∑ p ∈ S_mid, (((n : ℝ) / (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
                   ∑ h ∈ nzH, b_tilde h * eExp ((h : ℝ) * ((n : ℝ) / (p : ℝ)) / 2) =
@@ -925,7 +927,7 @@ theorem Delta_parity_second_order :
                   ∑ p ∈ S_mid.filter (fun p : ℕ => (Nat.sqrt n : ℝ) * (2 : ℝ) ^ k < (p : ℝ) ∧
                       (p : ℝ) ≤ 2 * ((Nat.sqrt n : ℝ) * (2 : ℝ) ^ k)),
                     (((n : ℝ) / (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) * eExp ((h : ℝ) * ((n : ℝ) / (p : ℝ)) / 2) := by
-              simp_rw [Finset.mul_sum]
+              conv_lhs => simp_rw [Finset.mul_sum]
               rw [Finset.sum_comm]
               refine Finset.sum_congr rfl (fun h _ => ?_)
               simp_rw [show ∀ p : ℕ, (((n : ℝ) / (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
@@ -937,7 +939,7 @@ theorem Delta_parity_second_order :
               conv_lhs => rw [hpart_mid]
               rw [Finset.sum_biUnion hdisj_mid]
             refine le_trans (le_trans (le_abs_self _) (Complex.abs_re_le_norm _)) ?_
-            rw [← Complex.norm_eq_abs, h_swap]
+            rw [h_swap]
             have hnz_card : (nzH.card : ℝ) ≤ 4 * (H : ℝ) + 3 := by
               have h1 : nzH.card ≤ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).card :=
                 Finset.card_filter_le _ _
@@ -953,40 +955,42 @@ theorem Delta_parity_second_order :
                 ≤ ∑ h ∈ nzH, ‖b_tilde h‖ * ‖∑ k ∈ dyadicBlocks _ _, _‖ := by
                   refine le_trans (norm_sum_le _ _) (Finset.sum_le_sum (fun h _ => by rw [norm_mul]))
               _ ≤ ∑ _h ∈ nzH, (3 / ((H : ℝ) + 1)) *
-                    ((3 * Real.log (n : ℝ)) * (C₁e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ))) := by
+                    ((3 * Real.log (n : ℝ)) * (C₂e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ))) := by
                   refine Finset.sum_le_sum (fun h hh => ?_)
                   refine mul_le_mul (h_btilde_b h).le ?_ (norm_nonneg _) (by positivity)
                   calc ‖∑ k ∈ dyadicBlocks _ _, _‖
                       ≤ ∑ k ∈ dyadicBlocks _ _, ‖∑ p ∈ _, _‖ := norm_sum_le _ _
-                    _ ≤ ∑ _k ∈ dyadicBlocks _ _, (C₁e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ)) := by
+                    _ ≤ ∑ _k ∈ dyadicBlocks _ _, (C₂e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ)) := by
                         refine Finset.sum_le_sum (fun k hk => h_block_exp k hk h
                           (Finset.mem_filter.mp hh).2
                           (by have := Finset.mem_Icc.mp (Finset.mem_filter.mp hh).1; rw [abs_le]; omega))
-                    _ = ((dyadicBlocks _ _).card : ℝ) * (C₁e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ)) := by
+                    _ = ((dyadicBlocks _ _).card : ℝ) * (C₂e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ)) := by
                         simp [Finset.sum_const, nsmul_eq_mul]
-                    _ ≤ (3 * Real.log (n : ℝ)) * (C₁e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ)) :=
+                    _ ≤ (3 * Real.log (n : ℝ)) * (C₂e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ)) :=
                         mul_le_mul_of_nonneg_right hdy_le_3log (by positivity)
               _ = (nzH.card : ℝ) * (3 / ((H : ℝ) + 1)) *
-                    (3 * Real.log (n : ℝ) * (C₁e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ))) := by
+                    (3 * Real.log (n : ℝ) * (C₂e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ))) := by
                   simp [Finset.sum_const, nsmul_eq_mul]; ring
-              _ ≤ 12 * (3 * Real.log (n : ℝ) * (C₁e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ))) := by
+              _ ≤ 12 * (3 * Real.log (n : ℝ) * (C₂e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ))) := by
                   apply mul_le_mul_of_nonneg_right _ (by positivity)
                   rw [mul_div_assoc', div_le_iff₀ (by positivity)]
                   linarith
-              _ = 36 * C₁e * (n : ℝ) * (Real.log (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ)) := by ring
-              _ ≤ 36 * C₁e * ((n : ℝ) / Real.log (n : ℝ)) := by
+              _ = 36 * C₂e * (n : ℝ) * (Real.log (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ)) := by ring
+              _ ≤ 36 * C₂e * ((n : ℝ) / Real.log (n : ℝ)) := by
                   have h_rpow : Real.log (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ) = (Real.log (n : ℝ)) ^ (-4 : ℝ) := by
-                    conv_lhs => rw [← Real.rpow_one (Real.log (n : ℝ)), ← Real.rpow_add hlogn_pos]
-                    congr 1; norm_num
+                    calc Real.log (n : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ)
+                        = (Real.log (n : ℝ)) ^ (1 : ℝ) * (Real.log (n : ℝ)) ^ (-5 : ℝ) := by rw [Real.rpow_one]
+                      _ = (Real.log (n : ℝ)) ^ (1 + (-5 : ℝ)) := (Real.rpow_add hlogn_pos 1 (-5)).symm
+                      _ = (Real.log (n : ℝ)) ^ (-4 : ℝ) := by norm_num
                   have h_le_inv : (Real.log (n : ℝ)) ^ (-4 : ℝ) ≤ 1 / Real.log (n : ℝ) := by
                     rw [show (-4 : ℝ) = -(4 : ℕ) from by norm_num, Real.rpow_neg hlogn_pos.le,
                       Real.rpow_natCast, one_div]
                     exact inv_anti₀ hlogn_pos (le_self_pow₀ (by linarith) (by norm_num : 4 ≠ 0))
                   rw [h_rpow]
-                  calc 36 * C₁e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-4 : ℝ)
-                      ≤ 36 * C₁e * (n : ℝ) * (1 / Real.log (n : ℝ)) :=
+                  calc 36 * C₂e * (n : ℝ) * (Real.log (n : ℝ)) ^ (-4 : ℝ)
+                      ≤ 36 * C₂e * (n : ℝ) * (1 / Real.log (n : ℝ)) :=
                         mul_le_mul_of_nonneg_left h_le_inv (by positivity)
-                    _ = 36 * C₁e * ((n : ℝ) / Real.log (n : ℝ)) := by ring
+                    _ = 36 * C₂e * ((n : ℝ) / Real.log (n : ℝ)) := by ring
           linarith
         linarith [h_diff_bound, hmain_le, hB_err_le]
     rw [hsplit_mid]
