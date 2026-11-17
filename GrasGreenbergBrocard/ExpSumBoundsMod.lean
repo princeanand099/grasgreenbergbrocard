@@ -123,8 +123,7 @@ theorem prime_exp_sum_bounds_mod (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
         mul_le_of_le_one_right (by positivity) hpow_le
       have h2 : 1 / (2 * (h_mod : ℝ)) ≤ (2 / (h_mod : ℝ)) * Mmax := by
         calc 1 / (2 * (h_mod : ℝ)) ≤ 2 / (h_mod : ℝ) := by
-              apply div_le_div_of_nonneg_left (by norm_num) (by positivity)
-              nlinarith
+              rw [div_le_div_iff₀ (by positivity) hh_pos]; nlinarith
           _ ≤ (2 / (h_mod : ℝ)) * Mmax := le_mul_of_one_le_right (by positivity) hM1
       linarith
     · intro t ht
@@ -164,6 +163,7 @@ theorem prime_exp_sum_bounds_mod (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
           unfold negPowDerivCoeff
           rw [abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul,
             abs_of_nonneg (Finset.prod_nonneg (fun k _ => by positivity))]
+          have hr₀_ge1 : 1 ≤ r₀ := (hA_range r₀ hr₀_mem).1
           have hN : 1 ≤ ∏ k ∈ Finset.range j, (r₀ + k) :=
             Nat.one_le_iff_ne_zero.mpr (Finset.prod_ne_zero_iff.mpr (fun k _ => by omega))
           exact_mod_cast hN
@@ -181,7 +181,7 @@ theorem prime_exp_sum_bounds_mod (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
         calc 2 * c₁_low * T₀ / P ^ j
             = (1 / (h_mod : ℝ)) * (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) *
                 (|(h r₀ : ℝ)| * (n : ℝ) / P ^ r₀) / P ^ j := by
-              unfold c₁_low; field_simp [hh_pos.ne']
+              unfold c₁_low T₀; field_simp [hh_pos.ne', hP_pos.ne']
           _ = (|(h r₀ : ℝ)| * (n : ℝ) / (h_mod : ℝ)) * 1 *
                 ((2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) * ((1 / P ^ r₀) / P ^ j)) := by ring
           _ ≤ (|(h r₀ : ℝ)| * (n : ℝ) / (h_mod : ℝ)) * |negPowDerivCoeff r₀ j| * t ^ (-((r₀ + j : ℕ) : ℤ)) := by
