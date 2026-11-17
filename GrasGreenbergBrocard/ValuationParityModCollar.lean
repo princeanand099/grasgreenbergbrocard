@@ -296,7 +296,7 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       _ = ∑ m ∈ allH, ‖b_mod m‖ := by
           refine Finset.sum_congr rfl (fun m _ => ?_)
           rw [norm_mul, show ‖eExp ((m : ℝ) * x / (h_mod : ℝ))‖ = 1 from by
-            unfold eExp; exact Complex.norm_exp_ofReal_mul_I _, mul_one]
+            exact norm_eExp _, mul_one]
       _ ≤ ∑ _m ∈ allH, (h_mod : ℝ) / ((H : ℝ) + 1) := Finset.sum_le_sum (fun m _ => hb_mod_norm m)
       _ = (allH.card : ℝ) * ((h_mod : ℝ) / ((H : ℝ) + 1)) := by simp [Finset.sum_const, nsmul_eq_mul]
       _ ≤ (2 * (H : ℝ) + 2) * ((h_mod : ℝ) / ((H : ℝ) + 1)) := by
@@ -312,7 +312,7 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
     have h1 := h_vaaler_pw x
     have h2 : (B_mod x).re ≤ 2 * (h_mod : ℝ) := le_trans (Complex.re_le_norm _) (hB_norm_le x)
     have h3 : ‖eExp ((z : ℝ) * (Int.floor x : ℝ) / (h_mod : ℝ))‖ = 1 := by
-      unfold eExp; exact Complex.norm_exp_ofReal_mul_I _
+      exact norm_eExp _
     calc ‖Psi_mod x‖ = ‖eExp ((z : ℝ) * (Int.floor x : ℝ) / (h_mod : ℝ)) -
           (eExp ((z : ℝ) * (Int.floor x : ℝ) / (h_mod : ℝ)) - Psi_mod x)‖ := by congr 1; ring
       _ ≤ ‖eExp ((z : ℝ) * (Int.floor x : ℝ) / (h_mod : ℝ))‖ +
@@ -358,7 +358,8 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         have hsq_half : (Nat.sqrt n : ℝ) ≤ (n : ℝ) / (Real.log (n : ℝ)) ^ 12 := hsq12
         have hn_16 : (16 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
         have h_extra : P ≤ (Nat.sqrt n : ℝ) := by
-          obtain ⟨p₀, hp₀⟩ := Finset.Nonempty.bex (Finset.nonempty_iff_ne_empty.mpr h_ne)
+          obtain ⟨p₀, hp₀⟩ := Finset.nonempty_iff_ne_empty.mpr h_ne
+          dsimp only [J] at hp₀
           have hp₀S := (Finset.mem_filter.mp hp₀).1
           have hp₀_sq : p₀ ≤ Nat.sqrt n := (Finset.mem_Icc.mp (Finset.mem_filter.mp hp₀S).1).2
           have hp₀_col := (Finset.mem_filter.mp hp₀).2.1
@@ -426,13 +427,13 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       have hW_bound : ∀ t ∈ Set.Icc P (2 * P), |1 / (t - 1)| ≤ 2 / P := by
         intro t ht
         have hP2 : 2 ≤ P := by
-          obtain ⟨p₀, hp₀⟩ := Finset.Nonempty.bex (Finset.nonempty_iff_ne_empty.mpr h_ne)
+          obtain ⟨p₀, hp₀⟩ := Finset.nonempty_iff_ne_empty.mpr h_ne
           have hp₀_3 : 3 ≤ p₀ := (Finset.mem_Icc.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hp₀).1).1).1
           have hp₀_2P : (p₀ : ℝ) ≤ 2 * P := (hI_prime p₀ hp₀).2.2
           linarith [show (3 : ℝ) ≤ (p₀ : ℝ) from by exact_mod_cast hp₀_3]
         have ht1 : P / 2 ≤ t - 1 := by linarith [ht.1]
         rw [abs_of_nonneg (by positivity : 0 ≤ 1 / (t - 1))]
-        rw [one_div, inv_le_comm₀ (by linarith) (by positivity)]
+        rw [one_div, inv_le_comm₀ (by linarith) (div_pos (by norm_num) hP_pos), inv_div]
         linarith
       have h_res := hexp_n P (J m_r) A h_fn (fun t => 1 / (t - 1)) (2 / P) hA_nz
         hP_lo hP_hi hI_prime hA_range hh_le hPhase hW_bound (by positivity)
@@ -481,12 +482,14 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         _ ≤ 4 * C₃e * (n : ℝ) ^ (-η) := by
             have : 0 ≤ C₃e * (n : ℝ) ^ (-η) := by positivity
             linarith
+  -- Now sum over m_r ∈ Icc 1 M_r
   have hS_sum_eq : ∑ p ∈ S_r, eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ)) *
         ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) =
       ∑ m_r ∈ Finset.Icc 1 M_r, ∑ p ∈ J m_r,
         eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ)) *
         ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) := by
     rw [hS_eq, Finset.sum_biUnion (fun m₁ hm₁ m₂ hm₂ hne => hJ_disj hm₁ hm₂ hne)]
+  -- On each J m_r, split into Psi_mod product + error
   have hJ_bound : ∀ m_r ∈ Finset.Icc 1 M_r,
       ‖∑ p ∈ J m_r, eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ)) *
           ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ)‖ ≤
@@ -527,7 +530,7 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
               have : (0 : ℝ) < (p : ℝ) - 1 := by exact_mod_cast (by omega : 1 < p)
               exact div_nonneg (Real.log_nonneg this) this.le
             rw [norm_mul, norm_mul, show ‖eExp ((z : ℝ) * (m_r : ℝ) / (h_mod : ℝ))‖ = 1 from by
-                unfold eExp; exact Complex.norm_exp_ofReal_mul_I _, one_mul,
+                exact norm_eExp _, one_mul,
               Complex.norm_real, Real.norm_of_nonneg hw_nn]
             apply mul_le_mul_of_nonneg_right _ hw_nn
             exact prod_sub_prod_norm_le I_s
@@ -535,7 +538,7 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
               (fun s => Psi_mod ((n : ℝ) / (p : ℝ) ^ s))
               (fun s => (B_mod ((n : ℝ) / (p : ℝ) ^ s)).re)
               (1 + 2 * (h_mod : ℝ)) (by linarith)
-              (fun s _ => by unfold eExp; exact Complex.norm_exp_ofReal_mul_I _)
+              (fun s _ => norm_eExp _)
               (fun s _ => hPsi_norm_le _)
               (fun s _ => h_vaaler_pw _)
         _ ≤ (1 + 2 * (h_mod : ℝ)) ^ R * ∑ s ∈ I_s,
@@ -568,25 +571,45 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
           ∑ h ∈ I_s.pi (fun _ => nzH), (∏ s ∈ I_s.attach, c_mod (h s.1 s.2)) *
             ∑ p ∈ J m_r, ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
               eExp (∑ s ∈ I_s, ((if hs : s ∈ I_s then h s hs else 0 : ℤ) : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) := by
-        dsimp only [main_sum]
-        rw [Finset.mul_sum, Finset.mul_sum]
-        rw [Finset.sum_comm]
-        refine Finset.sum_congr rfl (fun p _ => ?_)
-        dsimp only [Psi_mod]
-        rw [Finset.prod_sum]
-        rw [Finset.mul_sum]
-        refine Finset.sum_congr rfl (fun h _ => ?_)
-        have h_e_prod : ∏ s ∈ I_s.attach, c_mod (h s.1 s.2) * eExp ((h s.1 s.2 : ℝ) * ((n : ℝ) / (p : ℝ) ^ s.1) / (h_mod : ℝ)) =
-            (∏ s ∈ I_s.attach, c_mod (h s.1 s.2)) *
-              eExp (∑ s ∈ I_s, ((if hs : s ∈ I_s then h s hs else 0 : ℤ) : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) := by
-          rw [Finset.prod_mul_distrib, eExp_sum]
-          congr 2
-          rw [← Finset.sum_attach I_s]
-          refine Finset.sum_congr rfl (fun s _ => ?_)
-          simp only [dif_pos s.2]; ring
-        rw [h_e_prod]; ring
+        have h_inner : ∀ p ∈ J m_r,
+            (eExp ((z : ℝ) * (m_r : ℝ) / (h_mod : ℝ)) * (∏ s ∈ I_s, Psi_mod ((n : ℝ) / (p : ℝ) ^ s))) *
+              ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) =
+            ∑ h ∈ I_s.pi (fun _ => nzH),
+              eExp ((z : ℝ) * (m_r : ℝ) / (h_mod : ℝ)) *
+                ((∏ s ∈ I_s.attach, c_mod (h s.1 s.2)) *
+                  (((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
+                    eExp (∑ s ∈ I_s, ((if hs : s ∈ I_s then h s hs else 0 : ℤ) : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)))) := by
+          intro p _
+          dsimp only [Psi_mod]
+          rw [Finset.prod_sum, Finset.mul_sum, Finset.sum_mul]
+          refine Finset.sum_congr rfl (fun h _ => ?_)
+          have h_e_prod : ∏ s ∈ I_s.attach, c_mod (h s.1 s.2) * eExp ((h s.1 s.2 : ℝ) * ((n : ℝ) / (p : ℝ) ^ s.1) / (h_mod : ℝ)) =
+              (∏ s ∈ I_s.attach, c_mod (h s.1 s.2)) *
+                eExp (∑ s ∈ I_s, ((if hs : s ∈ I_s then h s hs else 0 : ℤ) : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) := by
+            rw [Finset.prod_mul_distrib, eExp_sum]
+            congr 2
+            rw [← Finset.sum_attach I_s]
+            refine Finset.sum_congr rfl (fun s _ => ?_)
+            simp only [dif_pos s.2]; ring
+          rw [h_e_prod]; ring
+        calc main_sum = ∑ p ∈ J m_r, ∑ h ∈ I_s.pi (fun _ => nzH),
+              eExp ((z : ℝ) * (m_r : ℝ) / (h_mod : ℝ)) *
+                ((∏ s ∈ I_s.attach, c_mod (h s.1 s.2)) *
+                  (((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
+                    eExp (∑ s ∈ I_s, ((if hs : s ∈ I_s then h s hs else 0 : ℤ) : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)))) :=
+              Finset.sum_congr rfl h_inner
+          _ = ∑ h ∈ I_s.pi (fun _ => nzH), ∑ p ∈ J m_r,
+              eExp ((z : ℝ) * (m_r : ℝ) / (h_mod : ℝ)) *
+                ((∏ s ∈ I_s.attach, c_mod (h s.1 s.2)) *
+                  (((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
+                    eExp (∑ s ∈ I_s, ((if hs : s ∈ I_s then h s hs else 0 : ℤ) : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)))) :=
+              Finset.sum_comm
+          _ = _ := by
+              rw [Finset.mul_sum]
+              refine Finset.sum_congr rfl (fun h _ => ?_)
+              rw [Finset.mul_sum, Finset.mul_sum]
       rw [h_eq, norm_mul, show ‖eExp ((z : ℝ) * (m_r : ℝ) / (h_mod : ℝ))‖ = 1 from by
-          unfold eExp; exact Complex.norm_exp_ofReal_mul_I _, one_mul]
+          exact norm_eExp _, one_mul]
       calc ‖∑ h ∈ I_s.pi (fun _ => nzH), _‖
           ≤ ∑ h ∈ I_s.pi (fun _ => nzH), ‖(∏ s ∈ I_s.attach, c_mod (h s.1 s.2)) *
               ∑ p ∈ J m_r, ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
@@ -618,6 +641,7 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
             exact pow_le_pow_left₀ (Finset.sum_nonneg (fun _ _ => norm_nonneg _))
               (le_trans h_L1 hlogH_le) (r - 1)
     exact le_trans (norm_add_le _ _) (add_le_add h_err_bd h_main_bd)
+  -- Bound the B_mod sum over S_r directly
   have h_B_total : ∀ s ∈ Finset.Icc 1 (r - 1),
       ∑ m_r ∈ Finset.Icc 1 M_r, ∑ p ∈ J m_r,
         (Real.log (p : ℝ) / ((p : ℝ) - 1)) * (B_mod ((n : ℝ) / (p : ℝ) ^ s)).re ≤
@@ -687,7 +711,7 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       rw [← Finset.sum_mul, hb0_re]
       have hsub : S_r ⊆ (Finset.Icc 3 n).filter Nat.Prime := fun p hp =>
         Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨(Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).1,
-          le_trans (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).2 (Nat.sqrt_le' n)⟩,
+          le_trans (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).2 (Nat.sqrt_le_self n)⟩,
           (Finset.mem_filter.mp hp).2.1⟩
       have hmert_n : ∑ p ∈ S_r, Real.log (p : ℝ) / ((p : ℝ) - 1) ≤ Real.log (n : ℝ) + Cm := by
         calc ∑ p ∈ S_r, Real.log (p : ℝ) / ((p : ℝ) - 1)
@@ -787,6 +811,7 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
             nlinarith [show 0 ≤ 8 * (h_mod : ℝ) * C₃e from by positivity]
     linarith [show (h_mod : ℝ) * (1 + Cm) / Real.log (n : ℝ) + 8 * (h_mod : ℝ) * C₃e / Real.log (n : ℝ) =
         ((h_mod : ℝ) * (1 + Cm) + 8 * (h_mod : ℝ) * C₃e) / Real.log (n : ℝ) from by ring]
+  -- Combine over all m_r ∈ Icc 1 M_r
   rw [hS_sum_eq]
   calc ‖∑ m_r ∈ Finset.Icc 1 M_r, ∑ p ∈ J m_r,
           eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ)) *

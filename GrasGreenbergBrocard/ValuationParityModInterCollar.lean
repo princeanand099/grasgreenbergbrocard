@@ -242,14 +242,16 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
     · have : (2 : ℝ) ^ (k₂ + 1) ≤ (2 : ℝ) ^ k₁ := pow_le_pow_right₀ (by norm_num) (by omega)
       nlinarith
   have hK_le : (K + 1 : ℝ) ≤ 2 * Real.log (n : ℝ) := by
-    have h1 : Nat.clog 2 (Nat.sqrt n) ≤ Nat.log 2 (Nat.sqrt n) + 1 := Nat.clog_le_log_add_one 2 (Nat.sqrt n)
+    have h1 : Nat.clog 2 (Nat.sqrt n) ≤ Nat.log 2 (Nat.sqrt n) + 1 :=
+      (Nat.clog_le_iff_le_pow (by norm_num : 1 < 2)).mpr (Nat.lt_pow_succ_log_self (by norm_num : 1 < 2) (Nat.sqrt n)).le
+    have hsqrt4 : 4 ≤ Nat.sqrt n := by rw [Nat.le_sqrt]; omega
     have h2 : (2 : ℝ) ^ Nat.log 2 (Nat.sqrt n) ≤ (Nat.sqrt n : ℝ) := by
-      exact_mod_cast Nat.pow_log_le_self 2 (by have : 4 ≤ Nat.sqrt n := by rw [Nat.le_sqrt]; omega; omega)
+      exact_mod_cast Nat.pow_log_le_self 2 (by omega)
     have h3 : (Nat.log 2 (Nat.sqrt n) : ℝ) * Real.log 2 ≤ Real.log (Nat.sqrt n : ℝ) := by
       rw [← Real.log_pow]
       exact Real.log_le_log (by positivity) h2
     have h4 : Real.log (Nat.sqrt n : ℝ) ≤ Real.log (n : ℝ) := by
-      apply Real.log_le_log (by positivity) (by exact_mod_cast Nat.sqrt_le' n)
+      apply Real.log_le_log (by positivity) (by exact_mod_cast Nat.sqrt_le_self n)
     have hlog2 : (0.69 : ℝ) < Real.log 2 := Real.log_two_gt_d9.trans_le' (by norm_num)
     have hK_R : (K + 1 : ℝ) ≤ (Nat.log 2 (Nat.sqrt n) : ℝ) + 3 := by
       have : K + 1 ≤ Nat.log 2 (Nat.sqrt n) + 3 := by omega
@@ -267,7 +269,7 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       _ = ∑ m ∈ allH, ‖b_mod m‖ := by
           refine Finset.sum_congr rfl (fun m _ => ?_)
           rw [norm_mul, show ‖eExp ((m : ℝ) * x / (h_mod : ℝ))‖ = 1 from by
-            unfold eExp; exact Complex.norm_exp_ofReal_mul_I _, mul_one]
+            exact norm_eExp _, mul_one]
       _ ≤ ∑ _m ∈ allH, (h_mod : ℝ) / ((H : ℝ) + 1) := Finset.sum_le_sum (fun m _ => hb_mod_norm m)
       _ = (allH.card : ℝ) * ((h_mod : ℝ) / ((H : ℝ) + 1)) := by simp [Finset.sum_const, nsmul_eq_mul]
       _ ≤ (2 * (H : ℝ) + 2) * ((h_mod : ℝ) / ((H : ℝ) + 1)) := by
@@ -282,7 +284,7 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
     have h1 := h_vaaler_pw x
     have h2 : (B_mod x).re ≤ 2 * (h_mod : ℝ) := le_trans (Complex.re_le_norm _) (hB_norm_le x)
     have h3 : ‖eExp ((z : ℝ) * (Int.floor x : ℝ) / (h_mod : ℝ))‖ = 1 := by
-      unfold eExp; exact Complex.norm_exp_ofReal_mul_I _
+      exact norm_eExp _
     calc ‖Psi_mod x‖ = ‖eExp ((z : ℝ) * (Int.floor x : ℝ) / (h_mod : ℝ)) -
           (eExp ((z : ℝ) * (Int.floor x : ℝ) / (h_mod : ℝ)) - Psi_mod x)‖ := by congr 1; ring
       _ ≤ ‖eExp ((z : ℝ) * (Int.floor x : ℝ) / (h_mod : ℝ))‖ +
@@ -304,7 +306,7 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
           _ ≤ L * (2 : ℝ) ^ k := mul_le_mul_of_nonneg_left (one_le_pow₀ (by norm_num)) (by linarith)
       have hP_pos : 0 < P := lt_of_lt_of_le (by positivity) hP_lo
       have hP_hi : P ≤ (n : ℝ) / (Real.log (n : ℝ)) ^ 12 := by
-        obtain ⟨p₀, hp₀⟩ := Finset.Nonempty.bex (Finset.nonempty_iff_ne_empty.mpr h_ne)
+        obtain ⟨p₀, hp₀⟩ := Finset.nonempty_iff_ne_empty.mpr h_ne
         have hp₀_D := (Finset.mem_filter.mp hp₀).1
         have hp₀_sq : p₀ ≤ Nat.sqrt n := (Finset.mem_Icc.mp (Finset.mem_filter.mp hp₀_D).1).2
         have hp₀_gt : P < (p₀ : ℝ) := (Finset.mem_filter.mp hp₀).2.1
@@ -312,6 +314,7 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       have hI_prime : ∀ p ∈ B_k k, p.Prime ∧ P < (p : ℝ) ∧ (p : ℝ) ≤ 2 * P := by
         intro p hp
         have hpD := (Finset.mem_filter.mp hp).1
+        dsimp only [D_r] at hpD
         have hp_pr := (Finset.mem_filter.mp hpD).2.1
         have hp_bd := (Finset.mem_filter.mp hp).2
         refine ⟨hp_pr, hp_bd.1, ?_⟩
@@ -322,7 +325,7 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       have hPhase : ∀ s ∈ A, (2 : ℝ) ^ (-(R : ℤ)) * (Real.log (n : ℝ)) ^ A_R ≤ (n : ℝ) / P ^ s := by
         intro s hs
         have hs_range := Finset.mem_Icc.mp (hA_sub hs)
-        obtain ⟨p₀, hp₀⟩ := Finset.Nonempty.bex (Finset.nonempty_iff_ne_empty.mpr h_ne)
+        obtain ⟨p₀, hp₀⟩ := Finset.nonempty_iff_ne_empty.mpr h_ne
         have hp₀D := (Finset.mem_filter.mp hp₀).1
         have hp₀_ic := (Finset.mem_filter.mp hp₀D).2.2.2.2.2
         have hp₀_bd := (Finset.mem_filter.mp hp₀).2
@@ -349,19 +352,20 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       have hW_bound : ∀ t ∈ Set.Icc P (2 * P), |1 / (t - 1)| ≤ 2 / P := by
         intro t ht
         have hP2 : 2 ≤ P := by
-          obtain ⟨p₀, hp₀⟩ := Finset.Nonempty.bex (Finset.nonempty_iff_ne_empty.mpr h_ne)
+          obtain ⟨p₀, hp₀⟩ := Finset.nonempty_iff_ne_empty.mpr h_ne
           have hp₀_3 : 3 ≤ p₀ := (Finset.mem_Icc.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hp₀).1).1).1
           have hp₀_2P : (p₀ : ℝ) ≤ 2 * P := (hI_prime p₀ hp₀).2.2
           linarith [show (3 : ℝ) ≤ (p₀ : ℝ) from by exact_mod_cast hp₀_3]
         have ht1 : P / 2 ≤ t - 1 := by linarith [ht.1]
-        rw [abs_of_nonneg (by positivity : 0 ≤ 1 / (t - 1)), one_div, inv_le_comm₀ (by linarith) (by positivity)]
+        rw [abs_of_nonneg (by positivity : 0 ≤ 1 / (t - 1)), one_div, inv_le_comm₀ (by linarith) (div_pos (by norm_num) hP_pos), inv_div]
         linarith
       have h_res := (hexp_n P (B_k k) A h_fn (fun t => 1 / (t - 1)) (2 / P) hA_nz
         hP_lo hP_hi hI_prime hA_range hh_le hPhase hW_bound (by positivity)).1.2
       calc ‖∑ p ∈ B_k k, ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
             eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s))‖
-          ≤ C₂e * (2 / P) * P * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := h_res
+          ≤ C₂e * (2 / P) * P * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := by simpa [neg_add, sub_eq_add_neg] using h_res
         _ = 2 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := by field_simp [hP_pos.ne']; ring
+  -- Bound ∑_{p ∈ D_r}
   have h_sum_split : ∑ p ∈ D_r, eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ)) *
         ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) =
       (∑ p ∈ D_r, (∏ s ∈ Finset.Icc 1 r, eExp ((z : ℝ) * (Int.floor ((n : ℝ) / (p : ℝ) ^ s) : ℝ) / (h_mod : ℝ)) -
@@ -408,7 +412,7 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
               (fun s => Psi_mod ((n : ℝ) / (p : ℝ) ^ s))
               (fun s => (B_mod ((n : ℝ) / (p : ℝ) ^ s)).re)
               (1 + 2 * (h_mod : ℝ)) (by linarith)
-              (fun s _ => by unfold eExp; exact Complex.norm_exp_ofReal_mul_I _)
+              (fun s _ => by exact norm_eExp _)
               (fun s _ => hPsi_norm_le _)
               (fun s _ => h_vaaler_pw _)
         _ ≤ (1 + 2 * (h_mod : ℝ)) ^ R * ∑ s ∈ I_s,
@@ -489,7 +493,7 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         rw [← Finset.sum_mul, hb0_re]
         have hsub : D_r ⊆ (Finset.Icc 3 n).filter Nat.Prime := fun p hp =>
           Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨(Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).1,
-            le_trans (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).2 (Nat.sqrt_le' n)⟩,
+            le_trans (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).2 (Nat.sqrt_le_self n)⟩,
             (Finset.mem_filter.mp hp).2.1⟩
         have hmert_n : ∑ p ∈ D_r, Real.log (p : ℝ) / ((p : ℝ) - 1) ≤ Real.log (n : ℝ) + Cm := by
           calc ∑ p ∈ D_r, Real.log (p : ℝ) / ((p : ℝ) - 1)
@@ -547,7 +551,7 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
                       (fun _ _ => abs_le.mpr (Finset.mem_Icc.mp (Finset.mem_filter.mp hm).1))
                     simpa using h_res
                 _ = ((K : ℝ) + 1) * (2 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2))) := by
-                    simp [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; push_cast; ring
+                    simp [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
           _ = (nzH.card : ℝ) * ((h_mod : ℝ) / ((H : ℝ) + 1)) *
                 (((K : ℝ) + 1) * (2 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)))) := by
               simp [Finset.sum_const, nsmul_eq_mul]; ring
@@ -569,7 +573,7 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
           _ ≤ 8 * (h_mod : ℝ) * C₂e / Real.log (n : ℝ) := by
               have h_rpow : (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) = 1 / (Real.log (n : ℝ)) ^ (R + 2) := by
                 rw [Real.rpow_neg hlogn_pos.le, one_div]
-                congr 1; norm_cast; rw [Real.rpow_natCast]
+                congr 1; norm_cast
               rw [h_rpow]
               have h_pow_ge : (Real.log (n : ℝ)) ^ 2 ≤ (Real.log (n : ℝ)) ^ (R + 2) :=
                 pow_le_pow_right₀ (by linarith) (by omega)
@@ -610,20 +614,39 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
           ∑ h ∈ I_s.pi (fun _ => nzH), (∏ s ∈ I_s.attach, c_mod (h s.1 s.2)) *
             ∑ p ∈ B_k k, ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
               eExp (∑ s ∈ I_s, ((if hs : s ∈ I_s then h s hs else 0 : ℤ) : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) := by
-        rw [Finset.sum_comm]
-        refine Finset.sum_congr rfl (fun p _ => ?_)
-        dsimp only [Psi_mod]
-        rw [Finset.prod_sum, Finset.sum_mul]
-        refine Finset.sum_congr rfl (fun h _ => ?_)
-        have h_e_prod : ∏ s ∈ I_s.attach, c_mod (h s.1 s.2) * eExp ((h s.1 s.2 : ℝ) * ((n : ℝ) / (p : ℝ) ^ s.1) / (h_mod : ℝ)) =
-            (∏ s ∈ I_s.attach, c_mod (h s.1 s.2)) *
-              eExp (∑ s ∈ I_s, ((if hs : s ∈ I_s then h s hs else 0 : ℤ) : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) := by
-          rw [Finset.prod_mul_distrib, eExp_sum]
-          congr 2
-          rw [← Finset.sum_attach I_s]
-          refine Finset.sum_congr rfl (fun s _ => ?_)
-          simp only [dif_pos s.2]; ring
-        rw [h_e_prod]; ring
+        have h_inner : ∀ p ∈ B_k k,
+            (∏ s ∈ I_s, Psi_mod ((n : ℝ) / (p : ℝ) ^ s)) * ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) =
+            ∑ h ∈ I_s.pi (fun _ => nzH),
+              (∏ s ∈ I_s.attach, c_mod (h s.1 s.2)) *
+                (((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
+                  eExp (∑ s ∈ I_s, ((if hs : s ∈ I_s then h s hs else 0 : ℤ) : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s))) := by
+          intro p _
+          dsimp only [Psi_mod]
+          rw [Finset.prod_sum, Finset.sum_mul]
+          refine Finset.sum_congr rfl (fun h _ => ?_)
+          have h_e_prod : ∏ s ∈ I_s.attach, c_mod (h s.1 s.2) * eExp ((h s.1 s.2 : ℝ) * ((n : ℝ) / (p : ℝ) ^ s.1) / (h_mod : ℝ)) =
+              (∏ s ∈ I_s.attach, c_mod (h s.1 s.2)) *
+                eExp (∑ s ∈ I_s, ((if hs : s ∈ I_s then h s hs else 0 : ℤ) : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) := by
+            rw [Finset.prod_mul_distrib, eExp_sum]
+            congr 2
+            rw [← Finset.sum_attach I_s]
+            refine Finset.sum_congr rfl (fun s _ => ?_)
+            simp only [dif_pos s.2]; ring
+          rw [h_e_prod]; ring
+        calc ∑ p ∈ B_k k, (∏ s ∈ I_s, Psi_mod ((n : ℝ) / (p : ℝ) ^ s)) * ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ)
+            = ∑ p ∈ B_k k, ∑ h ∈ I_s.pi (fun _ => nzH),
+                (∏ s ∈ I_s.attach, c_mod (h s.1 s.2)) *
+                  (((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
+                    eExp (∑ s ∈ I_s, ((if hs : s ∈ I_s then h s hs else 0 : ℤ) : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s))) :=
+              Finset.sum_congr rfl h_inner
+          _ = ∑ h ∈ I_s.pi (fun _ => nzH), ∑ p ∈ B_k k,
+                (∏ s ∈ I_s.attach, c_mod (h s.1 s.2)) *
+                  (((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
+                    eExp (∑ s ∈ I_s, ((if hs : s ∈ I_s then h s hs else 0 : ℤ) : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s))) :=
+              Finset.sum_comm
+          _ = _ := by
+              refine Finset.sum_congr rfl (fun h _ => ?_)
+              rw [Finset.mul_sum]
       rw [h_eq]
       calc ‖∑ h ∈ I_s.pi (fun _ => nzH), _‖
           ≤ ∑ h ∈ I_s.pi (fun _ => nzH), ‖(∏ s ∈ I_s.attach, c_mod (h s.1 s.2)) *
@@ -656,15 +679,15 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
             exact pow_le_pow_left₀ (Finset.sum_nonneg (fun _ _ => norm_nonneg _))
               (le_trans h_L1 hlogH_le) r
     have h_rpow : (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) = 1 / (Real.log (n : ℝ)) ^ (R + 2) := by
-      rw [Real.rpow_neg hlogn_pos.le, one_div]; congr 1; norm_cast; rw [Real.rpow_natCast]
+      rw [Real.rpow_neg hlogn_pos.le, one_div]; congr 1; norm_cast
     calc ‖∑ k ∈ Finset.range (K + 1), _‖
         ≤ ∑ k ∈ Finset.range (K + 1), ‖∑ p ∈ B_k k, _‖ := norm_sum_le _ _
       _ ≤ ∑ _k ∈ Finset.range (K + 1), ((Real.log (n : ℝ)) ^ r * (2 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)))) :=
           Finset.sum_le_sum h_k_bd
       _ = ((K : ℝ) + 1) * ((Real.log (n : ℝ)) ^ r * (2 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)))) := by
-          simp [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; push_cast; ring
+          simp [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
       _ ≤ (2 * Real.log (n : ℝ)) * ((Real.log (n : ℝ)) ^ R * (2 * C₂e * (1 / (Real.log (n : ℝ)) ^ (R + 2)))) := by
-          rw [← h_rpow]
+          rw [h_rpow]
           gcongr
           exact pow_le_pow_right₀ (by linarith) hrR
       _ = 4 * C₂e / Real.log (n : ℝ) := by
