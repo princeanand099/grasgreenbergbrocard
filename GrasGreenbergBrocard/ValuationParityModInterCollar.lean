@@ -385,7 +385,8 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
             eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) :=
         Finset.sum_congr rfl (fun p _ => by congr 2; ring)
       rw [h_eq_sum]
-      exact le_trans h_res (le_of_eq (by field_simp [hP_pos.ne']))
+      exact le_trans h_res (le_of_eq (show C₂e * (2 / P) * P * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) =
+        2 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) from by field_simp [hP_pos.ne']; ring))
   -- Bound ∑_{p ∈ D_r}
   have h_sum_split : ∑ p ∈ D_r, eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ)) *
         ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) =

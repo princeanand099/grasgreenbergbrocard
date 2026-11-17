@@ -15,6 +15,7 @@ set_option pp.maxSteps 50
 set_option pp.deepTerms false
 set_option pp.deepTerms.threshold 3
 set_option pp.proofs false
+set_option maxHeartbeats 400000
 
 noncomputable section
 
@@ -140,8 +141,7 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
     have hp_lo := (Finset.mem_filter.mp hp).2.2.1
     have hR1 : 1 < (R + 1 : ℝ) * δ := by
       have : (1 / δ : ℝ) < (R : ℝ) + 1 := Nat.lt_floor_add_one (1 / δ)
-      exact (one_lt_div hδ0).mp this |>.trans_le (by ring_nf; rfl) |> fun h => by
-        rw [div_lt_iff₀ hδ0] at this; linarith
+      rw [div_lt_iff₀ hδ0] at this; linarith
     have h_rpow : (n : ℝ) < (p : ℝ) ^ (R + 1) := by
       have h1 : (n : ℝ) ^ (1 : ℝ) < (n : ℝ) ^ ((R + 1 : ℕ) * δ) :=
         Real.rpow_lt_rpow_of_exponent_lt (by exact_mod_cast (by omega : 1 < n)) (by simpa using hR1)
@@ -228,7 +228,7 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       have h1 := Real.rpow_lt_rpow (by positivity) hp_col.1.1 hr_pos
       have h2 := Real.rpow_le_rpow (by positivity) hp_col.1.2 hr_pos.le
       rw [← Real.rpow_mul (by positivity), one_div_mul_cancel hr_pos.ne', Real.rpow_one] at h1 h2
-      rw [← Real.rpow_natCast (p : ℝ) r, ← Real.rpow_mul hp_pos.le, mul_one_div_cancel hr_pos.ne', Real.rpow_one] at h1 h2
+      rw [Real.rpow_natCast] at h1 h2
       have hm_pos : (0 : ℝ) < (m_r : ℝ) := by exact_mod_cast (Finset.mem_Icc.mp hm_r).1
       rw [div_lt_iff₀ (by positivity)] at h1
       rw [le_div_iff₀ hm_pos] at h2
@@ -257,7 +257,7 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
             rw [← Real.rpow_add hn_pos]
             congr 1
             have hr1_ne : (r : ℝ) + 1 ≠ 0 := by positivity
-            field_simp [hr_pos.ne', hr1_ne]; ring
+            field_simp [hr_pos.ne', hr1_ne]
           have h_lt := lt_of_le_of_lt hpow_gt h1
           calc (n : ℝ) ^ (1 / ((r : ℝ) + 1)) * (Real.log (n : ℝ)) ^ ((A_R : ℝ) / (r : ℝ))
               < (n : ℝ) ^ (1 / ((r : ℝ) + 1)) * (n : ℝ) ^ (1 / ((r : ℝ) * ((r : ℝ) + 1))) :=
@@ -278,7 +278,10 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         rw [Finset.disjoint_left]; intro s hs1 hs2
         simp only [Finset.mem_Icc] at hs1 hs2; omega
       rw [h1, Finset.sum_union h2, Finset.sum_eq_zero h_gt_r_zero, add_zero]
-      rw [show r = (r - 1) + 1 from by omega, Finset.sum_Icc_succ_top (by omega : 1 ≤ (r - 1) + 1), h_div_mr]
+      have h_icc : ∑ s ∈ Finset.Icc 1 r, n / p ^ s = (∑ s ∈ Finset.Icc 1 (r - 1), n / p ^ s) + n / p ^ r := by
+        conv_lhs => rw [show r = (r - 1) + 1 from by omega, Finset.sum_Icc_succ_top (by omega : 1 ≤ (r - 1) + 1)]
+        rw [show (r - 1) + 1 = r from by omega]
+      rw [h_icc, h_div_mr]
     rw [h_v, h_sum_split]
     have h_fl_eq : ∀ s ∈ Finset.Icc 1 (r - 1),
         Int.floor ((n : ℝ) / (p : ℝ) ^ s) = ((n / p ^ s : ℕ) : ℤ) := by
@@ -308,8 +311,7 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       | empty => simp [eExp]
       | @insert a S ha ih =>
         rw [Finset.prod_insert ha, ih, Finset.sum_insert ha, Nat.cast_add, mul_add, add_div, eExp_add]
-    rw [h_prod_e, Nat.cast_add, mul_add, add_div, eExp_add]
-    ring
+    rw [h_prod_e, Nat.cast_add, mul_add, add_div, eExp_add, mul_comm]
   obtain ⟨c_mod, b_mod, hb_mod0, hb_mod_norm, h_vaaler_pw, h_L1⟩ :=
     vaaler_mod_approx h_mod hh_mod z hz1 hz2 H hH_ge1
   let allH := Finset.Icc (-(H : ℤ)) (H : ℤ)
@@ -364,9 +366,9 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
           rw [le_div_iff₀ hr_pos]
           have : (r : ℝ) ≤ (R : ℝ) := by exact_mod_cast hrR
           have : (R : ℝ) ≤ 1 / δ := Nat.floor_le (by positivity)
-          calc (r : ℝ) * δ ≤ (R : ℝ) * δ := mul_le_mul_of_nonneg_right (by linarith) hδ0.le
-            _ ≤ (1 / δ) * δ := mul_le_mul_of_nonneg_right this hδ0.le
-            _ = 1 := one_div_mul_cancel hδ0.ne'
+          calc δ * (r : ℝ) ≤ δ * (R : ℝ) := mul_le_mul_of_nonneg_left (by linarith) hδ0.le
+            _ ≤ δ * (1 / δ) := mul_le_mul_of_nonneg_left this hδ0.le
+            _ = 1 := mul_one_div_cancel hδ0.ne'
         · apply Real.rpow_le_rpow (by positivity) (div_le_self hn_pos.le (by linarith)) (by positivity)
       have hP_hi : P ≤ (n : ℝ) / (Real.log (n : ℝ)) ^ 12 := by
         have h1 : (n : ℝ) ^ (1 / (r : ℝ)) ≤ (Nat.sqrt n : ℝ) + 1 := by
@@ -400,7 +402,9 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         have hp_col := (Finset.mem_filter.mp hp).2.1
         refine ⟨hp_pr, max_lt hp_nd hp_col.1, ?_⟩
         have h_ratio : ((n : ℝ) / (m_r : ℝ)) ^ (1 / (r : ℝ)) ≤ 2 * (((n : ℝ) / ((m_r : ℝ) + 1)) ^ (1 / (r : ℝ))) := by
-          rw [← mul_one_div, ← Real.mul_rpow (by positivity) (by positivity)]
+          have h2_eq : (2 : ℝ) = ((2 : ℝ) ^ r) ^ (1 / (r : ℝ)) := by
+            rw [← Real.rpow_natCast (2 : ℝ) r, ← Real.rpow_mul (by norm_num), mul_one_div_cancel hr_pos.ne', Real.rpow_one]
+          conv_rhs => rw [h2_eq, ← Real.mul_rpow (by positivity) (by positivity)]
           apply Real.rpow_le_rpow (by positivity) _ (by positivity)
           have : (n : ℝ) / (m_r : ℝ) ≤ 2 ^ r * ((n : ℝ) / ((m_r : ℝ) + 1)) := by
             have h2r : (2 : ℝ) ≤ (2 : ℝ) ^ r := by
@@ -415,7 +419,7 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
               _ ≤ (2 : ℝ) ^ r * ((m_r : ℝ) * ((n : ℝ) / ((m_r : ℝ) + 1))) := by
                   gcongr
               _ = (2 : ℝ) ^ r * ((n : ℝ) / ((m_r : ℝ) + 1)) * (m_r : ℝ) := by ring
-          simpa [Real.rpow_natCast] using this
+          rwa [Real.rpow_natCast]
         exact le_trans hp_col.2 (le_trans h_ratio (mul_le_mul_of_nonneg_left (le_max_right _ _) (by positivity)))
       have hA_range : ∀ s ∈ A, 1 ≤ s ∧ s ≤ R := fun s hs => by
         have := Finset.mem_Icc.mp (hA_sub hs); exact ⟨this.1, by omega⟩
@@ -506,13 +510,11 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
             eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) :=
         Finset.sum_congr rfl (fun p _ => by congr 2; ring)
       rw [h_eq_sum]
-      calc ‖∑ p ∈ J m_r, (((fun t => 1 / (t - 1)) (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
-            eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s))‖
-          ≤ P * (C₃e * (2 / P)) * (n : ℝ) ^ (-η) := h_res2
-        _ = 2 * C₃e * (n : ℝ) ^ (-η) := by field_simp [hP_pos.ne']
-        _ ≤ 4 * C₃e * (n : ℝ) ^ (-η) := by
-            have : 0 ≤ C₃e * (n : ℝ) ^ (-η) := by positivity
-            linarith
+      have h_bd2 : C₃e * (2 / P) * P * (n : ℝ) ^ (-η) ≤ 4 * C₃e * (n : ℝ) ^ (-η) := by
+        rw [show C₃e * (2 / P) * P * (n : ℝ) ^ (-η) = 2 * C₃e * (n : ℝ) ^ (-η) from by field_simp [hP_pos.ne']; ring]
+        have : 0 ≤ C₃e * (n : ℝ) ^ (-η) := by positivity
+        linarith
+      exact le_trans h_res2 h_bd2
   -- Now sum over m_r ∈ Icc 1 M_r
   have hS_sum_eq : ∑ p ∈ S_r, eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ)) *
         ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) =
