@@ -1189,12 +1189,12 @@ theorem multi_modulus_power_band_equidistribution (h_mod c : ℕ) (hh_mod : 2 �
                 have hp3 := (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).1
                 have hp1_nn : 0 ≤ (p : ℝ) - 1 := (sub_pos.mpr (by exact_mod_cast (by omega : 1 < p))).le
                 have hlogp_nn : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ p))
+                have h_nonneg : 0 ≤ ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) * Real.log (p : ℝ) :=
+                  mul_nonneg (div_nonneg (Nat.cast_nonneg _) hp1_nn) hlogp_nn
                 rw [norm_mul, norm_eExp, mul_one]
-                have hd_nn : 0 ≤ ((Nat.digits p n).sum : ℝ) := Nat.cast_nonneg _
-                simp only [norm_mul, norm_div, Complex.norm_real,
-                  Real.norm_of_nonneg hd_nn, Real.norm_of_nonneg hp1_nn,
-                  Real.norm_of_nonneg hlogp_nn]
-                ring
+                simp only [← Complex.ofReal_natCast, ← Complex.ofReal_one, ← Complex.ofReal_sub,
+                  ← Complex.ofReal_div, ← Complex.ofReal_mul, Complex.norm_real,
+                  Real.norm_of_nonneg h_nonneg]
             _ ≤ ∑ _p ∈ S_mid3, 2 * Real.log (n : ℝ) := Finset.sum_le_sum h_each
             _ = (S_mid3.card : ℝ) * (2 * Real.log (n : ℝ)) := by simp [Finset.sum_const, nsmul_eq_mul]
             _ ≤ (Nat.sqrt n : ℝ) * (2 * Real.log (n : ℝ)) := mul_le_mul_of_nonneg_right h_card (by positivity)
