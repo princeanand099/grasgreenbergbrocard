@@ -339,11 +339,12 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
       · simp only [z, zsqrtd_mul_re', zsqrtd_natCast_re]
         have : (m : ℤ) = (u : ℤ) ^ 2 + (q_n n : ℤ) * (v : ℤ) ^ 2 := by exact_mod_cast hm_eq
         linarith
-      · simp only [z, zsqrtd_mul_im', zsqrtd_natCast_im]; ring
+      · simp only [z, zsqrtd_mul_im', zsqrtd_natCast_im]; ring_nf
     have hz_sq : z ^ 2 = ⟨1, (s_n n : ℤ)⟩ := by
       ext
       · simp only [z, sq, zsqrtd_mul_re']
-        have : (u : ℤ) ^ 2 - (q_n n : ℤ) * (v : ℤ) ^ 2 = 1 := by exact_mod_cast (by linarith : (u ^ 2 : ℕ) = q_n n * v ^ 2 + 1)
+        have h1 : (u : ℤ) ^ 2 = (q_n n : ℤ) * (v : ℤ) ^ 2 + 1 := by exact_mod_cast huv
+        have : (u : ℤ) ^ 2 - (q_n n : ℤ) * (v : ℤ) ^ 2 = 1 := by linarith
         linarith
       · simp only [z, sq, zsqrtd_mul_im']
         have : (s_n n : ℤ) = 2 * (u : ℤ) * (v : ℤ) := by exact_mod_cast hs_eq
@@ -358,17 +359,20 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
         exact Ideal.mem_span_singleton.mpr ⟨z, rfl⟩
     · rw [Ideal.span_singleton_le_iff_mem]
       have hcop_2u_m : IsCoprime (2 * (u : ℤ)) (m : ℤ) := by
+        have h2u2_nat : 2 * u ^ 2 = m + 1 := by nlinarith [hm_eq, huv]
         have h2u2 : 2 * (u : ℤ) ^ 2 - (m : ℤ) = 1 := by
-          have : 2 * u ^ 2 = m + 1 := by omega
-          exact_mod_cast (by omega : (2 * (u : ℤ) ^ 2) - (m : ℤ) = 1)
+          have h1 : (2 : ℤ) * (u : ℤ) ^ 2 = (m : ℤ) + 1 := by exact_mod_cast h2u2_nat
+          linarith
         refine ⟨(u : ℤ), -1, ?_⟩
         linarith
       obtain ⟨c₁, c₂, hc⟩ := hcop_2u_m
       have h1_eq : (1 : R) = (c₁ : R) * (z + ⟨(u : ℤ), -(v : ℤ)⟩) + (c₂ : R) * (m : R) := by
         have h2u : z + ⟨(u : ℤ), -(v : ℤ)⟩ = ((2 * (u : ℤ) : ℤ) : R) := by
-          ext <;> simp [z]; ring
+          ext <;> simp [z] <;> ring
         rw [h2u]
-        ext <;> simp [hc]
+        calc (1 : R) = ((1 : ℤ) : R) := by simp
+          _ = ((c₁ * (2 * (u : ℤ)) + c₂ * (m : ℤ) : ℤ) : R) := by rw [hc]
+          _ = (c₁ : R) * ((2 * (u : ℤ) : ℤ) : R) + (c₂ : R) * (m : R) := by push_cast; ring
       have hz_eq : z = (c₁ : R) * (z ^ 2 + (m : R)) + (c₂ : R) * (z * (m : R)) := by
         calc z = z * 1 := (mul_one z).symm
           _ = z * ((c₁ : R) * (z + ⟨(u : ℤ), -(v : ℤ)⟩) + (c₂ : R) * (m : R)) := by rw [← h1_eq]
@@ -397,8 +401,9 @@ theorem k_eq_1_picard_identity {n m δ₁ δ₂ z₁ z₂ : ℕ}
   ext
   · simp only [zsqrtd_mul_re', zsqrtd_natCast_re, zsqrtd_natCast_im, sq]
     have hq_z : (q_n n : ℤ) = (δ₁ : ℤ) * (δ₂ : ℤ) := by exact_mod_cast hq.symm
+    have hsub : (δ₂ : ℤ) * (z₂ : ℤ) ^ 2 - (δ₁ : ℤ) * (z₁ : ℤ) ^ 2 = 1 := by linarith
     rw [hq_z]
-    linarith
+    nlinarith
   · simp only [zsqrtd_mul_im', zsqrtd_natCast_re, zsqrtd_natCast_im, sq]
     have hs_z : (s_n n : ℤ) = 2 * (z₁ : ℤ) * (z₂ : ℤ) := by exact_mod_cast hs.symm
     rw [hs_z]

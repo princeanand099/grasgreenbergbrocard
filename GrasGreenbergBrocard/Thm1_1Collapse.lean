@@ -64,14 +64,35 @@ private lemma q_n_s_n_unique {n q s : ℕ} (hq_sf : Squarefree q) (hfac : Nat.fa
   refine ⟨hq_eq, ?_⟩
   have hsq : (s_n n) ^ 2 = s ^ 2 := by
     apply Nat.eq_of_mul_eq_mul_left (Nat.pos_of_ne_zero hq_ne)
-    rw [← hq_eq, ← hfac_n, hfac]
+    rw [hq_eq, ← hfac_n, hfac]
   exact (Nat.pow_left_inj (by norm_num : 2 ≠ 0)).mp hsq
+
+private lemma squarefree_6 : Squarefree 6 := by
+  rw [Nat.squarefree_iff_prime_squarefree]
+  intro p hp hpp
+  have hle : p * p ≤ 6 := Nat.le_of_dvd (by norm_num) hpp
+  have hp2 : p ≤ 2 := by nlinarith
+  interval_cases p <;> norm_num at hp hpp
+
+private lemma squarefree_30 : Squarefree 30 := by
+  rw [Nat.squarefree_iff_prime_squarefree]
+  intro p hp hpp
+  have hle : p * p ≤ 30 := Nat.le_of_dvd (by norm_num) hpp
+  have hp5 : p ≤ 5 := by nlinarith
+  interval_cases p <;> norm_num at hp hpp
+
+private lemma squarefree_35 : Squarefree 35 := by
+  rw [Nat.squarefree_iff_prime_squarefree]
+  intro p hp hpp
+  have hle : p * p ≤ 35 := Nat.le_of_dvd (by norm_num) hpp
+  have hp5 : p ≤ 5 := by nlinarith
+  interval_cases p <;> norm_num at hp hpp
 
 /-- `k(4) = 1` with `q_4 = 6`, `s_4 = 2`, `ε_4 = 5 + 2√6`. -/
 theorem known_k4 :
     q_n 4 = 6 ∧ s_n 4 = 2 ∧ IsFundamentalPell 6 5 2 ∧
       (5 : ℝ) + 2 * Real.sqrt 6 = (pellUnit 6 5 2) ^ 1 := by
-  obtain ⟨hq, hs⟩ := q_n_s_n_unique (n := 4) (q := 6) (s := 2) (by decide) (by norm_num [Nat.factorial])
+  obtain ⟨hq, hs⟩ := q_n_s_n_unique (n := 4) (q := 6) (s := 2) squarefree_6 (by norm_num [Nat.factorial])
   have hfund : IsFundamentalPell 6 5 2 := by
     refine ⟨by norm_num, by norm_num, by norm_num, fun x y hy heq => ?_⟩
     by_contra hlt
@@ -88,7 +109,7 @@ theorem known_k4 :
 theorem known_k5 :
     q_n 5 = 30 ∧ s_n 5 = 2 ∧ IsFundamentalPell 30 11 2 ∧
       (11 : ℝ) + 2 * Real.sqrt 30 = (pellUnit 30 11 2) ^ 1 := by
-  obtain ⟨hq, hs⟩ := q_n_s_n_unique (n := 5) (q := 30) (s := 2) (by decide) (by norm_num [Nat.factorial])
+  obtain ⟨hq, hs⟩ := q_n_s_n_unique (n := 5) (q := 30) (s := 2) squarefree_30 (by norm_num [Nat.factorial])
   have hfund : IsFundamentalPell 30 11 2 := by
     refine ⟨by norm_num, by norm_num, by norm_num, fun x y hy heq => ?_⟩
     by_contra hlt
@@ -105,7 +126,7 @@ theorem known_k5 :
 theorem known_k7 :
     q_n 7 = 35 ∧ s_n 7 = 12 ∧ IsFundamentalPell 35 6 1 ∧
       (71 : ℝ) + 12 * Real.sqrt 35 = (pellUnit 35 6 1) ^ 2 := by
-  obtain ⟨hq, hs⟩ := q_n_s_n_unique (n := 7) (q := 35) (s := 12) (by decide) (by norm_num [Nat.factorial])
+  obtain ⟨hq, hs⟩ := q_n_s_n_unique (n := 7) (q := 35) (s := 12) squarefree_35 (by norm_num [Nat.factorial])
   have hfund : IsFundamentalPell 35 6 1 :=
     ⟨by norm_num, by norm_num, by norm_num, fun _ _ hy _ => hy⟩
   refine ⟨hq, hs, hfund, ?_⟩
@@ -115,17 +136,34 @@ theorem known_k7 :
   rw [hsq]
   ring
 
+private lemma prod_pow_dvd_of_prime_dvd {S : Finset ℕ} {f : ℕ → ℕ} {M : ℕ}
+    (hS : ∀ p ∈ S, p.Prime) (hdvd : ∀ p ∈ S, p ^ f p ∣ M) :
+    (∏ p ∈ S, p ^ f p) ∣ M := by
+  classical
+  induction S using Finset.induction_on with
+  | empty => simp
+  | @insert p S hp_not ih =>
+    rw [Finset.prod_insert hp_not]
+    have hp : p.Prime := hS p (Finset.mem_insert_self p S)
+    have hS' : ∀ q ∈ S, q.Prime := fun q hq => hS q (Finset.mem_insert_of_mem hq)
+    have ih' := ih hS' (fun q hq => hdvd q (Finset.mem_insert_of_mem hq))
+    have hcop : Nat.Coprime (p ^ f p) (∏ q ∈ S, q ^ f q) := by
+      apply Nat.Coprime.prod_right
+      intro q hq
+      have hq_pr : q.Prime := hS' q hq
+      have hpq : p ≠ q := fun h => hp_not (h ▸ hq)
+      exact ((hp.coprime_iff_not_dvd.mpr (fun h =>
+        hpq ((Nat.prime_dvd_prime_iff_eq hp hq_pr).mp (hp.dvd_of_dvd_pow h)))).pow_left _)
+    exact hcop.mul_dvd_of_dvd_of_dvd (hdvd p (Finset.mem_insert_self p S)) ih'
+
 private lemma sum_padicValNat_log_le {k : ℕ} (hk : 1 ≤ k) (S : Finset ℕ)
     (hS : ∀ p ∈ S, p.Prime) :
     ∑ p ∈ S, (padicValNat p k : ℝ) * Real.log (p : ℝ) ≤ Real.log (k : ℝ) := by
   have hprod_dvd : (∏ p ∈ S, p ^ padicValNat p k) ∣ k := by
-    apply Finset.prod_dvd_of_coprime
-    · intro p hp q hq hpq
-      exact (((hS p hp).coprime_iff_not_dvd.mpr (fun h =>
-        hpq ((Nat.prime_dvd_prime_iff_eq (hS p hp) (hS q hq)).mp ((hS p hp).dvd_of_dvd_pow h)))).pow_left _).isCoprime
-    · intro p hp
-      haveI : Fact p.Prime := ⟨hS p hp⟩
-      exact pow_padicValNat_dvd
+    apply prod_pow_dvd_of_prime_dvd hS
+    intro p hp
+    haveI : Fact p.Prime := ⟨hS p hp⟩
+    exact pow_padicValNat_dvd
   have hprod_pos : 0 < ∏ p ∈ S, p ^ padicValNat p k := by
     apply Finset.prod_pos
     intro p hp
@@ -175,14 +213,17 @@ private lemma padicValNat_factorial_three_le (n : ℕ) :
     _ = (n : ℝ) * ∑ i ∈ Finset.Ico 1 (n + 1), (1 / 3 : ℝ) ^ i := (Finset.mul_sum _ _ _).symm
     _ ≤ (n : ℝ) * (1 / 2 : ℝ) := by
         apply mul_le_mul_of_nonneg_left _ (by positivity)
-        have hgeom : ∑ i ∈ Finset.range (n + 1), (1 / 3 : ℝ) ^ i =
-            (1 - (1 / 3 : ℝ) ^ (n + 1)) / (1 - 1 / 3 : ℝ) := geom_sum_eq (by norm_num : (1 / 3 : ℝ) ≠ 1) (n + 1)
-        have hsplit : ∑ i ∈ Finset.range (n + 1), (1 / 3 : ℝ) ^ i =
-            1 + ∑ i ∈ Finset.Ico 1 (n + 1), (1 / 3 : ℝ) ^ i := by
-          rw [← Finset.add_sum_Ico_eq_sum_range (by omega : 1 ≤ n + 1)]
-          simp
-        have hpow_nn : (0 : ℝ) ≤ (1 / 3 : ℝ) ^ (n + 1) := by positivity
-        linarith
+        have hico_le : ∀ m : ℕ, ∑ i ∈ Finset.Ico 1 (m + 1), (1 / 3 : ℝ) ^ i ≤
+            1 / 2 - (1 / 2 : ℝ) * (1 / 3 : ℝ) ^ m := by
+          intro m
+          induction m with
+          | zero => simp
+          | succ m ihm =>
+            rw [Finset.sum_Ico_succ_top (by omega : 1 ≤ m + 1)]
+            have : (1 / 3 : ℝ) ^ (m + 1) = (1 / 3 : ℝ) ^ m * (1 / 3 : ℝ) := pow_succ _ _
+            linarith
+        have hpow_nn : (0 : ℝ) ≤ (1 / 3 : ℝ) ^ n := by positivity
+        linarith [hico_le n]
     _ = (n : ℝ) / 2 := by ring
 
 /-- **Theorem 1.1 (Unconditional Collapse of the Pell Index, eq. 1.6)**:
@@ -238,9 +279,24 @@ theorem pell_index_collapse_large :
             rw [Real.log_mul (by norm_num) ht.ne', add_div]
           have h2 : Tendsto (fun t : ℝ => Real.log 2.5 / t) atTop (nhds 0) :=
             tendsto_const_nhds.div_atTop tendsto_id
-          have h3 : Tendsto (fun t : ℝ => Real.log t / t) atTop (nhds 0) :=
-            (Real.isLittleO_log_rpow_atTop (by norm_num : (0 : ℝ) < 1)).tendsto_div_nhds_zero.congr'
-              (Eventually.of_forall fun t => by simp)
+          have h3 : Tendsto (fun t : ℝ => Real.log t / t) atTop (nhds 0) := by
+            have h_inv_sqrt : Tendsto (fun t : ℝ => 2 / Real.sqrt t) atTop (nhds 0) := by
+              have hsq : Tendsto (fun t : ℝ => Real.sqrt t) atTop atTop :=
+                tendsto_rpow_atTop (by norm_num : (0 : ℝ) < 1 / 2) |>.congr'
+                  (Eventually.of_forall fun t => (Real.sqrt_eq_rpow t).symm)
+              exact tendsto_const_nhds.div_atTop hsq
+            refine tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds h_inv_sqrt ?_ ?_
+            · filter_upwards [eventually_ge_atTop (1 : ℝ)] with t ht
+              exact div_nonneg (Real.log_nonneg ht) (by linarith)
+            · filter_upwards [eventually_ge_atTop (1 : ℝ)] with t ht
+              have ht_pos : 0 < t := by linarith
+              have hsqrt_pos : 0 < Real.sqrt t := Real.sqrt_pos.mpr ht_pos
+              have h1 : Real.log (Real.sqrt t) ≤ Real.sqrt t - 1 := Real.log_le_sub_one_of_pos hsqrt_pos
+              have h2 : Real.log t = 2 * Real.log (Real.sqrt t) := by
+                rw [Real.sqrt_eq_rpow, Real.log_rpow ht_pos]; ring
+              rw [div_le_div_iff₀ ht_pos hsqrt_pos]
+              have hsq_t : Real.sqrt t * Real.sqrt t = t := Real.mul_self_sqrt ht_pos.le
+              nlinarith
           simpa using (h2.add h3).congr' h1.symm
         have hcomp : Tendsto (fun n : ℕ => Real.log (2.5 * Real.log (n : ℝ)) / Real.log (n : ℝ))
             atTop (nhds 0) := hlog_div.comp hlog_inf
@@ -284,17 +340,13 @@ theorem pell_index_collapse_large :
     have hS_pr : ∀ p ∈ S, p.Prime := fun p hp => (Finset.mem_filter.mp (Finset.mem_erase.mp hp).2).2.1
     have hprod_dvd : (∏ p ∈ S, p ^ (padicValNat p (Nat.factorial n) - 2 * padicValNat p k)) ∣
         q_n n * Y₁ ^ 2 := by
-      apply Finset.prod_dvd_of_coprime
-      · intro p hp q hq hpq
-        exact (((hS_pr p hp).coprime_iff_not_dvd.mpr (fun h =>
-          hpq ((Nat.prime_dvd_prime_iff_eq (hS_pr p hp) (hS_pr q hq)).mp
-            ((hS_pr p hp).dvd_of_dvd_pow h)))).pow_left _).isCoprime
-      · intro p hp
-        have hp_mem := Finset.mem_erase.mp hp
-        have hval := padicValNat_pell_absorption hk1 hp_mem.2 hp_mem.1 hpell_int hY1_pos hs_eq
-        rw [← hval]
-        haveI : Fact p.Prime := ⟨hS_pr p hp⟩
-        exact pow_padicValNat_dvd
+      apply prod_pow_dvd_of_prime_dvd hS_pr
+      intro p hp
+      have hp_mem := Finset.mem_erase.mp hp
+      have hval := padicValNat_pell_absorption hk1 hp_mem.2 hp_mem.1 hpell_int hY1_pos hs_eq
+      rw [← hval]
+      haveI : Fact p.Prime := ⟨hS_pr p hp⟩
+      exact pow_padicValNat_dvd
     have hprod_pos : 0 < ∏ p ∈ S, p ^ (padicValNat p (Nat.factorial n) - 2 * padicValNat p k) :=
       Finset.prod_pos (fun p hp => pow_pos (hS_pr p hp).pos _)
     have hle_nat : (∏ p ∈ S, p ^ (padicValNat p (Nat.factorial n) - 2 * padicValNat p k)) ≤
@@ -407,6 +459,8 @@ theorem pell_index_collapse_large :
     have hlog_ms : 2 * Real.log ((m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ)) ≤
         Real.log (9 * (n : ℝ) ^ n) := by
       rw [show (2 : ℝ) * Real.log ((m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ)) = Real.log (((m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ)) ^ 2) by rw [Real.log_pow]; norm_num]
+      have hm_pos_r : (0 : ℝ) < (m : ℝ) := by exact_mod_cast (by nlinarith [Nat.factorial_pos n] : 0 < m)
+      have hs_pos_r : (0 : ℝ) ≤ (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) := by positivity
       exact Real.log_le_log (by positivity) (le_trans hms_sq_le h9_le)
     have hlog9 : Real.log (9 * (n : ℝ) ^ n) = 2 * Real.log 3 + (n : ℝ) * Real.log (n : ℝ) := by
       rw [Real.log_mul (by norm_num) (by positivity), Real.log_pow,
@@ -591,6 +645,7 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
     have ht_le2 : t ≤ 2 := by omega
     have hsq4 : t ^ 2 ≤ 4 := by nlinarith
     omega
+  have ht2_ge9 : 9 ≤ t ^ 2 := by nlinarith
   have hn1_ge8 : 8 ≤ n₁ := by omega
   -- `(t * m₁ - m₂) * (t * m₁ + m₂) = t^2 - 1`
   have hid : (t * m₁) ^ 2 = m₂ ^ 2 + (t ^ 2 - 1) := by
@@ -607,8 +662,9 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
   have hdiff_ge1 : 1 ≤ t * m₁ - m₂ := by omega
   have hprod_factor : (t * m₁ - m₂) * (t * m₁ + m₂) = t ^ 2 - 1 := by
     zify [hlt_tm.le, (by nlinarith : 1 ≤ t ^ 2)]
-    have hid_z : ((t * m₁ : ℕ) : ℤ) ^ 2 = (m₂ : ℤ) ^ 2 + ((t : ℤ) ^ 2 - 1) := by
+    have hid_z : ((t : ℤ) * (m₁ : ℤ)) ^ 2 = (m₂ : ℤ) ^ 2 + ((t : ℤ) ^ 2 - 1) := by
       zify [(by nlinarith : 1 ≤ t ^ 2)] at hid
+      push_cast at hid
       exact hid
     linarith
   have hsum_le : t * m₁ + m₂ ≤ t ^ 2 - 1 := by
@@ -625,18 +681,19 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
           | zero => omega
           | succ k ihk =>
             rcases Nat.eq_or_lt_of_le hk with h4 | hk4
-            · have : k = 3 := by omega; subst this
+            · have hk3 : k = 3 := by omega
+              subst hk3
               norm_num [Nat.factorial]
             · have := ihk (by omega)
               rw [Nat.factorial_succ]
               nlinarith
         exact this n₁ hn₁
       omega
-    have hsq : t ^ 2 < m₁ ^ 2 := by omega
+    have hsq : t ^ 2 < m₁ ^ 2 := by clear hfac1 hfac2 hq_eq; omega
     exact (Nat.pow_lt_pow_iff_left (by norm_num : 2 ≠ 0)).mp hsq
   have hsum_gt : t ^ 2 < t * m₁ + m₂ := by
     have : t * t < t * m₁ := Nat.mul_lt_mul_of_pos_left hm1_gt_t (by omega)
     nlinarith
-  omega
+  linarith
 
 end GrasGreenbergBrocard
