@@ -434,8 +434,7 @@ theorem Delta_parity_second_order :
           exact ⟨⟨h1.1, (Nat.le_floor_iff (by positivity)).mpr hle⟩, h2⟩
       rw [hsdiff]
       unfold thetaPrime
-      have hs := Finset.sum_sdiff hsub (f := fun p => Real.log (p : ℝ))
-      linarith
+      rw [Finset.sum_sdiff_eq_sub hsub]
     rw [hS_hi_part, Finset.sum_biUnion hdisj_Hr, Finset.sum_congr rfl hHr_sum]
     have h_theta_err : ∑ r ∈ Finset.Icc 1 (R₁ - 1),
         |(-1 : ℝ) ^ r * (r : ℝ) * (thetaPrime ((n : ℝ) / (r : ℝ)) - thetaPrime ((n : ℝ) / ((r : ℝ) + 1))) -
@@ -685,7 +684,7 @@ theorem Delta_parity_second_order :
                 have hcoeff_nn : 0 ≤ (n : ℝ) / (p : ℝ) * Real.log (p : ℝ) := by positivity
                 rw [norm_mul, Complex.norm_real, Real.norm_of_nonneg hcoeff_nn]
                 apply mul_le_mul_of_nonneg_left _ hcoeff_nn
-                have hpw := (h_vaaler_pw ((n : ℝ) / (p : ℝ))).2
+                have hpw := h_vaaler_pw ((n : ℝ) / (p : ℝ))
                 have hsplit0 : ∑ h ∈ Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1),
                     b_tilde h * eExp ((h : ℝ) * ((n : ℝ) / (p : ℝ)) / 2) =
                     b_tilde 0 + ∑ h ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (· ≠ 0),
