@@ -417,9 +417,15 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ)‖ ≤
       (1 + 2 * (h_mod : ℝ)) ^ R * (R : ℝ) * ((h_mod : ℝ) * (1 + Cm) + 8 * (h_mod : ℝ) * C₂e) / Real.log (n : ℝ) := by
     let I_s := Finset.Icc 1 r
-    have h_tr : ‖∑ p ∈ D_r, _‖ ≤ (1 + 2 * (h_mod : ℝ)) ^ R * ∑ s ∈ I_s,
+    have h_tr : ‖∑ p ∈ D_r, (∏ s ∈ I_s, eExp ((z : ℝ) * (Int.floor ((n : ℝ) / (p : ℝ) ^ s) : ℝ) / (h_mod : ℝ)) -
+          ∏ s ∈ I_s, Psi_mod ((n : ℝ) / (p : ℝ) ^ s)) *
+        ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ)‖ ≤ (1 + 2 * (h_mod : ℝ)) ^ R * ∑ s ∈ I_s,
         (∑ p ∈ D_r, (Real.log (p : ℝ) / ((p : ℝ) - 1)) * (B_mod ((n : ℝ) / (p : ℝ) ^ s)).re) := by
-      calc ‖∑ p ∈ D_r, _‖ ≤ ∑ p ∈ D_r, ‖_‖ := norm_sum_le _ _
+      calc ‖∑ p ∈ D_r, (∏ s ∈ I_s, eExp ((z : ℝ) * (Int.floor ((n : ℝ) / (p : ℝ) ^ s) : ℝ) / (h_mod : ℝ)) -
+            ∏ s ∈ I_s, Psi_mod ((n : ℝ) / (p : ℝ) ^ s)) *
+          ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ)‖ ≤ ∑ p ∈ D_r, ‖(∏ s ∈ I_s, eExp ((z : ℝ) * (Int.floor ((n : ℝ) / (p : ℝ) ^ s) : ℝ) / (h_mod : ℝ)) -
+            ∏ s ∈ I_s, Psi_mod ((n : ℝ) / (p : ℝ) ^ s)) *
+          ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ)‖ := norm_sum_le _ _
         _ ≤ ∑ p ∈ D_r, ((1 + 2 * (h_mod : ℝ)) ^ I_s.card *
               ∑ s ∈ I_s, (B_mod ((n : ℝ) / (p : ℝ) ^ s)).re) * (Real.log (p : ℝ) / ((p : ℝ) - 1)) := by
             refine Finset.sum_le_sum (fun p hp => ?_)
