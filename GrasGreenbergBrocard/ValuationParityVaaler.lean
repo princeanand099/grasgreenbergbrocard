@@ -462,13 +462,13 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
       have h_pos_sum : ∑ h ∈ posSet, (2 / (Real.pi * |(h : ℝ)|)) =
           ∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ))) := by
         dsimp only [posSet]
-        rw [Finset.sum_image (g := fun k : ℕ => (k : ℤ)) (fun k1 _ k2 _ h => by omega)]
+        rw [Finset.sum_image (g := fun k : ℕ => (k : ℤ)) (fun _ _ _ _ h => Int.ofNat.inj h)]
         refine Finset.sum_congr rfl (fun k _ => ?_)
         rw [Int.cast_natCast, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
       have h_neg_sum : ∑ h ∈ negSet, (2 / (Real.pi * |(h : ℝ)|)) =
           ∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ))) := by
         dsimp only [negSet]
-        rw [Finset.sum_image (g := fun k : ℕ => -(k : ℤ)) (fun k1 _ k2 _ h => by omega)]
+        rw [Finset.sum_image (g := fun k : ℕ => -(k : ℤ)) (fun _ _ _ _ h => Int.ofNat.inj (neg_inj.mp h))]
         refine Finset.sum_congr rfl (fun k _ => ?_)
         simp only [Int.cast_neg, Int.cast_natCast, abs_neg, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
       have hsum_pos_neg :
