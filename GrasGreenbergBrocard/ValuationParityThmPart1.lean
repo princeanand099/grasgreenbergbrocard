@@ -895,8 +895,8 @@ theorem Delta_parity_second_order :
               (2 + 2 * Cm) * ((n : ℝ) / Real.log (n : ℝ)) := by
             have hb0_re : (b_tilde 0).re = 2 / ((H : ℝ) + 1) := by
               rw [h_btilde0]
-              have : (2 : ℂ) / ((H : ℂ) + 1) = ((2 / ((H : ℝ) + 1) : ℝ) : ℂ) := by push_cast; rfl
-              rw [this, Complex.ofReal_re]
+              simp only [← Complex.ofReal_natCast, ← Complex.ofReal_one, ← Complex.ofReal_add,
+                ← Complex.ofReal_ofNat, ← Complex.ofReal_div, Complex.ofReal_re]
             rw [hb0_re]
             have hsub : S_mid ⊆ (Finset.Icc 3 (Nat.floor (n : ℝ))).filter Nat.Prime := by
               intro p hp; simp only [S_mid, S_all, Finset.mem_filter, Finset.mem_Icc] at hp ⊢
