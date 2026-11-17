@@ -472,7 +472,11 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
                 ((1 : ℝ) / ((k - 1 : ℕ) : ℝ) - (1 : ℝ) / (k : ℝ)) =
               ∑ k ∈ Finset.Ico (Nat.sqrt n) n, ((1 : ℝ) / (k : ℝ) - (1 : ℝ) / ((k + 1 : ℕ) : ℝ)) := by
             rw [← Finset.sum_Ico_add (fun k : ℕ => (1 : ℝ) / ((k - 1 : ℕ) : ℝ) - (1 : ℝ) / (k : ℝ)) (Nat.sqrt n) n 1]
-            simp only [Nat.add_sub_cancel]
+            refine Finset.sum_congr rfl (fun k _ => ?_)
+            have h_k : ∀ m : ℕ, m + 1 - 1 = m := fun m => by omega
+            have h_k' : ∀ m : ℕ, 1 + m - 1 = m := fun m => by omega
+            simp only [h_k, h_k', Nat.cast_add, Nat.cast_one]
+            ring
           rw [h2, Finset.sum_Ico_eq_sum_range]
           have h3 : ∑ k ∈ Finset.range (n - Nat.sqrt n),
                 ((1 : ℝ) / ((Nat.sqrt n + k : ℕ) : ℝ) - (1 : ℝ) / ((Nat.sqrt n + k + 1 : ℕ) : ℝ)) =
