@@ -31,12 +31,8 @@ private lemma padicValNat_factorial_ge_div {n p : ℕ} (hp : p.Prime) (hn : 1 �
       induction m with
       | zero => norm_num
       | succ m ihm =>
-        calc m + 1 ≤ p ^ m + 1 := by omega
-          _ < p ^ m * p := by
-            have h1 : 1 ≤ p ^ m := Nat.one_le_pow m p hp.pos
-            have hp2 : 2 ≤ p := hp.two_le
-            have hmul : p ^ m * 2 ≤ p ^ m * p := Nat.mul_le_mul_left (p ^ m) hp2
-            omega
+        calc m + 1 ≤ p ^ m := ihm
+          _ < p ^ m * p := Nat.lt_mul_of_one_lt_right (Nat.pow_pos hp.pos) hp.one_lt
           _ = p ^ (m + 1) := (pow_succ p m).symm
     exact Nat.log_lt_of_lt_pow (by omega)
       (lt_trans (hself n) (Nat.pow_lt_pow_right hp.one_lt (Nat.lt_succ_self n)))

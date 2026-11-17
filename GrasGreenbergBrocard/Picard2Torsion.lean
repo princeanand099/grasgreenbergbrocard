@@ -185,7 +185,7 @@ theorem J_n_sq_eq {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2) 
           ((m : Zsqrtd (-(q_n n : ℤ))) * (m : Zsqrtd (-(q_n n : ℤ)))) ∈
         (Ideal.span {(m : Zsqrtd (-(q_n n : ℤ))), α}) ^ 2 :=
       Ideal.add_mem _ (Ideal.mul_mem_left _ _ hα2_in) (Ideal.mul_mem_left _ _ hm2_in)
-    exact hα_eq.symm ▸ hmem
+    exact (congrArg (· ∈ (Ideal.span {(m : Zsqrtd (-(q_n n : ℤ))), α}) ^ 2) hα_eq).mpr hmem
 
 /-- **Proposition 3.3, part 2 (`[𝔍_n] = 1 ⟺ k = 2`)**:
 For `n ≥ 4`, `n ≠ 6` with `n! + 1 = m^2`, the ideal `𝔍_n = (m, 1 + s_n √(-q_n))` is principal
