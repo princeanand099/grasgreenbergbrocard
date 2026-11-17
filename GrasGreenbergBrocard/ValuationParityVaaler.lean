@@ -141,16 +141,17 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
         _ = 2 / (Real.pi * |(h : ℝ)|) := by ring
   · have hev0 : Even (0 : ℤ) := ⟨0, rfl⟩
     simp only [b_tilde, hev0, ↓reduceIte, Int.zero_ediv, hb1_0, hb2_0]
-    have hH0 : (H : ℂ) + 1 ≠ 0 := by
-      have : (0 : ℝ) < (H : ℝ) + 1 := by positivity
-      exact_mod_cast this.ne'
-    push_cast
-    have h2H : (2 : ℂ) * (H : ℂ) + 2 ≠ 0 := by
-      intro heq; apply hH0; linear_combination heq / 2
-    have h4H : (2 : ℂ) * (2 * (H : ℂ) + 1) + 2 ≠ 0 := by
-      intro heq; apply hH0; linear_combination heq / 4
-    field_simp [hH0, h2H, h4H]
-    ring
+    have hR : (2 : ℝ) * (1 / (2 * (H : ℝ) + 2)) + 4 * (1 / (2 * ((2 * H + 1 : ℕ) : ℝ) + 2)) =
+        2 / ((H : ℝ) + 1) := by
+      push_cast
+      have hH0 : (H : ℝ) + 1 ≠ 0 := by positivity
+      have h2H : 2 * (H : ℝ) + 2 ≠ 0 := by positivity
+      have h4H : 2 * (2 * (H : ℝ) + 1) + 2 ≠ 0 := by positivity
+      field_simp [hH0, h2H, h4H]
+      ring
+    have hC := congrArg Complex.ofReal hR
+    push_cast at hC
+    exact hC
   · intro h
     have hH_pos : (0 : ℝ) < (H : ℝ) + 1 := by positivity
     by_cases hev : Even h
@@ -434,8 +435,8 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
             ≤ 4 * (1 / (2 * Real.pi * |(h : ℝ)|)) :=
               mul_le_mul_of_nonneg_left hc2_norm (by norm_num)
           _ = 2 / (Real.pi * |(h : ℝ)|) := by ring
-      let posSet : Finset ℤ := (Finset.Icc (1 : ℕ) (2 * H + 1)).map ⟨fun k : ℕ => (k : ℤ), fun _ _ h => Int.ofNat.inj h⟩
-      let negSet : Finset ℤ := (Finset.Icc (1 : ℕ) (2 * H + 1)).map ⟨fun k : ℕ => -(k : ℤ), fun _ _ h => Int.ofNat.inj (neg_inj.mp h)⟩
+      let posSet : Finset ℤ := (Finset.Icc (1 : ℕ) (2 * H + 1)).image (fun k : ℕ => (k : ℤ))
+      let negSet : Finset ℤ := (Finset.Icc (1 : ℕ) (2 * H + 1)).image (fun k : ℕ => -(k : ℤ))
       have hsub :
           ((Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Odd h)) ⊆
           posSet ∪ negSet := by
@@ -444,18 +445,20 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
         rw [Finset.mem_union]
         rcases lt_trichotomy h 0 with hneg | rfl | hpos
         · right
-          simp only [negSet, Finset.mem_map, Finset.mem_Icc, Function.Embedding.coeFn_mk]
-          exact ⟨(-h).toNat, ⟨by omega, by omega⟩, by omega⟩
+          rw [Finset.mem_image]
+          refine ⟨(-h).toNat, Finset.mem_Icc.mpr ⟨by omega, by omega⟩, by omega⟩
         · exact absurd rfl hh.2.1
         · left
-          simp only [posSet, Finset.mem_map, Finset.mem_Icc, Function.Embedding.coeFn_mk]
-          exact ⟨h.toNat, ⟨by omega, by omega⟩, by omega⟩
+          rw [Finset.mem_image]
+          refine ⟨h.toNat, Finset.mem_Icc.mpr ⟨by omega, by omega⟩, by omega⟩
       have hdisj_pn : Disjoint posSet negSet := by
         rw [Finset.disjoint_left]
         intro h hp hn
-        simp only [posSet, negSet, Finset.mem_map, Finset.mem_Icc, Function.Embedding.coeFn_mk] at hp hn
+        rw [Finset.mem_image] at hp hn
         obtain ⟨k1, hk1, rfl⟩ := hp
         obtain ⟨k2, hk2, hk_eq⟩ := hn
+        have h1 : 1 ≤ k1 := (Finset.mem_Icc.mp hk1).1
+        have h2 : 1 ≤ k2 := (Finset.mem_Icc.mp hk2).1
         omega
       have hsum_pos_neg :
           ∑ h ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Odd h),
@@ -470,12 +473,12 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
           _ = (∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ)))) +
               (∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ)))) := by
               congr 1
-              · rw [Finset.sum_map]
+              · rw [Finset.sum_image (fun k1 _ k2 _ h => Int.ofNat.inj h)]
                 refine Finset.sum_congr rfl (fun k _ => ?_)
-                simp only [Function.Embedding.coeFn_mk, Int.cast_natCast, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
-              · rw [Finset.sum_map]
+                rw [Int.cast_natCast, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
+              · rw [Finset.sum_image (fun k1 _ k2 _ h => Int.ofNat.inj (neg_inj.mp h))]
                 refine Finset.sum_congr rfl (fun k _ => ?_)
-                simp only [Function.Embedding.coeFn_mk, Int.cast_neg, Int.cast_natCast, abs_neg, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
+                rw [Int.cast_neg, Int.cast_natCast, abs_neg, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
           _ = 2 * ∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ))) := by ring
       calc ∑ h ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Odd h),
             ‖c_tilde h‖

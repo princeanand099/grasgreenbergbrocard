@@ -194,8 +194,8 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
   have hev_log : ∀ᶠ n : ℕ in atTop, (2 : ℝ) ≤ Real.log (n : ℝ) :=
     (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 2)
   filter_upwards [Filter.eventually_ge_atTop 4, hev1, hev2, hev_log] with n hn hsmall1 hsmall2 hlog2
-  intro P I A h w W₀ hA_nz hP_lo hP_hi hI_prime hA_range hh_bound hPhase hW_bound hW₀
   dsimp only
+  intro P I A h w W₀ hA_nz hP_lo hP_hi hI_prime hA_range hh_bound hPhase hW_bound hW₀
   set r₀ := (A.filter (fun r => h r ≠ 0)).min' (by
     obtain ⟨r, hrA, hr0⟩ := hA_nz
     exact ⟨r, Finset.mem_filter.mpr ⟨hrA, hr0⟩⟩)

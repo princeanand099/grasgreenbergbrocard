@@ -216,15 +216,14 @@ theorem alt_harmonic_eq_tail_harmonic (N : ℕ) :
       rw [show 2 * (m + 1) = 2 * m + 2 from by omega]
       linarith
     rw [h_lhs_rhs]
-    have hm1 : ((m + 1 : ℕ) : ℝ) ≠ 0 := by positivity
-    have hm2 : (2 * ((m + 1 : ℕ) : ℝ) - 1) ≠ 0 := by
-      have : (1 : ℝ) ≤ ((m + 1 : ℕ) : ℝ) := by exact_mod_cast (by omega : 1 ≤ m + 1)
-      linarith
-    have hm3 : (2 * ((m + 1 : ℕ) : ℝ)) ≠ 0 := by positivity
-    have h21 : ((2 * m + 1 : ℕ) : ℝ) = 2 * ((m + 1 : ℕ) : ℝ) - 1 := by push_cast; ring
-    have h22 : ((2 * m + 2 : ℕ) : ℝ) = 2 * ((m + 1 : ℕ) : ℝ) := by push_cast; ring
-    rw [h21, h22]
-    field_simp [hm1, hm2, hm3]
+    push_cast
+    have hm1 : (m : ℝ) + 1 ≠ 0 := by positivity
+    have hm2 : 2 * ((m : ℝ) + 1) - 1 ≠ 0 := by positivity
+    have hm3 : 2 * ((m : ℝ) + 1) ≠ 0 := by positivity
+    have hm21 : 2 * (m : ℝ) + 1 ≠ 0 := by positivity
+    have hm22 : 2 * (m : ℝ) + 2 ≠ 0 := by positivity
+    field_simp [hm1, hm2, hm3, hm21, hm22]
+    ring
 
 /-- Quantitative alternating harmonic bound: `|∑_{r=1}^N (1/(2r-1) - 1/(2r)) - log 2| ≤ 1 / (2N)`. -/
 theorem alt_harmonic_sum_diff_log_two {N : ℕ} (hN : 1 ≤ N) :
