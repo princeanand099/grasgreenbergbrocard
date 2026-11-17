@@ -259,10 +259,10 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
           exact (contDiffAt_id.inv ht_pos.ne').pow r
         have hcd : ∀ r ∈ A, ContDiffAt ℝ j
             (fun x : ℝ => ((h r : ℝ) * (n : ℝ) / 2) * x ^ (-(r : ℤ))) t :=
-          fun r _ => (hpow_cd r).const_mul _
+          fun r _ => contDiffAt_const.mul (hpow_cd r)
         rw [iteratedDeriv_sum hcd]
         refine Finset.sum_congr rfl (fun r _ => ?_)
-        rw [iteratedDeriv_const_mul (hpow_cd r), iteratedDeriv_neg_pow r j t ht_pos]
+        rw [iteratedDeriv_const_mul _ (hpow_cd r), iteratedDeriv_neg_pow r j t ht_pos]
         ring
       rw [hIter]
       have hsplit := Finset.add_sum_erase A

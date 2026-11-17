@@ -146,10 +146,10 @@ theorem prime_exp_sum_bounds_mod (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
           exact (contDiffAt_id.inv ht_pos.ne').pow r
         have hcd : ∀ r ∈ A, ContDiffAt ℝ j
             (fun x : ℝ => ((h r : ℝ) * (n : ℝ) / (h_mod : ℝ)) * x ^ (-(r : ℤ))) t :=
-          fun r _ => (hpow_cd r).const_mul _
+          fun r _ => contDiffAt_const.mul (hpow_cd r)
         rw [iteratedDeriv_sum hcd]
         refine Finset.sum_congr rfl (fun r _ => ?_)
-        rw [iteratedDeriv_const_mul (hpow_cd r), iteratedDeriv_neg_pow r j t ht_pos]
+        rw [iteratedDeriv_const_mul _ (hpow_cd r), iteratedDeriv_neg_pow r j t ht_pos]
         ring
       rw [hIter]
       have hsplit := Finset.add_sum_erase A
