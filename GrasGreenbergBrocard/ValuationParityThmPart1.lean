@@ -11,6 +11,7 @@ set_option pp.maxSteps 50
 set_option pp.deepTerms false
 set_option pp.deepTerms.threshold 3
 set_option pp.proofs false
+set_option maxHeartbeats 400000
 
 noncomputable section
 
@@ -138,8 +139,7 @@ theorem Delta_parity_second_order :
           rw [← Real.rpow_le_rpow_iff (by positivity) (by positivity) (by norm_num : (0 : ℝ) < 6)]
           rw [← Real.rpow_mul hn_pos.le]
           norm_num
-          rw [Real.rpow_one]
-          linarith
+          exact_mod_cast hn64
         have hsq_eq : Real.sqrt (n : ℝ) = (n : ℝ) ^ (1 / 3 : ℝ) * (n : ℝ) ^ (1 / 6 : ℝ) := by
           rw [Real.sqrt_eq_rpow, ← Real.rpow_add hn_pos]
           congr 1; norm_num
@@ -233,7 +233,7 @@ theorem Delta_parity_second_order :
         linarith
       have hsq_le_y : 12 * Real.sqrt (Real.log (n : ℝ)) + 1 ≤ Real.log (n : ℝ) := by
         have h100 : 100 ≤ Real.sqrt (Real.log (n : ℝ)) := by
-          rw [Real.le_sqrt (by norm_num) (by linarith)]; linarith
+          rw [Real.le_sqrt (by norm_num) (by linarith)]; norm_num; exact hln_10000
         have hsq : (Real.sqrt (Real.log (n : ℝ))) ^ 2 = Real.log (n : ℝ) :=
           Real.sq_sqrt (by linarith : 0 ≤ Real.log (n : ℝ))
         have h100_sq : 100 * Real.sqrt (Real.log (n : ℝ)) ≤ (Real.sqrt (Real.log (n : ℝ))) ^ 2 := by
