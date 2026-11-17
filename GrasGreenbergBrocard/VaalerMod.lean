@@ -27,6 +27,11 @@ theorem eExp_int (k : ℤ) : eExp (k : ℝ) = 1 := by
   rw [show (2 : ℂ) * Real.pi * Complex.I * (k : ℂ) = (k : ℂ) * (2 * Real.pi * Complex.I) from by ring]
   exact Complex.exp_int_mul_two_pi_mul_I k
 
+theorem norm_eExp (t : ℝ) : ‖eExp t‖ = 1 := by
+  unfold eExp
+  rw [show (2 : ℂ) * Real.pi * Complex.I * (t : ℂ) = (((2 * Real.pi * t : ℝ) : ℂ) * Complex.I) by push_cast; ring]
+  exact Complex.norm_exp_ofReal_mul_I _
+
 theorem eExp_nsmul (k : ℕ) (t : ℝ) : (eExp t) ^ k = eExp ((k : ℝ) * t) := by
   unfold eExp
   rw [← Complex.exp_nat_mul]
@@ -243,7 +248,6 @@ theorem vaaler_mod_approx (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
     have hH0 : (H : ℂ) + 1 ≠ 0 := by exact_mod_cast (by positivity : (H : ℝ) + 1 ≠ 0)
     have h2H0 : 2 * (H : ℂ) + 2 ≠ 0 := by exact_mod_cast (by positivity : 2 * (H : ℝ) + 2 ≠ 0)
     field_simp [hH0, h2H0]
-    ring
   · intro m
     dsimp only [b_mod]
     rw [norm_mul]
@@ -257,7 +261,7 @@ theorem vaaler_mod_approx (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
         _ ≤ ∑ _k ∈ Finset.range h_mod, (2 : ℝ) := by
             refine Finset.sum_le_sum (fun k _ => ?_)
             calc ‖eExp _ + eExp _‖ ≤ ‖eExp _‖ + ‖eExp _‖ := norm_add_le _ _
-              _ = 1 + 1 := by unfold eExp; rw [Complex.norm_exp_ofReal_mul_I, Complex.norm_exp_ofReal_mul_I]
+              _ = 1 + 1 := by rw [norm_eExp, norm_eExp]
               _ = 2 := by norm_num
         _ = 2 * (h_mod : ℝ) := by simp [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; ring
     calc ‖b m‖ * ‖∑ k ∈ Finset.range h_mod, _‖
@@ -265,7 +269,7 @@ theorem vaaler_mod_approx (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
           mul_le_mul (hb_bound m) hsum_norm (norm_nonneg _) (by positivity)
       _ = (h_mod : ℝ) / ((H : ℝ) + 1) := by
           have hH0 : (H : ℝ) + 1 ≠ 0 := by positivity
-          field_simp [hH0]; ring
+          field_simp [hH0]
   · dsimp only
     let Psi : ℝ → ℂ := fun t =>
       ∑ m ∈ (Finset.Icc (-(H : ℤ)) (H : ℤ)).filter (· ≠ 0), c m * eExp ((m : ℝ) * t)
@@ -297,7 +301,7 @@ theorem vaaler_mod_approx (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
           rw [harg, ← eExp_add, eExp_int, one_mul]
         · intro k _ hkr
           have hne : Int.floor x % (h_mod : ℤ) ≠ (k : ℤ) := by omega
-          rw [if_neg hne, Complex.ofReal_zero, zero_mul]
+          simp [if_neg hne]
         · intro hnot; exact absurd hr_mem hnot
       have hPsi_id : ∑ m ∈ (Finset.Icc (-(H : ℤ)) (H : ℤ)).filter (· ≠ 0),
             c_mod m * eExp ((m : ℝ) * x / (h_mod : ℝ)) =
@@ -326,7 +330,6 @@ theorem vaaler_mod_approx (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
         rw [h_swap, Finset.sum_comm]
         refine Finset.sum_congr rfl (fun m _ => ?_)
         rw [Finset.mul_sum, Finset.sum_mul]
-        refine Finset.sum_congr rfl (fun k _ => by ring)
       have hB_id : (∑ m ∈ Finset.Icc (-(H : ℤ)) (H : ℤ),
             b_mod m * eExp ((m : ℝ) * x / (h_mod : ℝ))).re =
           ∑ k ∈ Finset.range h_mod,
@@ -355,7 +358,6 @@ theorem vaaler_mod_approx (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
         refine Finset.sum_congr rfl (fun m _ => ?_)
         congr 1
         rw [Finset.mul_sum, Finset.sum_mul]
-        refine Finset.sum_congr rfl (fun k _ => by ring)
       rw [hexp_eq, hPsi_id, hB_id]
       have h0_cancel : ∑ k ∈ Finset.range h_mod,
           ((1 / (h_mod : ℝ) : ℝ) : ℂ) * eExp ((z : ℝ) * (k : ℝ) / (h_mod : ℝ)) = 0 := by
@@ -381,7 +383,7 @@ theorem vaaler_mod_approx (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
         have hflC : ((if Int.floor x % (h_mod : ℤ) = (k : ℤ) then (1 : ℝ) else 0) : ℂ) =
             ((sawtoothPsi ((x - (k : ℝ) - 1) / (h_mod : ℝ)) : ℂ) -
               (sawtoothPsi ((x - (k : ℝ)) / (h_mod : ℝ)) : ℂ) + ((1 / (h_mod : ℝ) : ℝ) : ℂ)) := by
-          exact_mod_cast hfl
+          rw [hfl]; push_cast; rfl
         rw [hflC]
         ring
       rw [h_diff_eq]
@@ -393,13 +395,12 @@ theorem vaaler_mod_approx (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
         _ ≤ ∑ k ∈ Finset.range h_mod,
               ((B ((x - (k : ℝ) - 1) / (h_mod : ℝ))).re + (B ((x - (k : ℝ)) / (h_mod : ℝ))).re) := by
             refine Finset.sum_le_sum (fun k _ => ?_)
-            rw [norm_mul, show ‖eExp ((z : ℝ) * (k : ℝ) / (h_mod : ℝ))‖ = 1 from by
-              unfold eExp; exact Complex.norm_exp_ofReal_mul_I _, mul_one]
+            rw [norm_mul, norm_eExp, mul_one]
             refine le_trans (norm_sub_le _ _) (add_le_add ?_ ?_)
             · have h1 := (hV.1 ((x - (k : ℝ) - 1) / (h_mod : ℝ))).2
-              simpa [sawtoothPsi] using h1
+              dsimp only [Psi, B, c]; simpa [sawtoothPsi] using h1
             · have h2 := (hV.1 ((x - (k : ℝ)) / (h_mod : ℝ))).2
-              simpa [sawtoothPsi] using h2
+              dsimp only [Psi, B, c]; simpa [sawtoothPsi] using h2
     · have hc_each : ∀ m ∈ (Finset.Icc (-(H : ℤ)) (H : ℤ)).filter (· ≠ 0),
           ‖c_mod m‖ ≤ (h_mod : ℝ) / (Real.pi * |(m : ℝ)|) := by
         intro m hm
@@ -432,10 +433,9 @@ theorem vaaler_mod_approx (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
                 norm_sum_le _ _
             _ ≤ ∑ _k ∈ Finset.range h_mod, (2 : ℝ) := by
                 refine Finset.sum_le_sum (fun k _ => ?_)
-                rw [norm_mul, show ‖eExp ((z : ℝ) * (k : ℝ) / (h_mod : ℝ))‖ = 1 from by
-                  unfold eExp; exact Complex.norm_exp_ofReal_mul_I _, one_mul]
+                rw [norm_mul, norm_eExp, one_mul]
                 calc ‖eExp _ - eExp _‖ ≤ ‖eExp _‖ + ‖eExp _‖ := norm_sub_le _ _
-                  _ = 1 + 1 := by unfold eExp; rw [Complex.norm_exp_ofReal_mul_I, Complex.norm_exp_ofReal_mul_I]
+                  _ = 1 + 1 := by rw [norm_eExp, norm_eExp]
                   _ = 2 := by norm_num
             _ = 2 * (h_mod : ℝ) := by simp [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; ring
         calc ‖c m‖ * ‖∑ k ∈ Finset.range h_mod, _‖
@@ -479,7 +479,7 @@ theorem vaaler_mod_approx (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
         _ = 2 * ∑ k ∈ Finset.Icc (1 : ℕ) H, ((h_mod : ℝ) / (Real.pi * (k : ℝ))) := by
             rw [Finset.sum_union hdisj_pn, h_pos_sum, h_neg_sum]; ring
         _ = (2 * (h_mod : ℝ) / Real.pi) * ∑ k ∈ Finset.Icc (1 : ℕ) H, (1 : ℝ) / (k : ℝ) := by
-            rw [Finset.mul_sum]; refine Finset.sum_congr rfl (fun k _ => by ring)
+            rw [Finset.mul_sum, Finset.mul_sum]; refine Finset.sum_congr rfl (fun k _ => by ring)
         _ ≤ (2 * (h_mod : ℝ) / Real.pi) * (Real.log (H : ℝ) + 1) :=
             mul_le_mul_of_nonneg_left (harmonic_sum_le_log_add_one hH) (by positivity)
         _ ≤ 2 * (h_mod : ℝ) * (Real.log (H : ℝ) + 1) := by
