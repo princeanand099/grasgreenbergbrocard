@@ -22,6 +22,8 @@ Formalizes Section 4.2 (eqs. 4.7–4.16 and Theorem 4.2(i)–(iii)) of the manus
 - `thm_4_2_part3_mertens_bound`: Explicit Mertens `n^{1/4}` lower bound on `δ₁, δ₂` (Theorem 4.2(iii))
 -/
 
+set_option maxHeartbeats 800000
+
 noncomputable section
 
 open Real Finset BigOperators Asymptotics Filter
@@ -295,7 +297,7 @@ theorem thm_4_2_part1_quartic_law {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
             rcases Nat.prime_two.dvd_mul.mp h2qY with h2q | h2Y2
             · have hpell := hfund.2.2.1
               have h2d1 : 2 ∣ X₁ ^ 2 - q_n n * Y₁ ^ 2 :=
-                Nat.dvd_sub (dvd_pow h2dX (by norm_num)) (dvd_mul_of_dvd_right h2q _)
+                Nat.dvd_sub (dvd_pow h2dX (by norm_num)) (dvd_mul_of_dvd_left h2q _)
               have h1 : X₁ ^ 2 - q_n n * Y₁ ^ 2 = 1 := by omega
               rw [h1] at h2d1; exact Nat.prime_two.not_dvd_one h2d1
             · exact Nat.prime_two.not_dvd_one (Nat.dvd_gcd h2dX (Nat.prime_two.dvd_of_dvd_pow h2Y2) |>.trans (by rw [hcop_XY]))
@@ -313,7 +315,7 @@ theorem thm_4_2_part1_quartic_law {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
           · rw [Nat.factorization_mul (pow_ne_zero _ (by norm_num)) (A_star_pos n).ne',
                 Nat.factorization_pow, Finsupp.coe_add, Finsupp.coe_smul, Pi.add_apply, Pi.smul_apply,
                 smul_eq_mul, Nat.factorization_def _ hp, padicValNat.eq_zero_of_not_dvd (fun h => by
-                  have := (Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).mp (hp.dvd_of_dvd_pow h); omega),
+                  have := (Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).mp h; omega),
                 mul_zero, zero_add]
         have hA_star_val : (A_star n).factorization p =
             if p ∈ (Peven n).filter (3 ≤ ·) then padicValNat p (Nat.factorial n) else 0 := by
@@ -726,7 +728,11 @@ theorem thm_4_2_part2_dual_quartic {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
   obtain ⟨_, _, hBZ_eq, _, _, _⟩ := thm_4_2_part1_quartic_law hn hm hfund hk2
   have hX1_pos : 1 ≤ X₁ := hfund.1
   have hX1_gt1 : 1 < X₁ := by
-    by_contra hle; have h1 : X₁ = 1 := by omega; rw [h1] at hfac_eq; simp at hfac_eq
+    by_contra hle
+    have h1 : X₁ = 1 := by omega
+    rw [h1] at hfac_eq
+    simp at hfac_eq
+    exact absurd hfac_eq (Nat.factorial_ne_zero n)
   set c₀ := Nat.gcd (X₁ - 1) (X₁ + 1)
   have hc₀_dvd_2 : c₀ ∣ 2 := by
     have hd1 : c₀ ∣ X₁ - 1 := Nat.gcd_dvd_left _ _
@@ -928,10 +934,16 @@ theorem thm_4_2_part2_dual_quartic {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
       calc (2 / c₀) * Zp ^ 2 ≤ (Bp * Zp ^ 2) * Zp ^ 2 := Nat.mul_le_mul_right _ hle2
         _ = Bp * Zp ^ 4 := by ring
     zify [hle]
-    have h1z : (Bm : ℤ) * (Zm : ℤ) ^ 2 + (2 / c₀ : ℕ) = (Bp : ℤ) * (Zp : ℤ) ^ 2 := by exact_mod_cast h1_sum.symm
+    have h1z : (Bm : ℤ) * (Zm : ℤ) ^ 2 = (Bp : ℤ) * (Zp : ℤ) ^ 2 - ((2 / c₀ : ℕ) : ℤ) := by
+      have h1z' : (Bm : ℤ) * (Zm : ℤ) ^ 2 + ((2 / c₀ : ℕ) : ℤ) = (Bp : ℤ) * (Zp : ℤ) ^ 2 := by
+        exact_mod_cast h1_sum.symm
+      linarith [h1z']
     have hZz : (Z : ℤ) = (Zm : ℤ) * (Zp : ℤ) := by exact_mod_cast hZ_prod.symm
     rw [hZz]
-    nlinarith [h1z]
+    calc (Bm : ℤ) * ((Zm : ℤ) * (Zp : ℤ)) ^ 2
+        = ((Bm : ℤ) * (Zm : ℤ) ^ 2) * (Zp : ℤ) ^ 2 := by ring
+      _ = ((Bp : ℤ) * (Zp : ℤ) ^ 2 - ((2 / c₀ : ℕ) : ℤ)) * (Zp : ℤ) ^ 2 := by rw [h1z]
+      _ = (Bp : ℤ) * (Zp : ℤ) ^ 4 - ((2 / c₀ : ℕ) : ℤ) * (Zp : ℤ) ^ 2 := by ring
   exact ⟨hc₀_12, Bm, Bp, Zm, Zp, hBm_pos, hBp_pos, hZm_pos, hZp_pos,
     hcop_B, hcop_Z, hB_prod, hZ_prod, hu₁_eq, hu₂_eq, hdiff_BZ, hq_minus, hq_plus⟩
 
@@ -2012,7 +2024,8 @@ theorem thm_4_2_part3_mertens_bound :
       haveI : Fact p.Prime := ⟨hp_pr⟩
       have hleg : (p - 1) * padicValNat p (Nat.factorial n) = n - (Nat.digits p n).sum :=
         sub_one_mul_padicValNat_factorial n
-      have hv_nat : (p - 1) * padicValNat p (Nat.factorial n) ≤ n := by omega
+      have hv_nat : (p - 1) * padicValNat p (Nat.factorial n) ≤ n :=
+        le_trans (Nat.le_mul_of_pos_left _ (Nat.sub_pos_of_lt hp_pr.one_lt)) (hleg ▸ Nat.sub_le n _)
       have hv_real : ((p : ℝ) - 1) * (padicValNat p (Nat.factorial n) : ℝ) ≤ (n : ℝ) := by
         have h1 : 1 ≤ p := hp_pr.one_lt.le
         have h1' : ((p - 1 : ℕ) : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) ≤ (n : ℝ) := by
