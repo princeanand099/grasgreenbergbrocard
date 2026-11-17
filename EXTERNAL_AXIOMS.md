@@ -3,7 +3,18 @@
 All external axioms in this repository represent **established, peer-reviewed mathematical theorems** external to the manuscript's own contributions, where Mathlib v4.35.0 does not yet provide a formalization. **Zero** manuscript-owned lemmas, propositions, or theorems are axiomatized.
 
 ## Section 2 External Axioms (`GrasGreenbergBrocard/ExternalAxiomsAnalytic.lean`)
-Classical analytic number theory bounds (Vaaler trigonometric polynomial approximation and exponential sum estimates) supporting the Section 2 valuation-parity distribution theorems.
+
+1. **`de_la_vallee_poussin_theta`**
+   - **Statement**: $\vartheta(x) - x = O\bigl(x \exp(-c_1\sqrt{\log x})\bigr)$ for some absolute constant $c_1 > 0$.
+   - **Source**: Ch.-J. de la Vallée Poussin (1899); H. Davenport, *Multiplicative Number Theory* (3rd ed., 2000), Ch. 18.
+
+2. **Prime Exponential Sum Bounds (Vinogradov–Korobov / Vaughan Type)**
+   - **Statement**: Bounds on $\sum_{p \sim P} e(\alpha n / p)$ and related prime exponential sums over dyadic intervals used in `ExpSumBounds.lean` and `ExpSumBoundsMod.lean`.
+   - **Source**: I. M. Vinogradov / R. C. Vaughan identity and Weyl-type exponential sum estimates (Davenport 2000, Ch. 24–25; Iwaniec–Kowalski 2004, Ch. 8 & 13).
+
+3. **Vaaler Trigonometric Polynomial Approximation**
+   - **Statement**: Beurling–Selberg / Vaaler extremal trigonometric polynomial bounds for the sawtooth function $\psi(t) = \{t\} - 1/2$ and modular indicator functions.
+   - **Source**: J. D. Vaaler, *Some extremal functions in Fourier analysis*, Bull. Amer. Math. Soc. (N.S.) 12 (1985), 183–216.
 
 ## Section 3 External Axioms (`GrasGreenbergBrocard/ExternalAxiomsSec3.lean`)
 
@@ -38,3 +49,13 @@ Classical analytic number theory bounds (Vaaler trigonometric polynomial approxi
 8. **`ozaki_taya_split_prime_iwasawa`**
    - **Statement**: For a split prime $p \ge 5$ ($p \nmid q$) with $v_p(\widetilde{R}_p(K)) \ge 2$: $|X(K_\infty)_\Gamma| = |A_m^\Gamma| = |T_{K,p}|$ for $m \ge v_p(\widetilde{R}_p(K)) - 1$; $\lambda_p(K) + \nu_p(K) \ge v_p(\widetilde{R}_p(K)) - 1$; and $n_0^{(r)}(K) > r + 1$ for all $r \ge 0$ implies $\lambda_p(K) \ge 1$.
    - **Source**: M. Ozaki (1997), Prop. 1; S. Yanagisawa (2026), Lemmas 6.1–6.2; H. Taya (1996), Cor. 2–3, Thm. 4.
+
+## Section 4 External Axioms (`GrasGreenbergBrocard/ExternalAxiomsSec4.lean`)
+
+1. **`mertens_first_theorem_odd_primes`**
+   - **Statement**: $\sum_{3 \le p \le x} \frac{\log p}{p - 1} = \log x - \gamma - \log 2 + o(1)$ as $x \to \infty$, with $0.5772 < \gamma < 0.5773$.
+   - **Source**: F. Mertens (1874); H. Davenport, *Multiplicative Number Theory* (3rd ed., 2000), Ch. 7.
+
+2. **`nth_prime_asymptotic`**
+   - **Statement**: The $k$-th prime $p_k$ satisfies $p_k = (1 + o(1))\, k \log k$ as $k \to \infty$.
+   - **Source**: Prime Number Theorem (Hadamard / de la Vallée Poussin 1896; Davenport 2000, Ch. 18).
