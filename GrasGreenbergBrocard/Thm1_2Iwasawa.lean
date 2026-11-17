@@ -112,8 +112,8 @@ theorem prime_in_band_val_and_coprime_k {n p k : ℕ} (hn : 116 ≤ n) (hp : p.P
     padicValNat_factorial_eq_div_of_lt_sq hp hp_sq_gt
   have h3p : 3 * p ≤ n := by exact_mod_cast (by linarith : 3 * (p : ℝ) ≤ (n : ℝ))
   have hn5p : n < 5 * p := by exact_mod_cast (by linarith : (n : ℝ) < 5 * (p : ℝ))
-  have hdiv_ge : 3 ≤ n / p := (Nat.le_div_iff_mul_le hp.pos).mpr h3p
-  have hdiv_lt : n / p < 5 := Nat.div_lt_of_lt_mul hn5p
+  have hdiv_ge : 3 ≤ n / p := (Nat.le_div_iff_mul_le hp.pos).mpr (by linarith)
+  have hdiv_lt : n / p < 5 := Nat.div_lt_of_lt_mul (by linarith : n < p * 5)
   have hval_or : padicValNat p (Nat.factorial n) = 3 ∨ padicValNat p (Nat.factorial n) = 4 := by
     rw [hv_div]; omega
   have hk_lt_p : k < p := by
@@ -126,7 +126,7 @@ theorem prime_in_band_val_and_coprime_k {n p k : ℕ} (hn : 116 ≤ n) (hp : p.P
         rw [Real.log_lt_iff_lt_exp (by norm_num)]
         have he1 : (2.718 : ℝ) < Real.exp 1 := by have := Real.exp_one_gt_d9; linarith
         have he3 : (2.718 : ℝ) ^ 3 < Real.exp 3 := by
-          rw [show (3 : ℝ) = ((3 : ℕ) : ℝ) by norm_num, Real.exp_nat_mul, mul_one]
+          rw [show (3 : ℝ) = ((3 : ℕ) : ℝ) * 1 by norm_num, Real.exp_nat_mul]
           exact pow_lt_pow_left₀ he1 (by norm_num) (by norm_num)
         norm_num at he3
         linarith
@@ -176,12 +176,13 @@ private lemma p_dvd_q_n_iff {n p : ℕ} (hp : p.Prime) (hpn : p ≤ n) :
         intro q hq
         have hq_pr : q.Prime := (Finset.mem_filter.mp hq).2.1
         exact (Nat.coprime_primes hp hq_pr).mpr (fun h => hnot (h ▸ hq))
-      exact hp.not_dvd_one (hcop.dvd_of_dvd_mul_left (dvd_mul_of_dvd_right hdvd 1))
-    exact (Finset.mem_filter.mp hmem).2.2
+      exact hp.not_dvd_one (hcop ▸ Nat.dvd_gcd dvd_rfl hdvd)
+    have hndvd := (Finset.mem_filter.mp hmem).2.2
+    omega
   · intro hodd
     unfold q_n
     apply Finset.dvd_prod_of_mem
-    exact Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hpn⟩, hp, hodd⟩
+    exact Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hpn⟩, hp, by omega⟩
 
 /-- **Theorem 1.2(i) (Parity-Independent Non-p-Rationality and p-Ramified Iwasawa Rank, eq. 1.8)**:
 For any prime `p ∈ [5, n/2]` with `v_p(R̃_p(K_n)) = ⌊v_p(n!)/2⌋`,
@@ -224,7 +225,7 @@ theorem thm_1_2_part1_valuation_law {n p : ℕ} (hp : p.Prime) (hp5 : 5 ≤ p) (
   refine ⟨hLp_eq, hT_eq, fun hp_third => ?_⟩
   have h3p : 3 * p ≤ n := by omega
   have hv3 : 3 ≤ padicValNat p (Nat.factorial n) :=
-    le_trans ((Nat.le_div_iff_mul_le hp.pos).mpr h3p) (padicValNat_factorial_ge_div hp (by omega))
+    le_trans ((Nat.le_div_iff_mul_le hp.pos).mpr (by linarith)) (padicValNat_factorial_ge_div hp (by omega))
   have hT_ge1 : 1 ≤ inv.v_T := by omega
   have h_not_prat : inv.is_p_rational = false := by
     by_contra htrue
@@ -252,7 +253,7 @@ theorem thm_1_2_part2_split_primes {n p : ℕ} (hp : p.Prime) (hp5 : 5 ≤ p) (h
     ((∀ r : ℕ, r + 1 < inv.n0_r r) → 1 ≤ inv.lambda_p) := by
   have h4p : 4 * p ≤ n := by omega
   have hv4 : 4 ≤ padicValNat p (Nat.factorial n) :=
-    le_trans ((Nat.le_div_iff_mul_le hp.pos).mpr h4p) (padicValNat_factorial_ge_div hp (by omega))
+    le_trans ((Nat.le_div_iff_mul_le hp.pos).mpr (by linarith)) (padicValNat_factorial_ge_div hp (by omega))
   have hreg_ge2 : 2 ≤ inv.v_reg := by omega
   have hp_ndvd_q : ¬ p ∣ q_n n := by
     have hev : padicValNat p (Nat.factorial n) % 2 = 0 := by
@@ -297,7 +298,7 @@ theorem thm_1_2_part3_conditional_finiteness {n p : ℕ} (hn : 116 ≤ n) (hp : 
       linarith
     have hp_third : p ≤ n / 3 := by
       have h3p : 3 * p ≤ n := by exact_mod_cast (by linarith : 3 * (p : ℝ) ≤ (n : ℝ))
-      exact (Nat.le_div_iff_mul_le (by norm_num)).mpr h3p
+      exact (Nat.le_div_iff_mul_le (by norm_num)).mpr (by linarith)
     have hp_half : p ≤ n / 2 := by omega
     have h_false := (thm_1_2_part1_valuation_law hp hp5 hp_half inv h_reg).2.2 hp_third
     rw [h_false.2.1] at hprat

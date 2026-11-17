@@ -66,10 +66,13 @@ theorem zsqrtd_neg_units {D : ℕ} (hD : 2 ≤ D) (w : (Zsqrtd (-(D : ℤ)))ˣ) 
     exact_mod_cast w.mul_inv
   have hnorm : (a ^ 2 + (D : ℤ) * b ^ 2) *
       ((w' : Zsqrtd (-(D : ℤ))).re ^ 2 + (D : ℤ) * (w' : Zsqrtd (-(D : ℤ))).im ^ 2) = 1 := by
-    have h1 := congrArg Zsqrtd.norm hmul
-    rw [Zsqrtd.norm_mul] at h1
-    simp only [Zsqrtd.norm, zsqrtd_one_re', zsqrtd_one_im'] at h1
-    simpa [a, b, mul_comm, sub_neg_eq_add] using h1
+    calc (a ^ 2 + (D : ℤ) * b ^ 2) *
+          ((w' : Zsqrtd (-(D : ℤ))).re ^ 2 + (D : ℤ) * (w' : Zsqrtd (-(D : ℤ))).im ^ 2)
+        = (w : Zsqrtd (-(D : ℤ))).norm * (w' : Zsqrtd (-(D : ℤ))).norm := by
+          simp only [Zsqrtd.norm, a, b]; ring
+      _ = ((w : Zsqrtd (-(D : ℤ))) * (w' : Zsqrtd (-(D : ℤ)))).norm := (Zsqrtd.norm_mul _ _).symm
+      _ = (1 : Zsqrtd (-(D : ℤ))).norm := by rw [hmul]
+      _ = 1 := by simp [Zsqrtd.norm]
   have hnn1 : 0 ≤ a ^ 2 + (D : ℤ) * b ^ 2 := by positivity
   have hnorm_one : a ^ 2 + (D : ℤ) * b ^ 2 = 1 := by
     rcases Int.mul_eq_one_iff_eq_one_or_neg_one.mp hnorm with ⟨h1, _⟩ | ⟨h1, _⟩
@@ -94,13 +97,14 @@ theorem zsqrtd_neg_units {D : ℕ} (hD : 2 ≤ D) (w : (Zsqrtd (-(D : ℤ)))ˣ) 
 private lemma zsqrtd_neg_mul_eq_zero {D : ℤ} (hD : 0 < D) (x y : Zsqrtd (-D))
     (hx : x ≠ 0) (hxy : x * y = 0) : y = 0 := by
   have hnorm : (x.re ^ 2 + D * x.im ^ 2) * (y.re ^ 2 + D * y.im ^ 2) = 0 := by
-    have h1 := congrArg Zsqrtd.norm hxy
-    rw [Zsqrtd.norm_mul] at h1
-    simp only [Zsqrtd.norm, Zsqrtd.zero_re, Zsqrtd.zero_im] at h1
-    simpa [sub_neg_eq_add] using h1
+    calc (x.re ^ 2 + D * x.im ^ 2) * (y.re ^ 2 + D * y.im ^ 2)
+        = x.norm * y.norm := by simp only [Zsqrtd.norm]; ring
+      _ = (x * y).norm := (Zsqrtd.norm_mul x y).symm
+      _ = (0 : Zsqrtd (-D)).norm := by rw [hxy]
+      _ = 0 := by simp [Zsqrtd.norm]
   have hx_pos : 0 < x.re ^ 2 + D * x.im ^ 2 := by
     by_contra hle
-    push_neg at hle
+    push Not at hle
     have hre : x.re = 0 := by nlinarith [sq_nonneg x.re, sq_nonneg x.im]
     have him : x.im = 0 := by nlinarith [sq_nonneg x.re, sq_nonneg x.im]
     exact hx (by ext <;> simp [hre, him])
@@ -127,7 +131,7 @@ theorem J_n_sq_eq {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2) 
     · dsimp only [α, β]
       rw [zsqrtd_mul_im', sq, zsqrtd_mul_im', zsqrtd_natCast_re, zsqrtd_natCast_im]
       ring
-  have hsum_2 : α + β = (2 : Zsqrtd (-(q_n n : ℤ))) := by
+  have hsum_2 : α + β = ((2 : ℕ) : Zsqrtd (-(q_n n : ℤ))) := by
     ext <;> dsimp only [α, β] <;> simp
   have hm_odd : m % 2 = 1 := m_odd_of_brocard hn hm
   obtain ⟨t, ht⟩ : ∃ t : ℤ, 1 - (m : ℤ) ^ 2 = t * 2 := by
@@ -164,6 +168,7 @@ theorem J_n_sq_eq {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2) 
         _ = (t : Zsqrtd (-(q_n n : ℤ))) * α ^ 2 + ((t : Zsqrtd (-(q_n n : ℤ))) + α) * (α * β) := by ring
         _ = (t : Zsqrtd (-(q_n n : ℤ))) * α ^ 2 +
               ((t : Zsqrtd (-(q_n n : ℤ))) + α) * (m : Zsqrtd (-(q_n n : ℤ))) ^ 2 := by rw [hαβ]
+    change α ∈ (Ideal.span {(m : Zsqrtd (-(q_n n : ℤ))), α}) ^ 2
     rw [hα_eq]
     have hα_in : α ∈ Ideal.span {(m : Zsqrtd (-(q_n n : ℤ))), α} :=
       Ideal.subset_span (Set.mem_insert_of_mem _ rfl)
@@ -262,22 +267,18 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
           have hs_pos : 0 < s_n n := by
             unfold s_n; exact Finset.prod_pos (fun q hq => pow_pos (Finset.mem_filter.mp hq).2.pos _)
           linarith
-        have h1 : ((z.re.natAbs * z.im.natAbs : ℕ) : ℤ) = z.re * z.im := by
-          push_cast
+        have h1 : (z.re.natAbs : ℤ) * (z.im.natAbs : ℤ) = z.re * z.im := by
           rw [← Int.abs_eq_natAbs, ← Int.abs_eq_natAbs, ← abs_mul, abs_of_pos him_pos]
-        have h2 : ((z.re.natAbs * z.im.natAbs : ℕ) : ℝ) = ((z.re * z.im : ℤ) : ℝ) := by
-          exact_mod_cast h1
-        push_cast at h2
-        exact h2
+        exact_mod_cast h1
       have hsq_q : Real.sqrt (q_n n : ℝ) ^ 2 = (q_n n : ℝ) := Real.sq_sqrt (by positivity)
       have hu2_v2 : (z.re.natAbs : ℝ) ^ 2 + (q_n n : ℝ) * (z.im.natAbs : ℝ) ^ 2 = (m : ℝ) := by
         have hm_sq : (m : ℝ) ^ 2 = ((z.re.natAbs : ℝ) ^ 2 + (q_n n : ℝ) * (z.im.natAbs : ℝ) ^ 2) ^ 2 := by
           have h1 : (z.re.natAbs : ℝ) ^ 2 - (q_n n : ℝ) * (z.im.natAbs : ℝ) ^ 2 = 1 := by
-            have hzre : (z.re.natAbs : ℝ) ^ 2 = (z.re : ℝ) ^ 2 := by
-              rw [← Int.cast_natAbs]; exact sq_abs _
-            have hzim : (z.im.natAbs : ℝ) ^ 2 = (z.im : ℝ) ^ 2 := by
-              rw [← Int.cast_natAbs]; exact sq_abs _
-            rw [hzre, hzim]
+            have hzre : (z.re.natAbs : ℤ) ^ 2 = z.re ^ 2 := by rw [← Int.abs_eq_natAbs, sq_abs]
+            have hzim : (z.im.natAbs : ℤ) ^ 2 = z.im ^ 2 := by rw [← Int.abs_eq_natAbs, sq_abs]
+            have hzre_r : (z.re.natAbs : ℝ) ^ 2 = (z.re : ℝ) ^ 2 := by exact_mod_cast hzre
+            have hzim_r : (z.im.natAbs : ℝ) ^ 2 = (z.im : ℝ) ^ 2 := by exact_mod_cast hzim
+            rw [hzre_r, hzim_r]
             exact_mod_cast hre
           have h2 : (2 * (z.re.natAbs : ℝ) * (z.im.natAbs : ℝ)) ^ 2 = (s_n n : ℝ) ^ 2 := by
             rw [mul_assoc, hsign]
@@ -369,7 +370,7 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
         have hrat : (r : ℝ) = Real.sqrt (q_n n : ℝ) := by
           dsimp only [r]
           push_cast
-          field_simp [hne]
+          rw [div_eq_iff hne]
           linarith
         exact hsqrt_irr ⟨r, hrat⟩
       have hm_r : (m : ℝ) = (u : ℝ) ^ 2 + (q_n n : ℝ) * (v : ℝ) ^ 2 := by
