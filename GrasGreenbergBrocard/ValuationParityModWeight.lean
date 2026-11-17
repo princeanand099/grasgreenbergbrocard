@@ -526,7 +526,7 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
         (∑ p ∈ S_low, ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) * Real.log (p : ℝ)) := by
       rw [hS_sum, hS_hi_val, hS_low_eq, ← h_mert_sum]; ring
     rw [h_diff]
-    refine abs5_bound hS2_bound ?_ ?_ h_frac_err h_dig_err ?_
+    refine abs5_bound (B2 := (n : ℝ) * (Real.log 3 + Cm)) (B3 := (n : ℝ) * 1) hS2_bound ?_ ?_ h_frac_err h_dig_err ?_
     · rw [abs_mul, abs_of_nonneg hn_pos.le]
       exact mul_le_mul_of_nonneg_left hmert_nα hn_pos.le
     · rw [abs_mul, abs_of_nonneg hn_pos.le]
