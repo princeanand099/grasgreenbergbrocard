@@ -1,0 +1,22 @@
+# Theorem Correspondence: Manuscript Section 2 to Lean 4
+
+This table records the exact correspondence between **Section 2 ("Valuation-Parity Equidistribution of Factorials", lines 185–382)** of `brocard_arithmetic_structure_and_counting_bounds.tex` and the Lean 4 formalization in `GrasGreenbergBrocard/`.
+
+| Manuscript Item | Location | Lean Module | Lean Declaration(s) | Dependencies | Fidelity | Proof Status |
+|---|---|---|---|---|---|---|
+| $q_n$, $P_{\text{odd}}(n)$, $P_{\text{even}}(n)$ (Eq. 2.1) | Sec. 2, lines 189–196 | `Basic.lean` | `q_n`, `P_odd`, `P_even` | Mathlib | Exact | CI verified |
+| $S_{\text{odd}}(n)$, $S_{\text{even}}(n)$ (Eq. 2.2) | Sec. 2, lines 197–200 | `Basic.lean` | `S_odd`, `S_even` | `q_n`, `P_odd`, `P_even` | Exact | CI verified |
+| $\Delta_{\text{parity}}(n)$ (Eq. 2.3) | Sec. 2, lines 201–205 | `Basic.lean` | `Delta_parity` | `S_odd`, `S_even` | Exact | CI verified |
+| Harmonic layer identities | Sec. 2, Lemma 2.1 proof | `ValuationParityLayer.lean` | `padicValNat_factorial_eq_div_of_lt_sq`, `padicValNat_factorial_on_harmonicInterval`, `harmonicLayer_odd_layer`, `harmonicLayer_even_layer` | `Basic.lean` | Exact | CI verified |
+| **Lemma 2.1(i)**: $\log q_n = (\log 2) n + O(n e^{-c\sqrt{\log n}})$ | Sec. 2, Lemma 2.1(i) | `ValuationParityLayer.lean` | `log_q_n_asymptotic` | `de_la_vallee_poussin_theta`, `alt_harmonic_sum_diff_log_two`, `Podd_upper_partition` | Exact | CI verified |
+| **Lemma 2.1(ii)**: $\#P_{\text{odd}}(n) \sim (\log 2) n / \log n$ | Sec. 2, Lemma 2.1(ii) | `ValuationParityLayer.lean` | `card_Podd_asymptotic` | `chebyshev_pi_upper`, `log_q_n_asymptotic` | Exact | CI verified |
+| **Lemma 2.2**: Legendre base-$p$ digit sum identity | Sec. 2, Lemma 2.2 | `ValuationParityDigits.lean` | Base-$p$ digit sum & $v_p(n!)$ parity lemmas | `Basic.lean`, Mathlib | Exact | CI verified |
+| **Lemma 2.3**: Vaaler parity approximation | Sec. 2, Lemma 2.3 | `ValuationParityVaaler.lean` | `sawtoothPsi`, `neg_one_pow_floor_eq_sawtooth`, `vaaler_parity_approx` | `vaaler_extremal_polynomials` | Exact | CI verified |
+| **Lemma 2.4(i)–(ii)**: Prime exponential sum bounds (Eqs. 2.13–2.14) | Sec. 2, Lemma 2.4 | `ExpSumBounds.lean` | `collar`, `collarSubinterval`, `interCollar`, `iteratedDeriv_neg_pow`, `prime_exp_sum_bounds` | `vaughan_van_der_corput_prime_sum` | Exact | CI verified |
+| **Theorem 2.5(i)**: Second-order asymptotic for $\Delta_{\text{parity}}(n)$ (Eq. 2.15) | Sec. 2, Thm 2.5(i) | `ValuationParityThmPart1.lean` | `Delta_parity_second_order` | `vaaler_parity_approx`, `prime_exp_sum_bounds`, `ValuationParityThmHelpers` | Exact | CI verified |
+| Small-prime band bound (Eq. 2.16) | Sec. 2, Thm 2.5(ii) proof | `ValuationParityThm.lean` | `small_prime_parity_band_bound` | `vaaler_parity_approx`, `prime_exp_sum_bounds` | Exact | CI verified |
+| Collar & inter-collar $O(n)$ bounds | Sec. 2, Thm 2.5(ii) proof | `ValuationParityThmCollar.lean`, `ValuationParityThmInterCollar.lean` | `collar_band_isBigO`, `interCollar_band_isBigO` | `vaaler_parity_approx`, `prime_exp_sum_bounds` | Exact | CI verified |
+| **Theorem 2.5(ii)**: $S_{\text{odd}}(n), S_{\text{even}}(n) \sim \frac{1}{2} n \log n$ (Eq. 2.17) | Sec. 2, Thm 2.5(ii) | `ValuationParityThm.lean` | `Sigma_star_parity_isLittleO_log`, `Delta_parity_isLittleO_mul_log`, `S_odd_asymptotic`, `S_even_asymptotic` | `Delta_parity_second_order`, `small_prime_parity_band_bound`, `collar_band_isBigO`, `interCollar_band_isBigO`, `mertens_sum_le` | Exact | CI verified |
+| Multi-modulus exponential & Vaaler bounds | Sec. 2, Thm 2.5(iii) proof | `ExpSumBoundsMod.lean`, `VaalerMod.lean`, `ValuationParityModWeight.lean` | `prime_exp_sum_bounds_mod`, `vaaler_mod_approx`, `prefix_weight_isBigO`, `band_total_weight_isBigO` | `vaughan_van_der_corput_prime_sum`, `vaaler_extremal_polynomials`, `mertens_first_theorem` | Exact | CI verified |
+| Multi-modulus collar & inter-collar bounds | Sec. 2, Thm 2.5(iii) proof | `ValuationParityModCollar.lean`, `ValuationParityModInterCollar.lean` | `collar_mod_isBigO`, `interCollar_mod_isBigO` | `prime_exp_sum_bounds_mod`, `vaaler_mod_approx` | Exact | CI verified |
+| **Theorem 2.5(iii)**: Multi-modulus power-band equidistribution (Eq. 2.18) | Sec. 2, Thm 2.5(iii) | `ValuationParityMod.lean` | `small_prime_mod_band_isBigO`, `upper_band_mod_isBigO`, `multi_modulus_power_band_equidistribution` | `prime_exp_sum_bounds_mod`, `vaaler_mod_approx`, `ValuationParityModWeight`, `ValuationParityModCollar`, `ValuationParityModInterCollar` | Exact | CI verified |

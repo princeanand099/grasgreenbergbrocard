@@ -1,27 +1,46 @@
-# GrasGreenbergBrocard — Lean 4 Formalization
+# Gras–Greenberg–Brocard: Lean 4 Formalization (Section 2)
 
-Lean 4 formalization of the mathematical manuscript *Arithmetic Structure and Counting Bounds for the Brocard–Ramanujan Equation* (`brocard_arithmetic_structure_and_counting_bounds.tex`).
+Lean 4 + Mathlib formalization of **Section 2 ("Valuation-Parity Equidistribution of Factorials")** of the manuscript *Brocard's Problem: Arithmetic Structure and Counting Bounds* (`brocard_arithmetic_structure_and_counting_bounds.tex`).
+
+## Scope
+
+This milestone completely formalizes **entire Section 2** (Equations 2.1–2.18, Lemmas 2.1–2.4, and Theorem 2.5(i)–(iii)) with **zero `sorry`**, **zero `admit`**, and **zero manuscript-owned axioms**. Sections 3–8 of the manuscript are outside the scope of this milestone.
 
 ## Environment & Build Instructions
-- **Lean Toolchain:** `leanprover/lean4:v4.35.0`
-- **Mathlib Version:** `v4.35.0`
-- **Build Command:**
-  ```bash
-  lake exe cache get
-  lake build
-  ```
 
-## Module Organization (Section 2 Formalization)
-- `GrasGreenbergBrocard/Basic.lean`: Core arithmetic definitions (`Podd`, `Peven`, `q_n`, `s_n`, `piPrime`, `thetaPrime`, `eExp`, `S_odd`, `S_even`, `Delta_parity`, `Sigma_star_parity`, `harmonicInterval`), `factorial_eq_q_mul_s_sq`, and `Delta_parity_eq_sum`.
-- `GrasGreenbergBrocard/ExternalAxiomsAnalytic.lean`: Peer-reviewed external analytic axioms (de la Vallée Poussin PNT, Chebyshev, Mertens, Vaaler, Vaughan–van der Corput).
-- `GrasGreenbergBrocard/ValuationParityLayer.lean`: Lemma 2.1 (harmonic layer stratification and asymptotics of `log q_n` and `|Podd(n)|`).
-- `GrasGreenbergBrocard/ValuationParityDigits.lean`: Lemma 2.2 (exact Legendre base-`p` digit reduction below `√n`).
-- `GrasGreenbergBrocard/ValuationParityVaaler.lean`: Lemma 2.3 (Vaaler's odd-harmonic trigonometric polynomial approximation `Ψ̃_H, B̃_H`).
-- `GrasGreenbergBrocard/ExpSumBounds.lean`: Lemma 2.4 (collar decomposition and prime exponential sum bounds on `[n^δ, n / (log n)^12]`).
-- `GrasGreenbergBrocard/ValuationParityThm.lean`: Theorem 2.5 (second-order discrepancy formula, 50–50 valuation-parity equidistribution, and multi-modulus power-band equidistribution).
+- **Lean toolchain**: `leanprover/lean4:v4.35.0` (see `lean-toolchain`)
+- **Dependencies**: `mathlib` (see `lakefile.toml` / `lake-manifest.json`)
 
-## Protocol Records
-- `THEOREM_CORRESPONDENCE.md`: Manuscript-to-Lean theorem correspondence record.
-- `EXTERNAL_AXIOMS.md`: External-axiom register with published sources and justifications.
-- `MATHEMATICAL_CORRECTIONS.md`: Mathematical correction and audit record.
-- `PROGRESS.md`: Continuous formalization progress record.
+To build the project locally:
+
+```bash
+lake exe cache get
+lake build
+```
+
+## Module Organization (17 Modules)
+
+1. `GrasGreenbergBrocard/Basic.lean` — Core definitions for $q_n$, $P_{\text{odd}}(n)$, $P_{\text{even}}(n)$, $S_{\text{odd}}(n)$, $S_{\text{even}}(n)$, and $\Delta_{\text{parity}}(n)$ (Equations 2.1–2.3).
+2. `GrasGreenbergBrocard/ExternalAxiomsAnalytic.lean` — External analytic number theory axioms (PNT/de la Vallée Poussin, Chebyshev, Mertens, Vaaler, Vaughan–van der Corput).
+3. `GrasGreenbergBrocard/ValuationParityLayer.lean` — Harmonic layer decomposition, alternating harmonic sum, and **Lemma 2.1(i)–(ii)** (`log_q_n_asymptotic`, `card_Podd_asymptotic`).
+4. `GrasGreenbergBrocard/ValuationParityDigits.lean` — Base-$p$ digit sum identity and Legendre/Kummer parity formulas (**Lemma 2.2**).
+5. `GrasGreenbergBrocard/ValuationParityVaaler.lean` — Vaaler trigonometric polynomial parity approximation (**Lemma 2.3**, `vaaler_parity_approx`).
+6. `GrasGreenbergBrocard/ExpSumBounds.lean` — Collar/inter-collar regions and Vaughan–van der Corput exponential sum bounds (**Lemma 2.4(i)–(ii)**, `prime_exp_sum_bounds`).
+7. `GrasGreenbergBrocard/ValuationParityThmHelpers.lean` — Helper lemmas for Vaaler Fourier series and band decompositions.
+8. `GrasGreenbergBrocard/ValuationParityThmPart1.lean` — **Theorem 2.5(i)** (`Delta_parity_second_order`, Equation 2.15).
+9. `GrasGreenbergBrocard/ValuationParityThmInterCollar.lean` — Inter-collar $O(n)$ band bound (`interCollar_band_isBigO`).
+10. `GrasGreenbergBrocard/ValuationParityThmCollar.lean` — Collar $O(n)$ band bound (`collar_band_isBigO`).
+11. `GrasGreenbergBrocard/ValuationParityThm.lean` — Small-prime band bound (`small_prime_parity_band_bound`, eq. 2.16) and **Theorem 2.5(ii)** (`S_odd_asymptotic`, `S_even_asymptotic`, eq. 2.17).
+12. `GrasGreenbergBrocard/ExpSumBoundsMod.lean` — Multi-modulus Vaughan–van der Corput exponential sum bounds (`prime_exp_sum_bounds_mod`).
+13. `GrasGreenbergBrocard/VaalerMod.lean` — Multi-modulus Vaaler indicator approximation (`vaaler_mod_approx`).
+14. `GrasGreenbergBrocard/ValuationParityModWeight.lean` — Prime-band weight asymptotics (`prefix_weight_isBigO`, `band_total_weight_isBigO`).
+15. `GrasGreenbergBrocard/ValuationParityModInterCollar.lean` — Multi-modulus inter-collar bound (`interCollar_mod_isBigO`).
+16. `GrasGreenbergBrocard/ValuationParityModCollar.lean` — Multi-modulus collar bound (`collar_mod_isBigO`).
+17. `GrasGreenbergBrocard/ValuationParityMod.lean` — **Theorem 2.5(iii)** (`multi_modulus_power_band_equidistribution`, Equation 2.18).
+
+## Documentation & Audit Records
+
+- [`THEOREM_CORRESPONDENCE.md`](THEOREM_CORRESPONDENCE.md) — Manuscript-to-Lean theorem correspondence for Section 2.
+- [`EXTERNAL_AXIOMS.md`](EXTERNAL_AXIOMS.md) — Register of external analytic number theory axioms.
+- [`MATHEMATICAL_CORRECTIONS.md`](MATHEMATICAL_CORRECTIONS.md) — Mathematical refinements and clarifications recorded during formalization.
+- [`PROGRESS.md`](PROGRESS.md) — Build, CI, and verification log.
