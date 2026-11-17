@@ -15,7 +15,7 @@ set_option maxHeartbeats 400000
 
 noncomputable section
 
-open Real Finset BigOperators Asymptotics Filter
+open Real Finset BigOperators Asymptotics Filter Classical
 
 namespace GrasGreenbergBrocard
 
@@ -30,8 +30,8 @@ theorem interCollar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
   set A_R := 6 * R + 30
   have hR3 : 3 ≤ R := by
     rw [Nat.le_floor_iff (by positivity)]
-    rw [le_div_iff₀ hδ0]
-    linarith
+    have h3 : (3 : ℝ) ≤ 1 / δ := by rw [le_div_iff₀ hδ0]; linarith
+    exact_mod_cast h3
   obtain ⟨η', η, hη', hη, C₁e, C₂e, C₃e, hC₁e, hC₂e, hC₃e, hExp⟩ :=
     prime_exp_sum_bounds δ hδ0 hδ1
   obtain ⟨Cm, hCm_pos, hCm⟩ := mertens_sum_le
@@ -52,7 +52,7 @@ theorem interCollar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
     rw [← Real.sqrt_eq_rpow] at h1
     have h2 : (Nat.sqrt n : ℝ) ≤ Real.sqrt (n : ℝ) := by
       rw [Real.le_sqrt (by positivity) (by positivity)]; exact_mod_cast Nat.sqrt_le' n
-    rw [le_div_iff₀ (by positivity)]
+    rw [le_div_iff₀ (pow_pos (Real.log_pos (by exact_mod_cast (by omega : 1 < n))) 12)]
     calc (Nat.sqrt n : ℝ) * (Real.log (n : ℝ)) ^ 12 ≤ Real.sqrt (n : ℝ) * (Real.log (n : ℝ)) ^ 12 :=
           mul_le_mul_of_nonneg_right h2 (by positivity)
       _ ≤ Real.sqrt (n : ℝ) * Real.sqrt (n : ℝ) := by
@@ -69,10 +69,10 @@ theorem interCollar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
     have hfl_le : 2 * (Nat.floor ((Real.log (n : ℝ)) ^ (R + 2)) : ℝ) + 1 ≤ (Real.log (n : ℝ)) ^ (R + 3) := by
       have h1 : (Nat.floor ((Real.log (n : ℝ)) ^ (R + 2)) : ℝ) ≤ (Real.log (n : ℝ)) ^ (R + 2) :=
         Nat.floor_le (by positivity)
-      have h2 : (Real.log (n : ℝ)) ^ (R + 2) * 3 ≤ (Real.log (n : ℝ)) ^ (R + 2) * Real.log (n : ℝ) :=
-        mul_le_mul_of_nonneg_left (by linarith) (by positivity)
+      have h2 : (Real.log (n : ℝ)) ^ (R + 2) * 3 ≤ (Real.log (n : ℝ)) ^ (R + 3) := by
+        rw [show R + 3 = R + 2 + 1 from rfl, pow_succ]
+        exact mul_le_mul_of_nonneg_left (by linarith) (by positivity)
       have h3 : (1 : ℝ) ≤ (Real.log (n : ℝ)) ^ (R + 2) := one_le_pow₀ (by linarith)
-      rw [pow_succ] at h2
       linarith
     have hlog_le : Real.log (2 * (Nat.floor ((Real.log (n : ℝ)) ^ (R + 2)) : ℝ) + 1) ≤
         ((R : ℝ) + 3) * Real.log (Real.log (n : ℝ)) := by
@@ -194,7 +194,10 @@ theorem interCollar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
     let nzH := allH.filter (· ≠ 0)
     let b_real : ℤ → ℂ := fun h => (1 / 2 : ℂ) * (b_tilde h + star (b_tilde (-h)))
     have hb_real_0 : b_real 0 = ((2 / ((H : ℝ) + 1) : ℝ) : ℂ) := by
-      dsimp only [b_real]; rw [neg_zero, h_btilde0]; apply Complex.ext <;> simp <;> norm_cast
+      dsimp only [b_real]
+      have hbt : b_tilde 0 = ((2 / ((H : ℝ) + 1) : ℝ) : ℂ) := by rw [h_btilde0]; push_cast; rfl
+      rw [neg_zero, hbt, Complex.conj_ofReal]
+      push_cast; ring
     have hb_real_norm : ∀ h : ℤ, ‖b_real h‖ ≤ 3 / ((H : ℝ) + 1) := by
       intro h; dsimp only [b_real]
       rw [norm_mul, show ‖(1 / 2 : ℂ)‖ = 1 / 2 from by norm_num]
@@ -211,7 +214,7 @@ theorem interCollar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
       let P := A_lo * (2 : ℝ) ^ k
       let Ik := D_r.filter (fun p : ℕ => P < (p : ℝ) ∧ (p : ℝ) ≤ 2 * P)
       rcases eq_or_ne Ik ∅ with h_emp | h_Ik_ne
-      · rw [h_emp, Finset.sum_empty, norm_zero]; positivity
+      · change ‖∑ p ∈ Ik, _‖ ≤ _; rw [h_emp, Finset.sum_empty, norm_zero]; positivity
       · have hP_lo : (n : ℝ) ^ δ ≤ P :=
           le_trans (le_max_left _ _) (le_mul_of_one_le_right (by positivity) (one_le_pow₀ (by norm_num)))
         have hP_pos : 0 < P := lt_of_lt_of_le (by positivity) hP_lo
@@ -239,7 +242,7 @@ theorem interCollar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
           have hBr_eq : B_hi ^ r = (n : ℝ) / (Real.log (n : ℝ)) ^ A_R := by
             dsimp only [B_hi]
             rw [div_pow, ← Real.rpow_natCast _ r, ← Real.rpow_mul hn_pos.le,
-              ← Real.rpow_natCast (Real.log (n : ℝ)) _, ← Real.rpow_mul (by positivity)]
+              ← Real.rpow_natCast ((Real.log (n : ℝ)) ^ ((A_R : ℝ) / (r : ℝ))) r, ← Real.rpow_mul (by positivity)]
             rw [one_div_mul_cancel hr_pos.ne', div_mul_cancel₀ _ hr_pos.ne', Real.rpow_one, Real.rpow_natCast]
           have h2R_le1 : (2 : ℝ) ^ (-(R : ℤ)) ≤ 1 := zpow_le_one_of_nonpos₀ (by norm_num) (by omega)
           calc (2 : ℝ) ^ (-(R : ℤ)) * (Real.log (n : ℝ)) ^ A_R ≤ (Real.log (n : ℝ)) ^ A_R :=
@@ -299,8 +302,7 @@ theorem interCollar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
       dsimp only [a_fn]
       rw [Complex.norm_real, Real.norm_eq_abs, abs_zpow, abs_neg, abs_one, one_zpow]
     have hB_pw : ∀ s p, ‖a_fn s p - b_fn s p‖ ≤ B_fn s p := fun s p => by
-      dsimp only [a_fn, b_fn, B_fn]
-      exact h_vaaler_pw ((n : ℝ) / (p : ℝ) ^ s)
+      simpa only [a_fn, b_fn, B_fn] using h_vaaler_pw ((n : ℝ) / (p : ℝ) ^ s)
     let S_idx := Finset.Icc 1 r
     have hS_idx_ne : S_idx.Nonempty := ⟨1, Finset.mem_Icc.mpr ⟨le_rfl, by omega⟩⟩
     have hS_idx_card : S_idx.card ≤ R := by rw [Nat.card_Icc]; omega
@@ -345,64 +347,58 @@ theorem interCollar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
         6 ^ R * (3 * 4 * C₂e) * (1 / Real.log (n : ℝ)) := by
       have h_prod_exp : ∀ p ∈ D_r,
           ∏ s ∈ S_idx, b_fn s p =
-            ∑ g ∈ Fintype.piFinset (fun _ : S_idx => oddH),
-              (∏ s : S_idx, c_tilde (g s)) *
-                eExp (∑ s ∈ S_idx, (if hs : s ∈ S_idx then (g ⟨s, hs⟩ : ℝ) else 0) * (n : ℝ) / (2 * (p : ℝ) ^ s)) := by
+            ∑ g ∈ S_idx.pi (fun _ => oddH),
+              (∏ s ∈ S_idx, c_tilde (g s.1 s.2)) *
+                eExp (∑ s ∈ S_idx, ((if hs : s ∈ S_idx then g s hs else 0 : ℤ) : ℝ) * (n : ℝ) / (2 * (p : ℝ) ^ s)) := by
         intro p _
         dsimp only [b_fn]
-        rw [← Finset.prod_coe_sort S_idx]
-        rw [Fintype.prod_sum (fun (s : S_idx) (h : ℤ) => c_tilde h * eExp ((h : ℝ) * ((n : ℝ) / (p : ℝ) ^ (s : ℕ)) / 2))]
+        rw [Finset.prod_sum]
         refine Finset.sum_congr rfl (fun g _ => ?_)
         rw [Finset.prod_mul_distrib, eExp_sum]
         congr 2
-        rw [← Finset.sum_coe_sort S_idx]
-        refine Finset.sum_congr rfl (fun s _ => ?_)
-        simp only [s.2, ↓reduceDIte]
-        ring
+        refine Finset.sum_congr rfl (fun s hs => ?_)
+        simp only [dif_pos hs]; ring
       rw [Finset.sum_congr rfl (fun p hp => by rw [h_prod_exp p hp, Finset.mul_sum])]
       rw [Finset.sum_comm]
-      have h_each_g : ∀ g ∈ Fintype.piFinset (fun _ : S_idx => oddH),
-          ‖∑ p ∈ D_r, (w_p p : ℂ) * ((∏ s : S_idx, c_tilde (g s)) *
-            eExp (∑ s ∈ S_idx, (if hs : s ∈ S_idx then (g ⟨s, hs⟩ : ℝ) else 0) * (n : ℝ) / (2 * (p : ℝ) ^ s)))‖ ≤
-          (∏ s : S_idx, ‖c_tilde (g s)‖) * (3 * Real.log (n : ℝ) * (4 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)))) := by
+      have h_each_g : ∀ g ∈ S_idx.pi (fun _ => oddH),
+          ‖∑ p ∈ D_r, (w_p p : ℂ) * ((∏ s ∈ S_idx, c_tilde (g s.1 s.2)) *
+            eExp (∑ s ∈ S_idx, ((if hs : s ∈ S_idx then g s hs else 0 : ℤ) : ℝ) * (n : ℝ) / (2 * (p : ℝ) ^ s)))‖ ≤
+          (∏ s ∈ S_idx, ‖c_tilde (g s.1 s.2)‖) * (3 * Real.log (n : ℝ) * (4 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)))) := by
         intro g hg
-        have hpull : ∑ p ∈ D_r, (w_p p : ℂ) * ((∏ s : S_idx, c_tilde (g s)) *
-              eExp (∑ s ∈ S_idx, (if hs : s ∈ S_idx then (g ⟨s, hs⟩ : ℝ) else 0) * (n : ℝ) / (2 * (p : ℝ) ^ s))) =
-            (∏ s : S_idx, c_tilde (g s)) * ∑ k ∈ dyadicBlocks A_lo B_hi,
+        have hpull : ∑ p ∈ D_r, (w_p p : ℂ) * ((∏ s ∈ S_idx, c_tilde (g s.1 s.2)) *
+              eExp (∑ s ∈ S_idx, ((if hs : s ∈ S_idx then g s hs else 0 : ℤ) : ℝ) * (n : ℝ) / (2 * (p : ℝ) ^ s))) =
+            (∏ s ∈ S_idx, c_tilde (g s.1 s.2)) * ∑ k ∈ dyadicBlocks A_lo B_hi,
               ∑ p ∈ D_r.filter (fun p : ℕ => A_lo * (2 : ℝ) ^ k < (p : ℝ) ∧ (p : ℝ) ≤ 2 * (A_lo * (2 : ℝ) ^ k)),
-                (w_p p : ℂ) * eExp (∑ s ∈ S_idx, (if hs : s ∈ S_idx then (g ⟨s, hs⟩ : ℝ) else 0) * (n : ℝ) / (2 * (p : ℝ) ^ s)) := by
+                (w_p p : ℂ) * eExp (∑ s ∈ S_idx, ((if hs : s ∈ S_idx then g s hs else 0 : ℤ) : ℝ) * (n : ℝ) / (2 * (p : ℝ) ^ s)) := by
           rw [← Finset.sum_biUnion hdisj_D, ← hpart_D, Finset.mul_sum]
           refine Finset.sum_congr rfl (fun p _ => by ring)
         rw [hpull, norm_mul, norm_prod]
         apply mul_le_mul_of_nonneg_left _ (Finset.prod_nonneg (fun _ _ => norm_nonneg _))
-        have hg_mem : ∀ s : S_idx, g s ∈ oddH := fun s => Fintype.mem_piFinset.mp hg s
         obtain ⟨s0, hs0⟩ := hS_idx_ne
-        have hnz : ∃ s ∈ S_idx, (if hs : s ∈ S_idx then g ⟨s, hs⟩ else 0) ≠ 0 := by
-          refine ⟨s0, hs0, ?_⟩; simp only [hs0, ↓reduceDIte]
-          exact (Finset.mem_filter.mp (hg_mem ⟨s0, hs0⟩)).2.1
-        have hle : ∀ s ∈ S_idx, |if hs : s ∈ S_idx then g ⟨s, hs⟩ else 0| ≤ 2 * (H : ℤ) + 1 := by
-          intro s hs; simp only [hs, ↓reduceDIte]
-          have := Finset.mem_Icc.mp (Finset.mem_filter.mp (hg_mem ⟨s, hs⟩)).1
+        have hnz : ∃ s ∈ S_idx, (if hs : s ∈ S_idx then g s hs else 0) ≠ 0 := by
+          refine ⟨s0, hs0, ?_⟩; rw [dif_pos hs0]
+          exact (Finset.mem_filter.mp (Finset.mem_pi.mp hg s0 hs0)).2.1
+        have hle : ∀ s ∈ S_idx, |if hs : s ∈ S_idx then g s hs else 0| ≤ 2 * (H : ℤ) + 1 := by
+          intro s hs; rw [dif_pos hs]
+          have := Finset.mem_Icc.mp (Finset.mem_filter.mp (Finset.mem_pi.mp hg s hs)).1
           rw [abs_le]; omega
         calc ‖∑ k ∈ dyadicBlocks A_lo B_hi, ∑ p ∈ _, _‖
             ≤ ∑ k ∈ dyadicBlocks A_lo B_hi, ‖∑ p ∈ _, _‖ := norm_sum_le _ _
           _ ≤ ∑ _k ∈ dyadicBlocks A_lo B_hi, (4 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2))) :=
               Finset.sum_le_sum (fun k hk => h_D_block_exp k hk S_idx le_rfl
-                (fun s => if hs : s ∈ S_idx then g ⟨s, hs⟩ else 0) hnz hle)
+                (fun s => if hs : s ∈ S_idx then g s hs else 0) hnz hle)
           _ = ((dyadicBlocks A_lo B_hi).card : ℝ) * (4 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2))) := by
               simp [Finset.sum_const, nsmul_eq_mul]
           _ ≤ (3 * Real.log (n : ℝ)) * (4 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2))) :=
               mul_le_mul_of_nonneg_right hdy_card_le (by positivity)
-      calc ‖∑ g ∈ Fintype.piFinset (fun _ : S_idx => oddH), ∑ p ∈ D_r, _‖
-          ≤ ∑ g ∈ Fintype.piFinset (fun _ : S_idx => oddH), ‖∑ p ∈ D_r, _‖ := norm_sum_le _ _
-        _ ≤ ∑ g ∈ Fintype.piFinset (fun _ : S_idx => oddH),
-              (∏ s : S_idx, ‖c_tilde (g s)‖) * (3 * Real.log (n : ℝ) * (4 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)))) :=
+      calc ‖∑ g ∈ S_idx.pi (fun _ => oddH), ∑ p ∈ D_r, _‖
+          ≤ ∑ g ∈ S_idx.pi (fun _ => oddH), ‖∑ p ∈ D_r, _‖ := norm_sum_le _ _
+        _ ≤ ∑ g ∈ S_idx.pi (fun _ => oddH),
+              (∏ s ∈ S_idx, ‖c_tilde (g s.1 s.2)‖) * (3 * Real.log (n : ℝ) * (4 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)))) :=
             Finset.sum_le_sum h_each_g
-        _ = (∏ _s : S_idx, ∑ h ∈ oddH, ‖c_tilde h‖) *
+        _ = (∏ _s ∈ S_idx, ∑ h ∈ oddH, ‖c_tilde h‖) *
               (3 * Real.log (n : ℝ) * (4 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)))) := by
-            rw [← Finset.sum_mul]
-            congr 1
-            exact (Fintype.prod_sum (fun (_s : S_idx) (h : ℤ) => ‖c_tilde h‖)).symm
+            rw [← Finset.sum_mul]; congr 1; rw [Finset.prod_sum]
         _ ≤ (6 * Real.log (n : ℝ)) ^ R *
               (3 * Real.log (n : ℝ) * (4 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)))) := by
             apply mul_le_mul_of_nonneg_right _ (by positivity)
@@ -410,8 +406,8 @@ theorem interCollar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
               have h4pi : 4 / Real.pi ≤ 2 := by rw [div_le_iff₀ Real.pi_pos]; linarith [Real.pi_gt_three]
               nlinarith [hlog_pR]
             have h6_ge1 : (1 : ℝ) ≤ 6 * Real.log (n : ℝ) := by linarith
-            calc (∏ _s : S_idx, ∑ h ∈ oddH, ‖c_tilde h‖)
-                = (∑ h ∈ oddH, ‖c_tilde h‖) ^ S_idx.card := by rw [Finset.prod_const, Finset.card_univ, Fintype.card_coe]
+            calc (∏ _s ∈ S_idx, ∑ h ∈ oddH, ‖c_tilde h‖)
+                = (∑ h ∈ oddH, ‖c_tilde h‖) ^ S_idx.card := by rw [Finset.prod_const]
               _ ≤ ((4 / Real.pi) * (Real.log (2 * (H : ℝ) + 1) + 1)) ^ S_idx.card :=
                   pow_le_pow_left₀ (Finset.sum_nonneg (fun _ _ => norm_nonneg _)) h_L1 _
               _ ≤ (6 * Real.log (n : ℝ)) ^ S_idx.card :=
@@ -530,43 +526,41 @@ theorem interCollar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
             refine le_trans (mul_le_mul_of_nonneg_right h_pow_le1 (norm_nonneg _)) ?_
             rw [one_mul]
             have hZ_exp : ∀ p ∈ D_r, ∏ s ∈ U, Z s p =
-                  ∑ g ∈ Fintype.piFinset (fun _ : U => nzH),
-                    (∏ s : U, b_real (g s)) *
-                      eExp (∑ s ∈ U, (if hs : s ∈ U then (g ⟨s, hs⟩ : ℝ) else 0) * (n : ℝ) / (2 * (p : ℝ) ^ s)) := by
-              intro p _; dsimp only [Z]; rw [← Finset.prod_coe_sort U]
-              rw [Fintype.prod_sum (fun (s : U) (h : ℤ) => b_real h * eExp ((h : ℝ) * ((n : ℝ) / (p : ℝ) ^ (s : ℕ)) / 2))]
+                  ∑ g ∈ U.pi (fun _ => nzH),
+                    (∏ s ∈ U, b_real (g s.1 s.2)) *
+                      eExp (∑ s ∈ U, ((if hs : s ∈ U then g s hs else 0 : ℤ) : ℝ) * (n : ℝ) / (2 * (p : ℝ) ^ s)) := by
+              intro p _; dsimp only [Z]; rw [Finset.prod_sum]
               refine Finset.sum_congr rfl (fun g _ => ?_)
-              rw [Finset.prod_mul_distrib, eExp_sum]; congr 2; rw [← Finset.sum_coe_sort U]
-              refine Finset.sum_congr rfl (fun s _ => by simp only [s.2, ↓reduceDIte]; ring)
+              rw [Finset.prod_mul_distrib, eExp_sum]; congr 2
+              refine Finset.sum_congr rfl (fun s hs => by simp only [dif_pos hs]; ring)
             rw [Finset.sum_congr rfl (fun p hp => by rw [hZ_exp p hp, Finset.mul_sum]), Finset.sum_comm]
-            have h_each_g : ∀ g ∈ Fintype.piFinset (fun _ : U => nzH),
-                ‖∑ p ∈ D_r, (w_p p : ℂ) * ((∏ s : U, b_real (g s)) *
-                  eExp (∑ s ∈ U, (if hs : s ∈ U then (g ⟨s, hs⟩ : ℝ) else 0) * (n : ℝ) / (2 * (p : ℝ) ^ s)))‖ ≤
-                (∏ s : U, ‖b_real (g s)‖) * (3 * Real.log (n : ℝ) * (4 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)))) := by
+            have h_each_g : ∀ g ∈ U.pi (fun _ => nzH),
+                ‖∑ p ∈ D_r, (w_p p : ℂ) * ((∏ s ∈ U, b_real (g s.1 s.2)) *
+                  eExp (∑ s ∈ U, ((if hs : s ∈ U then g s hs else 0 : ℤ) : ℝ) * (n : ℝ) / (2 * (p : ℝ) ^ s)))‖ ≤
+                (∏ s ∈ U, ‖b_real (g s.1 s.2)‖) * (3 * Real.log (n : ℝ) * (4 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)))) := by
               intro g hg
-              have hpull_g : ∑ p ∈ D_r, (w_p p : ℂ) * ((∏ s : U, b_real (g s)) *
-                    eExp (∑ s ∈ U, (if hs : s ∈ U then (g ⟨s, hs⟩ : ℝ) else 0) * (n : ℝ) / (2 * (p : ℝ) ^ s))) =
-                  (∏ s : U, b_real (g s)) * ∑ k ∈ dyadicBlocks A_lo B_hi,
+              have hpull_g : ∑ p ∈ D_r, (w_p p : ℂ) * ((∏ s ∈ U, b_real (g s.1 s.2)) *
+                    eExp (∑ s ∈ U, ((if hs : s ∈ U then g s hs else 0 : ℤ) : ℝ) * (n : ℝ) / (2 * (p : ℝ) ^ s))) =
+                  (∏ s ∈ U, b_real (g s.1 s.2)) * ∑ k ∈ dyadicBlocks A_lo B_hi,
                     ∑ p ∈ D_r.filter (fun p : ℕ => A_lo * (2 : ℝ) ^ k < (p : ℝ) ∧ (p : ℝ) ≤ 2 * (A_lo * (2 : ℝ) ^ k)),
-                      (w_p p : ℂ) * eExp (∑ s ∈ U, (if hs : s ∈ U then (g ⟨s, hs⟩ : ℝ) else 0) * (n : ℝ) / (2 * (p : ℝ) ^ s)) := by
+                      (w_p p : ℂ) * eExp (∑ s ∈ U, ((if hs : s ∈ U then g s hs else 0 : ℤ) : ℝ) * (n : ℝ) / (2 * (p : ℝ) ^ s)) := by
                 rw [← Finset.sum_biUnion hdisj_D, ← hpart_D, Finset.mul_sum]
                 refine Finset.sum_congr rfl (fun p _ => by ring)
               rw [hpull_g, norm_mul, norm_prod]
               apply mul_le_mul_of_nonneg_left _ (Finset.prod_nonneg (fun _ _ => norm_nonneg _))
-              have hg_mem : ∀ s : U, g s ∈ nzH := fun s => Fintype.mem_piFinset.mp hg s
               obtain ⟨s0, hs0⟩ := hU_ne
-              have hnz : ∃ s ∈ U, (if hs : s ∈ U then g ⟨s, hs⟩ else 0) ≠ 0 := by
-                refine ⟨s0, hs0, ?_⟩; simp only [hs0, ↓reduceDIte]
-                exact (Finset.mem_filter.mp (hg_mem ⟨s0, hs0⟩)).2
-              have hle : ∀ s ∈ U, |if hs : s ∈ U then g ⟨s, hs⟩ else 0| ≤ 2 * (H : ℤ) + 1 := by
-                intro s hs; simp only [hs, ↓reduceDIte]
-                have := Finset.mem_Icc.mp (Finset.mem_filter.mp (hg_mem ⟨s, hs⟩)).1
+              have hnz : ∃ s ∈ U, (if hs : s ∈ U then g s hs else 0) ≠ 0 := by
+                refine ⟨s0, hs0, ?_⟩; rw [dif_pos hs0]
+                exact (Finset.mem_filter.mp (Finset.mem_pi.mp hg s0 hs0)).2
+              have hle : ∀ s ∈ U, |if hs : s ∈ U then g s hs else 0| ≤ 2 * (H : ℤ) + 1 := by
+                intro s hs; rw [dif_pos hs]
+                have := Finset.mem_Icc.mp (Finset.mem_filter.mp (Finset.mem_pi.mp hg s hs)).1
                 rw [abs_le]; omega
               calc ‖∑ k ∈ dyadicBlocks A_lo B_hi, ∑ p ∈ _, _‖
                   ≤ ∑ k ∈ dyadicBlocks A_lo B_hi, ‖∑ p ∈ _, _‖ := norm_sum_le _ _
                 _ ≤ ∑ _k ∈ dyadicBlocks A_lo B_hi, (4 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2))) :=
                     Finset.sum_le_sum (fun k hk => h_D_block_exp k hk U hU_sub
-                      (fun s => if hs : s ∈ U then g ⟨s, hs⟩ else 0) hnz hle)
+                      (fun s => if hs : s ∈ U then g s hs else 0) hnz hle)
                 _ = ((dyadicBlocks A_lo B_hi).card : ℝ) * (4 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2))) := by
                     simp [Finset.sum_const, nsmul_eq_mul]
                 _ ≤ (3 * Real.log (n : ℝ)) * (4 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2))) :=
@@ -587,22 +581,21 @@ theorem interCollar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
               rw [h1, show -((R : ℝ) + 1) = -((R + 1 : ℕ) : ℝ) from by push_cast; ring,
                 Real.rpow_neg hlogn_pos.le, Real.rpow_natCast, one_div]
               exact inv_anti₀ hlogn_pos (le_self_pow₀ (by linarith) (by omega))
-            calc ‖∑ g ∈ Fintype.piFinset (fun _ : U => nzH), ∑ p ∈ D_r, _‖
-                ≤ ∑ g ∈ Fintype.piFinset (fun _ : U => nzH), ‖∑ p ∈ D_r, _‖ := norm_sum_le _ _
-              _ ≤ ∑ g ∈ Fintype.piFinset (fun _ : U => nzH),
-                    (∏ s : U, ‖b_real (g s)‖) * (3 * Real.log (n : ℝ) * (4 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)))) :=
+            calc ‖∑ g ∈ U.pi (fun _ => nzH), ∑ p ∈ D_r, _‖
+                ≤ ∑ g ∈ U.pi (fun _ => nzH), ‖∑ p ∈ D_r, _‖ := norm_sum_le _ _
+              _ ≤ ∑ g ∈ U.pi (fun _ => nzH),
+                    (∏ s ∈ U, ‖b_real (g s.1 s.2)‖) * (3 * Real.log (n : ℝ) * (4 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)))) :=
                   Finset.sum_le_sum h_each_g
-              _ = (∏ _s : U, ∑ h ∈ nzH, ‖b_real h‖) *
+              _ = (∏ _s ∈ U, ∑ h ∈ nzH, ‖b_real h‖) *
                     (3 * Real.log (n : ℝ) * (4 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)))) := by
-                  rw [← Finset.sum_mul]; congr 1
-                  exact (Fintype.prod_sum (fun (_s : U) (h : ℤ) => ‖b_real h‖)).symm
+                  rw [← Finset.sum_mul]; congr 1; rw [Finset.prod_sum]
               _ ≤ 12 ^ R * (3 * 4 * C₂e) * (Real.log (n : ℝ) * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2))) := by
-                  have hprod_le : (∏ _s : U, ∑ h ∈ nzH, ‖b_real h‖) ≤ 12 ^ R := by
-                    rw [Finset.prod_const, Finset.card_univ, Fintype.card_coe]
+                  have hprod_le : (∏ _s ∈ U, ∑ h ∈ nzH, ‖b_real h‖) ≤ 12 ^ R := by
+                    rw [Finset.prod_const]
                     calc (∑ h ∈ nzH, ‖b_real h‖) ^ U.card ≤ 12 ^ U.card :=
                           pow_le_pow_left₀ (Finset.sum_nonneg (fun _ _ => norm_nonneg _)) h_nz_sum_le _
                       _ ≤ 12 ^ R := pow_le_pow_right₀ (by norm_num) hU_card
-                  calc (∏ _s : U, ∑ h ∈ nzH, ‖b_real h‖) * (3 * Real.log (n : ℝ) * (4 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2))))
+                  calc (∏ _s ∈ U, ∑ h ∈ nzH, ‖b_real h‖) * (3 * Real.log (n : ℝ) * (4 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2))))
                       ≤ 12 ^ R * (3 * Real.log (n : ℝ) * (4 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)))) :=
                         mul_le_mul_of_nonneg_right hprod_le (by positivity)
                     _ = 12 ^ R * (3 * 4 * C₂e) * (Real.log (n : ℝ) * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2))) := by ring

@@ -108,6 +108,7 @@ theorem Delta_parity_second_order :
     have hfl5_le : (Nat.floor ((Real.log (n : ℝ)) ^ 5) : ℝ) ≤ (Real.log (n : ℝ)) ^ 5 :=
       Nat.floor_le (by positivity)
     have h5_le_2fl5 : (Real.log (n : ℝ)) ^ 5 ≤ 2 * (Nat.floor ((Real.log (n : ℝ)) ^ 5) : ℝ) := by
+      have hfl5_ge1_r : (1 : ℝ) ≤ (Nat.floor ((Real.log (n : ℝ)) ^ 5) : ℝ) := by exact_mod_cast hfl5_ge1
       linarith [Nat.lt_floor_add_one ((Real.log (n : ℝ)) ^ 5)]
     have h_r1_le_rpow : (Nat.floor ((Real.log (n : ℝ)) ^ 48) : ℝ) ≤ (1 / 4 : ℝ) * (n : ℝ) ^ (1 / 4 : ℝ) := by
       have h1 := (div_le_iff₀ (by positivity)).mp ht1_sm
@@ -137,6 +138,7 @@ theorem Delta_parity_second_order :
           rw [← Real.rpow_le_rpow_iff (by positivity) (by positivity) (by norm_num : (0 : ℝ) < 6)]
           rw [← Real.rpow_mul hn_pos.le]
           norm_num
+          rw [Real.rpow_one]
           linarith
         have hsq_eq : Real.sqrt (n : ℝ) = (n : ℝ) ^ (1 / 3 : ℝ) * (n : ℝ) ^ (1 / 6 : ℝ) := by
           rw [Real.sqrt_eq_rpow, ← Real.rpow_add hn_pos]
@@ -203,15 +205,23 @@ theorem Delta_parity_second_order :
     have h_R3 : Nat.floor (1 / (1 / 3 : ℝ)) = 3 := by norm_num
     have h_pow_48 : (2 : ℝ) ^ (-(Nat.floor (1 / (1 / 3 : ℝ)) : ℕ) : ℤ) *
         (Real.log (n : ℝ)) ^ (6 * Nat.floor (1 / (1 / 3 : ℝ)) + 30) ≤ (Real.log (n : ℝ)) ^ 48 / 2 := by
-      rw [h_R3]; norm_num; positivity
+      rw [h_R3]
+      have h1 : (2 : ℝ) ^ (-(3 : ℕ) : ℤ) = 1 / 8 := by norm_num
+      rw [h1]
+      linarith [pow_nonneg (by linarith : 0 ≤ Real.log (n : ℝ)) 48]
     have h_2H1_12 : 2 * (Nat.floor ((Real.log (n : ℝ)) ^ 5) : ℝ) + 1 ≤ (Real.log (n : ℝ)) ^ 12 := by
-      have : 2 * (Real.log (n : ℝ)) ^ 5 + 1 ≤ (Real.log (n : ℝ)) ^ 6 := by nlinarith
+      have hy5 : (1 : ℝ) ≤ (Real.log (n : ℝ)) ^ 5 := one_le_pow₀ (by linarith)
+      have hy6 : 3 * (Real.log (n : ℝ)) ^ 5 ≤ (Real.log (n : ℝ)) ^ 6 := by
+        rw [pow_succ]; nlinarith [pow_pos (by linarith : 0 < Real.log (n : ℝ)) 5]
       have h6_12 : (Real.log (n : ℝ)) ^ 6 ≤ (Real.log (n : ℝ)) ^ 12 :=
         pow_le_pow_right₀ (by linarith) (by norm_num)
       linarith
     have h_loglog_4 : (Real.log (2 * (Nat.floor ((Real.log (n : ℝ)) ^ 5) : ℝ) + 1) + 1) *
         (Real.log (n : ℝ) / Real.log 2 + 2) ≤ (Real.log (n : ℝ)) ^ 4 := by
-      have hle6 : 2 * (Nat.floor ((Real.log (n : ℝ)) ^ 5) : ℝ) + 1 ≤ (Real.log (n : ℝ)) ^ 6 := by nlinarith
+      have hy5 : (1 : ℝ) ≤ (Real.log (n : ℝ)) ^ 5 := one_le_pow₀ (by linarith)
+      have hy6 : 3 * (Real.log (n : ℝ)) ^ 5 ≤ (Real.log (n : ℝ)) ^ 6 := by
+        rw [pow_succ]; nlinarith [pow_pos (by linarith : 0 < Real.log (n : ℝ)) 5]
+      have hle6 : 2 * (Nat.floor ((Real.log (n : ℝ)) ^ 5) : ℝ) + 1 ≤ (Real.log (n : ℝ)) ^ 6 := by linarith
       have hlog6 : Real.log (2 * (Nat.floor ((Real.log (n : ℝ)) ^ 5) : ℝ) + 1) ≤ 6 * Real.log (Real.log (n : ℝ)) := by
         calc Real.log (2 * (Nat.floor ((Real.log (n : ℝ)) ^ 5) : ℝ) + 1)
             ≤ Real.log ((Real.log (n : ℝ)) ^ 6) := Real.log_le_log (by positivity) hle6
@@ -222,9 +232,13 @@ theorem Delta_parity_second_order :
           rw [Real.log_sqrt (by linarith)]; ring
         linarith
       have hsq_le_y : 12 * Real.sqrt (Real.log (n : ℝ)) + 1 ≤ Real.log (n : ℝ) := by
-        have : 100 ≤ Real.sqrt (Real.log (n : ℝ)) := by
+        have h100 : 100 ≤ Real.sqrt (Real.log (n : ℝ)) := by
           rw [Real.le_sqrt (by norm_num) (by linarith)]; linarith
-        nlinarith [Real.sq_sqrt (by linarith : 0 ≤ Real.log (n : ℝ))]
+        have hsq : (Real.sqrt (Real.log (n : ℝ))) ^ 2 = Real.log (n : ℝ) :=
+          Real.sq_sqrt (by linarith : 0 ≤ Real.log (n : ℝ))
+        have h100_sq : 100 * Real.sqrt (Real.log (n : ℝ)) ≤ (Real.sqrt (Real.log (n : ℝ))) ^ 2 := by
+          rw [sq]; exact mul_le_mul_of_nonneg_right h100 (Real.sqrt_nonneg _)
+        linarith
       have h_f1 : Real.log (2 * (Nat.floor ((Real.log (n : ℝ)) ^ 5) : ℝ) + 1) + 1 ≤ Real.log (n : ℝ) := by linarith
       have hlog2_pos : 0 < Real.log 2 := Real.log_pos (by norm_num)
       have hlog2_ge : (1 / 2 : ℝ) ≤ Real.log 2 := by
@@ -234,8 +248,16 @@ theorem Delta_parity_second_order :
         have : Real.log (n : ℝ) / Real.log 2 ≤ 2 * Real.log (n : ℝ) := by
           rw [div_le_iff₀ hlog2_pos]; nlinarith
         linarith
-      have : 3 * (Real.log (n : ℝ)) ^ 2 ≤ (Real.log (n : ℝ)) ^ 4 := by nlinarith
-      nlinarith
+      have hsq_ge3 : 3 ≤ (Real.log (n : ℝ)) ^ 2 := by nlinarith
+      have h_4 : 3 * (Real.log (n : ℝ)) ^ 2 ≤ (Real.log (n : ℝ)) ^ 4 := by
+        calc 3 * (Real.log (n : ℝ)) ^ 2 ≤ (Real.log (n : ℝ)) ^ 2 * (Real.log (n : ℝ)) ^ 2 :=
+              mul_le_mul_of_nonneg_right hsq_ge3 (by positivity)
+          _ = (Real.log (n : ℝ)) ^ 4 := by ring
+      calc (Real.log (2 * (Nat.floor ((Real.log (n : ℝ)) ^ 5) : ℝ) + 1) + 1) * (Real.log (n : ℝ) / Real.log 2 + 2)
+          ≤ Real.log (n : ℝ) * (3 * Real.log (n : ℝ)) :=
+            mul_le_mul h_f1 h_f2 (by positivity) (by linarith)
+        _ = 3 * (Real.log (n : ℝ)) ^ 2 := by ring
+        _ ≤ (Real.log (n : ℝ)) ^ 4 := h_4
     exact ⟨h_sqrt_lt, h_13_sqrtN, h_div_r1_12, hfl_ge4, hfl5_ge1, h48_le_2fl, h5_le_2fl5,
       h_n34_ge, h_exp_last, h_pow_48, h_2H1_12, h_loglog_4⟩
   let M : ℝ := |C_ed| + (4 * |C₁| + 2) +
@@ -468,7 +490,7 @@ theorem Delta_parity_second_order :
             (-1 : ℝ) ^ r * (r : ℝ) *
               ((thetaPrime ((n : ℝ) / (r : ℝ)) - (n : ℝ) / (r : ℝ)) -
                 (thetaPrime ((n : ℝ) / ((r : ℝ) + 1)) - (n : ℝ) / ((r : ℝ) + 1))) := by
-          field_simp [hr_pos.ne', by positivity : (r : ℝ) + 1 ≠ 0]; ring
+          field_simp [hr_pos.ne', (by positivity : (r : ℝ) + 1 ≠ 0)]; ring
         rw [hid, abs_mul, abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul, abs_of_pos hr_pos]
         have htri := abs_sub
           (thetaPrime ((n : ℝ) / (r : ℝ)) - (n : ℝ) / (r : ℝ))
