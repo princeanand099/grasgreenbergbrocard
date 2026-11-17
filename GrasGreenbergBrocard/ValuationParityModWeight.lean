@@ -292,9 +292,8 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
           (∑ p ∈ S_low, ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) * Real.log (p : ℝ))|
         ≤ |∑ p ∈ S_2, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ)| +
           |(n : ℝ) * ((∑ p ∈ S_low, Real.log (p : ℝ) / ((p : ℝ) - 1)) - α * Real.log (n : ℝ))| +
-          |∑ p ∈ S_low, ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) * Real.log (p : ℝ)| := by
-            calc |(_ + _) - _| ≤ |_ + _| + |_| := abs_sub _ _
-              _ ≤ (|_| + |_|) + |_| := add_le_add_right (abs_add_le _ _) _
+          |∑ p ∈ S_low, ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) * Real.log (p : ℝ)| :=
+            le_trans (abs_sub _ _) (add_le_add_right (abs_add_le _ _) _)
       _ ≤ Real.log 2 * (n : ℝ) +
           (n : ℝ) * (Real.log 3 + Cm) + (n : ℝ) := by
             refine add_le_add (add_le_add hS2_bound ?_) h_dig_err
@@ -323,7 +322,8 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
       simp only [S_hi, S, Finset.mem_filter, Finset.mem_Icc]
       constructor
       · rintro ⟨⟨⟨hp2, _⟩, hp_pr, hpa⟩, hsq⟩
-        have hp3 : 3 ≤ p := by have : 4 ≤ Nat.sqrt n := by rw [Nat.le_sqrt]; omega; omega
+        have hsq4 : 4 ≤ Nat.sqrt n := by rw [Nat.le_sqrt]; omega
+        have hp3 : 3 ≤ p := by omega
         exact ⟨⟨⟨hp3, (Nat.le_floor_iff (by positivity)).mpr hpa⟩, hp_pr⟩, hsq⟩
       · rintro ⟨⟨⟨hp3, hpfl⟩, hp_pr⟩, hsq⟩
         have hpa : (p : ℝ) ≤ (n : ℝ) ^ α := le_trans (by exact_mod_cast hpfl) (Nat.floor_le (by positivity))
@@ -384,9 +384,6 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
         have hp2 : 2 ≤ p := (Finset.mem_Icc.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).1).1
         have hp_pos : (0 : ℝ) < (p : ℝ) := by exact_mod_cast (by omega : 0 < p)
         have hlogp_nn : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ p))
-        have hfl_eq : (n / p : ℕ) = Int.floor ((n : ℝ) / (p : ℝ)) := by
-          have := Int.floor_natCast_div (n : ℕ) (p : ℕ)
-          omega
         have h1 : ((n / p : ℕ) : ℝ) ≤ (n : ℝ) / (p : ℝ) := by
           have : (p : ℝ) * ((n / p : ℕ) : ℝ) ≤ (n : ℝ) := by exact_mod_cast Nat.mul_div_le n p
           exact (le_div_iff₀ hp_pos).mpr (by linarith)
@@ -408,11 +405,11 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
       calc ∑ p ∈ S_hi, (((n : ℝ) / (p : ℝ) - ((n / p : ℕ) : ℝ)) * Real.log (p : ℝ))
           ≤ ∑ p ∈ S_hi, Real.log (p : ℝ) := Finset.sum_le_sum (fun p hp => (h_each p hp).2)
         _ ≤ ∑ p ∈ (Finset.Icc 2 n).filter Nat.Prime, Real.log (p : ℝ) :=
-            Finset.sum_le_sum_of_subset_of_nonneg hsub (fun p _ _ => Real.log_nonneg (by norm_num; try omega))
+            Finset.sum_le_sum_of_subset_of_nonneg hsub (fun p hp _ => Real.log_nonneg (by exact_mod_cast (by have := (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).1; omega : 1 ≤ p)))
         _ = thetaPrime (n : ℝ) := by
             unfold thetaPrime
             congr 1; ext p; simp only [Finset.mem_filter, Finset.mem_Icc, Nat.floor_natCast]
-        _ ≤ Cθ * (n : ℝ) := hCθ (n : ℝ) (by exact_mod_cast (by omega : 2 ≤ n))
+        _ ≤ Cθ * (n : ℝ) := hCθ (n : ℝ) (by exact_mod_cast (by omega : 1 ≤ n))
     -- Compare ∑_{S_hi} log p / p with ∑_{S_hi} log p / (p - 1) via telescoping ∑ 1/(k*(k-1))
     have h_p_p1 : |∑ p ∈ S_hi, Real.log (p : ℝ) / ((p : ℝ) - 1) - ∑ p ∈ S_hi, Real.log (p : ℝ) / (p : ℝ)| ≤ 1 := by
       have h_eq : ∑ p ∈ S_hi, Real.log (p : ℝ) / ((p : ℝ) - 1) - ∑ p ∈ S_hi, Real.log (p : ℝ) / (p : ℝ) =
@@ -428,7 +425,7 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
         refine Finset.sum_nonneg (fun p hp => ?_)
         have hp2 : 2 ≤ p := (Finset.mem_Icc.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).1).1
         have hlogp : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ p))
-        have hp1 : (0 : ℝ) ≤ (p : ℝ) - 1 := by exact_mod_cast (by omega : 1 ≤ p)
+        have hp1 : (0 : ℝ) ≤ (p : ℝ) - 1 := sub_nonneg.mpr (by exact_mod_cast (by omega : 1 ≤ p))
         positivity
       rw [abs_of_nonneg h_nn]
       have hsub : S_hi ⊆ Finset.Icc (Nat.sqrt n + 1) n := fun p hp =>
@@ -438,7 +435,7 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
           1 / (Nat.sqrt n : ℝ) := by
         have h_Ico : Finset.Icc (Nat.sqrt n + 1) n = Finset.Ico (Nat.sqrt n + 1) (n + 1) := rfl
         rw [h_Ico]
-        have h_le : Nat.sqrt n ≤ n := Nat.sqrt_le' n
+        have h_le : Nat.sqrt n ≤ n := Nat.sqrt_le_self n
         have h_eq_tele : ∑ k ∈ Finset.Ico (Nat.sqrt n + 1) (n + 1),
               ((1 : ℝ) / ((k : ℝ) - 1) - (1 : ℝ) / (k : ℝ)) =
             (1 : ℝ) / (Nat.sqrt n : ℝ) - (1 : ℝ) / (n : ℝ) := by
@@ -452,7 +449,7 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
           have h2 : ∑ k ∈ Finset.Ico (Nat.sqrt n + 1) (n + 1),
                 ((1 : ℝ) / ((k - 1 : ℕ) : ℝ) - (1 : ℝ) / (k : ℝ)) =
               ∑ k ∈ Finset.Ico (Nat.sqrt n) n, ((1 : ℝ) / (k : ℝ) - (1 : ℝ) / ((k + 1 : ℕ) : ℝ)) := by
-            rw [← Finset.sum_Ico_add (fun k => (1 : ℝ) / (k : ℝ) - (1 : ℝ) / ((k + 1 : ℕ) : ℝ)) (Nat.sqrt n) n 1]
+            rw [← Finset.sum_Ico_add (fun k : ℕ => (1 : ℝ) / (k : ℝ) - (1 : ℝ) / ((k + 1 : ℕ) : ℝ)) (Nat.sqrt n) n 1]
             refine Finset.sum_congr rfl (fun k hk => ?_)
             have hk1 : 1 ≤ k := by have := (Finset.mem_Ico.mp hk).1; omega
             simp [Nat.sub_add_cancel hk1]
@@ -475,7 +472,7 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
               field_simp [hp0, hp1]; ring
             rw [h_id, ← mul_div_assoc, mul_one]
             apply div_le_div_of_nonneg_right (Real.log_le_log (by positivity) (by exact_mod_cast hpn))
-            have : (0 : ℝ) ≤ (p : ℝ) - 1 := by exact_mod_cast (by omega : 1 ≤ p)
+            have : (0 : ℝ) ≤ (p : ℝ) - 1 := sub_nonneg.mpr (by exact_mod_cast (by omega : 1 ≤ p))
             positivity
         _ ≤ ∑ k ∈ Finset.Icc (Nat.sqrt n + 1) n, Real.log (n : ℝ) * ((1 : ℝ) / ((k : ℝ) - 1) - (1 : ℝ) / (k : ℝ)) := by
             refine Finset.sum_le_sum_of_subset_of_nonneg hsub (fun k hk _ => ?_)
@@ -483,7 +480,7 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
               have : 4 ≤ Nat.sqrt n := by rw [Nat.le_sqrt]; omega
               have := (Finset.mem_Icc.mp hk).1; omega
             have hk0 : (0 : ℝ) < (k : ℝ) := by exact_mod_cast (by omega : 0 < k)
-            have hk1 : (0 : ℝ) < (k : ℝ) - 1 := by exact_mod_cast (by omega : 1 < k)
+            have hk1 : (0 : ℝ) < (k : ℝ) - 1 := sub_pos.mpr (by exact_mod_cast (by omega : 1 < k))
             have : (1 : ℝ) / ((k : ℝ) - 1) - (1 : ℝ) / (k : ℝ) = 1 / ((k : ℝ) * ((k : ℝ) - 1)) := by
               field_simp [hk0.ne', hk1.ne']; ring
             rw [this]; positivity
@@ -491,7 +488,8 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
             rw [← Finset.mul_sum]
         _ ≤ Real.log (n : ℝ) * (1 / (Nat.sqrt n : ℝ)) := mul_le_mul_of_nonneg_left h_tele hlogn_nn
         _ ≤ 1 := by
-            rw [mul_one_div, div_le_one (by linarith)]
+            have hsq4_nat : 4 ≤ Nat.sqrt n := by rw [Nat.le_sqrt]; omega
+            rw [mul_one_div, div_le_one (by exact_mod_cast (by omega : 0 < Nat.sqrt n))]
             have hsq4 : (4 : ℝ) ≤ (Nat.sqrt n : ℝ) := by
               have : 4 ≤ Nat.sqrt n := by rw [Nat.le_sqrt]; omega
               exact_mod_cast this
@@ -507,12 +505,24 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
         (∑ p ∈ S_low, ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) * Real.log (p : ℝ)) := by
       rw [hS_sum, hS_hi_val, hS_low_eq, ← h_mert_sum]; ring
     rw [h_diff]
-    calc |((∑ p ∈ S_2, _) + (n : ℝ) * _ - (n : ℝ) * _ + _ - _)|
-        ≤ |(∑ p ∈ S_2, _)| + |(n : ℝ) * _| + |(n : ℝ) * _| + |_| + |_| := by
-            calc |((_ + _) - _ + _) - _| ≤ |((_ + _) - _ + _)| + |_| := abs_sub _ _
-              _ ≤ (|((_ + _) - _)| + |_|) + |_| := add_le_add_right (abs_add_le _ _) _
-              _ ≤ ((|_ + _| + |_|) + |_|) + |_| := add_le_add_right (add_le_add_right (abs_sub _ _) _) _
-              _ ≤ (((|_| + |_|) + |_|) + |_|) + |_| := add_le_add_right (add_le_add_right (add_le_add_right (abs_add_le _ _) _) _) _
+    have h_abs5 : ∀ a b c d e : ℝ, |a + b - c + d - e| ≤ |a| + |b| + |c| + |d| + |e| := by
+      intro a b c d e
+      calc |a + b - c + d - e| ≤ |a + b - c + d| + |e| := abs_sub _ _
+        _ ≤ (|a + b - c| + |d|) + |e| := add_le_add_right (abs_add_le _ _) _
+        _ ≤ ((|a + b| + |c|) + |d|) + |e| := add_le_add_right (add_le_add_right (abs_sub _ _) _) _
+        _ ≤ (((|a| + |b|) + |c|) + |d|) + |e| := add_le_add_right (add_le_add_right (add_le_add_right (abs_add_le _ _) _) _) _
+    calc |(∑ p ∈ S_2, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ)) +
+          (n : ℝ) * ((∑ p ∈ (Finset.Icc 3 (Nat.floor ((n : ℝ) ^ α))).filter Nat.Prime,
+            Real.log (p : ℝ) / ((p : ℝ) - 1)) - α * Real.log (n : ℝ)) -
+          (n : ℝ) * (∑ p ∈ S_hi, Real.log (p : ℝ) / ((p : ℝ) - 1) - ∑ p ∈ S_hi, Real.log (p : ℝ) / (p : ℝ)) +
+          ((∑ p ∈ S_hi, ((n / p : ℕ) : ℝ) * Real.log (p : ℝ)) - (n : ℝ) * (∑ p ∈ S_hi, Real.log (p : ℝ) / (p : ℝ))) -
+          (∑ p ∈ S_low, ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) * Real.log (p : ℝ))|
+        ≤ |∑ p ∈ S_2, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ)| +
+          |(n : ℝ) * ((∑ p ∈ (Finset.Icc 3 (Nat.floor ((n : ℝ) ^ α))).filter Nat.Prime,
+            Real.log (p : ℝ) / ((p : ℝ) - 1)) - α * Real.log (n : ℝ))| +
+          |(n : ℝ) * (∑ p ∈ S_hi, Real.log (p : ℝ) / ((p : ℝ) - 1) - ∑ p ∈ S_hi, Real.log (p : ℝ) / (p : ℝ))| +
+          |(∑ p ∈ S_hi, ((n / p : ℕ) : ℝ) * Real.log (p : ℝ)) - (n : ℝ) * (∑ p ∈ S_hi, Real.log (p : ℝ) / (p : ℝ))| +
+          |∑ p ∈ S_low, ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) * Real.log (p : ℝ)| := h_abs5 _ _ _ _ _
       _ ≤ Real.log 2 * (n : ℝ) + (n : ℝ) * (Real.log 3 + Cm) + (n : ℝ) * 1 + Cθ * (n : ℝ) + (n : ℝ) := by
             refine add_le_add (add_le_add (add_le_add (add_le_add hS2_bound ?_) ?_) h_frac_err) h_dig_err
             · rw [abs_mul, abs_of_nonneg hn_pos.le]
