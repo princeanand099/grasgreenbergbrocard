@@ -78,6 +78,7 @@ theorem small_prime_mod_band_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
     exact (ht.eventually (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1))).mono (fun _ h => h.le)
   filter_upwards [(tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 2),
     Filter.eventually_ge_atTop 16, h_rpow_all] with n hln hn hrpow_all
+  dsimp only [Function.comp_apply] at hln
   have hn_pos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast (by omega : 0 < n)
   let S := (Finset.Icc 3 (Nat.sqrt n)).filter (fun p : ℕ =>
     p.Prime ∧ (n : ℝ) ^ δ < (p : ℝ) ∧ (n : ℝ) ^ a < (p : ℝ) ∧ (p : ℝ) ≤ (n : ℝ) ^ b)
@@ -331,7 +332,7 @@ theorem upper_band_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         constructor
         · rw [Int.cast_natCast, le_div_iff₀ hp_pos]; exact_mod_cast Nat.div_mul_le_self n p
         · rw [Int.cast_natCast, div_lt_iff₀ hp_pos]
-          have h_nat : n < (n / p + 1) * p := by have := Nat.lt_div_mul_add hp_pr.pos; linarith
+          have h_nat : n < (n / p + 1) * p := by have := Nat.lt_div_mul_add n hp_pr.pos; nlinarith
           exact_mod_cast (by push_cast; linarith : (n : ℝ) < ((n / p + 1 : ℕ) : ℝ) * (p : ℝ))
       rw [hv_U p hp, hfl, Int.cast_natCast]
       push_cast; field_simp [hp_pos.ne']
@@ -350,7 +351,7 @@ theorem upper_band_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
           have h1 : ((n / p : ℕ) : ℝ) ≤ (n : ℝ) / (p : ℝ) := by
             rw [le_div_iff₀ hp_pos]; exact_mod_cast Nat.div_mul_le_self n p
           have h2 : (n : ℝ) / (p : ℝ) - ((n / p : ℕ) : ℝ) < 1 := by
-            have h_nat : n < (n / p + 1) * p := by have := Nat.lt_div_mul_add hp_pr.pos; linarith
+            have h_nat : n < (n / p + 1) * p := by have := Nat.lt_div_mul_add n hp_pr.pos; nlinarith
             have hltR : (n : ℝ) < (((n / p : ℕ) : ℝ) + 1) * (p : ℝ) := by exact_mod_cast h_nat
             have := (div_lt_iff₀ hp_pos).mpr hltR
             linarith
@@ -624,7 +625,8 @@ theorem upper_band_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         congr 1
         rw [Finset.sum_comm]
         simp_rw [← Complex.re_sum]
-        refine Finset.sum_congr rfl (fun m _ => congrArg Complex.re ?_)
+        congr 1
+        refine Finset.sum_congr rfl (fun m _ => ?_)
         conv_lhs => rw [hU_eq, Finset.sum_biUnion (fun k₁ hk₁ k₂ hk₂ hne => hB_disj hk₁ hk₂ hne)]
         rw [Finset.mul_sum]
         refine Finset.sum_congr rfl (fun k _ => ?_)
@@ -632,8 +634,7 @@ theorem upper_band_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         refine Finset.sum_congr rfl (fun p _ => by ring)
       have h_m0 : ∑ p ∈ U, (Real.log (p : ℝ) / (p : ℝ)) * (b_mod 0).re ≤ (h_mod : ℝ) * (1 + Cm) := by
         have hb0_re : (b_mod 0).re = (h_mod : ℝ) / ((H : ℝ) + 1) := by
-          rw [hb_mod0, ← Complex.ofReal_natCast h_mod, ← Complex.ofReal_natCast H,
-            ← Complex.ofReal_one, ← Complex.ofReal_add, ← Complex.ofReal_div, Complex.ofReal_re]
+          rw [hb_mod0, ← Complex.ofReal_one, ← Complex.ofReal_add, ← Complex.ofReal_div, Complex.ofReal_re]
         rw [← Finset.sum_mul, hb0_re]
         have hsub : U ⊆ (Finset.Icc 3 n).filter Nat.Prime := fun p hp => by
           have hp_sq : Nat.sqrt n + 1 ≤ p := (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).1
@@ -1188,6 +1189,7 @@ theorem multi_modulus_power_band_equidistribution (h_mod c : ℕ) (hh_mod : 2 �
                 simp only [norm_mul, norm_div, norm_eExp, mul_one, Complex.norm_real,
                   Real.norm_of_nonneg (Nat.cast_nonneg ((Nat.digits p n).sum)),
                   Real.norm_of_nonneg hp1_nn, Real.norm_of_nonneg hlogp_nn]
+                ring
             _ ≤ ∑ _p ∈ S_mid3, 2 * Real.log (n : ℝ) := Finset.sum_le_sum h_each
             _ = (S_mid3.card : ℝ) * (2 * Real.log (n : ℝ)) := by simp [Finset.sum_const, nsmul_eq_mul]
             _ ≤ (Nat.sqrt n : ℝ) * (2 * Real.log (n : ℝ)) := mul_le_mul_of_nonneg_right h_card (by positivity)
@@ -1314,7 +1316,7 @@ theorem multi_modulus_power_band_equidistribution (h_mod c : ℕ) (hh_mod : 2 �
         have hz1 : 1 ≤ z := by have := Finset.mem_range.mp hz_mem.1; have := hz_mem.2; omega
         have hz2 : z < h_mod := Finset.mem_range.mp hz_mem.1
         exact Asymptotics.IsLittleO.const_mul_left (h_char_z z hz1 hz2) _
-      simpa only [Finset.sum_apply] using h_sum
+      exact h_sum.congr' (Eventually.of_forall (fun n => by simp only [Finset.sum_apply])) EventuallyEq.rfl
     refine (h_z0.add h_znz).congr' ?_ EventuallyEq.rfl
     filter_upwards with n
     let S := (Finset.Icc 2 n).filter (fun p : ℕ =>
