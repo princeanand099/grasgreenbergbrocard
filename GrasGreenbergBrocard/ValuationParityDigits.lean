@@ -44,8 +44,9 @@ theorem basePDigitSum_le (p n : ℕ) : basePDigitSum p n ≤ n := by
   rcases lt_or_ge p 2 with hp | hp
   · rcases eq_or_ne p 0 with rfl | hp0
     · rcases eq_or_ne n 0 with rfl | hn0
-      · simp
-      · simp [hn0]
+      · decide
+      · obtain ⟨k, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hn0
+        simp [Nat.digits_zero_succ]
     · have hp1 : p = 1 := by omega
       subst hp1
       simp [Nat.digits_one]

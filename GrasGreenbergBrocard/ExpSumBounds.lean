@@ -116,9 +116,17 @@ theorem log_pow_div_rpow_tendsto_zero (k : ℕ) {δ : ℝ} (hδ : 0 < δ) :
             congr 1; ring
         _ = x ^ (-(δ / ((k : ℝ) + 1))) := by
             congr 1; field_simp; ring
-  have h0 : Tendsto (fun x : ℝ => (Real.log x) ^ k / x ^ δ) atTop (nhds 0) :=
-    tendsto_of_tendsto_of_tendsto_of_eventually_le tendsto_const_nhds htend
-      (hev.mono (fun _ h => h.1)) (hev.mono (fun _ h => h.2))
+  have h0 : Tendsto (fun x : ℝ => (Real.log x) ^ k / x ^ δ) atTop (nhds 0) := by
+    rw [Metric.tendsto_atTop]
+    intro ε hε
+    obtain ⟨X₁, hX₁⟩ := Metric.tendsto_atTop.mp htend ε hε
+    obtain ⟨X₂, hX₂⟩ := Filter.eventually_atTop.mp hev
+    refine ⟨max X₁ X₂, fun x hx => ?_⟩
+    have h1 := hX₁ x (le_trans (le_max_left _ _) hx)
+    have h2 := hX₂ x (le_trans (le_max_right _ _) hx)
+    rw [Real.dist_eq, sub_zero, abs_of_nonneg h2.1]
+    rw [Real.dist_eq, sub_zero] at h1
+    exact lt_of_le_of_lt (le_trans h2.2 (le_abs_self _)) h1
   exact h0.comp tendsto_natCast_atTop_atTop
 
 /-- **Lemma 2.4(i) and (ii) (Prime Exponential Sum Bound on `[n^δ, n/(log n)^12]`)**:
@@ -184,7 +192,7 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
       (Real.log (n : ℝ)) ^ (R + 5) / (n : ℝ) ^ (δ * η') ≤ 1 :=
     htend2.eventually (ge_mem_nhds (by norm_num : (0 : ℝ) < 1))
   have hev_log : ∀ᶠ n : ℕ in atTop, (2 : ℝ) ≤ Real.log (n : ℝ) :=
-    (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (ge_mem_nhds (by norm_num))
+    (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 2)
   filter_upwards [Filter.eventually_ge_atTop 4, hev1, hev2, hev_log] with n hn hsmall1 hsmall2 hlog2
   intro P I A h w W₀ hA_nz hP_lo hP_hi hI_prime hA_range hh_bound hPhase hW_bound hW₀
   dsimp only

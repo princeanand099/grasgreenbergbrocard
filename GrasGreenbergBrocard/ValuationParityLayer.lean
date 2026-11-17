@@ -225,7 +225,6 @@ theorem alt_harmonic_eq_tail_harmonic (N : ℕ) :
     have h22 : ((2 * m + 2 : ℕ) : ℝ) = 2 * ((m + 1 : ℕ) : ℝ) := by push_cast; ring
     rw [h21, h22]
     field_simp [hm1, hm2, hm3]
-    ring
 
 /-- Quantitative alternating harmonic bound: `|∑_{r=1}^N (1/(2r-1) - 1/(2r)) - log 2| ≤ 1 / (2N)`. -/
 theorem alt_harmonic_sum_diff_log_two {N : ℕ} (hN : 1 ≤ N) :

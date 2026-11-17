@@ -139,7 +139,8 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
           ≤ 4 * (1 / (2 * Real.pi * |(h : ℝ)|)) :=
             mul_le_mul_of_nonneg_left hc2_norm (by norm_num)
         _ = 2 / (Real.pi * |(h : ℝ)|) := by ring
-  · simp only [b_tilde, even_zero, ↓reduceIte, Int.zero_ediv, hb1_0, hb2_0]
+  · have hev0 : Even (0 : ℤ) := ⟨0, rfl⟩
+    simp only [b_tilde, hev0, ↓reduceIte, Int.zero_ediv, hb1_0, hb2_0]
     have hH0 : (H : ℂ) + 1 ≠ 0 := by
       have : (0 : ℝ) < (H : ℝ) + 1 := by positivity
       exact_mod_cast this.ne'
@@ -444,11 +445,11 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
         rcases lt_trichotomy h 0 with hneg | rfl | hpos
         · right
           simp only [negSet, Finset.mem_map, Finset.mem_Icc, Function.Embedding.coeFn_mk]
-          refine ⟨(-h).toNat, ⟨by omega, by omega⟩, by omega⟩
+          exact ⟨(-h).toNat, ⟨by omega, by omega⟩, by omega⟩
         · exact absurd rfl hh.2.1
         · left
           simp only [posSet, Finset.mem_map, Finset.mem_Icc, Function.Embedding.coeFn_mk]
-          refine ⟨h.toNat, ⟨by omega, by omega⟩, by omega⟩
+          exact ⟨h.toNat, ⟨by omega, by omega⟩, by omega⟩
       have hdisj_pn : Disjoint posSet negSet := by
         rw [Finset.disjoint_left]
         intro h hp hn
@@ -471,12 +472,10 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
               congr 1
               · rw [Finset.sum_map]
                 refine Finset.sum_congr rfl (fun k _ => ?_)
-                dsimp only [Function.Embedding.coeFn_mk]
-                rw [Int.cast_natCast, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
+                simp only [Function.Embedding.coeFn_mk, Int.cast_natCast, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
               · rw [Finset.sum_map]
                 refine Finset.sum_congr rfl (fun k _ => ?_)
-                dsimp only [Function.Embedding.coeFn_mk]
-                rw [Int.cast_neg, Int.cast_natCast, abs_neg, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
+                simp only [Function.Embedding.coeFn_mk, Int.cast_neg, Int.cast_natCast, abs_neg, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
           _ = 2 * ∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ))) := by ring
       calc ∑ h ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Odd h),
             ‖c_tilde h‖
