@@ -345,7 +345,7 @@ private lemma pow_dvd_choose_mul_M {p k j : ℕ} {M : ℤ}
       rw [pow_succ, mul_comm]
       calc p * p ^ a ∣ ((2 * j + 1) / p ^ a) * p ^ a := Nat.mul_dvd_mul_right hdvd (p ^ a)
         _ = p ^ a * ((2 * j + 1) / p ^ a) := mul_comm _ _
-        _ = 2 * j + 1 := by dsimp only [a]; exact (Nat.mul_div_cancel' pow_padicValNat_dvd).symm
+        _ = 2 * j + 1 := by dsimp only [a]; exact Nat.mul_div_cancel' pow_padicValNat_dvd
     have hle := (padicValNat_dvd_iff_le (by omega : 2 * j + 1 ≠ 0)).mp hpow_dvd
     dsimp only [a] at hle
     omega
