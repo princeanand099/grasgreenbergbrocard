@@ -96,7 +96,7 @@ lemma eq_sfCore_mul_sqPart_sq {m : ℕ} (hm : 0 < m) :
         · exact hp.factorization_self
         · intro q hq hqp
           have hq_pr := Nat.prime_of_mem_primeFactors (Finset.mem_filter.mp hq).1
-          rw [hq_pr.factorization, Finsupp.single_apply, if_neg (Ne.symm hqp)]
+          rw [hq_pr.factorization, Finsupp.single_apply, if_neg hqp]
         · intro habs; exact absurd hmem habs
       · rw [Finset.sum_eq_zero]
         intro q hq
@@ -115,7 +115,7 @@ lemma eq_sfCore_mul_sqPart_sq {m : ℕ} (hm : 0 < m) :
         · rw [hp.factorization_self, mul_one]
         · intro q hq hqp
           have hq_pr := Nat.prime_of_mem_primeFactors hq
-          rw [hq_pr.factorization, Finsupp.single_apply, if_neg (Ne.symm hqp), mul_zero]
+          rw [hq_pr.factorization, Finsupp.single_apply, if_neg hqp, mul_zero]
         · intro habs; exact absurd hmem habs
       · rw [Finset.sum_eq_zero]
         intro q hq
@@ -125,9 +125,7 @@ lemma eq_sfCore_mul_sqPart_sq {m : ℕ} (hm : 0 < m) :
     rw [h_sf_fac, h_sq_fac, Nat.factorization_def m hp]
     by_cases hmem : p ∈ m.primeFactors
     · simp only [Finset.mem_filter, hmem, true_and, if_pos]
-      split_ifs with hodd
-      · omega
-      · omega
+      split_ifs with hodd <;> omega
     · have hp_ndvd : ¬ p ∣ m := fun hd => hmem (Nat.mem_primeFactors.mpr ⟨hp, hd, hm_ne⟩)
       have h0 : padicValNat p m = 0 := padicValNat.eq_zero_of_not_dvd hp_ndvd
       simp only [Finset.mem_filter, hmem, false_and, ↓reduceIte, h0]
@@ -286,7 +284,8 @@ theorem k_eq_2_identities {n m X₁ Y₁ : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
     zify [hX1_pos]
     have hpell_z : (X₁ : ℤ) ^ 2 = (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 + 1 := by exact_mod_cast hpell
     linarith
-  have hm_sub1' : m - 1 = 2 * (X₁ - 1) * (X₁ + 1) := by rw [hm_sub1, ← h_diff_sq]; ring
+  have hm_sub1' : m - 1 = 2 * (X₁ - 1) * (X₁ + 1) := by
+    rw [hm_sub1, show 2 * q_n n * Y₁ ^ 2 = 2 * (q_n n * Y₁ ^ 2) by ring, ← h_diff_sq]; ring
   have hfac_eq : Nat.factorial n = 4 * (X₁ - 1) * X₁ ^ 2 * (X₁ + 1) := by
     have h1 : (m - 1) * (m + 1) = Nat.factorial n := by
       zify [(by omega : 1 ≤ m)]
@@ -355,17 +354,19 @@ theorem prop_4_1_part1 {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     have hnd1 : ¬ p ∣ X₁ - 1 := fun h => h12 ⟨h, hpX⟩
     have hnd3 : ¬ p ∣ X₁ + 1 := fun h => h23 ⟨hpX, h⟩
     have hnd4 : ¬ p ∣ 4 := fun h => by
-      have := Nat.le_of_dvd (by norm_num) h; omega
+      have : p ∣ 2 := hp.dvd_of_dvd_pow (by simpa [show (4 : ℕ) = 2 ^ 2 by norm_num] using h)
+      have := Nat.le_of_dvd (by norm_num) this; omega
     have hpn : p ≤ n := by
       have hdvd_fac : p ∣ Nat.factorial n := by
         rw [hfac_eq]
-        exact dvd_mul_of_dvd_left (dvd_mul_of_dvd_right (dvd_pow_self p (by norm_num)) _) _
+        exact dvd_mul_of_dvd_left (dvd_mul_of_dvd_right (dvd_pow_self p (by decide : 2 ≠ 0)) _) _
       exact hp.dvd_factorial.mp hdvd_fac
     have hval_eq : padicValNat p (Nat.factorial n) = 2 * padicValNat p X₁ := by
       rw [hfac_eq]
       have hne4 : (4 : ℕ) ≠ 0 := by norm_num
       have hne1 : X₁ - 1 ≠ 0 := by omega
       have hne2 : X₁ ^ 2 ≠ 0 := pow_ne_zero 2 (by omega)
+      have hneX : X₁ ≠ 0 := by omega
       have hne3 : X₁ + 1 ≠ 0 := by omega
       rw [padicValNat.mul (mul_ne_zero (mul_ne_zero hne4 hne1) hne2) hne3,
           padicValNat.mul (mul_ne_zero hne4 hne1) hne2,
@@ -373,7 +374,7 @@ theorem prop_4_1_part1 {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
           padicValNat.eq_zero_of_not_dvd hnd4,
           padicValNat.eq_zero_of_not_dvd hnd1,
           padicValNat.eq_zero_of_not_dvd hnd3,
-          padicValNat.pow 2 (by omega)]
+          padicValNat.pow 2 hneX]
       ring
     have hpeven : p ∈ Peven n :=
       Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hpn⟩, hp, ⟨padicValNat p X₁, hval_eq⟩⟩
@@ -409,11 +410,12 @@ theorem prop_4_1_part1 {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
       calc 4 * (X₁ - 1) * X₁ ^ 2 * (X₁ + 1)
           = 4 * X₁ ^ 2 * ((X₁ - 1) * (X₁ + 1)) := by ring
         _ = 4 * X₁ ^ 2 * (q_n n * Y₁ ^ 2) := by rw [hdiff]
-    rw [hfac_qY] at hdvd_fac
+    nth_rw 2 [hfac_qY] at hdvd_fac
     have hcop4 : Nat.Coprime (p ^ padicValNat p (Nat.factorial n)) 4 := by
       apply Nat.Coprime.pow_left
       exact hp_pr.coprime_iff_not_dvd.mpr (fun h => by
-        have := Nat.le_of_dvd (by norm_num) h; omega)
+        have : p ∣ 2 := hp_pr.dvd_of_dvd_pow (by simpa [show (4 : ℕ) = 2 ^ 2 by norm_num] using h)
+        have := Nat.le_of_dvd (by norm_num) this; omega)
     have hcopX : Nat.Coprime (p ^ padicValNat p (Nat.factorial n)) (X₁ ^ 2) := by
       apply Nat.Coprime.pow_left
       apply Nat.Coprime.pow_right
@@ -442,7 +444,7 @@ theorem prop_4_1_part1 {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
       refine Nat.mem_primeFactors.mpr ⟨hp_pr, ?_, hm_sub1_pos.ne'⟩
       by_cases hp2 : p = 2
       · subst hp2
-        rw [hm_sub1]
+        rw [hm_sub1, mul_assoc]
         exact dvd_mul_right 2 _
       · have hp3 : 3 ≤ p := by have := hp_pr.two_le; omega
         obtain ⟨hdvd, _⟩ := hPodd p hp_mem hp3
@@ -453,7 +455,7 @@ theorem prop_4_1_part1 {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
             have hz : padicValNat p (Nat.factorial n) = 0 := by omega
             rw [hz] at this; exact this (dvd_zero 2)
           exact dvd_trans (dvd_pow_self p (by omega)) hdvd
-        rw [hm_sub1]
+        rw [hm_sub1, mul_assoc]
         exact dvd_mul_of_dvd_right h1 2
     have hlog_rad : Real.log (rad (m - 1) : ℝ) = ∑ p ∈ (m - 1).primeFactors, Real.log (p : ℝ) := by
       unfold rad
@@ -478,12 +480,16 @@ theorem prop_4_1_part1 {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
       push_cast
       rw [Real.log_prod (fun p hp => Nat.cast_ne_zero.mpr (Nat.prime_of_mem_primeFactors hp).ne_zero)]
     have h2_not : (2 : ℕ) ∉ (Finset.Icc 3 (n / 2)).filter Nat.Prime := by simp
-    rw [hlog_rad, ← Finset.sum_insert h2_not]
-    apply Finset.sum_le_sum_of_subset_of_nonneg hsub
-    intro p hp _
-    rcases Finset.mem_insert.mp hp with rfl | hp'
-    · exact Real.log_nonneg (by norm_num)
-    · exact Real.log_nonneg (by exact_mod_cast (Finset.mem_filter.mp hp').2.one_lt.le)
+    rw [hlog_rad]
+    calc ∑ p ∈ (m + 1).primeFactors, Real.log (p : ℝ)
+        ≤ ∑ p ∈ insert 2 ((Finset.Icc 3 (n / 2)).filter Nat.Prime), Real.log (p : ℝ) := by
+          apply Finset.sum_le_sum_of_subset_of_nonneg hsub
+          intro p hp _
+          rcases Finset.mem_insert.mp hp with rfl | hp'
+          · exact Real.log_nonneg (by norm_num)
+          · exact Real.log_nonneg (by exact_mod_cast (Finset.mem_filter.mp hp').2.one_lt.le)
+      _ = Real.log 2 + ∑ p ∈ (Finset.Icc 3 (n / 2)).filter Nat.Prime, Real.log (p : ℝ) := by
+          rw [Finset.sum_insert h2_not]; norm_num
   exact ⟨hdisj, hPodd, hX_even, hm_smooth, h_rad_sub, h_rad_add⟩
 
 /-- **Proposition 4.1(ii) (Biquadratic Splitting and Fermat-Quotient Lock, eqs. 4.5–4.6)**:
@@ -512,15 +518,15 @@ theorem prop_4_1_part2 {n m X₁ Y₁ δ₁ δ₂ u v p : ℕ} (hn : 8 ≤ n)
   have hpart1 := prop_4_1_part1 hn hm hfund hk2
   have hval_X := (hpart1.2.2.1 p hp hp3 hpX).2.1
   have hX1_pos : 1 ≤ X₁ := hfund.1
-  have hX_zmod0 : (X₁ : ZMod p) = 0 := (ZMod.natCast_zmod_eq_zero_iff_dvd X₁ p).mpr hpX
+  have hX_zmod0 : (X₁ : ZMod p) = 0 := (ZMod.natCast_eq_zero_iff X₁ p).mpr hpX
   have h_leg1 : legendreSym p (-(δ₁ : ℤ)) = 1 := by
-    have hmod : (-(δ₁ : ℤ) : ZMod p) * (u : ZMod p) ^ 2 = 1 := by
+    have hmod : ((-(δ₁ : ℤ) : ℤ) : ZMod p) * (u : ZMod p) ^ 2 = 1 := by
       have h1 : ((X₁ : ℤ) - 1 : ZMod p) = (δ₁ : ZMod p) * (u : ZMod p) ^ 2 := by
         have hnat : (X₁ : ℤ) - 1 = (δ₁ : ℤ) * (u : ℤ) ^ 2 := by
           zify [hX1_pos] at hX_sub; exact hX_sub
         exact_mod_cast congrArg (Int.cast : ℤ → ZMod p) hnat
       rw [show ((X₁ : ℤ) : ZMod p) = (X₁ : ZMod p) by norm_cast, hX_zmod0] at h1
-      calc (-(δ₁ : ℤ) : ZMod p) * (u : ZMod p) ^ 2
+      calc ((-(δ₁ : ℤ) : ℤ) : ZMod p) * (u : ZMod p) ^ 2
           = -((δ₁ : ZMod p) * (u : ZMod p) ^ 2) := by push_cast; ring
         _ = -(0 - 1 : ZMod p) := by rw [← h1]
         _ = 1 := by ring
@@ -530,9 +536,10 @@ theorem prop_4_1_part2 {n m X₁ Y₁ δ₁ δ₂ u v p : ℕ} (hn : 8 ≤ n)
       intro h0; rw [h0, zero_mul] at hmod; exact zero_ne_one hmod
     have hsq : IsSquare ((-(δ₁ : ℤ) : ℤ) : ZMod p) := by
       refine ⟨(u : ZMod p)⁻¹, ?_⟩
-      calc (-(δ₁ : ℤ) : ZMod p) = (-(δ₁ : ℤ) : ZMod p) * ((u : ZMod p) * (u : ZMod p)⁻¹) ^ 2 := by
+      calc ((-(δ₁ : ℤ) : ℤ) : ZMod p)
+          = ((-(δ₁ : ℤ) : ℤ) : ZMod p) * ((u : ZMod p) * (u : ZMod p)⁻¹) ^ 2 := by
             rw [mul_inv_cancel₀ hu_ne, one_pow, mul_one]
-        _ = ((-(δ₁ : ℤ) : ZMod p) * (u : ZMod p) ^ 2) * ((u : ZMod p)⁻¹) ^ 2 := by ring
+        _ = (((-(δ₁ : ℤ) : ℤ) : ZMod p) * (u : ZMod p) ^ 2) * ((u : ZMod p)⁻¹) ^ 2 := by ring
         _ = (u : ZMod p)⁻¹ * (u : ZMod p)⁻¹ := by rw [hmod, one_mul, sq]
     exact (legendreSym.eq_one_iff p hd_ne).mpr hsq
   have h_leg2 : legendreSym p (δ₂ : ℤ) = 1 := by
@@ -553,35 +560,36 @@ theorem prop_4_1_part2 {n m X₁ Y₁ δ₁ δ₂ u v p : ℕ} (hn : 8 ≤ n)
         _ = (((δ₂ : ℤ) : ZMod p) * (v : ZMod p) ^ 2) * ((v : ZMod p)⁻¹) ^ 2 := by ring
         _ = (v : ZMod p)⁻¹ * (v : ZMod p)⁻¹ := by rw [hmod, one_mul, sq]
     exact (legendreSym.eq_one_iff p hd_ne).mpr hsq
-  have h_qY_mod : (-(q_n n : ℤ) : ZMod p) * (Y₁ : ZMod p) ^ 2 = 1 := by
+  have h_qY_mod : ((-(q_n n : ℤ) : ℤ) : ZMod p) * (Y₁ : ZMod p) ^ 2 = 1 := by
     have hpell : (X₁ : ℤ) ^ 2 - (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 = 1 := by
       have h1 : (X₁ : ℤ) ^ 2 = (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 + 1 := by exact_mod_cast hfund.2.2.1
       linarith
     have h1 := congrArg (Int.cast : ℤ → ZMod p) hpell
     push_cast at h1
     rw [hX_zmod0] at h1
-    calc (-(q_n n : ℤ) : ZMod p) * (Y₁ : ZMod p) ^ 2
-        = 0 ^ 2 - (q_n n : ZMod p) * (Y₁ : ZMod p) ^ 2 := by ring
+    calc ((-(q_n n : ℤ) : ℤ) : ZMod p) * (Y₁ : ZMod p) ^ 2
+        = 0 ^ 2 - (q_n n : ZMod p) * (Y₁ : ZMod p) ^ 2 := by push_cast; ring
       _ = 1 := h1
   have h_leg3 : legendreSym p (-(q_n n : ℤ)) = 1 := by
     have hY_ne : (Y₁ : ZMod p) ≠ 0 := by
       intro h0; rw [h0, zero_pow (by norm_num), mul_zero] at h_qY_mod; exact zero_ne_one h_qY_mod
-    have hq_ne : (-(q_n n : ℤ) : ZMod p) ≠ 0 := by
+    have hq_ne : ((-(q_n n : ℤ) : ℤ) : ZMod p) ≠ 0 := by
       intro h0; rw [h0, zero_mul] at h_qY_mod; exact zero_ne_one h_qY_mod
-    have hsq : IsSquare (-(q_n n : ℤ) : ZMod p) := by
+    have hsq : IsSquare ((-(q_n n : ℤ) : ℤ) : ZMod p) := by
       refine ⟨(Y₁ : ZMod p)⁻¹, ?_⟩
-      calc (-(q_n n : ℤ) : ZMod p) = (-(q_n n : ℤ) : ZMod p) * ((Y₁ : ZMod p) * (Y₁ : ZMod p)⁻¹) ^ 2 := by
+      calc ((-(q_n n : ℤ) : ℤ) : ZMod p)
+          = ((-(q_n n : ℤ) : ℤ) : ZMod p) * ((Y₁ : ZMod p) * (Y₁ : ZMod p)⁻¹) ^ 2 := by
             rw [mul_inv_cancel₀ hY_ne, one_pow, mul_one]
-        _ = ((-(q_n n : ℤ) : ZMod p) * (Y₁ : ZMod p) ^ 2) * ((Y₁ : ZMod p)⁻¹) ^ 2 := by ring
+        _ = (((-(q_n n : ℤ) : ℤ) : ZMod p) * (Y₁ : ZMod p) ^ 2) * ((Y₁ : ZMod p)⁻¹) ^ 2 := by ring
         _ = (Y₁ : ZMod p)⁻¹ * (Y₁ : ZMod p)⁻¹ := by rw [h_qY_mod, one_mul, sq]
     exact (legendreSym.eq_one_iff p hq_ne).mpr hsq
   have h_zmod_pow : (q_n n : ZMod (p ^ padicValNat p (Nat.factorial n))) *
       (Y₁ : ZMod (p ^ padicValNat p (Nat.factorial n))) ^ 2 = -1 := by
     have hdvd : p ^ padicValNat p (Nat.factorial n) ∣ X₁ ^ 2 := by
-      rw [← hval_X, pow_mul]
+      rw [← hval_X, mul_comm, pow_mul]
       exact pow_dvd_pow_of_dvd pow_padicValNat_dvd 2
     have hX2_0 : (X₁ ^ 2 : ZMod (p ^ padicValNat p (Nat.factorial n))) = 0 :=
-      (ZMod.natCast_zmod_eq_zero_iff_dvd (X₁ ^ 2) (p ^ padicValNat p (Nat.factorial n))).mpr hdvd
+      (ZMod.natCast_eq_zero_iff (X₁ ^ 2) (p ^ padicValNat p (Nat.factorial n))).mpr hdvd
     have hpell := hfund.2.2.1
     have h1 := congrArg (Nat.cast : ℕ → ZMod (p ^ padicValNat p (Nat.factorial n))) hpell
     push_cast at h1
@@ -595,25 +603,26 @@ theorem prop_4_1_part2 {n m X₁ Y₁ δ₁ δ₂ u v p : ℕ} (hn : 8 ≤ n)
       2 * (((Y₁ : ℤ) ^ (p - 1) - 1) / (p : ℤ))) := by
     have hY_ndvd : ¬ p ∣ Y₁ := by
       intro hY
-      have h0 : (Y₁ : ZMod p) = 0 := (ZMod.natCast_zmod_eq_zero_iff_dvd Y₁ p).mpr hY
+      have h0 : (Y₁ : ZMod p) = 0 := (ZMod.natCast_eq_zero_iff Y₁ p).mpr hY
       rw [h0, zero_pow (by norm_num), mul_zero] at h_qY_mod
       exact zero_ne_one h_qY_mod
     have hq_ndvd : ¬ (p : ℤ) ∣ -(q_n n : ℤ) := by
       intro hq
-      have h0 : (-(q_n n : ℤ) : ZMod p) = 0 := (ZMod.intCast_zmod_eq_zero_iff_dvd _ p).mpr hq
+      have h0 : ((-(q_n n : ℤ) : ℤ) : ZMod p) = 0 := (ZMod.intCast_zmod_eq_zero_iff_dvd _ p).mpr hq
       rw [h0, zero_mul] at h_qY_mod
       exact zero_ne_one h_qY_mod
     have hflt_q : (p : ℤ) ∣ (-(q_n n : ℤ)) ^ (p - 1) - 1 := by
       rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
-      push_cast
-      have hne : (-(q_n n : ℤ) : ZMod p) ≠ 0 := by
+      have hne : ((-(q_n n : ℤ) : ℤ) : ZMod p) ≠ 0 := by
         intro h0; exact hq_ndvd ((ZMod.intCast_zmod_eq_zero_iff_dvd _ p).mp h0)
+      push_cast
+      rw [show (-(q_n n : ZMod p)) = ((-(q_n n : ℤ) : ℤ) : ZMod p) by push_cast; ring]
       rw [ZMod.pow_card_sub_one_eq_one hne, sub_self]
     have hflt_Y : (p : ℤ) ∣ (Y₁ : ℤ) ^ (p - 1) - 1 := by
       rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
       push_cast
       have hne : (Y₁ : ZMod p) ≠ 0 := by
-        intro h0; exact hY_ndvd ((ZMod.natCast_zmod_eq_zero_iff_dvd _ p).mp h0)
+        intro h0; exact hY_ndvd ((ZMod.natCast_eq_zero_iff _ p).mp h0)
       rw [ZMod.pow_card_sub_one_eq_one hne, sub_self]
     obtain ⟨qq, hqq⟩ := hflt_q
     obtain ⟨qY, hqY⟩ := hflt_Y
@@ -636,7 +645,7 @@ theorem prop_4_1_part2 {n m X₁ Y₁ δ₁ δ₂ u v p : ℕ} (hn : 8 ≤ n)
         (Int.modEq_iff_dvd.mpr hneg_qY2_mod).symm
       have h2 := h1.pow (p - 1)
       rw [one_pow] at h2
-      exact (Int.modEq_iff_dvd.mp h2).symm
+      exact Int.modEq_iff_dvd.mp h2.symm
     have hq_pow : (-(q_n n : ℤ)) ^ (p - 1) = 1 + (p : ℤ) * qq := by linarith
     have hY_pow : (Y₁ : ℤ) ^ (p - 1) = 1 + (p : ℤ) * qY := by linarith
     have hexpand : ((-(q_n n : ℤ)) * (Y₁ : ℤ) ^ 2) ^ (p - 1) - 1 =
