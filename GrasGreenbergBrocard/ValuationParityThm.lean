@@ -17,7 +17,7 @@ set_option pp.proofs false
 
 noncomputable section
 
-open Real Finset BigOperators Asymptotics Filter
+open Real Finset BigOperators Asymptotics Filter Classical
 
 namespace GrasGreenbergBrocard
 
@@ -31,7 +31,7 @@ theorem small_prime_parity_band_bound (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 
   set R := Nat.floor (1 / δ)
   set A_R := 6 * R + 30
   have hR3 : 3 ≤ R := by
-    rw [Nat.le_floor_iff (by positivity), le_div_iff₀ hδ0]; linarith
+    rw [Nat.le_floor_iff (by positivity), le_div_iff₀ hδ0]; norm_num; linarith
   have h_col_sum : ∀ r ∈ Finset.Icc 2 R,
       (fun n : ℕ => ∑ p ∈ ((Finset.Icc 3 (Nat.sqrt n)).filter (fun p : ℕ =>
           p.Prime ∧ (n : ℝ) ^ δ < (p : ℝ) ∧ (p : ℝ) ∈ collar n r A_R)),
@@ -58,6 +58,7 @@ theorem small_prime_parity_band_bound (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 
       (Real.log (n : ℝ)) ^ A_R / (n : ℝ) ^ (1 / ((r : ℝ) * ((r : ℝ) + 1))) ≤ 1 := by
     rw [Filter.eventually_all_finset]
     intro r hr
+    have hr_pos : (0 : ℝ) < (r : ℝ) := by exact_mod_cast (by have := (Finset.mem_Icc.mp hr).1; omega : 0 < r)
     have ht := log_pow_div_rpow_tendsto_zero A_R (by positivity : (0 : ℝ) < 1 / ((r : ℝ) * ((r : ℝ) + 1)))
     exact (ht.eventually (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1))).mono (fun _ h => h.le)
   filter_upwards [(tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 2),
@@ -91,10 +92,12 @@ theorem small_prime_parity_band_bound (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 
         have hr_le : (p : ℝ) ≤ (n : ℝ) ^ (1 / (r : ℝ)) := (Finset.mem_filter.mp hr_mem).2
         refine ⟨r, hr_icc, ?_, hr_le⟩
         by_cases hrR : r = R
-        · subst hrR; exact hp_gt_R1
-        · have hr1_icc : r + 1 ∈ Finset.Icc 2 R := Finset.mem_Icc.mpr ⟨by omega, by omega⟩
+        · rw [hrR]; exact hp_gt_R1
+        · have hr_bd := Finset.mem_Icc.mp hr_icc
+          have hr1_icc : r + 1 ∈ Finset.Icc 2 R := Finset.mem_Icc.mpr ⟨by omega, by omega⟩
           by_contra hle; push Not at hle
-          have hle' := Finset.le_max' _ (r + 1) (Finset.mem_filter.mpr ⟨hr1_icc, by push_cast; exact hle⟩)
+          have hle' : r + 1 ≤ r := Finset.le_max' _ (r + 1)
+            (Finset.mem_filter.mpr ⟨hr1_icc, by push_cast; exact hle.le⟩)
           omega
       obtain ⟨r, hr_icc, hlo, hhi⟩ := hex
       refine ⟨r, hr_icc, hp, ?_⟩
@@ -128,7 +131,8 @@ theorem small_prime_parity_band_bound (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 
           have h_n2 : (n : ℝ) ^ (1 / ((r : ℝ) + 1)) * (n : ℝ) ^ (1 / ((r : ℝ) * ((r : ℝ) + 1))) =
               (n : ℝ) ^ (1 / (r : ℝ)) := by
             rw [← Real.rpow_add hn_pos]
-            congr 1; field_simp [hr_pos.ne', by positivity : (r : ℝ) + 1 ≠ 0]; ring
+            have hr1_ne : (r : ℝ) + 1 ≠ 0 := by positivity
+            congr 1; field_simp [hr_pos.ne', hr1_ne]; ring
           nlinarith [Real.rpow_pos_of_pos hn_pos (1 / ((r : ℝ) + 1))]
         exact lt_of_le_of_lt h_gap hlo
       · refine ⟨hlo, le_trans hhi ?_⟩
@@ -219,14 +223,14 @@ theorem Sigma_star_parity_isLittleO_log :
           refine Finset.sum_congr rfl (fun p hp => ?_)
           have hp3 : 3 ≤ p := (Finset.mem_Icc.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).1).1
           have hlogp : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ p))
-          have hp1 : (0 : ℝ) < (p : ℝ) - 1 := by exact_mod_cast (by omega : 1 < p)
+          have hp1 : (0 : ℝ) < (p : ℝ) - 1 := sub_pos.mpr (by exact_mod_cast (by omega : 1 < p))
           rw [abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul, abs_of_nonneg (div_nonneg hlogp hp1.le)]
       _ ≤ ∑ p ∈ (Finset.Icc 3 (Nat.floor (max 3 ((n : ℝ) ^ δ)))).filter Nat.Prime,
             Real.log (p : ℝ) / ((p : ℝ) - 1) := by
           refine Finset.sum_le_sum_of_subset_of_nonneg ?_ (fun p hp _ => by
             have hp3 : 3 ≤ p := (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).1
             have hlogp : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ p))
-            have hp1 : (0 : ℝ) < (p : ℝ) - 1 := by exact_mod_cast (by omega : 1 < p)
+            have hp1 : (0 : ℝ) < (p : ℝ) - 1 := sub_pos.mpr (by exact_mod_cast (by omega : 1 < p))
             exact div_nonneg hlogp hp1.le)
           intro p hp
           simp only [S_lo, S, Finset.mem_filter, Finset.mem_Icc] at hp ⊢
@@ -273,14 +277,30 @@ theorem Sigma_star_parity_isLittleO_log :
 theorem Delta_parity_isLittleO_mul_log :
     (fun n : ℕ => Delta_parity n) =o[atTop] (fun n : ℕ => (n : ℝ) * Real.log (n : ℝ)) := by
   have h1 : (fun n : ℕ => Delta_parity n - (Real.log 2 - 1 - Sigma_star_parity n) * (n : ℝ))
-      =o[atTop] (fun n : ℕ => (n : ℝ) / Real.log (n : ℝ)) := Delta_parity_second_order
-  have h1' : (fun n : ℕ => Delta_parity n - (Real.log 2 - 1 - Sigma_star_parity n) * (n : ℝ))
+      =O[atTop] (fun n : ℕ => (n : ℝ) / Real.log (n : ℝ)) := Delta_parity_second_order
+  have h_div_o : (fun n : ℕ => (n : ℝ) / Real.log (n : ℝ))
       =o[atTop] (fun n : ℕ => (n : ℝ) * Real.log (n : ℝ)) := by
-    refine h1.trans_isBigO ?_
-    refine Asymptotics.IsBigO.of_bound 1 ?_
-    filter_upwards [(tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1)] with n hln
-    rw [Real.norm_of_nonneg (by positivity), Real.norm_of_nonneg (by positivity), one_mul]
-    exact div_le_mul_of_nonneg_left (le_self_pow₀ hln (by norm_num : 2 ≠ 0) |> fun h => by nlinarith) (by positivity) (by linarith)
+    rw [Asymptotics.isLittleO_iff]
+    intro ε hε
+    filter_upwards [(tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually
+      (eventually_ge_atTop (1 / Real.sqrt ε + 1)), Filter.eventually_ge_atTop 2] with n hln hn
+    dsimp only [Function.comp_apply] at hln
+    have hlogn_pos : 0 < Real.log (n : ℝ) := by
+      have : 0 ≤ 1 / Real.sqrt ε := by positivity
+      linarith
+    have hn_pos : (0 : ℝ) < (n : ℝ) := by positivity
+    rw [Real.norm_of_nonneg (by positivity), Real.norm_of_nonneg (by positivity)]
+    have hsq : 1 / Real.sqrt ε ≤ Real.log (n : ℝ) := by linarith
+    have hsq2 : 1 / ε ≤ (Real.log (n : ℝ)) ^ 2 := by
+      calc 1 / ε = (1 / Real.sqrt ε) ^ 2 := by rw [div_pow, one_pow, Real.sq_sqrt hε.le]
+        _ ≤ (Real.log (n : ℝ)) ^ 2 := pow_le_pow_left₀ (by positivity) hsq 2
+    have h1_le : 1 ≤ ε * (Real.log (n : ℝ)) ^ 2 := by
+      rwa [div_le_iff₀ hε] at hsq2
+    rw [div_le_iff₀ hlogn_pos]
+    nlinarith
+  have h1' : (fun n : ℕ => Delta_parity n - (Real.log 2 - 1 - Sigma_star_parity n) * (n : ℝ))
+      =o[atTop] (fun n : ℕ => (n : ℝ) * Real.log (n : ℝ)) :=
+    h1.trans_isLittleO h_div_o
   have h2 : (fun n : ℕ => (Real.log 2 - 1 - Sigma_star_parity n) * (n : ℝ))
       =o[atTop] (fun n : ℕ => (n : ℝ) * Real.log (n : ℝ)) := by
     have hconst : (fun n : ℕ => (Real.log 2 - 1 : ℝ)) =o[atTop] (fun n : ℕ => Real.log (n : ℝ)) :=
@@ -311,13 +331,17 @@ theorem n_log_n_sub_n_le_log_factorial (n : ℕ) (hn : 1 ≤ n) :
         linarith
       push_cast
       linarith
-  · rw [← Finset.prod_Icc_id_eq_factorial, Nat.cast_prod, Real.log_prod (fun k hk => by
-      exact_mod_cast (by have := (Finset.mem_Icc.mp hk).1; omega : k ≠ 0))]
-    calc ∑ k ∈ Finset.Icc 1 n, Real.log (k : ℝ)
-        ≤ ∑ _k ∈ Finset.Icc 1 n, Real.log (n : ℝ) := by
-          refine Finset.sum_le_sum (fun k hk => Real.log_le_log (by exact_mod_cast (Finset.mem_Icc.mp hk).1)
-            (by exact_mod_cast (Finset.mem_Icc.mp hk).2))
-      _ = (n : ℝ) * Real.log (n : ℝ) := by simp [Finset.sum_const, Nat.card_Icc]
+  · induction n, hn using Nat.le_induction with
+    | base => simp
+    | succ m hm ih =>
+      have hm_pos : (0 : ℝ) < (m : ℝ) := by exact_mod_cast hm
+      rw [Nat.factorial_succ, Nat.cast_mul, Real.log_mul (by positivity) (by exact_mod_cast (Nat.factorial_ne_zero m))]
+      have hlog_le : Real.log (m : ℝ) ≤ Real.log ((m : ℝ) + 1) :=
+        Real.log_le_log hm_pos (by linarith)
+      have h1 : (m : ℝ) * Real.log (m : ℝ) ≤ (m : ℝ) * Real.log ((m : ℝ) + 1) :=
+        mul_le_mul_of_nonneg_left hlog_le hm_pos.le
+      push_cast
+      linarith
 
 /-- **Theorem 2.5(ii), eq. (2.17), part 3**:
 `S_odd(n) = (1/2 + o(1)) n log n`. -/
@@ -329,26 +353,42 @@ theorem S_odd_asymptotic :
         (padicValNat 2 (Nat.factorial n) : ℝ) * Real.log 2 := by
     intro n hn
     have hfac : Nat.factorial n ≠ 0 := Nat.factorial_ne_zero n
-    have hsupp : (Nat.factorial n).factorization.support ⊆ (Finset.Icc 2 n).filter Nat.Prime := by
-      intro p hp
-      simp only [Finsupp.mem_support_iff, ne_eq] at hp
-      have hprime : p.Prime := Nat.prime_of_mem_primeFactors (by simpa [Nat.primeFactors] using hp)
-      have hdvd : p ∣ Nat.factorial n := Nat.dvd_of_mem_primeFactors (by simpa [Nat.primeFactors] using hp)
-      have hle : p ≤ n := hprime.dvd_factorial.mp hdvd
-      exact Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hprime.two_le, hle⟩, hprime⟩
+    have h_fac_eq : Nat.factorial n =
+        ∏ p ∈ (Finset.Icc 2 n).filter Nat.Prime, p ^ padicValNat p (Nat.factorial n) := by
+      apply Nat.eq_of_factorization_eq hfac
+      · exact Finset.prod_ne_zero_iff.mpr (fun p hp => pow_ne_zero _ (Finset.mem_filter.mp hp).2.ne_zero)
+      · intro q
+        rw [Nat.factorization_prod (fun p hp => pow_ne_zero _ (Finset.mem_filter.mp hp).2.ne_zero)]
+        simp only [Finsupp.coe_finset_sum, Finset.sum_apply, Nat.factorization_pow, Finsupp.smul_apply, smul_eq_mul]
+        by_cases hq : q ∈ (Finset.Icc 2 n).filter Nat.Prime
+        · rw [Finset.sum_eq_single q]
+          · have hq_pr : q.Prime := (Finset.mem_filter.mp hq).2
+            rw [hq_pr.factorization_self, mul_one, Nat.factorization_def _ hq_pr]
+          · intro p hp hpq
+            have hp_pr : p.Prime := (Finset.mem_filter.mp hp).2
+            rw [Nat.Prime.factorization_eq_zero_of_ne hp_pr hpq, mul_zero]
+          · intro hq_abs; exact absurd hq hq_abs
+        · rw [Finset.sum_eq_zero]
+          · symm
+            by_cases hq_pr : q.Prime
+            · apply Nat.factorization_eq_zero_of_not_dvd
+              intro hdvd
+              exact hq (Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hq_pr.two_le, hq_pr.dvd_factorial.mp hdvd⟩, hq_pr⟩)
+            · exact Nat.factorization_eq_zero_of_non_prime _ hq_pr
+          · intro p hp
+            have hp_pr : p.Prime := (Finset.mem_filter.mp hp).2
+            have hpq : p ≠ q := fun h => hq (h ▸ hp)
+            rw [Nat.Prime.factorization_eq_zero_of_ne hp_pr hpq, mul_zero]
     have hlog_fac : Real.log ((Nat.factorial n : ℕ) : ℝ) =
         ∑ p ∈ (Finset.Icc 2 n).filter Nat.Prime,
           (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) := by
-      conv_lhs => rw [← Nat.factorization_prod_pow_eq_self hfac]
-      rw [Finsupp.prod_of_support_subset _ hsupp _ (fun _ _ => by simp)]
+      conv_lhs => rw [h_fac_eq]
       push_cast [Nat.cast_prod]
       rw [Real.log_prod (fun p hp => by
         have hprime : p.Prime := (Finset.mem_filter.mp hp).2
         exact_mod_cast pow_ne_zero _ hprime.ne_zero)]
       refine Finset.sum_congr rfl (fun p hp => ?_)
-      have hprime : p.Prime := (Finset.mem_filter.mp hp).2
-      haveI : Fact p.Prime := ⟨hprime⟩
-      rw [Nat.cast_pow, Real.log_pow, Nat.factorization_def _ hprime]
+      rw [Nat.cast_pow, Real.log_pow]
     have h2_mem : (2 : ℕ) ∈ (Finset.Icc 2 n).filter Nat.Prime :=
       Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨le_rfl, hn⟩, Nat.prime_two⟩
     have h_ins : (Finset.Icc 2 n).filter Nat.Prime =
@@ -393,7 +433,7 @@ theorem S_odd_asymptotic :
       · rintro ⟨⟨⟨hp2, hpn⟩, hp_pr, hp_ev⟩, hp3⟩; exact ⟨⟨hp3, hpn⟩, hp_pr, hp_ev⟩
       · rintro ⟨⟨hp3, hpn⟩, hp_pr, hp_ev⟩; exact ⟨⟨⟨by omega, hpn⟩, hp_pr, hp_ev⟩, hp3⟩
     rw [h_split3, Finset.sum_union h_disj3, ← h_odd_eq, ← h_even_eq]
-    ring
+    simp only [Nat.cast_ofNat]; ring
   have h_sum_asymp : (fun n : ℕ => S_odd n + S_even n - (n : ℝ) * Real.log (n : ℝ))
       =o[atTop] (fun n : ℕ => (n : ℝ) * Real.log (n : ℝ)) := by
     rw [Asymptotics.isLittleO_iff]
@@ -401,6 +441,7 @@ theorem S_odd_asymptotic :
     filter_upwards [Filter.eventually_ge_atTop 2,
       (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop ((1 + Real.log 2) / ε + 1))] with
       n hn hln
+    dsimp only [Function.comp_apply] at hln
     have hn_pos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast (by omega : 0 < n)
     have hlogn_pos : 0 < Real.log (n : ℝ) := by
       have : 0 ≤ (1 + Real.log 2) / ε := by positivity
