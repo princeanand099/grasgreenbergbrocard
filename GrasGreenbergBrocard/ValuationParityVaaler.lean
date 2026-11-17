@@ -473,13 +473,15 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
               (∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ)))) := by
               congr 1
               · dsimp only [posSet]
-                rw [Finset.sum_image (fun k1 _ k2 _ h => Int.ofNat.inj h)]
-                refine Finset.sum_congr rfl (fun k _ => ?_)
-                rw [Int.cast_natCast, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
+                trans ∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * |((k : ℤ) : ℝ)|))
+                · exact Finset.sum_image (fun k1 _ k2 _ h => by omega)
+                · refine Finset.sum_congr rfl (fun k _ => ?_)
+                  rw [Int.cast_natCast, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
               · dsimp only [negSet]
-                rw [Finset.sum_image (fun k1 _ k2 _ h => Int.ofNat.inj (neg_inj.mp h))]
-                refine Finset.sum_congr rfl (fun k _ => ?_)
-                rw [Int.cast_neg, Int.cast_natCast, abs_neg, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
+                trans ∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * |(-(k : ℤ) : ℝ)|))
+                · exact Finset.sum_image (fun k1 _ k2 _ h => by omega)
+                · refine Finset.sum_congr rfl (fun k _ => ?_)
+                  rw [Int.cast_neg, Int.cast_natCast, abs_neg, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
           _ = 2 * ∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ))) := by ring
       calc ∑ h ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Odd h),
             ‖c_tilde h‖

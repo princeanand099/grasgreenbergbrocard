@@ -187,7 +187,10 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
         ext n; ring
       rw [heq]
       simpa using ((htend1.const_mul 2).add ht0).mul_const ((R : ℝ) * Mmax + 1)
-    exact h0.eventually (ge_mem_nhds (by positivity : (0 : ℝ) < c₁_low))
+    have hc₁_pos : 0 < c₁_low := by
+      unfold c₁_low
+      exact mul_pos (by norm_num) (zpow_pos (by norm_num) _)
+    exact h0.eventually (ge_mem_nhds hc₁_pos)
   have hev2 : ∀ᶠ n : ℕ in atTop,
       (Real.log (n : ℝ)) ^ (R + 5) / (n : ℝ) ^ (δ * η') ≤ 1 :=
     htend2.eventually (ge_mem_nhds (by norm_num : (0 : ℝ) < 1))
@@ -210,7 +213,8 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
     have hh1 : (1 : ℝ) ≤ |(h r₀ : ℝ)| := by exact_mod_cast Int.one_le_abs hr₀_ne
     calc (2 : ℝ) ^ (-(R : ℤ)) * (Real.log (n : ℝ)) ^ A_R
         ≤ (n : ℝ) / P ^ r₀ := hPhase r₀ hr₀_mem
-      _ ≤ |(h r₀ : ℝ)| * ((n : ℝ) / P ^ r₀) := le_mul_of_one_le_left (by positivity) hh1
+      _ = 1 * ((n : ℝ) / P ^ r₀) := (one_mul _).symm
+      _ ≤ |(h r₀ : ℝ)| * ((n : ℝ) / P ^ r₀) := mul_le_mul_of_nonneg_right hh1 (by positivity)
       _ = T₀ := by ring
   have hP_ge1 : (1 : ℝ) ≤ P := by
     calc (1 : ℝ) ≤ (n : ℝ) ^ δ := Real.one_le_rpow (by exact_mod_cast (by omega : 1 ≤ n)) hδ0.le
@@ -221,7 +225,10 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
         ∀ t ∈ Set.Icc P (2 * P),
           c₁ * T₀ / P ^ j ≤ |iteratedDeriv j F t| ∧ |iteratedDeriv j F t| ≤ c₂ * T₀ / P ^ j := by
     intro j hj1 hj2
-    refine ⟨c₁_low, c₂_high, by positivity, ?_, ?_⟩
+    have hc₁_pos : 0 < c₁_low := by
+      unfold c₁_low
+      exact mul_pos (by norm_num) (zpow_pos (by norm_num) _)
+    refine ⟨c₁_low, c₂_high, hc₁_pos, ?_, ?_⟩
     · unfold c₁_low c₂_high Mmax
       have hM1 : (1 : ℝ) ≤ ∏ k ∈ Finset.range (5 * R + 2), ((R + k : ℕ) : ℝ) := by
         refine Finset.one_le_prod' (fun k _ => ?_)
@@ -234,8 +241,9 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
       linarith
     · intro t ht
       have ht_pos : 0 < t := lt_of_lt_of_le hP_pos ht.1
-      have hF_eq : F = fun x : ℝ => ∑ r ∈ A, ((h r : ℝ) * (n : ℝ) / 2) * x ^ (-(r : ℤ)) := by
+      have hF_eq : F = ∑ r ∈ A, fun x : ℝ => ((h r : ℝ) * (n : ℝ) / 2) * x ^ (-(r : ℤ)) := by
         ext x
+        rw [Finset.sum_apply]
         refine Finset.sum_congr rfl (fun r _ => ?_)
         rw [zpow_neg, zpow_natCast]
         ring
@@ -245,18 +253,19 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
         have hcd : ∀ r ∈ A, ContDiffAt ℝ j
             (fun x : ℝ => ((h r : ℝ) * (n : ℝ) / 2) * x ^ (-(r : ℤ))) t := by
           intro r _
-          exact (contDiffAt_zpow (-(r : ℤ)) (Or.inl ht_pos.ne')).const_mul _
+          exact (contDiffAt_id.zpow (-(r : ℤ)) (Or.inl ht_pos.ne')).const_mul _
         rw [iteratedDeriv_sum hcd]
         refine Finset.sum_congr rfl (fun r _ => ?_)
-        rw [iteratedDeriv_const_mul (contDiffAt_zpow (-(r : ℤ)) (Or.inl ht_pos.ne')),
+        rw [iteratedDeriv_const_mul (contDiffAt_id.zpow (-(r : ℤ)) (Or.inl ht_pos.ne')),
           iteratedDeriv_neg_pow r j t ht_pos]
+        ring
       rw [hIter]
       have hsplit := Finset.add_sum_erase A
         (fun r => ((h r : ℝ) * (n : ℝ) / 2) * negPowDerivCoeff r j * t ^ (-((r + j : ℕ) : ℤ))) hr₀_mem
       rw [← hsplit]
       have hterm0_lo : 2 * c₁_low * T₀ / P ^ j ≤
           |((h r₀ : ℝ) * (n : ℝ) / 2) * negPowDerivCoeff r₀ j * t ^ (-((r₀ + j : ℕ) : ℤ))| := by
-        rw [abs_mul, abs_mul, abs_mul, abs_div, abs_of_pos (by positivity : (0 : ℝ) < (n : ℝ)),
+        rw [abs_mul, abs_mul, abs_div, abs_mul, abs_of_pos (by positivity : (0 : ℝ) < (n : ℝ)),
           abs_of_pos (by norm_num : (0 : ℝ) < 2),
           abs_of_pos (zpow_pos ht_pos (-((r₀ + j : ℕ) : ℤ)))]
         have hcoeff_ge : (1 : ℝ) ≤ |negPowDerivCoeff r₀ j| := by
@@ -289,7 +298,7 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
               · positivity
       have hterm0_hi : |((h r₀ : ℝ) * (n : ℝ) / 2) * negPowDerivCoeff r₀ j * t ^ (-((r₀ + j : ℕ) : ℤ))| ≤
           Mmax * T₀ / P ^ j := by
-        rw [abs_mul, abs_mul, abs_mul, abs_div, abs_of_pos (by positivity : (0 : ℝ) < (n : ℝ)),
+        rw [abs_mul, abs_mul, abs_div, abs_mul, abs_of_pos (by positivity : (0 : ℝ) < (n : ℝ)),
           abs_of_pos (by norm_num : (0 : ℝ) < 2),
           abs_of_pos (zpow_pos ht_pos (-((r₀ + j : ℕ) : ℤ)))]
         have hcoeff_le : |negPowDerivCoeff r₀ j| ≤ Mmax := by
@@ -342,7 +351,7 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
               have hle : r₀ ≤ r := Finset.min'_le _ r (Finset.mem_filter.mpr ⟨hrA, hhr⟩)
               omega
             have hr_range : 1 ≤ r ∧ r ≤ R := hA_range r hrA
-            rw [abs_mul, abs_mul, abs_mul, abs_div, abs_of_pos (by positivity : (0 : ℝ) < (n : ℝ)),
+            rw [abs_mul, abs_mul, abs_div, abs_mul, abs_of_pos (by positivity : (0 : ℝ) < (n : ℝ)),
               abs_of_pos (by norm_num : (0 : ℝ) < 2),
               abs_of_pos (zpow_pos ht_pos (-((r + j : ℕ) : ℤ)))]
             have hh_le : |(h r : ℝ)| ≤ 2 * (Real.log (n : ℝ)) ^ (R + 2) + 1 := by
@@ -426,6 +435,7 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
                   _ = R := by simp
               exact_mod_cast hcard
           _ ≤ c₁_low * (T₀ / P ^ j) := by
+              rw [← mul_assoc]
               apply mul_le_mul_of_nonneg_right _ (by positivity)
               calc (R : ℝ) * ((2 * (Real.log (n : ℝ)) ^ (R + 2) + 1) / (n : ℝ) ^ δ * Mmax)
                   ≤ (2 * (Real.log (n : ℝ)) ^ (R + 2) + 1) / (n : ℝ) ^ δ * ((R : ℝ) * Mmax + 1) := by
@@ -437,6 +447,7 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
       · have hrev := abs_sub_abs_le_abs_add
           (((h r₀ : ℝ) * (n : ℝ) / 2) * negPowDerivCoeff r₀ j * t ^ (-((r₀ + j : ℕ) : ℤ)))
           (∑ r ∈ A.erase r₀, ((h r : ℝ) * (n : ℝ) / 2) * negPowDerivCoeff r j * t ^ (-((r + j : ℕ) : ℤ)))
+        have h2c : 2 * c₁_low * T₀ / P ^ j = c₁_low * T₀ / P ^ j + c₁_low * T₀ / P ^ j := by ring
         linarith
       · have htri := abs_add_le
           (((h r₀ : ℝ) * (n : ℝ) / 2) * negPowDerivCoeff r₀ j * t ^ (-((r₀ + j : ℕ) : ℤ)))
@@ -451,10 +462,15 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
             exact_mod_cast (by omega : 1 ≤ R + k)
           have hpow_le : (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) ≤ 1 :=
             zpow_le_one_of_nonpos₀ (by norm_num) (by omega)
-          linarith
+          calc (1 / 4 : ℝ) * (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ))
+              ≤ (1 / 4 : ℝ) * 1 := mul_le_mul_of_nonneg_left hpow_le (by norm_num)
+            _ ≤ (1 / 2 : ℝ) * 1 := by norm_num
+            _ ≤ (1 / 2 : ℝ) * ∏ k ∈ Finset.range (5 * R + 2), ((R + k : ℕ) : ℝ) :=
+              mul_le_mul_of_nonneg_left hM1 (by norm_num)
         have hc1_T : c₁_low * T₀ / P ^ j ≤ ((1 / 2 : ℝ) * Mmax) * T₀ / P ^ j := by
           apply div_le_div_of_nonneg_right (mul_le_mul_of_nonneg_right hc1_le (by positivity)) (by positivity)
-        unfold c₂_high
+        have h32 : c₂_high * T₀ / P ^ j = Mmax * T₀ / P ^ j + ((1 / 2 : ℝ) * Mmax) * T₀ / P ^ j := by
+          unfold c₂_high; ring
         linarith
   have hMain := hVaughan n P I F w W₀ T₀ hn hP_lo hP_hi hI_prime hT₀_ge hW_bound hDeriv
   constructor
@@ -495,13 +511,14 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
         pow_le_pow_left₀ hlogP_nonneg hlogP_le 3
       have h4 : (n : ℝ) ^ (-(δ * η')) * (Real.log (n : ℝ)) ^ 3 =
           ((Real.log (n : ℝ)) ^ (R + 5) / (n : ℝ) ^ (δ * η')) * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := by
-        rw [Real.rpow_neg (by positivity)]
-        rw [← Real.rpow_natCast (Real.log (n : ℝ)) 3,
+        rw [Real.rpow_neg (Nat.cast_nonneg n),
+          ← Real.rpow_natCast (Real.log (n : ℝ)) 3,
           ← Real.rpow_natCast (Real.log (n : ℝ)) (R + 5),
           ← Real.rpow_add (by linarith)]
         have hexp : ((R + 5 : ℕ) : ℝ) + (-((R : ℝ) + 2)) = (3 : ℝ) := by push_cast; ring
-        rw [mul_assoc, ← Real.rpow_add (by linarith), hexp]
-        ring
+        rw [mul_assoc, div_eq_mul_inv, mul_assoc]
+        congr 1
+        rw [← Real.rpow_add (by linarith), hexp]
       calc P ^ (-η') * (Real.log P) ^ 3
           ≤ (n : ℝ) ^ (-(δ * η')) * (Real.log (n : ℝ)) ^ 3 :=
             mul_le_mul (le_trans h1 h2.le) h3 (by positivity) (by positivity)
