@@ -11,7 +11,7 @@ set_option pp.maxSteps 50
 set_option pp.deepTerms false
 set_option pp.deepTerms.threshold 3
 set_option pp.proofs false
-set_option maxHeartbeats 400000
+set_option maxHeartbeats 1600000
 
 noncomputable section
 
@@ -394,10 +394,8 @@ theorem Delta_parity_second_order :
       simp only [Hr, Finset.mem_filter, Finset.mem_Icc] at hp1 hp2
       have hr₁_pos : (0 : ℝ) < (r₁ : ℝ) := by exact_mod_cast hr₁.1
       have hr₂_pos : (0 : ℝ) < (r₂ : ℝ) := by exact_mod_cast hr₂.1
-      have hhi1 := hp1.1.1.2
-      have hhi2 := hp2.1.1.2
-      rw [Nat.le_floor_iff (by positivity), le_div_iff₀ hr₁_pos] at hhi1
-      rw [Nat.le_floor_iff (by positivity), le_div_iff₀ hr₂_pos] at hhi2
+      have hhi1 : (p : ℝ) * (r₁ : ℝ) ≤ (n : ℝ) := (le_div_iff₀ hr₁_pos).mp ((Nat.le_floor_iff (by positivity)).mp hp1.1.1.2)
+      have hhi2 : (p : ℝ) * (r₂ : ℝ) ≤ (n : ℝ) := (le_div_iff₀ hr₂_pos).mp ((Nat.le_floor_iff (by positivity)).mp hp2.1.1.2)
       have hlo1 := hp1.2; have hlo2 := hp2.2
       rw [div_lt_iff₀ (by positivity)] at hlo1 hlo2
       have h12 : (p : ℝ) * (r₁ : ℝ) < (p : ℝ) * ((r₂ : ℝ) + 1) := by linarith
