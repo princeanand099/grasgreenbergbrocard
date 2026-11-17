@@ -159,6 +159,7 @@ theorem J_n_sq_eq {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2) 
         ext
         · simp only [zsqrtd_one_re', zsqrtd_add_re', zsqrtd_mul_re', zsqrtd_intCast_re,
             zsqrtd_intCast_im, zsqrtd_natCast_re, zsqrtd_natCast_im, sq]
+          push_cast
           linarith
         · simp only [zsqrtd_one_im', zsqrtd_add_im', zsqrtd_mul_im', zsqrtd_intCast_re,
             zsqrtd_intCast_im, zsqrtd_natCast_re, zsqrtd_natCast_im, sq]
@@ -169,15 +170,17 @@ theorem J_n_sq_eq {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2) 
         _ = (t : Zsqrtd (-(q_n n : ℤ))) * α ^ 2 +
               ((t : Zsqrtd (-(q_n n : ℤ))) + α) * (m : Zsqrtd (-(q_n n : ℤ))) ^ 2 := by rw [hαβ]
     change α ∈ (Ideal.span {(m : Zsqrtd (-(q_n n : ℤ))), α}) ^ 2
-    rw [hα_eq]
+    conv_lhs => rw [hα_eq]
     have hα_in : α ∈ Ideal.span {(m : Zsqrtd (-(q_n n : ℤ))), α} :=
       Ideal.subset_span (Set.mem_insert_of_mem _ rfl)
     have hm_in : (m : Zsqrtd (-(q_n n : ℤ))) ∈ Ideal.span {(m : Zsqrtd (-(q_n n : ℤ))), α} :=
       Ideal.subset_span (Set.mem_insert _ _)
-    have hα2_in : α ^ 2 ∈ (Ideal.span {(m : Zsqrtd (-(q_n n : ℤ))), α}) ^ 2 := by
-      rw [sq]; exact Ideal.mul_mem_mul hα_in hα_in
-    have hm2_in : (m : Zsqrtd (-(q_n n : ℤ))) ^ 2 ∈ (Ideal.span {(m : Zsqrtd (-(q_n n : ℤ))), α}) ^ 2 := by
-      rw [sq]; exact Ideal.mul_mem_mul hm_in hm_in
+    have hα2_in : α * α ∈ (Ideal.span {(m : Zsqrtd (-(q_n n : ℤ))), α}) ^ 2 := by
+      rw [pow_two]; exact Ideal.mul_mem_mul hα_in hα_in
+    have hm2_in : (m : Zsqrtd (-(q_n n : ℤ))) * (m : Zsqrtd (-(q_n n : ℤ))) ∈
+        (Ideal.span {(m : Zsqrtd (-(q_n n : ℤ))), α}) ^ 2 := by
+      rw [pow_two]; exact Ideal.mul_mem_mul hm_in hm_in
+    rw [pow_two, pow_two]
     exact Ideal.add_mem _ (Ideal.mul_mem_left _ _ hα2_in) (Ideal.mul_mem_left _ _ hm2_in)
 
 /-- **Proposition 3.3, part 2 (`[𝔍_n] = 1 ⟺ k = 2`)**:
@@ -269,15 +272,24 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
           linarith
         have h1 : (z.re.natAbs : ℤ) * (z.im.natAbs : ℤ) = z.re * z.im := by
           rw [← Int.abs_eq_natAbs, ← Int.abs_eq_natAbs, ← abs_mul, abs_of_pos him_pos]
-        exact_mod_cast h1
+        calc (z.re.natAbs : ℝ) * (z.im.natAbs : ℝ)
+            = (((z.re.natAbs : ℤ) * (z.im.natAbs : ℤ) : ℤ) : ℝ) := by push_cast; rfl
+          _ = ((z.re * z.im : ℤ) : ℝ) := by rw [h1]
+          _ = (z.re : ℝ) * (z.im : ℝ) := by push_cast; rfl
       have hsq_q : Real.sqrt (q_n n : ℝ) ^ 2 = (q_n n : ℝ) := Real.sq_sqrt (by positivity)
       have hu2_v2 : (z.re.natAbs : ℝ) ^ 2 + (q_n n : ℝ) * (z.im.natAbs : ℝ) ^ 2 = (m : ℝ) := by
         have hm_sq : (m : ℝ) ^ 2 = ((z.re.natAbs : ℝ) ^ 2 + (q_n n : ℝ) * (z.im.natAbs : ℝ) ^ 2) ^ 2 := by
           have h1 : (z.re.natAbs : ℝ) ^ 2 - (q_n n : ℝ) * (z.im.natAbs : ℝ) ^ 2 = 1 := by
             have hzre : (z.re.natAbs : ℤ) ^ 2 = z.re ^ 2 := by rw [← Int.abs_eq_natAbs, sq_abs]
             have hzim : (z.im.natAbs : ℤ) ^ 2 = z.im ^ 2 := by rw [← Int.abs_eq_natAbs, sq_abs]
-            have hzre_r : (z.re.natAbs : ℝ) ^ 2 = (z.re : ℝ) ^ 2 := by exact_mod_cast hzre
-            have hzim_r : (z.im.natAbs : ℝ) ^ 2 = (z.im : ℝ) ^ 2 := by exact_mod_cast hzim
+            have hzre_r : (z.re.natAbs : ℝ) ^ 2 = (z.re : ℝ) ^ 2 := by
+              calc (z.re.natAbs : ℝ) ^ 2 = (((z.re.natAbs : ℤ) ^ 2 : ℤ) : ℝ) := by push_cast; rfl
+                _ = ((z.re ^ 2 : ℤ) : ℝ) := by rw [hzre]
+                _ = (z.re : ℝ) ^ 2 := by push_cast; rfl
+            have hzim_r : (z.im.natAbs : ℝ) ^ 2 = (z.im : ℝ) ^ 2 := by
+              calc (z.im.natAbs : ℝ) ^ 2 = (((z.im.natAbs : ℤ) ^ 2 : ℤ) : ℝ) := by push_cast; rfl
+                _ = ((z.im ^ 2 : ℤ) : ℝ) := by rw [hzim]
+                _ = (z.im : ℝ) ^ 2 := by push_cast; rfl
             rw [hzre_r, hzim_r]
             exact_mod_cast hre
           have h2 : (2 * (z.re.natAbs : ℝ) * (z.im.natAbs : ℝ)) ^ 2 = (s_n n : ℝ) ^ 2 := by
