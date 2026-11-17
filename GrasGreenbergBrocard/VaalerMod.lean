@@ -330,6 +330,7 @@ theorem vaaler_mod_approx (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
         rw [h_swap, Finset.sum_comm]
         refine Finset.sum_congr rfl (fun m _ => ?_)
         rw [Finset.mul_sum, Finset.sum_mul]
+        refine Finset.sum_congr rfl (fun k _ => by ring)
       have hB_id : (∑ m ∈ Finset.Icc (-(H : ℤ)) (H : ℤ),
             b_mod m * eExp ((m : ℝ) * x / (h_mod : ℝ))).re =
           ∑ k ∈ Finset.range h_mod,
@@ -383,7 +384,8 @@ theorem vaaler_mod_approx (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
         have hflC : ((if Int.floor x % (h_mod : ℤ) = (k : ℤ) then (1 : ℝ) else 0) : ℂ) =
             ((sawtoothPsi ((x - (k : ℝ) - 1) / (h_mod : ℝ)) : ℂ) -
               (sawtoothPsi ((x - (k : ℝ)) / (h_mod : ℝ)) : ℂ) + ((1 / (h_mod : ℝ) : ℝ) : ℂ)) := by
-          rw [hfl]; push_cast; rfl
+          have h1 := congrArg Complex.ofReal hfl
+          simpa only [Complex.ofReal_add, Complex.ofReal_sub] using h1
         rw [hflC]
         ring
       rw [h_diff_eq]
