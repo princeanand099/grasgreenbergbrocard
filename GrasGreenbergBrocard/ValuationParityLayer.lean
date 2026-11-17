@@ -14,8 +14,6 @@ Formalizes Section 2.1 of the manuscript:
 - `padicValNat_factorial_on_harmonicInterval`: `v_p(n!) = j` for `p ∈ I_j` (`1 ≤ j ≤ ⌊√n⌋ - 1`)
 - `harmonicLayer_odd_layer`, `harmonicLayer_even_layer`
 - `alt_harmonic_sum_diff_log_two`: `|∑_{r=1}^N (1/(2r-1) - 1/(2r)) - log 2| ≤ 1 / (2N)`
-- `log_q_n_asymptotic`: `log q_n = (log 2) n + O(n exp(-c₀ √(log n)))` (eq. 2.4a)
-- `card_Podd_asymptotic`: `|Podd(n)| = (log 2 + o(1)) π(n)` (eq. 2.4b)
 -/
 
 noncomputable section
@@ -31,7 +29,7 @@ theorem padicValNat_factorial_eq_div_of_lt_sq {p n : ℕ} (hp : p.Prime) (hn : n
   have hp1 : 1 ≤ p - 1 := by omega
   have hleg : (p - 1) * padicValNat p (Nat.factorial n) = n - (Nat.digits p n).sum := by
     haveI : Fact p.Prime := ⟨hp⟩
-    exact Nat.sub_one_mul_padicValNat_factorial n p
+    exact sub_one_mul_padicValNat_factorial n p
   have hsum_eq : n - (Nat.digits p n).sum = (p - 1) * (n / p) := by
     rcases lt_or_ge n p with hlt | hge
     · have hdiv0 : n / p = 0 := Nat.div_eq_of_lt hlt
@@ -53,8 +51,13 @@ theorem padicValNat_factorial_eq_div_of_lt_sq {p n : ℕ} (hp : p.Prime) (hn : n
         simp
       rw [hdig]
       simp only [List.sum_cons, List.sum_nil, add_zero]
-      have hdm := Nat.div_add_mod n p
-      omega
+      have hdm : p * (n / p) + n % p = n := Nat.div_add_mod n p
+      have hle1 : n % p + n / p ≤ n := by
+        have : 1 * (n / p) ≤ p * (n / p) := Nat.mul_le_mul_right _ (by omega)
+        omega
+      zify [hle1, (by omega : 1 ≤ p)]
+      have hdmZ : (p : ℤ) * ((n / p : ℕ) : ℤ) + ((n % p : ℕ) : ℤ) = (n : ℤ) := by exact_mod_cast hdm
+      linarith
   rw [hsum_eq] at hleg
   exact Nat.eq_of_mul_eq_mul_left hp1 hleg
 
@@ -68,16 +71,16 @@ theorem padicValNat_factorial_on_harmonicInterval {n j p : ℕ}
   have hj_sq : j + 1 ≤ Nat.sqrt n := by omega
   have hj_sq_le : (j + 1) ^ 2 ≤ n := by
     calc (j + 1) ^ 2 ≤ (Nat.sqrt n) ^ 2 := Nat.pow_le_pow_left hj_sq 2
-      _ ≤ n := Nat.sqrt_le n
+      _ ≤ n := by rw [sq]; exact Nat.sqrt_le' n
   have hp_pos : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hp.pos
   have hj_pos : (0 : ℝ) < (j : ℝ) := by exact_mod_cast (by omega : 0 < j)
   have hj1_pos : (0 : ℝ) < (j : ℝ) + 1 := by positivity
   have hlt_mul : n < (j + 1) * p := by
     rw [div_lt_iff₀ hj1_pos] at hlo
-    exact_mod_cast hlo
+    exact_mod_cast (by linarith : (n : ℝ) < ((j + 1 : ℕ) : ℝ) * (p : ℝ))
   have hle_mul : j * p ≤ n := by
     rw [le_div_iff₀ hj_pos] at hhi
-    exact_mod_cast (by linarith : ((j * p : ℕ) : ℝ) ≤ (n : ℝ))
+    exact_mod_cast (by linarith : ((j : ℝ) * (p : ℝ)) ≤ (n : ℝ))
   have hj1_lt_p : j + 1 < p := by
     nlinarith [hj_sq_le, hlt_mul]
   have hn_lt_psq : n < p ^ 2 := by
@@ -104,28 +107,34 @@ theorem harmonicLayer_odd_layer {n r p : ℕ} (hr1 : 1 ≤ r) (hr2 : 2 * r - 1 �
     exact_mod_cast hpn
   have hodd : ¬ 2 ∣ padicValNat p (Nat.factorial n) := by rw [hv]; omega
   have hp_mem : p ∈ Podd n := Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hple⟩, hp, hodd⟩
-  haveI : Fact p.Prime := ⟨hp⟩
+  have hq_ne : q_n n ≠ 0 := by
+    unfold q_n Podd
+    exact Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
+  have hs_ne : s_n n ≠ 0 := by
+    unfold s_n
+    exact Finset.prod_ne_zero_iff.mpr (fun x hx => pow_ne_zero _ (Finset.mem_filter.mp hx).2.ne_zero)
   have hq_val : padicValNat p (q_n n) = 1 := by
+    rw [← Nat.factorization_def (q_n n) hp]
     unfold q_n
-    have hprod_ne : ∏ x ∈ Podd n, x ≠ 0 :=
-      Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
-    rw [padicValNat_finset_prod _ hprod_ne]
+    rw [Nat.factorization_prod (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)]
+    simp only [Finset.sum_apply']
     rw [Finset.sum_eq_single p]
-    · exact padicValNat.self hp.one_lt
+    · exact hp.factorization_self
     · intro x hx hne
       have hx_prime : x.Prime := (Finset.mem_filter.mp hx).2.1
-      exact padicValNat.eq_zero_of_not_dvd
+      exact Nat.factorization_eq_zero_of_not_dvd
         (fun hdvd => hne ((Nat.prime_dvd_prime_iff_eq hp hx_prime).mp hdvd).symm)
     · intro hnot; exact absurd hp_mem hnot
   have hs_val : padicValNat p (s_n n) = r - 1 := by
     have hfac := factorial_eq_q_mul_s_sq n
-    have hq_ne : q_n n ≠ 0 :=
-      Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
-    have hs_ne : s_n n ≠ 0 := by
-      unfold s_n
-      exact Finset.prod_ne_zero_iff.mpr (fun x hx => pow_ne_zero _ (Finset.mem_filter.mp hx).2.ne_zero)
-    have hval := congrArg (padicValNat p) hfac
-    rw [padicValNat.mul hq_ne (pow_ne_zero 2 hs_ne), padicValNat.pow 2 hs_ne, hv, hq_val] at hval
+    have hfv : (Nat.factorial n).factorization p = padicValNat p (Nat.factorial n) :=
+      Nat.factorization_def _ hp
+    have hfq : (q_n n).factorization p = padicValNat p (q_n n) := Nat.factorization_def _ hp
+    have hfs : (s_n n).factorization p = padicValNat p (s_n n) := Nat.factorization_def _ hp
+    have hval := congrArg (fun m : ℕ => m.factorization p) hfac
+    rw [Nat.factorization_mul hq_ne (pow_ne_zero 2 hs_ne), Nat.factorization_pow,
+      Finsupp.add_apply, Finsupp.coe_smul, Pi.smul_apply, smul_eq_mul,
+      hfv, hfq, hfs, hv, hq_val] at hval
     omega
   exact ⟨hp_mem, hq_val, hs_val⟩
 
@@ -144,29 +153,35 @@ theorem harmonicLayer_even_layer {n r p : ℕ} (hr1 : 1 ≤ r) (hr2 : 2 * r ≤ 
     exact_mod_cast hpn
   have heven : 2 ∣ padicValNat p (Nat.factorial n) := by rw [hv]; exact ⟨r, rfl⟩
   have hp_mem : p ∈ Peven n := Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hple⟩, hp, heven⟩
-  haveI : Fact p.Prime := ⟨hp⟩
+  have hq_ne : q_n n ≠ 0 := by
+    unfold q_n Podd
+    exact Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
+  have hs_ne : s_n n ≠ 0 := by
+    unfold s_n
+    exact Finset.prod_ne_zero_iff.mpr (fun x hx => pow_ne_zero _ (Finset.mem_filter.mp hx).2.ne_zero)
   have hq_val : padicValNat p (q_n n) = 0 := by
+    rw [← Nat.factorization_def (q_n n) hp]
     unfold q_n
-    have hprod_ne : ∏ x ∈ Podd n, x ≠ 0 :=
-      Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
-    rw [padicValNat_finset_prod _ hprod_ne]
+    rw [Nat.factorization_prod (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)]
+    simp only [Finset.sum_apply']
     refine Finset.sum_eq_zero (fun x hx => ?_)
     have hx_prime : x.Prime := (Finset.mem_filter.mp hx).2.1
     have hx_odd : ¬ 2 ∣ padicValNat x (Nat.factorial n) := (Finset.mem_filter.mp hx).2.2
     have hne : p ≠ x := by
       rintro rfl
       exact hx_odd heven
-    exact padicValNat.eq_zero_of_not_dvd
+    exact Nat.factorization_eq_zero_of_not_dvd
       (fun hdvd => hne ((Nat.prime_dvd_prime_iff_eq hp hx_prime).mp hdvd))
   have hs_val : padicValNat p (s_n n) = r := by
     have hfac := factorial_eq_q_mul_s_sq n
-    have hq_ne : q_n n ≠ 0 :=
-      Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
-    have hs_ne : s_n n ≠ 0 := by
-      unfold s_n
-      exact Finset.prod_ne_zero_iff.mpr (fun x hx => pow_ne_zero _ (Finset.mem_filter.mp hx).2.ne_zero)
-    have hval := congrArg (padicValNat p) hfac
-    rw [padicValNat.mul hq_ne (pow_ne_zero 2 hs_ne), padicValNat.pow 2 hs_ne, hv, hq_val] at hval
+    have hfv : (Nat.factorial n).factorization p = padicValNat p (Nat.factorial n) :=
+      Nat.factorization_def _ hp
+    have hfq : (q_n n).factorization p = padicValNat p (q_n n) := Nat.factorization_def _ hp
+    have hfs : (s_n n).factorization p = padicValNat p (s_n n) := Nat.factorization_def _ hp
+    have hval := congrArg (fun m : ℕ => m.factorization p) hfac
+    rw [Nat.factorization_mul hq_ne (pow_ne_zero 2 hs_ne), Nat.factorization_pow,
+      Finsupp.add_apply, Finsupp.coe_smul, Pi.smul_apply, smul_eq_mul,
+      hfv, hfq, hfs, hv, hq_val] at hval
     omega
   exact ⟨hp_mem, hq_val, hs_val⟩
 
@@ -247,6 +262,7 @@ theorem alt_harmonic_sum_diff_log_two {N : ℕ} (hN : 1 ≤ N) :
     have h1 : Real.log ((k : ℝ) / ((k : ℝ) + 1)) ≤ (k : ℝ) / ((k : ℝ) + 1) - 1 :=
       Real.log_le_sub_one_of_pos (by positivity)
     rw [Real.log_div (by positivity) (by positivity)] at h1
+    have h2 : (k : ℝ) / ((k : ℝ) + 1) - 1 = -(1 / ((k : ℝ) + 1)) := by field_simp; ring
     linarith
   have hhi : Real.log 2 ≤ ∑ k ∈ Finset.Icc (N + 1) (2 * N), (1 : ℝ) / (k : ℝ) + 1 / (2 * (N : ℝ)) := by
     rw [← htel]

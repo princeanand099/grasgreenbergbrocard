@@ -47,13 +47,12 @@ theorem neg_one_pow_floor_eq_sawtooth {x : ℝ} (hx : ∀ m : ℤ, x ≠ (m : �
   rcases hfl with h | h
   · rw [h]
     have hpow : (-1 : ℝ) ^ (2 * Int.floor (x / 2)) = 1 := by
-      rw [zpow_mul, zpow_two, neg_one_sq, one_zpow]
+      rw [zpow_mul]; norm_num
     rw [hpow, Int.cast_mul, Int.cast_ofNat]
     ring
   · rw [h]
     have hpow : (-1 : ℝ) ^ (2 * Int.floor (x / 2) + 1) = -1 := by
-      rw [zpow_add₀ (by norm_num), zpow_mul, zpow_two, neg_one_sq, one_zpow, zpow_one]
-      norm_num
+      rw [zpow_add₀ (by norm_num), zpow_mul]; norm_num
     rw [hpow, Int.cast_add, Int.cast_mul, Int.cast_ofNat, Int.cast_one]
     ring
 
@@ -70,9 +69,20 @@ theorem harmonic_sum_le_log_add_one {N : ℕ} (hN : 1 ≤ N) :
       have h1 : Real.log ((m : ℝ) / ((m : ℝ) + 1)) ≤ (m : ℝ) / ((m : ℝ) + 1) - 1 :=
         Real.log_le_sub_one_of_pos (by positivity)
       rw [Real.log_div (by positivity) (by positivity)] at h1
+      have h2 : (m : ℝ) / ((m : ℝ) + 1) - 1 = -(1 / ((m : ℝ) + 1)) := by field_simp; ring
       linarith
     push_cast
     linarith
+
+private theorem norm_two_pi_I_mul_int (h : ℤ) :
+    ‖(2 : ℂ) * Real.pi * Complex.I * (h : ℂ)‖ = 2 * Real.pi * |(h : ℝ)| := by
+  rw [norm_mul, norm_mul, norm_mul, Complex.norm_I, mul_one]
+  have h2 : ‖(2 : ℂ)‖ = 2 := by norm_num
+  have hpi : ‖(Real.pi : ℂ)‖ = Real.pi := by
+    rw [Complex.norm_real, abs_of_pos Real.pi_pos]
+  have hhC : ‖(h : ℂ)‖ = |(h : ℝ)| := by
+    rw [← Complex.ofReal_intCast, Complex.norm_real]
+  rw [h2, hpi, hhC]
 
 /-- **Lemma 2.3 (Vaaler's Trigonometric Polynomial Approximation)**:
 Existence of `Ψ̃_H` and `B̃_H` with exact odd-frequency support, coefficient bounds,
@@ -113,34 +123,24 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
     · simp only [c_tilde, hev, ↓reduceIte, norm_zero]
       positivity
     · simp only [c_tilde, hev, ↓reduceIte, c2, hh]
-      rw [norm_mul, norm_neg, show (4 : ℂ) = ((4 : ℝ) : ℂ) from rfl, Complex.norm_real]
+      rw [norm_mul, norm_neg, show ‖(4 : ℂ)‖ = 4 from by norm_num]
       have hc2_norm : ‖-(1 / (2 * Real.pi * Complex.I * (h : ℂ))) *
           (W (|(h : ℝ)| / ((2 * H + 1 : ℕ) + 1 : ℝ)) : ℂ)‖ ≤ 1 / (2 * Real.pi * |(h : ℝ)|) := by
-        rw [norm_mul, norm_neg, norm_div, norm_one, Complex.norm_real]
+        rw [norm_mul, norm_neg, norm_div, norm_one, Complex.norm_real, norm_two_pi_I_mul_int h]
         have hW : |W (|(h : ℝ)| / ((2 * H + 1 : ℕ) + 1 : ℝ))| ≤ 1 := by
           have hb := hW_bounds (|(h : ℝ)| / ((2 * H + 1 : ℕ) + 1 : ℝ))
           rw [abs_of_nonneg hb.1]
           exact hb.2
-        have hden : ‖2 * Real.pi * Complex.I * (h : ℂ)‖ = 2 * Real.pi * |(h : ℝ)| := by
-          rw [norm_mul, norm_mul, norm_mul, Complex.norm_I, mul_one]
-          have h2pi : ‖(2 : ℂ) * (Real.pi : ℂ)‖ = 2 * Real.pi := by
-            rw [← Complex.ofReal_ofNat, ← Complex.ofReal_mul, Complex.norm_real,
-              abs_of_pos (by positivity)]
-          have hhC : ‖(h : ℂ)‖ = |(h : ℝ)| := by
-            rw [← Complex.ofReal_intCast, Complex.norm_real]
-          rw [show (2 : ℂ) * Real.pi = (2 : ℂ) * (Real.pi : ℂ) from rfl, h2pi, hhC]
-        rw [hden]
         calc (1 / (2 * Real.pi * |(h : ℝ)|)) * |W (|(h : ℝ)| / ((2 * H + 1 : ℕ) + 1 : ℝ))|
             ≤ (1 / (2 * Real.pi * |(h : ℝ)|)) * 1 :=
               mul_le_mul_of_nonneg_left hW (by positivity)
           _ = 1 / (2 * Real.pi * |(h : ℝ)|) := mul_one _
-      calc |4| * ‖-(1 / (2 * Real.pi * Complex.I * (h : ℂ))) *
+      calc 4 * ‖-(1 / (2 * Real.pi * Complex.I * (h : ℂ))) *
               (W (|(h : ℝ)| / ((2 * H + 1 : ℕ) + 1 : ℝ)) : ℂ)‖
-          ≤ 4 * (1 / (2 * Real.pi * |(h : ℝ)|)) := by
-            rw [abs_of_pos (by norm_num)]
-            exact mul_le_mul_of_nonneg_left hc2_norm (by norm_num)
+          ≤ 4 * (1 / (2 * Real.pi * |(h : ℝ)|)) :=
+            mul_le_mul_of_nonneg_left hc2_norm (by norm_num)
         _ = 2 / (Real.pi * |(h : ℝ)|) := by ring
-  · simp only [b_tilde, even_zero, ↓reduceIte, Int.zero_ediv, hb1_0, hb2_0]
+  · simp only [b_tilde, Int.even_zero, ↓reduceIte, Int.zero_ediv, hb1_0, hb2_0]
     push_cast
     have hH0 : (H : ℂ) + 1 ≠ 0 := by
       have : (0 : ℝ) < (H : ℝ) + 1 := by positivity
@@ -154,10 +154,8 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
       calc ‖2 * b1 (h / 2) + 4 * b2 h‖
           ≤ ‖2 * b1 (h / 2)‖ + ‖4 * b2 h‖ := norm_add_le _ _
         _ = 2 * ‖b1 (h / 2)‖ + 4 * ‖b2 h‖ := by
-            rw [norm_mul, norm_mul]
-            congr 1
-            · rw [show (2 : ℂ) = ((2 : ℝ) : ℂ) from rfl, Complex.norm_real, abs_of_pos (by norm_num)]
-            · rw [show (4 : ℂ) = ((4 : ℝ) : ℂ) from rfl, Complex.norm_real, abs_of_pos (by norm_num)]
+            rw [norm_mul, norm_mul, show ‖(2 : ℂ)‖ = 2 from by norm_num,
+              show ‖(4 : ℂ)‖ = 4 from by norm_num]
         _ ≤ 2 * (1 / (2 * (H : ℝ) + 2)) + 4 * (1 / (2 * ((2 * H + 1 : ℕ) : ℝ) + 2)) := by
             apply add_le_add
             · exact mul_le_mul_of_nonneg_left (hb1_bound (h / 2)) (by norm_num)
@@ -167,8 +165,7 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
             apply div_lt_div_of_pos_right (by norm_num) hH_pos
     · simp only [b_tilde, hev, ↓reduceIte, zero_add]
       calc ‖4 * b2 h‖
-          = 4 * ‖b2 h‖ := by
-            rw [norm_mul, show (4 : ℂ) = ((4 : ℝ) : ℂ) from rfl, Complex.norm_real, abs_of_pos (by norm_num)]
+          = 4 * ‖b2 h‖ := by rw [norm_mul, show ‖(4 : ℂ)‖ = 4 from by norm_num]
         _ ≤ 4 * (1 / (2 * ((2 * H + 1 : ℕ) : ℝ) + 2)) :=
             mul_le_mul_of_nonneg_left (hb2_bound h) (by norm_num)
         _ = 1 / ((H : ℝ) + 1) := by push_cast; field_simp; ring
@@ -196,8 +193,7 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
             ((Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Odd h)) ∪
             ((Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Even h)) := by
           ext h
-          simp only [Finset.mem_union, Finset.mem_filter, Int.not_odd_iff_even]
-          tauto
+          by_cases hodd : Odd h <;> simp [hodd, Int.not_odd_iff_even] <;> tauto
         have hdisj2 : Disjoint
             ((Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Odd h))
             ((Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Even h)) := by
@@ -255,6 +251,9 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
             rw [hexp]
             have h_cast : (h : ℂ) = 2 * (k : ℂ) := by exact_mod_cast (by omega : h = 2 * k)
             rw [h_cast]
+            have hkC : (k : ℂ) ≠ 0 := Int.cast_ne_zero.mpr hk_ne
+            have hpiC : (Real.pi : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
+            field_simp [hkC, hpiC, Complex.I_ne_zero]
             ring
         rw [hPsi2_split, mul_add, h_even_match]
         have hodd_sum :
@@ -285,41 +284,37 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
             ∑ h ∈ Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1),
               (if Even h then 2 * b1 (h / 2) else 0) * eExp ((h : ℝ) * x / 2) =
             2 * ∑ h ∈ Finset.Icc (-(H : ℤ)) (H : ℤ), b1 h * eExp ((h : ℝ) * x) := by
+          simp_rw [ite_mul, zero_mul]
           rw [← Finset.sum_filter (p := Even)]
-          · rw [Finset.mul_sum]
-            refine Finset.sum_bij (fun h _ => h / 2) ?_ ?_ ?_ ?_
-            · intro h hh
-              simp only [Finset.mem_filter, Finset.mem_Icc] at hh ⊢
-              obtain ⟨⟨hl, hu⟩, ⟨k, hk⟩⟩ := hh
-              have hk_eq : h / 2 = k := by omega
-              rw [hk_eq]
-              omega
-            · intro h1 hh1 h2 hh2 heq
-              simp only [Finset.mem_filter] at hh1 hh2
-              obtain ⟨k1, hk1⟩ := hh1.2
-              obtain ⟨k2, hk2⟩ := hh2.2
-              omega
-            · intro m hm
-              simp only [Finset.mem_Icc] at hm
-              refine ⟨2 * m, ?_, by omega⟩
-              simp only [Finset.mem_filter, Finset.mem_Icc]
-              exact ⟨⟨by omega, by omega⟩, ⟨m, by omega⟩⟩
-            · intro h hh
-              simp only [Finset.mem_filter] at hh
-              obtain ⟨k, hk⟩ := hh.2
-              have h_div : h / 2 = k := by omega
-              rw [h_div]
-              have hexp : eExp ((h : ℝ) * x / 2) = eExp ((k : ℝ) * x) := by
-                congr 1
-                have hkR : (h : ℝ) = 2 * (k : ℝ) := by exact_mod_cast (by omega : h = 2 * k)
-                rw [hkR]
-                ring
-              rw [hexp]
-              ring
+          rw [Finset.mul_sum]
+          refine Finset.sum_bij (fun h _ => h / 2) ?_ ?_ ?_ ?_
           · intro h hh
-            by_cases hev : Even h
-            · simp [hev]
-            · simp [hev]
+            simp only [Finset.mem_filter, Finset.mem_Icc] at hh ⊢
+            obtain ⟨⟨hl, hu⟩, ⟨k, hk⟩⟩ := hh
+            have hk_eq : h / 2 = k := by omega
+            rw [hk_eq]
+            omega
+          · intro h1 hh1 h2 hh2 heq
+            simp only [Finset.mem_filter] at hh1 hh2
+            obtain ⟨k1, hk1⟩ := hh1.2
+            obtain ⟨k2, hk2⟩ := hh2.2
+            omega
+          · intro m hm
+            simp only [Finset.mem_Icc] at hm
+            refine ⟨2 * m, ?_, by omega⟩
+            simp only [Finset.mem_filter, Finset.mem_Icc]
+            exact ⟨⟨by omega, by omega⟩, ⟨m, by omega⟩⟩
+          · intro h hh
+            simp only [Finset.mem_filter] at hh
+            obtain ⟨k, hk⟩ := hh.2
+            have h_div : h / 2 = k := by omega
+            rw [h_div]
+            have hexp : eExp ((h : ℝ) * x / 2) = eExp ((k : ℝ) * x) := by
+              congr 1
+              have hkR : (h : ℝ) = 2 * (k : ℝ) := by exact_mod_cast (by omega : h = 2 * k)
+              rw [hkR]
+              ring
+            rw [hexp]
         have h_odd_part :
             ∑ h ∈ Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1),
               4 * b2 h * eExp ((h : ℝ) * x / 2) =
@@ -362,7 +357,7 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
             have : (m : ℝ) = 2 * (k : ℝ) := by exact_mod_cast (by omega : m = 2 * k)
             linarith
           have hPsi2_zero : Psi2 ((m : ℝ) / 2) = 0 := by rw [hk_eq]; exact h2.2.2 k
-          rw [hPsi2_zero, mul_zero, neg_zero]
+          rw [hPsi2_zero, mul_zero, neg_zero, sub_zero]
           calc ‖((-1 : ℝ) ^ m : ℂ)‖ = 1 := hnorm1
             _ = 2 * (1 / 2) + 4 * 0 := by norm_num
             _ ≤ 2 * (1 / 2) + 4 * (B2 ((m : ℝ) / 2)).re := by linarith [hB2_nonneg]
@@ -378,20 +373,22 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
           have hPsi2_norm : ‖Psi2 ((m : ℝ) / 2)‖ ≤ (B2 ((m : ℝ) / 2)).re := by
             have h2b := h2_bound
             have h0 : (((m : ℝ) / 2 - (Int.floor ((m : ℝ) / 2) : ℝ) - 1 / 2 : ℝ) : ℂ) = 0 := by
-              exact_mod_cast hsaw_zero
+              have hs : (m : ℝ) / 2 - (Int.floor ((m : ℝ) / 2) : ℝ) - 1 / 2 = 0 := hsaw_zero
+              rw [hs, Complex.ofReal_zero]
             rw [h0, zero_sub, norm_neg] at h2b
             exact h2b
-          calc ‖((-1 : ℝ) ^ m : ℂ) - -4 * Psi2 ((m : ℝ) / 2)‖
-              ≤ ‖((-1 : ℝ) ^ m : ℂ)‖ + ‖4 * Psi2 ((m : ℝ) / 2)‖ := by
-                rw [show ((-1 : ℝ) ^ m : ℂ) - -4 * Psi2 ((m : ℝ) / 2) =
-                    ((-1 : ℝ) ^ m : ℂ) + 4 * Psi2 ((m : ℝ) / 2) from by ring]
-                exact norm_add_le _ _
+          calc ‖((-1 : ℝ) ^ m : ℂ) - -(4 * Psi2 ((m : ℝ) / 2))‖
+              = ‖((-1 : ℝ) ^ m : ℂ) + 4 * Psi2 ((m : ℝ) / 2)‖ := by ring_nf
+            _ ≤ ‖((-1 : ℝ) ^ m : ℂ)‖ + ‖4 * Psi2 ((m : ℝ) / 2)‖ := norm_add_le _ _
             _ = 1 + 4 * ‖Psi2 ((m : ℝ) / 2)‖ := by
-                rw [hnorm1, norm_mul, show (4 : ℂ) = ((4 : ℝ) : ℂ) from rfl,
-                  Complex.norm_real, abs_of_pos (by norm_num)]
+                rw [hnorm1, norm_mul, show ‖(4 : ℂ)‖ = 4 from by norm_num]
             _ ≤ 2 * (1 / 2) + 4 * (B2 ((m : ℝ) / 2)).re := by linarith
-      · push_neg at hx
-        rw [neg_one_pow_floor_eq_sawtooth hx]
+      · push Not at hx
+        have hx' := neg_one_pow_floor_eq_sawtooth hx
+        have hcast : ((-1 : ℝ) ^ (Int.floor x) : ℂ) =
+            ((2 * sawtoothPsi x - 4 * sawtoothPsi (x / 2) : ℝ) : ℂ) := by
+          exact_mod_cast hx'
+        rw [hcast]
         have hdiff : ((2 * sawtoothPsi x - 4 * sawtoothPsi (x / 2) : ℝ) : ℂ) - (2 * Psi1 x - 4 * Psi2 (x / 2)) =
             2 * (((sawtoothPsi x : ℝ) : ℂ) - Psi1 x) - 4 * (((sawtoothPsi (x / 2) : ℝ) : ℂ) - Psi2 (x / 2)) := by
           push_cast; ring
@@ -400,9 +397,8 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
             ≤ ‖2 * (((sawtoothPsi x : ℝ) : ℂ) - Psi1 x)‖ + ‖4 * (((sawtoothPsi (x / 2) : ℝ) : ℂ) - Psi2 (x / 2))‖ :=
               norm_sub_le _ _
           _ = 2 * ‖((sawtoothPsi x : ℝ) : ℂ) - Psi1 x‖ + 4 * ‖((sawtoothPsi (x / 2) : ℝ) : ℂ) - Psi2 (x / 2)‖ := by
-              rw [norm_mul, norm_mul, show (2 : ℂ) = ((2 : ℝ) : ℂ) from rfl,
-                show (4 : ℂ) = ((4 : ℝ) : ℂ) from rfl, Complex.norm_real, Complex.norm_real,
-                abs_of_pos (by norm_num), abs_of_pos (by norm_num)]
+              rw [norm_mul, norm_mul, show ‖(2 : ℂ)‖ = 2 from by norm_num,
+                show ‖(4 : ℂ)‖ = 4 from by norm_num]
           _ ≤ 2 * (B1 x).re + 4 * (B2 (x / 2)).re :=
               add_le_add (mul_le_mul_of_nonneg_left (h1.1 x).2 (by norm_num))
                 (mul_le_mul_of_nonneg_left (h2.1 (x / 2)).2 (by norm_num))
@@ -412,29 +408,25 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
         have hne : h ≠ 0 := (Finset.mem_filter.mp hh).2.1
         have hev : ¬ Even h := Int.not_even_iff_odd.mpr (Finset.mem_filter.mp hh).2.2
         simp only [c_tilde, hev, ↓reduceIte, c2, hne]
-        rw [norm_mul, norm_neg, show (4 : ℂ) = ((4 : ℝ) : ℂ) from rfl, Complex.norm_real,
-          abs_of_pos (by norm_num)]
-        have hW : |W (|(h : ℝ)| / ((2 * H + 1 : ℕ) + 1 : ℝ))| ≤ 1 := by
-          have hb := hW_bounds (|(h : ℝ)| / ((2 * H + 1 : ℕ) + 1 : ℝ))
-          rw [abs_of_nonneg hb.1]
-          exact hb.2
-        have hden : ‖2 * Real.pi * Complex.I * (h : ℂ)‖ = 2 * Real.pi * |(h : ℝ)| := by
-          rw [norm_mul, norm_mul, norm_mul, Complex.norm_I, mul_one]
-          have h2pi : ‖(2 : ℂ) * (Real.pi : ℂ)‖ = 2 * Real.pi := by
-            rw [← Complex.ofReal_ofNat, ← Complex.ofReal_mul, Complex.norm_real,
-              abs_of_pos (by positivity)]
-          have hhC : ‖(h : ℂ)‖ = |(h : ℝ)| := by
-            rw [← Complex.ofReal_intCast, Complex.norm_real]
-          rw [show (2 : ℂ) * Real.pi = (2 : ℂ) * (Real.pi : ℂ) from rfl, h2pi, hhC]
-        calc 4 * (‖1 / (2 * Real.pi * Complex.I * (h : ℂ))‖ *
-                ‖(W (|(h : ℝ)| / ((2 * H + 1 : ℕ) + 1 : ℝ)) : ℂ)‖)
-            = 4 * ((1 / (2 * Real.pi * |(h : ℝ)|)) * |W (|(h : ℝ)| / ((2 * H + 1 : ℕ) + 1 : ℝ))|) := by
-              rw [norm_div, norm_one, hden, Complex.norm_real]
-          _ ≤ 4 * ((1 / (2 * Real.pi * |(h : ℝ)|)) * 1) := by
-              apply mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left hW (by positivity)) (by norm_num)
+        rw [norm_mul, norm_neg, show ‖(4 : ℂ)‖ = 4 from by norm_num]
+        have hc2_norm : ‖-(1 / (2 * Real.pi * Complex.I * (h : ℂ))) *
+            (W (|(h : ℝ)| / ((2 * H + 1 : ℕ) + 1 : ℝ)) : ℂ)‖ ≤ 1 / (2 * Real.pi * |(h : ℝ)|) := by
+          rw [norm_mul, norm_neg, norm_div, norm_one, Complex.norm_real, norm_two_pi_I_mul_int h]
+          have hW : |W (|(h : ℝ)| / ((2 * H + 1 : ℕ) + 1 : ℝ))| ≤ 1 := by
+            have hb := hW_bounds (|(h : ℝ)| / ((2 * H + 1 : ℕ) + 1 : ℝ))
+            rw [abs_of_nonneg hb.1]
+            exact hb.2
+          calc (1 / (2 * Real.pi * |(h : ℝ)|)) * |W (|(h : ℝ)| / ((2 * H + 1 : ℕ) + 1 : ℝ))|
+              ≤ (1 / (2 * Real.pi * |(h : ℝ)|)) * 1 :=
+                mul_le_mul_of_nonneg_left hW (by positivity)
+            _ = 1 / (2 * Real.pi * |(h : ℝ)|) := mul_one _
+        calc 4 * ‖-(1 / (2 * Real.pi * Complex.I * (h : ℂ))) *
+                (W (|(h : ℝ)| / ((2 * H + 1 : ℕ) + 1 : ℝ)) : ℂ)‖
+            ≤ 4 * (1 / (2 * Real.pi * |(h : ℝ)|)) :=
+              mul_le_mul_of_nonneg_left hc2_norm (by norm_num)
           _ = 2 / (Real.pi * |(h : ℝ)|) := by ring
-      let posSet : Finset ℤ := (Finset.Icc 1 (2 * H + 1)).map ⟨fun k => (k : ℤ), fun _ _ h => Int.ofNat.inj h⟩
-      let negSet : Finset ℤ := (Finset.Icc 1 (2 * H + 1)).map ⟨fun k => -(k : ℤ), fun _ _ h => Int.ofNat.inj (neg_inj.mp h)⟩
+      let posSet : Finset ℤ := (Finset.Icc (1 : ℕ) (2 * H + 1)).map ⟨fun k : ℕ => (k : ℤ), fun _ _ h => Int.ofNat.inj h⟩
+      let negSet : Finset ℤ := (Finset.Icc (1 : ℕ) (2 * H + 1)).map ⟨fun k : ℕ => -(k : ℤ), fun _ _ h => Int.ofNat.inj (neg_inj.mp h)⟩
       have hsub :
           ((Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Odd h)) ⊆
           posSet ∪ negSet := by
@@ -458,30 +450,30 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
       have hsum_pos_neg :
           ∑ h ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Odd h),
             (2 / (Real.pi * |(h : ℝ)|)) ≤
-          2 * ∑ k ∈ Finset.Icc 1 (2 * H + 1), (2 / (Real.pi * (k : ℝ))) := by
+          2 * ∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ))) := by
         calc ∑ h ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Odd h),
               (2 / (Real.pi * |(h : ℝ)|))
             ≤ ∑ h ∈ posSet ∪ negSet, (2 / (Real.pi * |(h : ℝ)|)) :=
               Finset.sum_le_sum_of_subset_of_nonneg hsub (fun _ _ _ => by positivity)
           _ = (∑ h ∈ posSet, (2 / (Real.pi * |(h : ℝ)|))) +
               (∑ h ∈ negSet, (2 / (Real.pi * |(h : ℝ)|))) := Finset.sum_union hdisj_pn
-          _ = (∑ k ∈ Finset.Icc 1 (2 * H + 1), (2 / (Real.pi * (k : ℝ)))) +
-              (∑ k ∈ Finset.Icc 1 (2 * H + 1), (2 / (Real.pi * (k : ℝ)))) := by
+          _ = (∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ)))) +
+              (∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ)))) := by
               congr 1
               · rw [Finset.sum_map]
-                refine Finset.sum_congr rfl (fun k hk => ?_)
+                refine Finset.sum_congr rfl (fun k _ => ?_)
                 simp only [Function.Embedding.coeFn_mk, Int.cast_natCast, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
               · rw [Finset.sum_map]
-                refine Finset.sum_congr rfl (fun k hk => ?_)
+                refine Finset.sum_congr rfl (fun k _ => ?_)
                 simp only [Function.Embedding.coeFn_mk, Int.cast_neg, Int.cast_natCast, abs_neg,
                   abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
-          _ = 2 * ∑ k ∈ Finset.Icc 1 (2 * H + 1), (2 / (Real.pi * (k : ℝ))) := by ring
+          _ = 2 * ∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ))) := by ring
       calc ∑ h ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Odd h),
             ‖c_tilde h‖
           ≤ ∑ h ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Odd h),
               (2 / (Real.pi * |(h : ℝ)|)) := Finset.sum_le_sum hc_bound_each
-        _ ≤ 2 * ∑ k ∈ Finset.Icc 1 (2 * H + 1), (2 / (Real.pi * (k : ℝ))) := hsum_pos_neg
-        _ = (4 / Real.pi) * ∑ k ∈ Finset.Icc 1 (2 * H + 1), (1 : ℝ) / (k : ℝ) := by
+        _ ≤ 2 * ∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ))) := hsum_pos_neg
+        _ = (4 / Real.pi) * ∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (1 : ℝ) / (k : ℝ) := by
             rw [Finset.mul_sum, Finset.mul_sum]
             refine Finset.sum_congr rfl (fun k _ => by ring)
         _ ≤ (4 / Real.pi) * (Real.log (2 * (H : ℝ) + 1) + 1) := by
