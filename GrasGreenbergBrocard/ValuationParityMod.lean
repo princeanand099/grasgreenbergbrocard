@@ -640,16 +640,16 @@ theorem upper_band_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
               ≤ ∑ p ∈ U, Real.log (p : ℝ) / ((p : ℝ) - 1) := by
                 refine Finset.sum_le_sum (fun p hp => ?_)
                 have hp_sq : Nat.sqrt n + 1 ≤ p := (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).1
-                have hp_pos : (0 : ℝ) < (p : ℝ) := by positivity
-                have hp1_pos : (0 : ℝ) < (p : ℝ) - 1 := by exact_mod_cast (by omega : 1 < p)
+                have hp_pos : (0 : ℝ) < (p : ℝ) := by exact_mod_cast (by omega : 0 < p)
+                have hp1_pos : (0 : ℝ) < (p : ℝ) - 1 := sub_pos.mpr (by exact_mod_cast (by omega : 1 < p))
                 have hlogp_nn : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ p))
                 exact div_le_div_of_nonneg_left hlogp_nn hp1_pos (by linarith)
             _ ≤ ∑ p ∈ (Finset.Icc 3 n).filter Nat.Prime, Real.log (p : ℝ) / ((p : ℝ) - 1) := by
                 refine Finset.sum_le_sum_of_subset_of_nonneg hsub (fun p hp _ => ?_)
                 have hp3 := (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).1
-                have : (1 : ℝ) ≤ (p : ℝ) := by exact_mod_cast (by omega : 1 ≤ p)
-                have : (0 : ℝ) < (p : ℝ) - 1 := by exact_mod_cast (by omega : 1 < p)
-                exact div_nonneg (Real.log_nonneg this) this.le
+                have hp_ge1 : (1 : ℝ) ≤ (p : ℝ) := by exact_mod_cast (by omega : 1 ≤ p)
+                have hp1_pos : (0 : ℝ) < (p : ℝ) - 1 := sub_pos.mpr (by exact_mod_cast (by omega : 1 < p))
+                exact div_nonneg (Real.log_nonneg hp_ge1) hp1_pos.le
             _ ≤ Real.log (n : ℝ) + Cm := by
                 have := hCm (n : ℝ) (by exact_mod_cast (by omega : 3 ≤ n))
                 rwa [Nat.floor_natCast] at this
@@ -667,7 +667,7 @@ theorem upper_band_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         calc (∑ p ∈ U, Real.log (p : ℝ) / (p : ℝ)) * ((h_mod : ℝ) / ((H : ℝ) + 1))
             ≤ (Real.log (n : ℝ) + Cm) * ((h_mod : ℝ) * (2 / (Real.log (n : ℝ)) ^ (R + 2))) := by
               apply mul_le_mul hmert_n _ (by positivity) (by positivity)
-              rw [div_eq_mul_one_div, div_eq_mul_one_div]
+              rw [div_eq_mul_one_div (h_mod : ℝ) ((H : ℝ) + 1)]
               exact mul_le_mul_of_nonneg_left hH_inv (by positivity)
           _ = 2 * (h_mod : ℝ) * ((Real.log (n : ℝ) + Cm) / (Real.log (n : ℝ)) ^ (R + 2)) := by ring
           _ ≤ 2 * (h_mod : ℝ) * ((1 + Cm) / 2) := mul_le_mul_of_nonneg_left h_log_le (by positivity)
@@ -871,12 +871,12 @@ theorem multi_modulus_power_band_equidistribution (h_mod c : ℕ) (hh_mod : 2 �
     have hlogn_pos : 0 < Real.log (n : ℝ) := by linarith
     have h_nlogn_nn : 0 ≤ (n : ℝ) * Real.log (n : ℝ) := by positivity
     rw [Real.norm_of_nonneg h_nlogn_nn]
-    let S := (Finset.Icc 2 n).filter (fun p : ℕ =>
+    let S : Finset ℕ := (Finset.Icc 2 n).filter (fun p : ℕ =>
       p.Prime ∧ (n : ℝ) ^ a < (p : ℝ) ∧ (p : ℝ) ≤ (n : ℝ) ^ b)
-    let S_low := S.filter (fun p => (p : ℝ) ≤ (n : ℝ) ^ δ)
-    let S_mid := S.filter (fun p => (n : ℝ) ^ δ < (p : ℝ) ∧ p ≤ Nat.sqrt n)
-    let S_up := S.filter (fun p => Nat.sqrt n < p ∧ (p : ℝ) ≤ (n : ℝ) ^ (1 - δ))
-    let S_hi := S.filter (fun p => Nat.sqrt n < p ∧ (n : ℝ) ^ (1 - δ) < (p : ℝ))
+    let S_low : Finset ℕ := S.filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) ^ δ)
+    let S_mid : Finset ℕ := S.filter (fun p : ℕ => (n : ℝ) ^ δ < (p : ℝ) ∧ p ≤ Nat.sqrt n)
+    let S_up : Finset ℕ := S.filter (fun p : ℕ => Nat.sqrt n < p ∧ (p : ℝ) ≤ (n : ℝ) ^ (1 - δ))
+    let S_hi : Finset ℕ := S.filter (fun p : ℕ => Nat.sqrt n < p ∧ (n : ℝ) ^ (1 - δ) < (p : ℝ))
     have hS_part : S = (((S_low ∪ S_mid : Finset ℕ) ∪ S_up : Finset ℕ) ∪ S_hi : Finset ℕ) := by
       ext p
       simp only [Finset.mem_union, S_low, S_mid, S_up, S_hi, Finset.mem_filter]
@@ -957,11 +957,9 @@ theorem multi_modulus_power_band_equidistribution (h_mod c : ℕ) (hh_mod : 2 �
         _ = ∑ p ∈ S_low, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) := by
             refine Finset.sum_congr rfl (fun p hp => ?_)
             have hp2 : 2 ≤ p := (Finset.mem_Icc.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).1).1
-            have hw_nn : 0 ≤ (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) :=
-              mul_nonneg (Nat.cast_nonneg _) (Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ p)))
-            rw [norm_mul, show ‖eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ))‖ = 1 from by
-              exact norm_eExp _, mul_one, Complex.norm_real,
-              Real.norm_of_nonneg hw_nn]
+            rw [norm_mul, norm_mul, norm_eExp, mul_one, Complex.norm_real, Complex.norm_real,
+              Real.norm_of_nonneg (Nat.cast_nonneg _),
+              Real.norm_of_nonneg (Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ p)))]
         _ ≤ ∑ p ∈ (Finset.Icc 2 n).filter (fun p : ℕ => p.Prime ∧ (p : ℝ) ≤ (n : ℝ) ^ δ),
               (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) := by
             refine Finset.sum_le_sum_of_subset_of_nonneg hsub (fun p hp _ => ?_)
@@ -988,11 +986,9 @@ theorem multi_modulus_power_band_equidistribution (h_mod c : ℕ) (hh_mod : 2 �
         _ = ∑ p ∈ S_hi, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) := by
             refine Finset.sum_congr rfl (fun p hp => ?_)
             have hp2 : 2 ≤ p := (Finset.mem_Icc.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).1).1
-            have hw_nn : 0 ≤ (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) :=
-              mul_nonneg (Nat.cast_nonneg _) (Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ p)))
-            rw [norm_mul, show ‖eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ))‖ = 1 from by
-              exact norm_eExp _, mul_one, Complex.norm_real,
-              Real.norm_of_nonneg hw_nn]
+            rw [norm_mul, norm_mul, norm_eExp, mul_one, Complex.norm_real, Complex.norm_real,
+              Real.norm_of_nonneg (Nat.cast_nonneg _),
+              Real.norm_of_nonneg (Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ p)))]
         _ ≤ ∑ p ∈ (Finset.Icc 2 n).filter (fun p : ℕ =>
               p.Prime ∧ (n : ℝ) ^ (1 - δ) < (p : ℝ) ∧ (p : ℝ) ≤ (n : ℝ) ^ (1 : ℝ)),
               (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) := by
@@ -1035,6 +1031,7 @@ theorem multi_modulus_power_band_equidistribution (h_mod c : ℕ) (hh_mod : 2 �
           have hv2 : padicValNat 2 (Nat.factorial n) ≤ n := by
             haveI : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
             have hleg := sub_one_mul_padicValNat_factorial (p := 2) n
+            simp only [Nat.reduceSub, one_mul] at hleg
             omega
           have hlog2_pos : 0 < Real.log 2 := Real.log_pos (by norm_num)
           rw [Real.norm_of_nonneg (mul_nonneg (Nat.cast_nonneg _) hlog2_pos.le)]
@@ -1064,7 +1061,7 @@ theorem multi_modulus_power_band_equidistribution (h_mod c : ℕ) (hh_mod : 2 �
             have := hp; rw [hS_mid3_eq] at this; exact (Finset.mem_filter.mp this).2.1
           have hp3 : 3 ≤ p := by
             have := hp; rw [hS_mid3_eq] at this; exact (Finset.mem_Icc.mp (Finset.mem_filter.mp this).1).1
-          have hp1 : (p : ℝ) - 1 ≠ 0 := by exact_mod_cast (by omega : p - 1 ≠ 0)
+          have hp1 : (p : ℝ) - 1 ≠ 0 := sub_ne_zero.mpr (by exact_mod_cast (by omega : p ≠ 1))
           have hleg : (p - 1) * padicValNat p (Nat.factorial n) = n - (Nat.digits p n).sum := by
             haveI : Fact p.Prime := ⟨hp_pr⟩; exact sub_one_mul_padicValNat_factorial n
           have hsum_le : (Nat.digits p n).sum ≤ n := by
@@ -1109,7 +1106,7 @@ theorem multi_modulus_power_band_equidistribution (h_mod c : ℕ) (hh_mod : 2 �
             have hp_pr := (Finset.mem_filter.mp hp).2.1
             have hp3 := (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).1
             have hpn : p ≤ n := le_trans (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).2 (Nat.sqrt_le_self n)
-            have hp1_pos : (0 : ℝ) < (p : ℝ) - 1 := by exact_mod_cast (by omega : 1 < p)
+            have hp1_pos : (0 : ℝ) < (p : ℝ) - 1 := sub_pos.mpr (by exact_mod_cast (by omega : 1 < p))
             have hlogp_pos : 0 < Real.log (p : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < p))
             have hdig_len : (Nat.digits p n).length ≤ Nat.floor (Real.log (n : ℝ) / Real.log (p : ℝ)) + 1 := by
               have h1 : p ^ ((Nat.digits p n).length - 1) ≤ n := by
@@ -1169,7 +1166,7 @@ theorem multi_modulus_power_band_equidistribution (h_mod c : ℕ) (hh_mod : 2 �
                 rw [hS_mid3_eq] at hp
                 have hp3 := (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).1
                 have hw_nn : 0 ≤ ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) * Real.log (p : ℝ) := by
-                  have : (0 : ℝ) < (p : ℝ) - 1 := by exact_mod_cast (by omega : 1 < p)
+                  have : (0 : ℝ) < (p : ℝ) - 1 := sub_pos.mpr (by exact_mod_cast (by omega : 1 < p))
                   have : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ p))
                   positivity
                 rw [norm_mul, show ‖eExp _‖ = 1 from by exact norm_eExp _,
@@ -1200,27 +1197,8 @@ theorem multi_modulus_power_band_equidistribution (h_mod c : ℕ) (hh_mod : 2 �
           eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ))‖ + ‖∑ p ∈ S_mid, ((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) : ℂ) *
           eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ))‖ + ‖∑ p ∈ S_up, ((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) : ℂ) *
           eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ))‖ + ‖∑ p ∈ S_hi, ((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) : ℂ) *
-          eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ))‖ := by
-          calc ‖((∑ p ∈ S_low, ((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) : ℂ) *
-          eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ))) + (∑ p ∈ S_mid, ((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) : ℂ) *
-          eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ)))) + (∑ p ∈ S_up, ((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) : ℂ) *
-          eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ))) + (∑ p ∈ S_hi, ((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) : ℂ) *
-          eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ)))‖
-              ≤ ‖((∑ p ∈ S_low, ((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) : ℂ) *
-          eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ))) + (∑ p ∈ S_mid, ((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) : ℂ) *
-          eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ)))) + (∑ p ∈ S_up, ((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) : ℂ) *
-          eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ)))‖ + ‖∑ p ∈ S_hi, ((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) : ℂ) *
-          eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ))‖ := norm_add_le _ _
-            _ ≤ (‖(∑ p ∈ S_low, ((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) : ℂ) *
-          eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ))) + (∑ p ∈ S_mid, ((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) : ℂ) *
-          eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ)))‖ + ‖∑ p ∈ S_up, ((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) : ℂ) *
-          eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ))‖) + ‖∑ p ∈ S_hi, ((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) : ℂ) *
-          eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ))‖ := add_le_add_right (norm_add_le _ _) _
-            _ ≤ ((‖∑ p ∈ S_low, ((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) : ℂ) *
-          eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ))‖ + ‖∑ p ∈ S_mid, ((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) : ℂ) *
-          eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ))‖) + ‖∑ p ∈ S_up, ((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) : ℂ) *
-          eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ))‖) + ‖∑ p ∈ S_hi, ((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) : ℂ) *
-          eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ))‖ := add_le_add_right (add_le_add_right (norm_add_le _ _) _) _
+          eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ))‖ :=
+          le_trans (norm_add_le _ _) (add_le_add_right (le_trans (norm_add_le _ _) (add_le_add_right (norm_add_le _ _) _)) _)
       _ ≤ (δ * ((n : ℝ) * Real.log (n : ℝ)) + M₁ * (n : ℝ)) +
           (Real.log 2 + 1 + M₃) * (n : ℝ) + M₄ * (n : ℝ) +
           (δ * ((n : ℝ) * Real.log (n : ℝ)) + M₂ * (n : ℝ)) := by
