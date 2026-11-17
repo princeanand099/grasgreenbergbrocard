@@ -141,6 +141,7 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
       have hleg' : (p - 1) * padicValNat p (Nat.factorial n) + (Nat.digits p n).sum = n := by omega
       have hR : ((p - 1 : ℕ) : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) + ((Nat.digits p n).sum : ℝ) = (n : ℝ) := by
         exact_mod_cast hleg'
+      rw [hsub] at hR
       linarith
     have hdiv : (padicValNat p (Nat.factorial n) : ℝ) =
         ((n : ℝ) - ((Nat.digits p n).sum : ℝ)) / ((p : ℝ) - 1) :=
@@ -175,16 +176,16 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
             (Nat.le_floor_iff (div_nonneg hlogn_nn hlogp_pos.le)).mpr h3
           omega
         have hdig_sum : (Nat.digits p n).sum ≤ (Nat.digits p n).length * (p - 1) := by
-          have hlt : ∀ d ∈ Nat.digits p n, d ≤ p - 1 := fun d hd =>
-            Nat.le_sub_one_of_lt (Nat.digits_lt_base hp_pr.one_lt hd)
-          calc (Nat.digits p n).sum ≤ (Nat.digits p n).length * (p - 1) := by
-                induction Nat.digits p n with
-                | nil => simp
-                | cons a l ih =>
-                  simp only [List.sum_cons, List.length_cons]
-                  have ha := hlt a (by simp)
-                  have hl := ih (fun d hd => hlt d (by simp [hd]))
-                  nlinarith
+          have h_list : ∀ L : List ℕ, (∀ d ∈ L, d ≤ p - 1) → L.sum ≤ L.length * (p - 1) := by
+            intro L hL
+            induction L with
+            | nil => simp
+            | cons a l ih =>
+              simp only [List.sum_cons, List.length_cons]
+              have ha := hL a (by simp)
+              have hl := ih (fun d hd => hL d (by simp [hd]))
+              nlinarith
+          exact h_list (Nat.digits p n) (fun d hd => Nat.le_sub_one_of_lt (Nat.digits_lt_base hp_pr.one_lt hd))
         have hsum_R : ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) ≤ Real.log (n : ℝ) / Real.log (p : ℝ) + 1 := by
           have h1 : ((Nat.digits p n).sum : ℝ) ≤ ((Nat.digits p n).length : ℝ) * ((p : ℝ) - 1) := by
             have : ((p - 1 : ℕ) : ℝ) = (p : ℝ) - 1 := by rw [Nat.cast_sub (by omega : 1 ≤ p)]; push_cast; ring
@@ -202,7 +203,8 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
             (Real.log (n : ℝ) / Real.log (p : ℝ) + 1) * Real.log (p : ℝ) :=
           mul_le_mul_of_nonneg_right hsum_R hlogp_pos.le
         have h_eq_add : (Real.log (n : ℝ) / Real.log (p : ℝ) + 1) * Real.log (p : ℝ) =
-            Real.log (n : ℝ) + Real.log (p : ℝ) := by field_simp [hlogp_pos.ne']
+            Real.log (n : ℝ) + Real.log (p : ℝ) := by
+          field_simp [hlogp_pos.ne']
         linarith
     have hnn : 0 ≤ ∑ p ∈ S_low, ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) * Real.log (p : ℝ) :=
       Finset.sum_nonneg (fun p hp => (h_each p hp).1)
