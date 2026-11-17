@@ -595,7 +595,7 @@ theorem collar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
             exact Finset.prod_congr rfl (fun s _ => (hB_eq_C s p).symm)
           rw [hprod_C, ← Complex.ofReal_mul, Complex.ofReal_re]
         rw [h_re_eq]
-        refine le_trans (Real.le_abs_self _) (Complex.abs_re_le_norm _)
+        refine le_trans (le_abs_self _) (Complex.abs_re_le_norm _)
         have h_prod_T : ∀ p ∈ J m_r,
             ∏ s ∈ T, (Z s p + ((2 / ((H : ℝ) + 1) : ℝ) : ℂ)) =
               ∑ U ∈ T.powerset, (∏ s ∈ U, Z s p) * ((2 / ((H : ℝ) + 1) : ℝ) : ℂ) ^ (T \ U).card := by
@@ -829,7 +829,7 @@ theorem collar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
           rw [div_le_one (by positivity)]
           have : (1 : ℝ) ≤ (H : ℝ) := by exact_mod_cast hH_ge1
           linarith
-        exact pow_le_of_le_one (by positivity) hbase hT_card1.ne'
+        exact pow_le_of_le_one (by positivity) hbase (by omega)
       have h2_H : (Real.log (n : ℝ)) ^ 2 ≤ (H : ℝ) + 1 := by
         have : (Real.log (n : ℝ)) ^ 2 ≤ (Real.log (n : ℝ)) ^ (R + 2) :=
           pow_le_pow_right₀ (by linarith) (by omega)
@@ -847,7 +847,7 @@ theorem collar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
             exact div_le_div_of_nonneg_left (by norm_num) (by positivity) h2_H
         _ ≤ (2 + 2 * Cm) * (1 / Real.log (n : ℝ)) := by
             rw [div_mul_eq_mul_div, mul_one_div, div_le_div_iff₀ (by positivity) hlogn_pos]
-            nlinarith [hln100]
+            nlinarith [hln100, hCm_pos]
     calc ∑ T ∈ S_idx.powerset.filter (·.Nonempty),
             ∑ m_r ∈ Finset.Icc 1 M_r, (2 / ((H : ℝ) + 1)) ^ T.card * ∑ p ∈ J m_r, Real.log (p : ℝ) / ((p : ℝ) - 1)
         ≤ ∑ _T ∈ S_idx.powerset.filter (·.Nonempty), (2 + 2 * Cm) * (1 / Real.log (n : ℝ)) :=

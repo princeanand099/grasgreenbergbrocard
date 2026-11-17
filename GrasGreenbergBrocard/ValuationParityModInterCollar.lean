@@ -362,7 +362,6 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
             eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s))‖
           ≤ C₂e * (2 / P) * P * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := h_res
         _ = 2 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := by field_simp [hP_pos.ne']; ring
-  -- Bound ∑_{p ∈ D_r}
   have h_sum_split : ∑ p ∈ D_r, eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ)) *
         ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) =
       (∑ p ∈ D_r, (∏ s ∈ Finset.Icc 1 r, eExp ((z : ℝ) * (Int.floor ((n : ℝ) / (p : ℝ) ^ s) : ℝ) / (h_mod : ℝ)) -
@@ -608,7 +607,7 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       intro k _
       have h_eq : ∑ p ∈ B_k k, (∏ s ∈ I_s, Psi_mod ((n : ℝ) / (p : ℝ) ^ s)) *
             ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) =
-          ∑ h ∈ I_s.pi (fun _ => nzH), (∏ s ∈ I_s, c_mod (h s.1 s.2)) *
+          ∑ h ∈ I_s.pi (fun _ => nzH), (∏ s ∈ I_s.attach, c_mod (h s.1 s.2)) *
             ∑ p ∈ B_k k, ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
               eExp (∑ s ∈ I_s, ((if hs : s ∈ I_s then h s hs else 0 : ℤ) : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) := by
         rw [Finset.sum_comm]
@@ -616,27 +615,22 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         dsimp only [Psi_mod]
         rw [Finset.prod_sum, Finset.sum_mul]
         refine Finset.sum_congr rfl (fun h _ => ?_)
-        have h_e_prod : ∏ s ∈ I_s, c_mod (h s.1 s.2) * eExp ((h s.1 s.2 : ℝ) * ((n : ℝ) / (p : ℝ) ^ s) / (h_mod : ℝ)) =
-            (∏ s ∈ I_s, c_mod (h s.1 s.2)) *
+        have h_e_prod : ∏ s ∈ I_s.attach, c_mod (h s.1 s.2) * eExp ((h s.1 s.2 : ℝ) * ((n : ℝ) / (p : ℝ) ^ s.1) / (h_mod : ℝ)) =
+            (∏ s ∈ I_s.attach, c_mod (h s.1 s.2)) *
               eExp (∑ s ∈ I_s, ((if hs : s ∈ I_s then h s hs else 0 : ℤ) : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) := by
-          rw [Finset.prod_mul_distrib]
-          congr 1
-          have h_cong : ∏ s ∈ I_s, eExp ((h s.1 s.2 : ℝ) * ((n : ℝ) / (p : ℝ) ^ s) / (h_mod : ℝ)) =
-              ∏ s ∈ I_s, eExp (((if hs : s ∈ I_s then h s hs else 0 : ℤ) : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) := by
-            refine Finset.prod_congr rfl (fun s hs => ?_)
-            simp only [dif_pos hs]; congr 1; ring
-          rw [h_cong]
-          induction I_s using Finset.induction_on with
-          | empty => simp [eExp]
-          | @insert a S ha ih => rw [Finset.prod_insert ha, ih, Finset.sum_insert ha, eExp_add]
+          rw [Finset.prod_mul_distrib, eExp_sum]
+          congr 2
+          rw [← Finset.sum_attach I_s]
+          refine Finset.sum_congr rfl (fun s _ => ?_)
+          simp only [dif_pos s.2]; ring
         rw [h_e_prod]; ring
       rw [h_eq]
       calc ‖∑ h ∈ I_s.pi (fun _ => nzH), _‖
-          ≤ ∑ h ∈ I_s.pi (fun _ => nzH), ‖(∏ s ∈ I_s, c_mod (h s.1 s.2)) *
+          ≤ ∑ h ∈ I_s.pi (fun _ => nzH), ‖(∏ s ∈ I_s.attach, c_mod (h s.1 s.2)) *
               ∑ p ∈ B_k k, ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
                 eExp (∑ s ∈ I_s, ((if hs : s ∈ I_s then h s hs else 0 : ℤ) : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s))‖ :=
             norm_sum_le _ _
-        _ ≤ ∑ h ∈ I_s.pi (fun _ => nzH), (∏ s ∈ I_s, ‖c_mod (h s.1 s.2)‖) *
+        _ ≤ ∑ h ∈ I_s.pi (fun _ => nzH), (∏ s ∈ I_s.attach, ‖c_mod (h s.1 s.2)‖) *
               (2 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2))) := by
             refine Finset.sum_le_sum (fun h hh => ?_)
             rw [norm_mul, norm_prod]
@@ -651,7 +645,7 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
               exact abs_le.mpr (Finset.mem_Icc.mp (Finset.mem_filter.mp (Finset.mem_pi.mp hh s hs)).1)
             exact h_B_exp k I_s Subset.rfl (fun s => if hs : s ∈ I_s then h s hs else 0)
               ⟨1, h1_mem, hh1_ne⟩ hh_le
-        _ = (∑ h ∈ I_s.pi (fun _ => nzH), ∏ s ∈ I_s, ‖c_mod (h s.1 s.2)‖) *
+        _ = (∑ h ∈ I_s.pi (fun _ => nzH), ∏ s ∈ I_s.attach, ‖c_mod (h s.1 s.2)‖) *
               (2 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2))) := by rw [← Finset.sum_mul]
         _ = (∏ _s ∈ I_s, ∑ m ∈ nzH, ‖c_mod m‖) * (2 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2))) := by
             congr 1; rw [Finset.prod_sum]

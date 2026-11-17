@@ -353,10 +353,12 @@ theorem Delta_parity_second_order :
         have hdiv_lt : n / p < R₁ := by
           rw [Nat.div_lt_iff_lt_mul hp_pr.pos]
           rw [div_lt_iff₀ hR1_pos] at hp_gt
+          rw [mul_comm] at hp_gt
           exact_mod_cast hp_gt
         let r := n / p
         refine ⟨r, ⟨hdiv_ge, by omega⟩, ⟨⟨hp_pr.two_le, ?_⟩, hp_pr⟩, ?_⟩
         · rw [Nat.le_floor_iff (by positivity), le_div_iff₀ (by exact_mod_cast hdiv_ge)]
+          rw [mul_comm]
           exact_mod_cast Nat.div_mul_le_self n p
         · rw [div_lt_iff₀ (by positivity)]
           have : n < (r + 1) * p := (Nat.div_lt_iff_lt_mul hp_pr.pos).mp (by omega : n / p < r + 1)
@@ -381,7 +383,8 @@ theorem Delta_parity_second_order :
         have hpn : p ≤ n := by
           rw [Nat.le_floor_iff (by positivity), le_div_iff₀ hr_pos] at hp_hi
           have hr1R : (1 : ℝ) ≤ (r : ℝ) := by exact_mod_cast hr1
-          exact_mod_cast (by nlinarith : (p : ℝ) ≤ (n : ℝ))
+          have hpr_le : (p : ℝ) * 1 ≤ (p : ℝ) * (r : ℝ) := mul_le_mul_of_nonneg_left hr1R (by positivity)
+          exact_mod_cast le_trans (by linarith) hp_hi
         exact ⟨⟨⟨hp3, hpn⟩, hp_pr⟩, hp_gt_r1⟩
     have hdisj_Hr : (Finset.Icc 1 (R₁ - 1) : Set ℕ).PairwiseDisjoint Hr := by
       intro r₁ hr₁ r₂ hr₂ hne

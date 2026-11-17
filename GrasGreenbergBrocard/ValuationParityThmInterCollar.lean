@@ -172,7 +172,7 @@ theorem interCollar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
         constructor
         · rw [Int.cast_natCast, le_div_iff₀ hps_pos]; exact_mod_cast Nat.div_mul_le_self n (p ^ s)
         · rw [Int.cast_natCast, div_lt_iff₀ hps_pos]
-          have h_nat : n < (n / p ^ s + 1) * p ^ s := Nat.lt_div_mul_add (pow_pos hp_pr.pos s)
+          have h_nat : n < (n / p ^ s + 1) * p ^ s := by linarith [Nat.lt_div_mul_add (pow_pos hp_pr.pos s)]
           have h_nat_r : (n : ℝ) < ((n / p ^ s + 1 : ℕ) : ℝ) * ((p ^ s : ℕ) : ℝ) := by exact_mod_cast h_nat
           push_cast at h_nat_r; exact h_nat_r
       rw [hfl, zpow_natCast]
@@ -304,8 +304,8 @@ theorem interCollar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
     have ha_norm : ∀ s p, ‖a_fn s p‖ = 1 := fun s p => by
       dsimp only [a_fn]
       rw [Complex.norm_real, Real.norm_eq_abs, abs_zpow, abs_neg, abs_one, one_zpow]
-    have hB_pw : ∀ s p, ‖a_fn s p - b_fn s p‖ ≤ B_fn s p := fun s p => by
-      simpa only [a_fn, b_fn, B_fn, oddH, allH] using h_vaaler_pw ((n : ℝ) / (p : ℝ) ^ s)
+    have hB_pw : ∀ s p, ‖a_fn s p - b_fn s p‖ ≤ B_fn s p := fun s p =>
+      h_vaaler_pw ((n : ℝ) / (p : ℝ) ^ s)
     let S_idx := Finset.Icc 1 r
     have hS_idx_ne : S_idx.Nonempty := ⟨1, Finset.mem_Icc.mpr ⟨le_rfl, by omega⟩⟩
     have hS_idx_card : S_idx.card ≤ R := by rw [Nat.card_Icc]; omega
@@ -409,7 +409,8 @@ theorem interCollar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
             apply mul_le_mul_of_nonneg_right _ (by positivity)
             have hL1_le : (4 / Real.pi) * (Real.log (2 * (H : ℝ) + 1) + 1) ≤ 6 * Real.log (n : ℝ) := by
               have h4pi : 4 / Real.pi ≤ 2 := by rw [div_le_iff₀ Real.pi_pos]; linarith [Real.pi_gt_three]
-              calc (4 / Real.pi) * (Real.log (2 * (H : ℝ) + 1) + 1) ≤ 2 * Real.log (n : ℝ) := mul_le_mul h4pi hlog_pR (by positivity) (by norm_num)
+              have hlog_nn : 0 ≤ Real.log (2 * (H : ℝ) + 1) + 1 := add_nonneg (Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ 2 * H + 1))) zero_le_one
+              calc (4 / Real.pi) * (Real.log (2 * (H : ℝ) + 1) + 1) ≤ 2 * Real.log (n : ℝ) := mul_le_mul h4pi hlog_pR hlog_nn (by norm_num)
                 _ ≤ 6 * Real.log (n : ℝ) := by linarith
             have h6_ge1 : (1 : ℝ) ≤ 6 * Real.log (n : ℝ) := by linarith
             calc (∏ _s ∈ S_idx, ∑ h ∈ oddH, ‖c_tilde h‖)
@@ -417,7 +418,7 @@ theorem interCollar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
               _ ≤ ((4 / Real.pi) * (Real.log (2 * (H : ℝ) + 1) + 1)) ^ S_idx.card :=
                   pow_le_pow_left₀ (Finset.sum_nonneg (fun _ _ => norm_nonneg _)) h_L1 _
               _ ≤ (6 * Real.log (n : ℝ)) ^ S_idx.card :=
-                  pow_le_pow_left₀ (mul_nonneg (by positivity) (by linarith [Real.log_pos (by linarith : (1 : ℝ) < 2 * (H : ℝ) + 1)])) hL1_le _
+                  pow_le_pow_left₀ (mul_nonneg (by positivity) (add_nonneg (Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ 2 * H + 1))) zero_le_one)) hL1_le _
               _ ≤ (6 * Real.log (n : ℝ)) ^ R := pow_le_pow_right₀ h6_ge1 hS_idx_card
         _ = 6 ^ R * (3 * 4 * C₂e) * ((Real.log (n : ℝ)) ^ (R + 1) * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2))) := by
             rw [mul_pow, pow_succ]; ring
@@ -461,7 +462,7 @@ theorem interCollar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
             rw [hb_real_0, Int.cast_zero, zero_mul, show eExp 0 = 1 from by unfold eExp; simp, mul_one]
           have h_nz_eq : allH.erase 0 = nzH := by
             ext h; simp [nzH, allH, Finset.mem_erase, Finset.mem_filter]; tauto
-          rw [h0_term, h_nz_eq, add_comm]; rfl
+          dsimp only [Z]; rw [h0_term, h_nz_eq, add_comm]
         have h_re_eq : ∑ p ∈ D_r, w_p p * ∏ s ∈ T, B_fn s p =
             (∑ p ∈ D_r, (w_p p : ℂ) * ∏ s ∈ T, (Z s p + ((2 / ((H : ℝ) + 1) : ℝ) : ℂ))).re := by
           rw [Complex.re_sum]
@@ -471,7 +472,7 @@ theorem interCollar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
             rw [Complex.ofReal_prod]; exact Finset.prod_congr rfl (fun s _ => (hB_eq_C s p).symm)
           rw [hprod_C, ← Complex.ofReal_mul, Complex.ofReal_re]
         rw [h_re_eq]
-        refine le_trans (Real.le_abs_self _) (Complex.abs_re_le_norm _)
+        refine le_trans (le_abs_self _) (Complex.abs_re_le_norm _)
         have h_prod_T : ∀ p ∈ D_r,
             ∏ s ∈ T, (Z s p + ((2 / ((H : ℝ) + 1) : ℝ) : ℂ)) =
               ∑ U ∈ T.powerset, (∏ s ∈ U, Z s p) * ((2 / ((H : ℝ) + 1) : ℝ) : ℂ) ^ (T \ U).card := by
