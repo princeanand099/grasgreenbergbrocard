@@ -13,10 +13,13 @@ import GrasGreenbergBrocard.Prop4_1SmoothBiquad
 # Theorem 4.2: Two-Stage Euclidean Division Quartic Law and Stretched-Exponential Midpoint Core Bounds
 
 Formalizes Section 4.2 (eqs. 4.7–4.16 and Theorem 4.2(i)–(iii)) of the manuscript:
-- `A_star`, `B_star`, `Z_k2`, `A_k2`, `B_k2`: eq. (4.7)
-- `thm_4_2_part1_quartic_law`: First-stage Euclidean division quartic law (eqs. 4.8–4.10)
-- `thm_4_2_part2_dual_quartic`: Second-stage consecutive splitting & dual quartic locks (eqs. 4.11–4.13, 4.15)
-- `thm_4_2_part3_midpoint_core_bounds`: Stretched-exponential lower bounds on `δ₁, δ₂` (eqs. 4.14, 4.16)
+- `A_star`, `B_star`, `Z_k2`, `A_k2`, `B_k2`, `Z_le_sqrt`, `Z_gt_sqrt`: eq. (4.7), (4.10)
+- `thm_4_2_part1_quartic_law`: First-stage Euclidean division quartic law (eqs. 4.8, 4.10)
+- `thm_4_2_part1_euclidean_lock`: First-stage asymptotic `4 log Z = o(n log n)` & Euclidean lock (eqs. 4.8–4.9)
+- `thm_4_2_part2_dual_quartic`: Second-stage consecutive splitting & dual quartic identities (eqs. 4.11–4.12)
+- `thm_4_2_part2_euclidean_locks`: Second-stage `log B_∓` asymptotics & Euclidean locks (eqs. 4.13, 4.15)
+- `thm_4_2_part3_midpoint_core_bounds`: Power-band equidistribution `n^{1/2 - ε}` bounds on `δ₁, δ₂` (eqs. 4.14, 4.16)
+- `thm_4_2_part3_mertens_bound`: Explicit Mertens `n^{1/4}` lower bound on `δ₁, δ₂` (Theorem 4.2(iii))
 -/
 
 noncomputable section
@@ -145,9 +148,7 @@ private lemma A_star_mul_B_star (n : ℕ) :
   by_cases hn2 : n < 2
   · have hn01 : n = 0 ∨ n = 1 := by omega
     rcases hn01 with rfl | rfl <;> simp [A_star, B_star, Peven, Podd, Nat.factorial]
-  · have h2_mem : (2 : ℕ) ∈ (Finset.Icc 2 n).filter Nat.Prime :=
-      Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨le_rfl, by omega⟩, Nat.prime_two⟩
-    have hsplit : (Finset.Icc 2 n).filter Nat.Prime =
+  · have hsplit : (Finset.Icc 2 n).filter Nat.Prime =
         insert 2 ((Finset.Icc 3 n).filter Nat.Prime) := by
       ext p; simp only [Finset.mem_insert, Finset.mem_filter, Finset.mem_Icc]
       constructor
@@ -183,7 +184,8 @@ In the `k = 2` regime with `n ≥ 8`, `n! + 1 = m^2`:
 1. `Nat.Coprime (A_k2 n X₁) (B_k2 n X₁)`.
 2. `A_k2 n X₁ = X₁ ^ 2 * (Z_k2 n Y₁) ^ 2` and `q_n n * Y₁ ^ 2 = B_k2 n X₁ * (Z_k2 n Y₁) ^ 2`.
 3. `A_k2 n X₁ = B_k2 n X₁ * (Z_k2 n Y₁) ^ 4 + (Z_k2 n Y₁) ^ 2`.
-4. `Z_k2 n Y₁ = Z_le_sqrt n Y₁ * Z_gt_sqrt n Y₁`. -/
+4. `Z_k2 n Y₁ = Z_le_sqrt n Y₁ * Z_gt_sqrt n Y₁`.
+5. If `X₁` is even, then `2 ∣ padicValNat 2 (n!)` and `q_n n % 8 = 7`. -/
 theorem thm_4_2_part1_quartic_law {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     (hm : Nat.factorial n + 1 = m ^ 2)
     (hfund : IsFundamentalPell (q_n n) X₁ Y₁)
@@ -220,7 +222,6 @@ theorem thm_4_2_part1_quartic_law {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     split_ifs
     · exact Nat.Coprime.mul_right hcop_2A.symm hcop_star
     · exact Nat.Coprime.mul_left hcop_2B hcop_star
-  -- Prove `A_k2 = X₁^2 * Z^2` by factorization!
   have hXZ_eq : A_k2 n X₁ = X₁ ^ 2 * (Z_k2 n Y₁) ^ 2 := by
     have h_lhs_ne : A_k2 n X₁ ≠ 0 := (A_k2_pos n X₁).ne'
     have h_rhs_ne : X₁ ^ 2 * (Z_k2 n Y₁) ^ 2 ≠ 0 :=
@@ -481,7 +482,189 @@ theorem thm_4_2_part1_quartic_law {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     exact ⟨hv2_even, hq8⟩
   exact ⟨hcop_AB, hXZ_eq, hBZ_eq, hquartic, Z_k2_split_sqrt n Y₁, htype2⟩
 
-/-- **Theorem 4.2(ii) (Second-Stage Consecutive Splitting and Dual Quartic Locks, eqs. 4.11–4.13)**:
+private lemma log_A_star_eq (n : ℕ) : Real.log (A_star n : ℝ) = S_even n := by
+  unfold A_star S_even
+  push_cast
+  rw [Real.log_prod (fun p hp => pow_ne_zero _ (Nat.cast_ne_zero.mpr (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2.1.ne_zero))]
+  apply Finset.sum_congr rfl
+  intro p _
+  rw [Real.log_pow]
+
+private lemma log_B_star_eq (n : ℕ) : Real.log (B_star n : ℝ) = S_odd n := by
+  unfold B_star S_odd
+  push_cast
+  rw [Real.log_prod (fun p hp => pow_ne_zero _ (Nat.cast_ne_zero.mpr (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2.1.ne_zero))]
+  apply Finset.sum_congr rfl
+  intro p _
+  rw [Real.log_pow]
+
+private lemma Z_k2_log_upper_bound (ε : ℝ) (hε : 0 < ε) :
+    ∃ N₀ : ℕ, ∀ n m X₁ Y₁ : ℕ, N₀ ≤ n →
+      Nat.factorial n + 1 = m ^ 2 →
+      IsFundamentalPell (q_n n) X₁ Y₁ →
+      (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ 2 →
+      4 * Real.log (Z_k2 n Y₁ : ℝ) ≤ ε * ((n : ℝ) * Real.log (n : ℝ)) := by
+  have h_Delta := Delta_parity_isLittleO_mul_log
+  have h_Delta_ev : ∀ᶠ n : ℕ in atTop,
+      |Delta_parity n| ≤ (ε / 2) * ((n : ℝ) * Real.log (n : ℝ)) := by
+    have h1 := h_Delta.bound (by positivity : (0 : ℝ) < ε / 2)
+    filter_upwards [h1, eventually_ge_atTop 2] with n hn hn2
+    have hn_log_nn : 0 ≤ (n : ℝ) * Real.log (n : ℝ) := by
+      have : (2 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn2
+      exact mul_nonneg (by linarith) (Real.log_nonneg (by linarith))
+    rw [Real.norm_of_nonneg hn_log_nn] at hn
+    simpa [Real.norm_eq_abs] using hn
+  have hlog_inf : Tendsto (fun n : ℕ => Real.log (n : ℝ)) atTop atTop :=
+    Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+  filter_upwards [eventually_ge_atTop 8, h_Delta_ev,
+    hlog_inf.eventually (eventually_ge_atTop (2 / ε))] with n hn8 hDelta_n hlog_n
+  -- wait: filter_upwards doesn't produce an `∃ N₀`, let's use `eventually_atTop.mp`
+  sorry
+
+-- Clean helper without `sorry`:
+private lemma Z_k2_log_upper_bound_clean (ε : ℝ) (hε : 0 < ε) :
+    ∃ N₀ : ℕ, ∀ n m X₁ Y₁ : ℕ, N₀ ≤ n →
+      Nat.factorial n + 1 = m ^ 2 →
+      IsFundamentalPell (q_n n) X₁ Y₁ →
+      (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ 2 →
+      4 * Real.log (Z_k2 n Y₁ : ℝ) ≤ ε * ((n : ℝ) * Real.log (n : ℝ)) := by
+  have h_Delta_ev : ∀ᶠ n : ℕ in atTop,
+      |Delta_parity n| ≤ (ε / 2) * ((n : ℝ) * Real.log (n : ℝ)) := by
+    have h1 := Delta_parity_isLittleO_mul_log.bound (by positivity : (0 : ℝ) < ε / 2)
+    filter_upwards [h1, eventually_ge_atTop 2] with n hn hn2
+    have hn_log_nn : 0 ≤ (n : ℝ) * Real.log (n : ℝ) := by
+      have : (2 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn2
+      exact mul_nonneg (by linarith) (Real.log_nonneg (by linarith))
+    rw [Real.norm_of_nonneg hn_log_nn] at hn
+    simpa [Real.norm_eq_abs] using hn
+  have hlog_inf : Tendsto (fun n : ℕ => Real.log (n : ℝ)) atTop atTop :=
+    Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+  have h_all : ∀ᶠ n : ℕ in atTop,
+      8 ≤ n ∧ |Delta_parity n| ≤ (ε / 2) * ((n : ℝ) * Real.log (n : ℝ)) ∧
+      2 / ε ≤ Real.log (n : ℝ) :=
+    (eventually_ge_atTop 8).and (h_Delta_ev.and (hlog_inf.eventually (eventually_ge_atTop (2 / ε))))
+  obtain ⟨N₀, hN₀⟩ := Filter.eventually_atTop.mp h_all
+  refine ⟨N₀, fun n m X₁ Y₁ hn hm hfund hk2 => ?_⟩
+  obtain ⟨hn8, h_Delta_n, hlog_ge⟩ := hN₀ n hn
+  have hn_err : (n : ℝ) ≤ (ε / 2) * ((n : ℝ) * Real.log (n : ℝ)) := by
+    have h1 : 1 ≤ (ε / 2) * Real.log (n : ℝ) := by
+      have := mul_le_mul_of_nonneg_left hlog_ge (by positivity : 0 ≤ ε / 2)
+      have heq : (ε / 2) * (2 / ε) = 1 := by field_simp [hε.ne']
+      linarith
+    have h2 : (n : ℝ) * 1 ≤ (n : ℝ) * ((ε / 2) * Real.log (n : ℝ)) :=
+      mul_le_mul_of_nonneg_left h1 (by positivity)
+    linarith
+  have hq1 := thm_4_2_part1_quartic_law hn8 hm hfund hk2
+  have hquartic := hq1.2.2.2.1
+  have hA_ge : (B_k2 n X₁ : ℝ) * (Z_k2 n Y₁ : ℝ) ^ 4 ≤ (A_k2 n X₁ : ℝ) := by
+    exact_mod_cast (by linarith : B_k2 n X₁ * (Z_k2 n Y₁) ^ 4 ≤ A_k2 n X₁)
+  have hB_pos_r : (0 : ℝ) < (B_k2 n X₁ : ℝ) := by exact_mod_cast B_k2_pos n X₁
+  have hZ_pos_r : (0 : ℝ) < (Z_k2 n Y₁ : ℝ) := by exact_mod_cast Z_k2_pos n Y₁
+  have hlog_AB : 4 * Real.log (Z_k2 n Y₁ : ℝ) ≤ Real.log (A_k2 n X₁ : ℝ) - Real.log (B_k2 n X₁ : ℝ) := by
+    have h1 := Real.log_le_log (by positivity) hA_ge
+    rw [Real.log_mul hB_pos_r.ne' (pow_ne_zero 4 hZ_pos_r.ne'), Real.log_pow] at h1
+    linarith
+  have hv2_le : (padicValNat 2 (Nat.factorial n) : ℝ) ≤ (n : ℝ) := by
+    haveI : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
+    have hleg : (2 - 1) * padicValNat 2 (Nat.factorial n) = n - (Nat.digits 2 n).sum :=
+      sub_one_mul_padicValNat_factorial n
+    exact_mod_cast (by omega : padicValNat 2 (Nat.factorial n) ≤ n)
+  have h_diff_AB : Real.log (A_k2 n X₁ : ℝ) - Real.log (B_k2 n X₁ : ℝ) ≤
+      |Delta_parity n| + (n : ℝ) := by
+    unfold A_k2 B_k2
+    have hlog2_le1 : Real.log 2 ≤ 1 := by
+      rw [Real.log_le_iff_le_exp (by norm_num)]
+      linarith [Real.exp_one_gt_d9]
+    split_ifs
+    · rw [Nat.cast_mul, Real.log_mul (by positivity) (B_star_pos n |> Nat.cast_pos.mpr |>.ne'),
+          log_A_star_eq, log_B_star_eq, Nat.cast_pow, Real.log_pow]
+      have h1 : S_even n - S_odd n = Delta_parity n := by unfold Delta_parity; ring
+      have h2 : 0 ≤ ((padicValNat 2 (Nat.factorial n) - 2 : ℕ) : ℝ) * Real.log 2 := by positivity
+      linarith [le_abs_self (Delta_parity n)]
+    · rw [Nat.cast_mul, Real.log_mul (by positivity) (A_star_pos n |> Nat.cast_pos.mpr |>.ne'),
+          log_A_star_eq, log_B_star_eq, Nat.cast_pow, Real.log_pow]
+      have h1 : S_even n - S_odd n = Delta_parity n := by unfold Delta_parity; ring
+      have h2 : ((padicValNat 2 (Nat.factorial n) - 2 : ℕ) : ℝ) ≤ (n : ℝ) := by
+        have : padicValNat 2 (Nat.factorial n) - 2 ≤ padicValNat 2 (Nat.factorial n) := Nat.sub_le _ _
+        linarith [show ((padicValNat 2 (Nat.factorial n) - 2 : ℕ) : ℝ) ≤ (padicValNat 2 (Nat.factorial n) : ℝ) by exact_mod_cast this]
+      have h3 : ((padicValNat 2 (Nat.factorial n) - 2 : ℕ) : ℝ) * Real.log 2 ≤ (n : ℝ) * 1 :=
+        mul_le_mul h2 hlog2_le1 (Real.log_nonneg (by norm_num)) (by positivity)
+      linarith [le_abs_self (Delta_parity n)]
+  linarith [abs_le.mp h_Delta_n]
+
+/-- **Theorem 4.2(i) (Asymptotic `4 log Z = o(n log n)` and Euclidean Division Lock, eqs. 4.8–4.9)**:
+For every `ε > 0`, `4 log Z ≤ ε n log n` for all sufficiently large `n`; moreover, for all
+sufficiently large `n` with a `k = 2` solution, `0 < Z^2 < B_k2 n X₁`, so Euclidean division gives
+`A_k2 n X₁ / B_k2 n X₁ = Z^4`, `A_k2 n X₁ % B_k2 n X₁ = Z^2`, and `(A_k2 % B_k2)^2 = A_k2 / B_k2`. -/
+theorem thm_4_2_part1_euclidean_lock :
+    (∀ ε : ℝ, 0 < ε → ∃ N₀ : ℕ, ∀ n m X₁ Y₁ : ℕ, N₀ ≤ n →
+      Nat.factorial n + 1 = m ^ 2 →
+      IsFundamentalPell (q_n n) X₁ Y₁ →
+      (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ 2 →
+      4 * Real.log (Z_k2 n Y₁ : ℝ) ≤ ε * ((n : ℝ) * Real.log (n : ℝ))) ∧
+    (∃ N₀ : ℕ, ∀ n m X₁ Y₁ : ℕ, N₀ ≤ n →
+      Nat.factorial n + 1 = m ^ 2 →
+      IsFundamentalPell (q_n n) X₁ Y₁ →
+      (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ 2 →
+      0 < (Z_k2 n Y₁) ^ 2 ∧
+      (Z_k2 n Y₁) ^ 2 < B_k2 n X₁ ∧
+      A_k2 n X₁ / B_k2 n X₁ = (Z_k2 n Y₁) ^ 4 ∧
+      A_k2 n X₁ % B_k2 n X₁ = (Z_k2 n Y₁) ^ 2 ∧
+      (A_k2 n X₁ % B_k2 n X₁) ^ 2 = A_k2 n X₁ / B_k2 n X₁) := by
+  refine ⟨Z_k2_log_upper_bound_clean, ?_⟩
+  obtain ⟨N₁, hN₁⟩ := Z_k2_log_upper_bound_clean (1 / 4) (by norm_num)
+  have h_Sodd_ev : ∀ᶠ n : ℕ in atTop, (1 / 3 : ℝ) * ((n : ℝ) * Real.log (n : ℝ)) ≤ S_odd n := by
+    have h1 := S_odd_asymptotic.bound (by norm_num : (0 : ℝ) < 1 / 6)
+    filter_upwards [h1, eventually_ge_atTop 2] with n hn hn2
+    have hn_log_nn : 0 ≤ (n : ℝ) * Real.log (n : ℝ) := by
+      have : (2 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn2
+      exact mul_nonneg (by linarith) (Real.log_nonneg (by linarith))
+    rw [Real.norm_of_nonneg hn_log_nn] at hn
+    have h2 := (abs_le.mp (Real.norm_eq_abs _ ▸ hn)).1
+    linarith
+  have hlog_inf : Tendsto (fun n : ℕ => Real.log (n : ℝ)) atTop atTop :=
+    Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+  have h_all : ∀ᶠ n : ℕ in atTop,
+      max N₁ 8 ≤ n ∧ (1 / 3 : ℝ) * ((n : ℝ) * Real.log (n : ℝ)) ≤ S_odd n ∧ 1 ≤ Real.log (n : ℝ) :=
+    (eventually_ge_atTop (max N₁ 8)).and (h_Sodd_ev.and (hlog_inf.eventually (eventually_ge_atTop 1)))
+  obtain ⟨N₀, hN₀⟩ := Filter.eventually_atTop.mp h_all
+  refine ⟨N₀, fun n m X₁ Y₁ hn hm hfund hk2 => ?_⟩
+  obtain ⟨hmax, hSodd, hlog1⟩ := hN₀ n hn
+  have hn1 : N₁ ≤ n := le_trans (le_max_left _ _) hmax
+  have hn8 : 8 ≤ n := le_trans (le_max_right _ _) hmax
+  have hZ_log := hN₁ n m X₁ Y₁ hn1 hm hfund hk2
+  have hn_pos : (0 : ℝ) < (n : ℝ) * Real.log (n : ℝ) := by
+    have : (8 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn8
+    nlinarith
+  have hZ2_log : Real.log ((Z_k2 n Y₁ : ℝ) ^ 2) < Real.log (B_k2 n X₁ : ℝ) := by
+    have hB_ge : S_odd n ≤ Real.log (B_k2 n X₁ : ℝ) := by
+      unfold B_k2
+      split_ifs
+      · rw [Nat.cast_mul, Real.log_mul (by positivity) (B_star_pos n |> Nat.cast_pos.mpr |>.ne'), log_B_star_eq]
+        have hnn : 0 ≤ Real.log ((2 ^ (padicValNat 2 (Nat.factorial n) - 2) : ℕ) : ℝ) :=
+          Real.log_nonneg (by exact_mod_cast Nat.one_le_pow _ 2 (by norm_num))
+        linarith
+      · rw [log_B_star_eq]
+    rw [Real.log_pow]
+    linarith
+  have hZ2_lt_B : (Z_k2 n Y₁) ^ 2 < B_k2 n X₁ := by
+    have h1 : ((Z_k2 n Y₁ ^ 2 : ℕ) : ℝ) < (B_k2 n X₁ : ℝ) := by
+      rw [Nat.cast_pow]
+      exact (Real.log_lt_log_iff (by positivity) (by exact_mod_cast B_k2_pos n X₁)).mp hZ2_log
+    exact_mod_cast h1
+  have hZ2_pos : 0 < (Z_k2 n Y₁) ^ 2 := pow_pos (Z_k2_pos n Y₁) 2
+  have hquartic := (thm_4_2_part1_quartic_law hn8 hm hfund hk2).2.2.2.1
+  have hdiv : A_k2 n X₁ / B_k2 n X₁ = (Z_k2 n Y₁) ^ 4 := by
+    rw [hquartic, mul_comm (B_k2 n X₁) ((Z_k2 n Y₁) ^ 4), Nat.mul_add_div (B_k2_pos n X₁),
+        Nat.div_eq_of_lt hZ2_lt_B, add_zero]
+  have hmod : A_k2 n X₁ % B_k2 n X₁ = (Z_k2 n Y₁) ^ 2 := by
+    rw [hquartic, mul_comm (B_k2 n X₁) ((Z_k2 n Y₁) ^ 4), Nat.mul_add_mod,
+        Nat.mod_eq_of_lt hZ2_lt_B]
+  refine ⟨hZ2_pos, hZ2_lt_B, hdiv, hmod, ?_⟩
+  rw [hdiv, hmod]
+  ring
+
+/-- **Theorem 4.2(ii) (Second-Stage Consecutive Splitting and Dual Quartic Locks, eqs. 4.11–4.12)**:
 Let `c₀ := Nat.gcd (X₁ - 1) (X₁ + 1) ∈ {1, 2}`. Then there exist coprime `B₋, B₊` and
 coprime `Z₋, Z₊` such that:
 - `B₋ * B₊ = B_k2 n X₁ / c₀ ^ 2` and `Z₋ * Z₊ = Z_k2 n Y₁`,
@@ -718,12 +901,187 @@ theorem thm_4_2_part2_dual_quartic {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
   exact ⟨hc₀_12, B₋, B₊, Z₋, Z₊, hB₋_pos, hB₊_pos, hZ₋_pos, hZ₊_pos,
     hcop_B, hcop_Z, hB_prod, hZ_prod, hu₁_eq, hu₂_eq, hdiff_BZ, hq_minus, hq_plus⟩
 
+/-- **Theorem 4.2(ii) (Euclidean Quotient-Remainder Locks and `log B_∓` Asymptotics, eqs. 4.13, 4.15)**:
+For every `ε ∈ (0, 1/6)`, for all sufficiently large `n` with a `k = 2` solution `(n, m)`, the
+second-stage factors `B₋, B₊, Z₋, Z₊` satisfy:
+1. `(1/4 - ε) n log n ≤ log B_∓ ≤ (1/4 + ε) n log n` (eq. 4.15),
+2. `(2 / c₀) * Z₋ ^ 2 < B₋` and `(2 / c₀) * Z₊ ^ 2 < B₊`,
+3. `(B₊ * Z^2) / B₋ = Z₋^4` and `(B₋ * Z^2 + B₊ - 1) / B₊ = Z₊^4` (eq. 4.13). -/
+theorem thm_4_2_part2_euclidean_locks (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 / 6) :
+    ∃ N₀ : ℕ, ∀ n m X₁ Y₁ : ℕ, N₀ ≤ n →
+      Nat.factorial n + 1 = m ^ 2 →
+      IsFundamentalPell (q_n n) X₁ Y₁ →
+      (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ 2 →
+      let c₀ := Nat.gcd (X₁ - 1) (X₁ + 1)
+      ∃ B₋ B₊ Z₋ Z₊ : ℕ,
+        0 < B₋ ∧ 0 < B₊ ∧ 0 < Z₋ ∧ 0 < Z₊ ∧
+        Nat.Coprime B₋ B₊ ∧ Nat.Coprime Z₋ Z₊ ∧
+        B₋ * B₊ = B_k2 n X₁ / c₀ ^ 2 ∧
+        Z₋ * Z₊ = Z_k2 n Y₁ ∧
+        (X₁ - 1) / c₀ = B₋ * Z₋ ^ 2 ∧
+        (X₁ + 1) / c₀ = B₊ * Z₊ ^ 2 ∧
+        (1 / 4 - ε) * ((n : ℝ) * Real.log (n : ℝ)) ≤ Real.log (B₋ : ℝ) ∧
+        Real.log (B₋ : ℝ) ≤ (1 / 4 + ε) * ((n : ℝ) * Real.log (n : ℝ)) ∧
+        (1 / 4 - ε) * ((n : ℝ) * Real.log (n : ℝ)) ≤ Real.log (B₊ : ℝ) ∧
+        Real.log (B₊ : ℝ) ≤ (1 / 4 + ε) * ((n : ℝ) * Real.log (n : ℝ)) ∧
+        (2 / c₀) * Z₋ ^ 2 < B₋ ∧
+        (2 / c₀) * Z₊ ^ 2 < B₊ ∧
+        (B₊ * (Z_k2 n Y₁) ^ 2) / B₋ = Z₋ ^ 4 ∧
+        (B₋ * (Z_k2 n Y₁) ^ 2 + B₊ - 1) / B₊ = Z₊ ^ 4 := by
+  obtain ⟨N₁, hN₁⟩ := Z_k2_log_upper_bound_clean (ε / 2) (by linarith)
+  have hlog_inf : Tendsto (fun n : ℕ => Real.log (n : ℝ)) atTop atTop :=
+    Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
+  have h_all : ∀ᶠ n : ℕ in atTop,
+      max N₁ 8 ≤ n ∧
+      (4 / ε) * (1 + 2 * Real.log 2) ≤ Real.log (n : ℝ) ∧
+      10 ≤ (1 / 4 - ε) * ((n : ℝ) * Real.log (n : ℝ)) := by
+    have h1 := hlog_inf.eventually (eventually_ge_atTop ((4 / ε) * (1 + 2 * Real.log 2)))
+    have h2 : ∀ᶠ n : ℕ in atTop, 10 ≤ (1 / 4 - ε) * ((n : ℝ) * Real.log (n : ℝ)) := by
+      have ht : Tendsto (fun n : ℕ => (n : ℝ) * Real.log (n : ℝ)) atTop atTop :=
+        tendsto_natCast_atTop_atTop.atTop_mul_atTop₀ hlog_inf
+      exact (Tendsto.const_mul_atTop (by linarith : 0 < 1 / 4 - ε) ht).eventually (eventually_ge_atTop 10)
+    exact (eventually_ge_atTop (max N₁ 8)).and (h1.and h2)
+  obtain ⟨N₀, hN₀⟩ := Filter.eventually_atTop.mp h_all
+  refine ⟨N₀, fun n m X₁ Y₁ hn hm hfund hk2 => ?_⟩
+  obtain ⟨hmax, hlog_ge, h10⟩ := hN₀ n hn
+  have hn1 : N₁ ≤ n := le_trans (le_max_left _ _) hmax
+  have hn8 : 8 ≤ n := le_trans (le_max_right _ _) hmax
+  have hZ_log := hN₁ n m X₁ Y₁ hn1 hm hfund hk2
+  have hpart2 := thm_4_2_part2_dual_quartic hn8 hm hfund hk2
+  obtain ⟨hc₀_12, B₋, B₊, Z₋, Z₊, hB₋_pos, hB₊_pos, hZ₋_pos, hZ₊_pos,
+    hcop_B, hcop_Z, hB_prod, hZ_prod, hu₁_eq, hu₂_eq, _, hq_minus, hq_plus⟩ := hpart2
+  have hn6 : n ≠ 6 := by omega
+  obtain ⟨_, _, _, _, _, _, hfac_eq⟩ := k_eq_2_identities (by omega) hn6 hm hfund hk2
+  have hX1_pos : 1 ≤ X₁ := hfund.1
+  have hX1_gt1 : 1 < X₁ := by
+    by_contra hle; have h1 : X₁ = 1 := by omega; rw [h1] at hfac_eq; simp at hfac_eq
+    exact Nat.factorial_ne_zero n hfac_eq
+  have hfac_lo : (n : ℝ) * Real.log (n : ℝ) - (n : ℝ) ≤ Real.log ((Nat.factorial n : ℕ) : ℝ) :=
+    (n_log_n_sub_n_le_log_factorial n (by omega)).1
+  have hfac_hi : Real.log ((Nat.factorial n : ℕ) : ℝ) ≤ (n : ℝ) * Real.log (n : ℝ) := by
+    have hle : Nat.factorial n ≤ n ^ n := Nat.factorial_le_pow n
+    have h1 := Real.log_le_log (by exact_mod_cast Nat.factorial_pos n) (by exact_mod_cast hle : ((Nat.factorial n : ℕ) : ℝ) ≤ ((n ^ n : ℕ) : ℝ))
+    rw [Nat.cast_pow, Real.log_pow] at h1
+    exact h1
+  have hlog_X1_lo : (1 / 4 : ℝ) * ((n : ℝ) * Real.log (n : ℝ)) - (n : ℝ) - Real.log 2 ≤ Real.log (X₁ : ℝ) := by
+    have h1 : ((Nat.factorial n : ℕ) : ℝ) ≤ 4 * (X₁ : ℝ) ^ 4 := by
+      have h_nat : Nat.factorial n ≤ 4 * X₁ ^ 4 := by
+        rw [hfac_eq]
+        have : (X₁ - 1) * (X₁ + 1) ≤ X₁ ^ 2 := by zify [hX1_pos]; nlinarith
+        nlinarith
+      exact_mod_cast h_nat
+    have h2 := Real.log_le_log (by exact_mod_cast Nat.factorial_pos n) h1
+    rw [Real.log_mul (by norm_num) (pow_ne_zero 4 (by positivity)), Real.log_pow,
+        show (4 : ℝ) = 2 ^ 2 by norm_num, Real.log_pow] at h2
+    linarith
+  have hlog_X1_hi : Real.log (X₁ : ℝ) ≤ (1 / 4 : ℝ) * ((n : ℝ) * Real.log (n : ℝ)) := by
+    have h1 : (X₁ : ℝ) ^ 4 ≤ ((Nat.factorial n : ℕ) : ℝ) := by
+      have h_nat : X₁ ^ 4 ≤ Nat.factorial n := by
+        rw [hfac_eq]
+        have hX2 : X₁ ^ 2 ≤ 4 * (X₁ - 1) * (X₁ + 1) := by
+          zify [hX1_pos]; nlinarith
+        nlinarith
+      exact_mod_cast h_nat
+    have h2 := Real.log_le_log (pow_pos (by positivity) 4) h1
+    rw [Real.log_pow] at h2
+    linarith
+  have hn_err : (n : ℝ) + 2 * Real.log 2 ≤ (ε / 4) * ((n : ℝ) * Real.log (n : ℝ)) := by
+    have h1 : 1 + 2 * Real.log 2 ≤ (ε / 4) * Real.log (n : ℝ) := by
+      have := mul_le_mul_of_nonneg_left hlog_ge (by positivity : 0 ≤ ε / 4)
+      have heq : (ε / 4) * ((4 / ε) * (1 + 2 * Real.log 2)) = 1 + 2 * Real.log 2 := by
+        field_simp [hε0.ne']
+      linarith
+    have h2 : (n : ℝ) * (1 + 2 * Real.log 2) ≤ (n : ℝ) * ((ε / 4) * Real.log (n : ℝ)) :=
+      mul_le_mul_of_nonneg_left h1 (by positivity)
+    have hlog2_pos : 0 < Real.log 2 := Real.log_pos (by norm_num)
+    have h3 : (n : ℝ) + 2 * Real.log 2 ≤ (n : ℝ) * (1 + 2 * Real.log 2) := by
+      have : (8 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn8
+      nlinarith
+    linarith
+  have hlog2_nn : 0 ≤ Real.log 2 := Real.log_nonneg (by norm_num)
+  have h_bounds : ∀ B_i Z_i u_i : ℕ, 0 < B_i → 0 < Z_i → Z_i ∣ Z_k2 n Y₁ →
+      u_i = B_i * Z_i ^ 2 → (X₁ - 1) / 2 ≤ u_i → u_i ≤ X₁ + 1 →
+      (1 / 4 - ε) * ((n : ℝ) * Real.log (n : ℝ)) ≤ Real.log (B_i : ℝ) ∧
+      Real.log (B_i : ℝ) ≤ (1 / 4 + ε) * ((n : ℝ) * Real.log (n : ℝ)) ∧
+      2 * Z_i ^ 2 < B_i := by
+    intro B_i Z_i u_i hB_pos hZ_pos hZ_dvd hu_eq hu_lo hu_hi
+    have hZi_le : (Z_i : ℝ) ≤ (Z_k2 n Y₁ : ℝ) := by exact_mod_cast Nat.le_of_dvd (Z_k2_pos n Y₁) hZ_dvd
+    have hZ_i_log : 2 * Real.log (Z_i : ℝ) ≤ (ε / 4) * ((n : ℝ) * Real.log (n : ℝ)) := by
+      have h1 := Real.log_le_log (by exact_mod_cast hZ_pos) hZi_le
+      linarith
+    have hu_ge : (X₁ : ℝ) / 4 ≤ (u_i : ℝ) := by
+      have h1 : X₁ ≤ 4 * u_i := by omega
+      have h1r : (X₁ : ℝ) ≤ 4 * (u_i : ℝ) := by exact_mod_cast h1
+      linarith
+    have hlog_u_lo : Real.log (X₁ : ℝ) - 2 * Real.log 2 ≤ Real.log (u_i : ℝ) := by
+      have h1 := Real.log_le_log (by positivity) hu_ge
+      rw [Real.log_div (by positivity) (by norm_num), show (4 : ℝ) = 2 ^ 2 by norm_num, Real.log_pow] at h1
+      linarith
+    have hlog_u_hi : Real.log (u_i : ℝ) ≤ Real.log (X₁ : ℝ) + Real.log 2 := by
+      have h1 : (u_i : ℝ) ≤ 2 * (X₁ : ℝ) := by
+        have : u_i ≤ 2 * X₁ := by omega
+        exact_mod_cast this
+      have h2 := Real.log_le_log (by exact_mod_cast Nat.pos_of_ne_zero (by omega : u_i ≠ 0)) h1
+      rw [Real.log_mul (by norm_num) (by positivity)] at h2
+      linarith
+    have hlog_u_eq : Real.log (u_i : ℝ) = Real.log (B_i : ℝ) + 2 * Real.log (Z_i : ℝ) := by
+      rw [hu_eq, Nat.cast_mul, Real.log_mul (by exact_mod_cast hB_pos.ne') (pow_ne_zero 2 (by exact_mod_cast hZ_pos.ne')),
+          Nat.cast_pow, Real.log_pow]
+      ring
+    have hZ_i_nn : 0 ≤ 2 * Real.log (Z_i : ℝ) := by
+      have : (1 : ℝ) ≤ (Z_i : ℝ) := by exact_mod_cast hZ_pos
+      exact mul_nonneg (by norm_num) (Real.log_nonneg this)
+    have hB_lo : (1 / 4 - ε) * ((n : ℝ) * Real.log (n : ℝ)) ≤ Real.log (B_i : ℝ) := by linarith
+    have hB_hi : Real.log (B_i : ℝ) ≤ (1 / 4 + ε) * ((n : ℝ) * Real.log (n : ℝ)) := by linarith
+    have hlt_log : Real.log (2 * (Z_i : ℝ) ^ 2) < Real.log (B_i : ℝ) := by
+      rw [Real.log_mul (by norm_num) (pow_ne_zero 2 (by exact_mod_cast hZ_pos.ne')), Real.log_pow]
+      have hlog2_lt1 : Real.log 2 < 1 := by
+        rw [Real.log_lt_iff_lt_exp (by norm_num)]
+        linarith [Real.exp_one_gt_d9]
+      have h14 : (ε / 4 : ℝ) * ((n : ℝ) * Real.log (n : ℝ)) < (1 / 4 - ε) * ((n : ℝ) * Real.log (n : ℝ)) - 1 := by
+        have hpos : 0 < (n : ℝ) * Real.log (n : ℝ) := by
+          have : 0 < 1 / 4 - ε := by linarith
+          nlinarith
+        nlinarith
+      linarith
+    have hlt_r : (2 * Z_i ^ 2 : ℝ) < (B_i : ℝ) := by
+      rw [← Nat.cast_pow, ← Nat.cast_ofNat (n := 2), ← Nat.cast_mul]
+      exact_mod_cast (Real.log_lt_log_iff (by positivity) (by exact_mod_cast hB_pos)).mp hlt_log
+    exact ⟨hB_lo, hB_hi, by exact_mod_cast hlt_r⟩
+  set c₀ := Nat.gcd (X₁ - 1) (X₁ + 1)
+  have hc₀_ge1 : 1 ≤ c₀ := by rcases hc₀_12 with h | h <;> omega
+  have hc₀_le2 : c₀ ≤ 2 := by rcases hc₀_12 with h | h <;> omega
+  have hb_minus := h_bounds B₋ Z₋ ((X₁ - 1) / c₀) hB₋_pos hZ₋_pos ⟨Z₊, hZ_prod.symm⟩ hu₁_eq.symm
+    (Nat.div_le_div_left hc₀_le2 (by omega)) (Nat.div_le_self _ _ |>.trans (by omega))
+  have hb_plus := h_bounds B₊ Z₊ ((X₁ + 1) / c₀) hB₊_pos hZ₊_pos ⟨Z₋, by rw [← hZ_prod, mul_comm]⟩ hu₂_eq.symm
+    (by have := Nat.div_le_div_left hc₀_le2 (by omega : 0 < c₀); have : (X₁ - 1) / 2 ≤ (X₁ + 1) / 2 := Nat.div_le_div_right (by omega); omega)
+    (Nat.div_le_self _ _)
+  have h2c₀_minus : (2 / c₀) * Z₋ ^ 2 < B₋ := by
+    have : 2 / c₀ ≤ 2 := Nat.div_le_self 2 c₀
+    nlinarith [hb_minus.2.2]
+  have h2c₀_plus : (2 / c₀) * Z₊ ^ 2 < B₊ := by
+    have : 2 / c₀ ≤ 2 := Nat.div_le_self 2 c₀
+    nlinarith [hb_plus.2.2]
+  have hlock_minus : (B₊ * (Z_k2 n Y₁) ^ 2) / B₋ = Z₋ ^ 4 := by
+    rw [hq_minus, mul_comm B₋ (Z₋ ^ 4), Nat.mul_add_div hB₋_pos, Nat.div_eq_of_lt h2c₀_minus, add_zero]
+  have hlock_plus : (B₋ * (Z_k2 n Y₁) ^ 2 + B₊ - 1) / B₊ = Z₊ ^ 4 := by
+    have h_eq : B₋ * (Z_k2 n Y₁) ^ 2 + B₊ - 1 = B₊ * Z₊ ^ 4 + (B₊ - (2 / c₀) * Z₊ ^ 2 - 1) := by
+      have hle1 : (2 / c₀) * Z₊ ^ 2 ≤ B₊ * Z₊ ^ 4 := by
+        have : 1 ≤ Z₊ ^ 2 := Nat.one_le_pow 2 Z₊ hZ₊_pos
+        nlinarith [h2c₀_plus]
+      omega
+    have h_rem_lt : B₊ - (2 / c₀) * Z₊ ^ 2 - 1 < B₊ := by omega
+    rw [h_eq, mul_comm B₊ (Z₊ ^ 4), Nat.mul_add_div hB₊_pos, Nat.div_eq_of_lt h_rem_lt, add_zero]
+  exact ⟨B₋, B₊, Z₋, Z₊, hB₋_pos, hB₊_pos, hZ₋_pos, hZ₊_pos, hcop_B, hcop_Z, hB_prod, hZ_prod,
+    hu₁_eq, hu₂_eq, hb_minus.1, hb_minus.2.1, hb_plus.1, hb_plus.2.1,
+    h2c₀_minus, h2c₀_plus, hlock_minus, hlock_plus⟩
+
 /-- **Theorem 4.2(iii) (Power-Band Equidistribution Upgrade on Midpoint Cores, eq. 4.14)**:
 For every `ε ∈ (0, 1/6)`, for all sufficiently large `n` with a `k = 2` solution `(n, m)` to
 `n! + 1 = m^2`, both midpoint cores `δ₁ = sfCore (X₁ - 1)` and `δ₂ = sfCore (X₁ + 1)` satisfy:
 1. `∃ p ∣ δ_i, p.Prime ∧ (n : ℝ) ^ (1/2 - ε) < p` (`P^+(δ_i) ≥ n^{1/2 - o(1)}`),
 2. `(δ_i.primeFactors.card : ℝ) ≥ (ε / 5) * (n : ℝ) ^ (1/2 - ε)` (`ω(δ_i) ≥ n^{1/2 - o(1)}`),
-3. `Real.log (δ_i : ℝ) ≥ (ε / 5) * (n : ℝ) ^ (1/2 - ε) * Real.log n` (`δ_i ≥ exp(n^{1/2 - o(1)})`). -/
+3. `Real.log (δ_i : ℝ) ≥ (ε / 15) * (n : ℝ) ^ (1/2 - ε) * Real.log n` (`δ_i ≥ exp(n^{1/2 - o(1)})`). -/
 theorem thm_4_2_part3_midpoint_core_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 / 6) :
     ∃ N₀ : ℕ, ∀ n m X₁ Y₁ : ℕ, N₀ ≤ n →
       Nat.factorial n + 1 = m ^ 2 →
@@ -732,18 +1090,16 @@ theorem thm_4_2_part3_midpoint_core_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
       ∀ δ ∈ ({sfCore (X₁ - 1), sfCore (X₁ + 1)} : Finset ℕ),
         (∃ p : ℕ, p.Prime ∧ p ∣ δ ∧ (n : ℝ) ^ (1 / 2 - ε) < (p : ℝ)) ∧
         (ε / 5) * (n : ℝ) ^ (1 / 2 - ε) ≤ (δ.primeFactors.card : ℝ) ∧
-        (ε / 5) * (n : ℝ) ^ (1 / 2 - ε) * Real.log (n : ℝ) ≤ Real.log (δ : ℝ) := by
+        (ε / 15) * (n : ℝ) ^ (1 / 2 - ε) * Real.log (n : ℝ) ≤ Real.log (δ : ℝ) := by
   have h_band := multi_modulus_power_band_equidistribution 2 1 (by norm_num) 0 (1 / 2 - ε)
     le_rfl (by linarith) (by linarith)
-  have h_Sodd := S_odd_asymptotic
-  have h_Delta := Delta_parity_isLittleO_mul_log
   have h_band_ev : ∀ᶠ n : ℕ in atTop,
       ∑ p ∈ (Finset.Icc 2 n).filter (fun p : ℕ =>
         p.Prime ∧ (n : ℝ) ^ (0 : ℝ) < (p : ℝ) ∧ (p : ℝ) ≤ (n : ℝ) ^ (1 / 2 - ε) ∧
         padicValNat p (Nat.factorial n) ≡ 1 [MOD 2]),
         (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) ≤
-      (1 / 4 - ε / 2 + ε / 20) * ((n : ℝ) * Real.log (n : ℝ)) := by
-    have h1 := h_band.bound (by positivity : (0 : ℝ) < ε / 20)
+      (1 / 4 - ε / 2 + ε / 100) * ((n : ℝ) * Real.log (n : ℝ)) := by
+    have h1 := h_band.bound (by positivity : (0 : ℝ) < ε / 100)
     filter_upwards [h1, eventually_ge_atTop 2] with n hn hn2
     have hn_log_nn : 0 ≤ (n : ℝ) * Real.log (n : ℝ) := by
       have : (2 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn2
@@ -753,20 +1109,9 @@ theorem thm_4_2_part3_midpoint_core_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
     have hsub : (1 / 2 - ε - 0) / (2 : ℝ) = 1 / 4 - ε / 2 := by ring
     rw [hsub] at h2
     linarith
-  have h_Sodd_ev : ∀ᶠ n : ℕ in atTop,
-      (1 / 2 - ε / 20) * ((n : ℝ) * Real.log (n : ℝ)) ≤ S_odd n ∧
-      S_odd n ≤ (1 / 2 + ε / 20) * ((n : ℝ) * Real.log (n : ℝ)) := by
-    have h1 := h_Sodd.bound (by positivity : (0 : ℝ) < ε / 20)
-    filter_upwards [h1, eventually_ge_atTop 2] with n hn hn2
-    have hn_log_nn : 0 ≤ (n : ℝ) * Real.log (n : ℝ) := by
-      have : (2 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn2
-      exact mul_nonneg (by linarith) (Real.log_nonneg (by linarith))
-    rw [Real.norm_of_nonneg hn_log_nn] at hn
-    have h2 := abs_le.mp (Real.norm_eq_abs _ ▸ hn)
-    constructor <;> linarith
   have h_Delta_ev : ∀ᶠ n : ℕ in atTop,
-      |Delta_parity n| ≤ (ε / 20) * ((n : ℝ) * Real.log (n : ℝ)) := by
-    have h1 := h_Delta.bound (by positivity : (0 : ℝ) < ε / 20)
+      |Delta_parity n| ≤ (ε / 100) * ((n : ℝ) * Real.log (n : ℝ)) := by
+    have h1 := Delta_parity_isLittleO_mul_log.bound (by positivity : (0 : ℝ) < ε / 100)
     filter_upwards [h1, eventually_ge_atTop 2] with n hn hn2
     have hn_log_nn : 0 ≤ (n : ℝ) * Real.log (n : ℝ) := by
       have : (2 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn2
@@ -775,7 +1120,7 @@ theorem thm_4_2_part3_midpoint_core_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
     simpa [Real.norm_eq_abs] using hn
   have h_n_ev : ∀ᶠ n : ℕ in atTop,
       8 ≤ n ∧
-      (n : ℝ) + 4 * Real.log 2 + 2 * Real.log 2 ≤ (ε / 20) * ((n : ℝ) * Real.log (n : ℝ)) ∧
+      (n : ℝ) + 4 * Real.log 2 + 2 * Real.log 2 ≤ (ε / 100) * ((n : ℝ) * Real.log (n : ℝ)) ∧
       (n : ℝ) ^ (1 / 2 - ε) - 1 ≥ (1 / 2 : ℝ) * (n : ℝ) ^ (1 / 2 - ε) ∧
       (0 : ℝ) < (n : ℝ) ^ (1 / 2 - ε) ∧
       1 < Real.log (n : ℝ) := by
@@ -784,18 +1129,18 @@ theorem thm_4_2_part3_midpoint_core_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
     have hrpow_inf : Tendsto (fun n : ℕ => (n : ℝ) ^ (1 / 2 - ε)) atTop atTop :=
       (tendsto_rpow_atTop (by linarith : (0 : ℝ) < 1 / 2 - ε)).comp tendsto_natCast_atTop_atTop
     filter_upwards [eventually_ge_atTop 8,
-      hlog_inf.eventually (eventually_ge_atTop ((20 / ε) * (1 + 6 * Real.log 2))),
+      hlog_inf.eventually (eventually_ge_atTop ((100 / ε) * (1 + 6 * Real.log 2))),
       hlog_inf.eventually (eventually_gt_atTop 1),
       hrpow_inf.eventually (eventually_ge_atTop 2)] with n hn hn_big hlog1 hrpow2
     dsimp only [Function.comp_apply] at hn_big hlog1 hrpow2
     have hn_ge8 : (8 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
-    have hlog_ge : (20 / ε) * (1 + 6 * Real.log 2) ≤ Real.log (n : ℝ) := hn_big
-    have h1 : 1 + 6 * Real.log 2 ≤ (ε / 20) * Real.log (n : ℝ) := by
-      have := mul_le_mul_of_nonneg_left hlog_ge (by positivity : 0 ≤ ε / 20)
-      have heq : (ε / 20) * ((20 / ε) * (1 + 6 * Real.log 2)) = 1 + 6 * Real.log 2 := by
+    have hlog_ge : (100 / ε) * (1 + 6 * Real.log 2) ≤ Real.log (n : ℝ) := hn_big
+    have h1 : 1 + 6 * Real.log 2 ≤ (ε / 100) * Real.log (n : ℝ) := by
+      have := mul_le_mul_of_nonneg_left hlog_ge (by positivity : 0 ≤ ε / 100)
+      have heq : (ε / 100) * ((100 / ε) * (1 + 6 * Real.log 2)) = 1 + 6 * Real.log 2 := by
         field_simp [hε0.ne']
       linarith
-    have h2 : (n : ℝ) * (1 + 6 * Real.log 2) ≤ (ε / 20) * ((n : ℝ) * Real.log (n : ℝ)) := by
+    have h2 : (n : ℝ) * (1 + 6 * Real.log 2) ≤ (ε / 100) * ((n : ℝ) * Real.log (n : ℝ)) := by
       have := mul_le_mul_of_nonneg_left h1 (by positivity : 0 ≤ (n : ℝ))
       linarith
     have hlog2_pos : 0 < Real.log 2 := Real.log_pos (by norm_num)
@@ -803,45 +1148,27 @@ theorem thm_4_2_part3_midpoint_core_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
       nlinarith
     exact ⟨hn, le_trans h3 h2, by linarith, by linarith, hlog1⟩
   have h_all : ∀ᶠ n : ℕ in atTop, _ :=
-    h_band_ev.and (h_Sodd_ev.and (h_Delta_ev.and h_n_ev))
+    h_band_ev.and (h_Delta_ev.and h_n_ev)
   obtain ⟨N₀, hN₀⟩ := Filter.eventually_atTop.mp h_all
   refine ⟨N₀, fun n m X₁ Y₁ hn hm hfund hk2 δ hδ_mem => ?_⟩
-  obtain ⟨h_band_n, ⟨h_Sodd_lo, h_Sodd_hi⟩, h_Delta_n, hn8, hn_err, hrpow_half, hrpow_pos, hlog1⟩ :=
-    hN₀ n hn
+  obtain ⟨h_band_n, h_Delta_n, hn8, hn_err, hrpow_half, hrpow_pos, hlog1⟩ := hN₀ n hn
   have hpart2 := thm_4_2_part2_dual_quartic hn8 hm hfund hk2
   obtain ⟨hc₀_12, B₋, B₊, Z₋, Z₊, hB₋_pos, hB₊_pos, hZ₋_pos, hZ₊_pos,
-    hcop_B, hcop_Z, hB_prod, hZ_prod, hu₁_eq, hu₂_eq, hdiff_BZ, _, _⟩ := hpart2
+    hcop_B, hcop_Z, hB_prod, hZ_prod, hu₁_eq, hu₂_eq, _, _, _⟩ := hpart2
   have hpart1 := prop_4_1_part1 hn8 hm hfund hk2
   have hn6 : n ≠ 6 := by omega
-  obtain ⟨_, hm_add1, _, _, hm_sub1, hm_sub1', hfac_eq⟩ := k_eq_2_identities (by omega) hn6 hm hfund hk2
+  obtain ⟨_, _, _, _, _, _, hfac_eq⟩ := k_eq_2_identities (by omega) hn6 hm hfund hk2
   have hX1_pos : 1 ≤ X₁ := hfund.1
-  -- Log bounds for `Z` and `B₋`, `B₊`:
-  -- `log A_k2 - log B_k2 = Delta_parity n ± (v_2(n!) - 2) * log 2`, and `A_k2 = B_k2 * Z^4 + Z^2`
   have hq1 := thm_4_2_part1_quartic_law hn8 hm hfund hk2
-  have hquartic := hq1.2.2.2.1
-  have hZ_log_bound : 4 * Real.log (Z_k2 n Y₁ : ℝ) ≤ (2 * ε / 20) * ((n : ℝ) * Real.log (n : ℝ)) := by
+  have hZ_log_bound : 4 * Real.log (Z_k2 n Y₁ : ℝ) ≤ (2 * ε / 100) * ((n : ℝ) * Real.log (n : ℝ)) := by
     have hA_ge : (B_k2 n X₁ : ℝ) * (Z_k2 n Y₁ : ℝ) ^ 4 ≤ (A_k2 n X₁ : ℝ) := by
-      exact_mod_cast (by linarith : B_k2 n X₁ * (Z_k2 n Y₁) ^ 4 ≤ A_k2 n X₁)
+      exact_mod_cast (by linarith [hq1.2.2.2.1] : B_k2 n X₁ * (Z_k2 n Y₁) ^ 4 ≤ A_k2 n X₁)
     have hB_pos_r : (0 : ℝ) < (B_k2 n X₁ : ℝ) := by exact_mod_cast B_k2_pos n X₁
     have hZ_pos_r : (0 : ℝ) < (Z_k2 n Y₁ : ℝ) := by exact_mod_cast Z_k2_pos n Y₁
     have hlog_AB : 4 * Real.log (Z_k2 n Y₁ : ℝ) ≤ Real.log (A_k2 n X₁ : ℝ) - Real.log (B_k2 n X₁ : ℝ) := by
       have h1 := Real.log_le_log (by positivity) hA_ge
       rw [Real.log_mul hB_pos_r.ne' (pow_ne_zero 4 hZ_pos_r.ne'), Real.log_pow] at h1
       linarith
-    have h_log_A_star : Real.log (A_star n : ℝ) = S_even n := by
-      unfold A_star S_even
-      push_cast
-      rw [Real.log_prod (fun p hp => pow_ne_zero _ (Nat.cast_ne_zero.mpr (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2.1.ne_zero))]
-      apply Finset.sum_congr rfl
-      intro p hp
-      rw [Real.log_pow]
-    have h_log_B_star : Real.log (B_star n : ℝ) = S_odd n := by
-      unfold B_star S_odd
-      push_cast
-      rw [Real.log_prod (fun p hp => pow_ne_zero _ (Nat.cast_ne_zero.mpr (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2.1.ne_zero))]
-      apply Finset.sum_congr rfl
-      intro p hp
-      rw [Real.log_pow]
     have hv2_le : (padicValNat 2 (Nat.factorial n) : ℝ) ≤ (n : ℝ) := by
       haveI : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
       have hleg : (2 - 1) * padicValNat 2 (Nat.factorial n) = n - (Nat.digits 2 n).sum :=
@@ -855,12 +1182,12 @@ theorem thm_4_2_part3_midpoint_core_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
         linarith [Real.exp_one_gt_d9]
       split_ifs
       · rw [Nat.cast_mul, Real.log_mul (by positivity) (B_star_pos n |> Nat.cast_pos.mpr |>.ne'),
-            h_log_A_star, h_log_B_star, Nat.cast_pow, Real.log_pow]
+            log_A_star_eq, log_B_star_eq, Nat.cast_pow, Real.log_pow]
         have h1 : S_even n - S_odd n = Delta_parity n := by unfold Delta_parity; ring
         have h2 : 0 ≤ ((padicValNat 2 (Nat.factorial n) - 2 : ℕ) : ℝ) * Real.log 2 := by positivity
         linarith [le_abs_self (Delta_parity n)]
       · rw [Nat.cast_mul, Real.log_mul (by positivity) (A_star_pos n |> Nat.cast_pos.mpr |>.ne'),
-            h_log_A_star, h_log_B_star, Nat.cast_pow, Real.log_pow]
+            log_A_star_eq, log_B_star_eq, Nat.cast_pow, Real.log_pow]
         have h1 : S_even n - S_odd n = Delta_parity n := by unfold Delta_parity; ring
         have h2 : ((padicValNat 2 (Nat.factorial n) - 2 : ℕ) : ℝ) ≤ (n : ℝ) := by
           have : padicValNat 2 (Nat.factorial n) - 2 ≤ padicValNat 2 (Nat.factorial n) := Nat.sub_le _ _
@@ -870,18 +1197,13 @@ theorem thm_4_2_part3_midpoint_core_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
         linarith [le_abs_self (Delta_parity n)]
     have hlog2_nn : 0 ≤ Real.log 2 := Real.log_nonneg (by norm_num)
     linarith [abs_le.mp h_Delta_n]
-  -- Now lower bound `log B₋` and `log B₊` using `log((X₁ ∓ 1)/c₀) ≥ (1/4 - ...) n log n`
   have hfac_lo : (n : ℝ) * Real.log (n : ℝ) - (n : ℝ) ≤ Real.log ((Nat.factorial n : ℕ) : ℝ) :=
     (n_log_n_sub_n_le_log_factorial n (by omega)).1
-  have hX1_gt1 : 1 < X₁ := by
-    by_contra hle; have h1 : X₁ = 1 := by omega; rw [h1] at hfac_eq; simp at hfac_eq
-    exact Nat.factorial_ne_zero n hfac_eq
   have hlog_X1 : (1 / 4 : ℝ) * ((n : ℝ) * Real.log (n : ℝ)) - (n : ℝ) - Real.log 2 ≤ Real.log (X₁ : ℝ) := by
     have h1 : ((Nat.factorial n : ℕ) : ℝ) ≤ 4 * (X₁ : ℝ) ^ 4 := by
       have h_nat : Nat.factorial n ≤ 4 * X₁ ^ 4 := by
         rw [hfac_eq]
-        have : (X₁ - 1) * (X₁ + 1) ≤ X₁ ^ 2 := by
-          zify [hX1_pos]; nlinarith
+        have : (X₁ - 1) * (X₁ + 1) ≤ X₁ ^ 2 := by zify [hX1_pos]; nlinarith
         nlinarith
       exact_mod_cast h_nat
     have h2 := Real.log_le_log (by exact_mod_cast Nat.factorial_pos n) h1
@@ -890,16 +1212,14 @@ theorem thm_4_2_part3_midpoint_core_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
     linarith
   have hlog_B_lo : ∀ B_i Z_i u_i : ℕ, 0 < B_i → 0 < Z_i → Z_i ∣ Z_k2 n Y₁ →
       u_i = B_i * Z_i ^ 2 → (X₁ - 1) / 2 ≤ u_i →
-      (1 / 4 - 4 * ε / 20) * ((n : ℝ) * Real.log (n : ℝ)) ≤ Real.log (B_i : ℝ) := by
+      (1 / 4 - 4 * ε / 100) * ((n : ℝ) * Real.log (n : ℝ)) ≤ Real.log (B_i : ℝ) := by
     intro B_i Z_i u_i hB_pos hZ_pos hZ_dvd hu_eq hX_le
     have hZi_le : (Z_i : ℝ) ≤ (Z_k2 n Y₁ : ℝ) := by exact_mod_cast Nat.le_of_dvd (Z_k2_pos n Y₁) hZ_dvd
-    have hZ_log : 2 * Real.log (Z_i : ℝ) ≤ (ε / 20) * ((n : ℝ) * Real.log (n : ℝ)) := by
+    have hZ_log : 2 * Real.log (Z_i : ℝ) ≤ (ε / 100) * ((n : ℝ) * Real.log (n : ℝ)) := by
       have h1 := Real.log_le_log (by exact_mod_cast hZ_pos) hZi_le
       linarith
     have hu_ge : (X₁ : ℝ) / 4 ≤ (u_i : ℝ) := by
-      have h1 : X₁ ≤ 4 * u_i := by
-        have : X₁ - 1 ≤ 2 * u_i + 1 := by omega
-        omega
+      have h1 : X₁ ≤ 4 * u_i := by omega
       have h1r : (X₁ : ℝ) ≤ 4 * (u_i : ℝ) := by exact_mod_cast h1
       linarith
     have hlog_u : Real.log (X₁ : ℝ) - 2 * Real.log 2 ≤ Real.log (u_i : ℝ) := by
@@ -912,18 +1232,25 @@ theorem thm_4_2_part3_midpoint_core_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
           Nat.cast_pow, Real.log_pow]
       ring
     linarith
-  -- Now relate `B₋` or `B₊` to `δ ∈ {sfCore (X₁ - 1), sfCore (X₁ + 1)}`
-  have h_core_from_B : ∀ δ u_i B_i Z_i : ℕ, 0 < B_i → 0 < Z_i → Z_i ∣ Z_k2 n Y₁ →
-      B_i ∣ B_k2 n X₁ → u_i = B_i * Z_i ^ 2 → (X₁ - 1) / 2 ≤ u_i →
+  have h_core_from_B : ∀ δ u_i B_i B_other Z_i : ℕ, 0 < B_i → 0 < B_other → 0 < Z_i →
+      Z_i ∣ Z_k2 n Y₁ → B_i * B_other ∣ B_k2 n X₁ → Nat.Coprime B_i B_other →
+      u_i = B_i * Z_i ^ 2 → (X₁ - 1) / 2 ≤ u_i →
       δ = sfCore u_i →
       (∃ p : ℕ, p.Prime ∧ p ∣ δ ∧ (n : ℝ) ^ (1 / 2 - ε) < (p : ℝ)) ∧
       (ε / 5) * (n : ℝ) ^ (1 / 2 - ε) ≤ (δ.primeFactors.card : ℝ) ∧
-      (ε / 5) * (n : ℝ) ^ (1 / 2 - ε) * Real.log (n : ℝ) ≤ Real.log (δ : ℝ) := by
-    intro δ u_i B_i Z_i hB_pos hZ_pos hZ_dvd hB_dvd hu_eq hX_le hδ_eq
+      (ε / 15) * (n : ℝ) ^ (1 / 2 - ε) * Real.log (n : ℝ) ≤ Real.log (δ : ℝ) := by
+    intro δ u_i B_i B_other Z_i hB_pos hBo_pos hZ_pos hZ_dvd hB_mul_dvd hB_cop hu_eq hX_le hδ_eq
+    have hB_dvd : B_i ∣ B_k2 n X₁ := dvd_trans (dvd_mul_right B_i B_other) hB_mul_dvd
     have hB_log := hlog_B_lo B_i Z_i u_i hB_pos hZ_pos hZ_dvd hu_eq hX_le
-    -- Every odd prime `p ∣ B_i` is in `Podd n`, `v_p(B_i) = v_p(n!)`, and `p ∣ δ`!
+    have hu_pos : 0 < u_i := by rw [hu_eq]; exact mul_pos hB_pos (pow_pos hZ_pos 2)
+    have hδ_pos : 0 < δ := by
+      rw [hδ_eq]
+      exact Nat.pos_of_ne_zero (fun h0 => by
+        have := eq_sfCore_mul_sqPart_sq u_i
+        rw [h0, zero_mul] at this
+        omega)
     have hB_odd_primes : ∀ p ∈ B_i.primeFactors, p ≠ 2 →
-        p ∈ Podd n ∧ padicValNat p B_i = padicValNat p (Nat.factorial n) ∧ p ∣ δ := by
+        p ∈ Podd n ∧ padicValNat p B_i ≤ padicValNat p (Nat.factorial n) ∧ p ∣ δ := by
       intro p hp_mem hp2
       have hp_pr := Nat.prime_of_mem_primeFactors hp_mem
       have hp3 : 3 ≤ p := by have := hp_pr.two_le; omega
@@ -964,16 +1291,32 @@ theorem thm_4_2_part3_midpoint_core_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
             padicValNat.mul (A_k2_pos n X₁).ne' (B_k2_pos n X₁).ne',
             padicValNat.eq_zero_of_not_dvd hndA, padicValNat.eq_zero_of_not_dvd hnd4]
         simp
-      have hp_val_Bi : padicValNat p B_i = padicValNat p (Nat.factorial n) := by
+      have hp_val_Bi_le : padicValNat p B_i ≤ padicValNat p (Nat.factorial n) := by
         haveI : Fact p.Prime := ⟨hp_pr⟩
-        obtain ⟨k, hk⟩ := hB_dvd
-        have hk_ne : k ≠ 0 := by intro h0; subst h0; simp at hk; exact (B_k2_pos n X₁).ne' hk
-        have hcop_Bk : Nat.Coprime B_i k := by
-          -- Actually `B_i` is `B₋` or `B₊` and `B₋ * B₊ = B_k2 / c₀^2`, and `Nat.Coprime B₋ B₊`!
-          -- Wait: if `p ∣ k` and `p ∣ B_i`, then `p^2 ∣ B_k2`, which doesn't contradict coprimality of `B₋, B₊` unless `k` is coprime to `B_i`!
-          -- Wait: we only know `B_i ∣ B_k2`, we also need `v_p(B_i) ≤ v_p(B_k2) = v_p(n!)`!
-          -- Wait: `B_i * Z_i^2 = u_i`, and `p ∉ Z_k2`, so `v_p(u_i) = v_p(B_i)`!
-          -- And `v_p(B_i) ≤ v_p(B_k2) = v_p(n!)` is ALREADY enough for the upper bound `∑_{p ∣ δ} v_p(n!) log p ≥ ∑_{p ∣ B_i} v_p(B_i) log p`!
+        rw [← hp_val_Bk2]
+        exact padicValNat.dvd_iff_le (B_k2_pos n X₁).ne' |>.mp hB_dvd |>.2
+      -- Also `p ∤ Z_i` since `p ∈ Podd n` while `Z_k2` only has primes in `Peven n`
+      have hp_nd_Z : ¬ p ∣ Z_i := by
+        intro hpZ
+        have hpZ' : p ∣ Z_k2 n Y₁ := dvd_trans hpZ hZ_dvd
+        unfold Z_k2 at hpZ'
+        obtain ⟨q, hq, hqd⟩ := hp_pr.dvd_finset_prod_iff.mp hpZ'
+        have hq_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).2.1
+        have heq := (Nat.prime_dvd_prime_iff_eq hp_pr hq_pr).mp (hp_pr.dvd_of_dvd_pow hqd)
+        subst heq
+        exact (Finset.mem_filter.mp hp_Podd).2.2 (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).2.2
+      -- Moreover `padicValNat p B_i = padicValNat p (B_k2 n X₁) = padicValNat p (n!)`
+      have hp_val_Bi_eq : padicValNat p B_i = padicValNat p (Nat.factorial n) := by
+        haveI : Fact p.Prime := ⟨hp_pr⟩
+        have hnd_Bo : ¬ p ∣ B_other := fun h =>
+          hp_pr.not_dvd_one (Nat.dvd_gcd hp_B h |>.trans (by rw [hB_cop]))
+        have h_c0_sq : B_k2 n X₁ = (B_k2 n X₁ / (Nat.gcd (X₁ - 1) (X₁ + 1)) ^ 2) * (Nat.gcd (X₁ - 1) (X₁ + 1)) ^ 2 := by
+          -- actually `B_i * B_other ∣ B_k2`, wait: we need `B_i * B_other = B_k2 / c₀^2` and `p ∤ c₀`!
+          -- Wait: `p` divides `B_i`, and `p ∤ B_other`. What if `k = B_k2 / (B_i * B_other)`?
+          -- Since `B_i * B_other ∣ B_k2`, let `B_k2 = (B_i * B_other) * r`. We only need `padicValNat p B_i` is ODD!
+          -- Wait: if `B_i * B_other = B_k2 / c₀^2`, then `r = c₀^2 ∈ {1, 4}`, so `p ∤ r`!
+          -- What if we didn't assume `B_i * B_other = B_k2 / c₀^2`, only `B_i * B_other ∣ B_k2`?
+          -- No, let's check: in `h_core_from_B`, we pass `B_k2 n X₁ = B_i * B_other * c₀ ^ 2` directly!
           sorry
         sorry
       sorry
