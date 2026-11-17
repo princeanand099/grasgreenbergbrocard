@@ -53,8 +53,13 @@ theorem padicValNat_factorial_eq_div_of_lt_sq {p n : ℕ} (hp : p.Prime) (hn : n
         simp
       rw [hdig]
       simp only [List.sum_cons, List.sum_nil, add_zero]
-      have hdm := Nat.div_add_mod n p
-      omega
+      have hdm : p * (n / p) + n % p = n := Nat.div_add_mod n p
+      have hle1 : n % p + n / p ≤ n := by
+        have : 1 * (n / p) ≤ p * (n / p) := Nat.mul_le_mul_right _ (by omega)
+        omega
+      zify [hle1, (by omega : 1 ≤ p)]
+      have hdmZ : (p : ℤ) * ((n / p : ℕ) : ℤ) + ((n % p : ℕ) : ℤ) = (n : ℤ) := by exact_mod_cast hdm
+      linarith
   rw [hsum_eq] at hleg
   exact Nat.eq_of_mul_eq_mul_left hp1 hleg
 
@@ -106,28 +111,34 @@ theorem harmonicLayer_odd_layer {n r p : ℕ} (hr1 : 1 ≤ r) (hr2 : 2 * r - 1 �
     exact_mod_cast hpn
   have hodd : ¬ 2 ∣ padicValNat p (Nat.factorial n) := by rw [hv]; omega
   have hp_mem : p ∈ Podd n := Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hple⟩, hp, hodd⟩
-  haveI : Fact p.Prime := ⟨hp⟩
+  have hq_ne : q_n n ≠ 0 := by
+    unfold q_n Podd
+    exact Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
+  have hs_ne : s_n n ≠ 0 := by
+    unfold s_n
+    exact Finset.prod_ne_zero_iff.mpr (fun x hx => pow_ne_zero _ (Finset.mem_filter.mp hx).2.ne_zero)
   have hq_val : padicValNat p (q_n n) = 1 := by
+    rw [← Nat.factorization_def (q_n n) hp]
     unfold q_n
-    have hprod_ne : ∏ x ∈ Podd n, x ≠ 0 :=
-      Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
-    rw [padicValNat_finset_prod _ hprod_ne]
+    rw [Nat.factorization_prod (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)]
+    simp only [Finset.sum_apply']
     rw [Finset.sum_eq_single p]
-    · exact padicValNat.self hp.one_lt
+    · exact hp.factorization_self
     · intro x hx hne
       have hx_prime : x.Prime := (Finset.mem_filter.mp hx).2.1
-      exact padicValNat.eq_zero_of_not_dvd
+      exact Nat.factorization_eq_zero_of_not_dvd
         (fun hdvd => hne ((Nat.prime_dvd_prime_iff_eq hp hx_prime).mp hdvd).symm)
     · intro hnot; exact absurd hp_mem hnot
   have hs_val : padicValNat p (s_n n) = r - 1 := by
     have hfac := factorial_eq_q_mul_s_sq n
-    have hq_ne : q_n n ≠ 0 :=
-      Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
-    have hs_ne : s_n n ≠ 0 := by
-      unfold s_n
-      exact Finset.prod_ne_zero_iff.mpr (fun x hx => pow_ne_zero _ (Finset.mem_filter.mp hx).2.ne_zero)
-    have hval := congrArg (padicValNat p) hfac
-    rw [padicValNat.mul hq_ne (pow_ne_zero 2 hs_ne), padicValNat.pow 2 hs_ne, hv, hq_val] at hval
+    have hfv : (Nat.factorial n).factorization p = padicValNat p (Nat.factorial n) :=
+      Nat.factorization_def _ hp
+    have hfq : (q_n n).factorization p = padicValNat p (q_n n) := Nat.factorization_def _ hp
+    have hfs : (s_n n).factorization p = padicValNat p (s_n n) := Nat.factorization_def _ hp
+    have hval := congrArg (fun m : ℕ => m.factorization p) hfac
+    rw [Nat.factorization_mul hq_ne (pow_ne_zero 2 hs_ne), Nat.factorization_pow,
+      Finsupp.add_apply, Finsupp.coe_smul, Pi.smul_apply, smul_eq_mul,
+      hfv, hfq, hfs, hv, hq_val] at hval
     omega
   exact ⟨hp_mem, hq_val, hs_val⟩
 
@@ -144,29 +155,35 @@ theorem harmonicLayer_even_layer {n r p : ℕ} (hr1 : 1 ≤ r) (hr2 : 2 * r ≤ 
     exact_mod_cast hpn
   have heven : 2 ∣ padicValNat p (Nat.factorial n) := by rw [hv]; exact ⟨r, rfl⟩
   have hp_mem : p ∈ Peven n := Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hple⟩, hp, heven⟩
-  haveI : Fact p.Prime := ⟨hp⟩
+  have hq_ne : q_n n ≠ 0 := by
+    unfold q_n Podd
+    exact Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
+  have hs_ne : s_n n ≠ 0 := by
+    unfold s_n
+    exact Finset.prod_ne_zero_iff.mpr (fun x hx => pow_ne_zero _ (Finset.mem_filter.mp hx).2.ne_zero)
   have hq_val : padicValNat p (q_n n) = 0 := by
+    rw [← Nat.factorization_def (q_n n) hp]
     unfold q_n
-    have hprod_ne : ∏ x ∈ Podd n, x ≠ 0 :=
-      Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
-    rw [padicValNat_finset_prod _ hprod_ne]
+    rw [Nat.factorization_prod (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)]
+    simp only [Finset.sum_apply']
     refine Finset.sum_eq_zero (fun x hx => ?_)
     have hx_prime : x.Prime := (Finset.mem_filter.mp hx).2.1
     have hx_odd : ¬ 2 ∣ padicValNat x (Nat.factorial n) := (Finset.mem_filter.mp hx).2.2
     have hne : p ≠ x := by
       rintro rfl
       exact hx_odd heven
-    exact padicValNat.eq_zero_of_not_dvd
+    exact Nat.factorization_eq_zero_of_not_dvd
       (fun hdvd => hne ((Nat.prime_dvd_prime_iff_eq hp hx_prime).mp hdvd))
   have hs_val : padicValNat p (s_n n) = r := by
     have hfac := factorial_eq_q_mul_s_sq n
-    have hq_ne : q_n n ≠ 0 :=
-      Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
-    have hs_ne : s_n n ≠ 0 := by
-      unfold s_n
-      exact Finset.prod_ne_zero_iff.mpr (fun x hx => pow_ne_zero _ (Finset.mem_filter.mp hx).2.ne_zero)
-    have hval := congrArg (padicValNat p) hfac
-    rw [padicValNat.mul hq_ne (pow_ne_zero 2 hs_ne), padicValNat.pow 2 hs_ne, hv, hq_val] at hval
+    have hfv : (Nat.factorial n).factorization p = padicValNat p (Nat.factorial n) :=
+      Nat.factorization_def _ hp
+    have hfq : (q_n n).factorization p = padicValNat p (q_n n) := Nat.factorization_def _ hp
+    have hfs : (s_n n).factorization p = padicValNat p (s_n n) := Nat.factorization_def _ hp
+    have hval := congrArg (fun m : ℕ => m.factorization p) hfac
+    rw [Nat.factorization_mul hq_ne (pow_ne_zero 2 hs_ne), Nat.factorization_pow,
+      Finsupp.add_apply, Finsupp.coe_smul, Pi.smul_apply, smul_eq_mul,
+      hfv, hfq, hfs, hv, hq_val] at hval
     omega
   exact ⟨hp_mem, hq_val, hs_val⟩
 
@@ -210,6 +227,7 @@ theorem alt_harmonic_eq_tail_harmonic (N : ℕ) :
     have h22 : ((2 * m + 2 : ℕ) : ℝ) = 2 * ((m + 1 : ℕ) : ℝ) := by push_cast; ring
     rw [h21, h22]
     field_simp [hm1, hm2, hm3]
+    ring
 
 /-- Quantitative alternating harmonic bound: `|∑_{r=1}^N (1/(2r-1) - 1/(2r)) - log 2| ≤ 1 / (2N)`. -/
 theorem alt_harmonic_sum_diff_log_two {N : ℕ} (hN : 1 ≤ N) :
@@ -257,8 +275,7 @@ theorem alt_harmonic_sum_diff_log_two {N : ℕ} (hN : 1 ≤ N) :
     have h1 : Real.log ((k : ℝ) / ((k : ℝ) + 1)) ≤ (k : ℝ) / ((k : ℝ) + 1) - 1 :=
       Real.log_le_sub_one_of_pos (by positivity)
     rw [Real.log_div (by positivity) (by positivity)] at h1
-    have heq : (k : ℝ) / ((k : ℝ) + 1) - 1 = -(1 / ((k : ℝ) + 1)) := by
-      field_simp [by positivity : (k : ℝ) + 1 ≠ 0]; ring
+    have h2 : (k : ℝ) / ((k : ℝ) + 1) - 1 = -(1 / ((k : ℝ) + 1)) := by field_simp; ring
     linarith
   have hhi : Real.log 2 ≤ ∑ k ∈ Finset.Icc (N + 1) (2 * N), (1 : ℝ) / (k : ℝ) + 1 / (2 * (N : ℝ)) := by
     rw [← htel]
@@ -415,6 +432,7 @@ theorem Podd_upper_partition (n K : ℕ) (hn : 4 ≤ n) (hK : 1 ≤ K) (hKsq : 2
         have hltR : (n : ℝ) < ((2 * r : ℕ) : ℝ) * (p : ℝ) := by exact_mod_cast hlt
         push_cast at hltR; linarith
     · rintro ⟨r, ⟨hr1, hrK⟩, ⟨⟨hp2, hp_hi⟩, hp_prime⟩, hp_lo⟩
+      have hr1R : (1 : ℝ) ≤ (r : ℝ) := by exact_mod_cast hr1
       have hr_pos : (0 : ℝ) < (r : ℝ) := by exact_mod_cast hr1
       have hp_gt : (n : ℝ) / (2 * (K : ℝ) + 1) < (p : ℝ) := by
         calc (n : ℝ) / (2 * (K : ℝ) + 1) < (n : ℝ) / (2 * (r : ℝ)) := by
@@ -443,12 +461,15 @@ theorem Podd_upper_partition (n K : ℕ) (hn : 4 ≤ n) (hK : 1 ≤ K) (hKsq : 2
       have hdiv_lt : n / p < 2 * r := by
         rw [div_lt_iff₀ (by positivity)] at hp_lo
         rw [Nat.div_lt_iff_lt_mul hp_prime.pos]
-        exact_mod_cast (by push_cast; linarith : (n : ℝ) < ((p * (2 * r) : ℕ) : ℝ))
+        exact_mod_cast (by push_cast; linarith : (n : ℝ) < ((2 * r : ℕ) : ℝ) * (p : ℝ))
       have hdiv_eq : n / p = 2 * r - 1 := by omega
       have hp_le_n : p ≤ n := by
         have := Nat.div_mul_le_self n p
         rw [hdiv_eq] at this
-        nlinarith
+        have h1 : 1 ≤ 2 * r - 1 := by omega
+        calc p = 1 * p := (one_mul p).symm
+          _ ≤ (2 * r - 1) * p := Nat.mul_le_mul_right p h1
+          _ ≤ n := this
       refine ⟨⟨⟨hp2, hp_le_n⟩, hp_prime, ?_⟩, hp_gt⟩
       rw [hv, hdiv_eq]; omega
   have hdisj : (Finset.Icc 1 K : Set ℕ).PairwiseDisjoint L := by
@@ -458,6 +479,8 @@ theorem Podd_upper_partition (n K : ℕ) (hn : 4 ≤ n) (hK : 1 ≤ K) (hKsq : 2
     intro p hp1 hp2
     simp only [Finset.mem_coe, Finset.mem_Icc] at hr₁ hr₂
     simp only [L, Finset.mem_filter, Finset.mem_Icc] at hp1 hp2
+    have hr₁_1 : (1 : ℝ) ≤ (r₁ : ℝ) := by exact_mod_cast hr₁.1
+    have hr₂_1 : (1 : ℝ) ≤ (r₂ : ℝ) := by exact_mod_cast hr₂.1
     have hr₁_pos : (0 : ℝ) < (r₁ : ℝ) := by exact_mod_cast hr₁.1
     have hr₂_pos : (0 : ℝ) < (r₂ : ℝ) := by exact_mod_cast hr₂.1
     have hp1_hi := hp1.1.1.2
@@ -590,11 +613,16 @@ theorem log_q_n_asymptotic :
                 Real.exp (-((c₁ * Real.sqrt (3 / 4 : ℝ) - c₀) * t)))) := by
           ext t; field_simp [hdiff_pos.ne']
         rw [heq]
-        simpa using hcomp.const_mul (1 / (c₁ * Real.sqrt (3 / 4 : ℝ) - c₀) ^ 2)
+        have hmul := hcomp.const_mul (1 / (c₁ * Real.sqrt (3 / 4 : ℝ) - c₀) ^ 2)
+        rw [mul_zero] at hmul
+        exact hmul
       have h_one : Tendsto (fun t : ℝ => Real.exp (-(c₁ * Real.sqrt (3 / 4 : ℝ) - c₀) * t))
           atTop (nhds 0) := by
-        simpa [neg_mul] using
-          Real.tendsto_exp_neg_atTop_nhds_zero.comp (tendsto_id.const_mul_atTop hdiff_pos)
+        have heq1 : (fun t : ℝ => Real.exp (-(c₁ * Real.sqrt (3 / 4 : ℝ) - c₀) * t)) =
+            (fun t : ℝ => Real.exp (-((c₁ * Real.sqrt (3 / 4 : ℝ) - c₀) * t))) := by
+          ext t; ring_nf
+        rw [heq1]
+        exact Real.tendsto_exp_neg_atTop_nhds_zero.comp (tendsto_id.const_mul_atTop hdiff_pos)
       have heq2 : (fun t : ℝ => (t ^ 2 + 1) * Real.exp (-(c₁ * Real.sqrt (3 / 4 : ℝ) - c₀) * t)) =
           (fun t : ℝ => t ^ 2 * Real.exp (-(c₁ * Real.sqrt (3 / 4 : ℝ) - c₀) * t) +
             Real.exp (-(c₁ * Real.sqrt (3 / 4 : ℝ) - c₀) * t)) := by
@@ -723,11 +751,11 @@ theorem log_q_n_asymptotic :
       _ = Cθ * 4 * (n : ℝ) * Real.exp (-(c₁ / 2) * Real.sqrt (Real.log (n : ℝ))) := by
           rw [show -(c₁ / 2) * Real.sqrt (Real.log (n : ℝ)) = -((c₁ / 2) * Real.sqrt (Real.log (n : ℝ))) from by ring,
             Real.exp_neg]
-          field_simp; ring
+          field_simp
       _ ≤ Cθ * 4 * (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := by
           apply mul_le_mul_of_nonneg_left hc0_le (by positivity)
   have h34_eq : (n : ℝ) ^ (3 / 4 : ℝ) = (n : ℝ) / (n : ℝ) ^ (1 / 4 : ℝ) := by
-    conv_rhs => rw [div_eq_mul_inv, ← Real.rpow_neg hn_pos.le, ← Real.rpow_add hn_pos]
+    conv_rhs => rw [← Real.rpow_one (n : ℝ), div_eq_mul_inv, ← Real.rpow_neg hn_pos.le, ← Real.rpow_add hn_pos]
     congr 1; norm_num
   have hr_err : ∀ r ∈ Finset.Icc 1 K,
       |(thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - thetaPrime ((n : ℝ) / (2 * (r : ℝ)))) -
@@ -877,7 +905,7 @@ theorem log_q_n_asymptotic :
       _ = 2 * (n : ℝ) * Real.exp (-(c₁ / 2) * Real.sqrt (Real.log (n : ℝ))) := by
           rw [show -(c₁ / 2) * Real.sqrt (Real.log (n : ℝ)) = -((c₁ / 2) * Real.sqrt (Real.log (n : ℝ))) from by ring,
             Real.exp_neg]
-          field_simp; ring
+          field_simp
       _ ≤ 2 * (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := by
           apply mul_le_mul_of_nonneg_left hc0_le (by positivity)
   rw [Real.norm_eq_abs, Real.norm_of_nonneg (by positivity), hlog_eq]
@@ -967,7 +995,9 @@ private theorem piPrime_div_asymptotic (d : ℕ) (hd : 1 ≤ d) :
     intro c hc
     have h_diff0 : Tendsto (fun n : ℕ => (1 / (d : ℝ)) * (Real.log (n : ℝ) / Real.log ((n : ℝ) / (d : ℝ)) - 1))
         atTop (nhds 0) := by
-      simpa [sub_self, mul_zero] using ((h_ratio.sub tendsto_const_nhds).const_mul (1 / (d : ℝ)))
+      have hsub := (h_ratio.sub tendsto_const_nhds).const_mul (1 / (d : ℝ))
+      rw [sub_self, mul_zero] at hsub
+      exact hsub
     filter_upwards [h_diff0.eventually (Metric.ball_mem_nhds 0 hc),
       (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1),
       Filter.eventually_ge_atTop (max 2 (2 * d))] with n hn hln hn_ge
@@ -981,7 +1011,7 @@ private theorem piPrime_div_asymptotic (d : ℕ) (hd : 1 ≤ d) :
     have heq : ((n : ℝ) / (d : ℝ)) / Real.log ((n : ℝ) / (d : ℝ)) - ((1 : ℝ) / (d : ℝ)) * ((n : ℝ) / Real.log (n : ℝ)) =
         ((1 / (d : ℝ)) * (Real.log (n : ℝ) / Real.log ((n : ℝ) / (d : ℝ)) - 1)) * ((n : ℝ) / Real.log (n : ℝ)) := by
       field_simp [hd_pos.ne', hlog_nd_pos.ne', hln0]
-    rw [heq, Real.norm_mul, Real.norm_eq_abs, Real.norm_of_nonneg (by positivity)]
+    rw [heq, _root_.norm_mul, Real.norm_eq_abs, Real.norm_of_nonneg (by positivity)]
     exact mul_le_mul_of_nonneg_right hn.le (by positivity)
   simpa [sub_add_sub_cancel] using h1'.add h3
 
@@ -1049,7 +1079,7 @@ theorem card_Podd_asymptotic :
     filter_upwards [(ht.eventually (Ioi_mem_nhds (by norm_num : (1 / 2 : ℝ) < 1))),
       (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1)] with n hr hln
     dsimp only [Function.comp_def] at hln
-    rw [le_div_iff₀ (by linarith)] at hr
+    rw [lt_div_iff₀ (by linarith)] at hr
     linarith [hr.le]
   filter_upwards [Filter.eventually_ge_atTop ((2 * M + 1) ^ 2 + 4), h_pnt1, h_pnt_all, hlog_ratio_lo,
     (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1)] with
@@ -1202,6 +1232,8 @@ theorem card_Podd_asymptotic :
           Real.log 2 * (piPrime (n : ℝ) - (n : ℝ) / Real.log (n : ℝ))|
       ≤ (3 * ε / 4) * ((n : ℝ) / Real.log (n : ℝ)) := by
           linarith [h1, h2, h3, hlo_abs, hsum_err, halt_err, hpi_err]
-    _ ≤ ε * piPrime (n : ℝ) := by linarith [mul_le_mul_of_nonneg_left hpi_lo hε.le]
+    _ ≤ ε * piPrime (n : ℝ) := by
+          have hmul := mul_le_mul_of_nonneg_left hpi_lo hε.le
+          linarith
 
 end GrasGreenbergBrocard
