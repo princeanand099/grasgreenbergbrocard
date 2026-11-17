@@ -384,7 +384,7 @@ theorem Delta_parity_second_order :
           rw [Nat.le_floor_iff (by positivity), le_div_iff₀ hr_pos] at hp_hi
           have hr1R : (1 : ℝ) ≤ (r : ℝ) := by exact_mod_cast hr1
           have hpr_le : (p : ℝ) * 1 ≤ (p : ℝ) * (r : ℝ) := mul_le_mul_of_nonneg_left hr1R (by positivity)
-          exact_mod_cast le_trans (by linarith) hp_hi
+          exact_mod_cast (le_trans (by linarith : (p : ℝ) ≤ (p : ℝ) * (r : ℝ)) hp_hi : (p : ℝ) ≤ (n : ℝ))
         exact ⟨⟨⟨hp3, hpn⟩, hp_pr⟩, hp_gt_r1⟩
     have hdisj_Hr : (Finset.Icc 1 (R₁ - 1) : Set ℕ).PairwiseDisjoint Hr := by
       intro r₁ hr₁ r₂ hr₂ hne
@@ -400,11 +400,11 @@ theorem Delta_parity_second_order :
       rw [Nat.le_floor_iff (by positivity), le_div_iff₀ hr₂_pos] at hhi2
       have hlo1 := hp1.2; have hlo2 := hp2.2
       rw [div_lt_iff₀ (by positivity)] at hlo1 hlo2
-      have h12 : (p : ℝ) * (r₁ : ℝ) < ((r₂ : ℝ) + 1) * (p : ℝ) := lt_of_le_of_lt hhi1 hlo2
-      have h21 : (p : ℝ) * (r₂ : ℝ) < ((r₁ : ℝ) + 1) * (p : ℝ) := lt_of_le_of_lt hhi2 hlo1
+      have h12 : (p : ℝ) * (r₁ : ℝ) < (p : ℝ) * ((r₂ : ℝ) + 1) := by linarith
+      have h21 : (p : ℝ) * (r₂ : ℝ) < (p : ℝ) * ((r₁ : ℝ) + 1) := by linarith
       have hp_pos : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hp1.1.2.pos
-      have : r₁ < r₂ + 1 := by exact_mod_cast (by nlinarith : (r₁ : ℝ) < (r₂ : ℝ) + 1)
-      have : r₂ < r₁ + 1 := by exact_mod_cast (by nlinarith : (r₂ : ℝ) < (r₁ : ℝ) + 1)
+      have : r₁ < r₂ + 1 := by exact_mod_cast lt_of_mul_lt_mul_left h12 hp_pos.le
+      have : r₂ < r₁ + 1 := by exact_mod_cast lt_of_mul_lt_mul_left h21 hp_pos.le
       omega
     have hr_val : ∀ r ∈ Finset.Icc 1 (R₁ - 1), ∀ p ∈ Hr r,
         f_term p = (-1 : ℝ) ^ r * (r : ℝ) * Real.log (p : ℝ) := by
