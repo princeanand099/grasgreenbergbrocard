@@ -385,11 +385,12 @@ theorem collar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
       have hexp_app := hexp_n P (J m_r) A h_fn (fun t => 1 / (t - 1)) (2 / P)
         hA_nz hP_lo hP_hi hJ_pr hA_range hh_le hPhase hW_b (by positivity)
       dsimp only at hexp_app
-      have hT₀_ge : (n : ℝ) ^ (δ / 2) ≤ |(h_fn ((A.filter (fun s => h_fn s ≠ 0)).min' _ : ℕ) : ℝ)| * (n : ℝ) /
-          P ^ ((A.filter (fun s => h_fn s ≠ 0)).min' _) := by
-        set r₀ := (A.filter (fun s => h_fn s ≠ 0)).min' (by
-          obtain ⟨s, hsA, hs0⟩ := hA_nz; exact ⟨s, Finset.mem_filter.mpr ⟨hsA, hs0⟩⟩)
-        have hr₀_flt := Finset.min'_mem (A.filter (fun s => h_fn s ≠ 0)) _
+      have hA_filt_ne : (A.filter (fun s => h_fn s ≠ 0)).Nonempty := by
+        obtain ⟨s, hsA, hs0⟩ := hA_nz; exact ⟨s, Finset.mem_filter.mpr ⟨hsA, hs0⟩⟩
+      have hT₀_ge : (n : ℝ) ^ (δ / 2) ≤ |(h_fn ((A.filter (fun s => h_fn s ≠ 0)).min' hA_filt_ne : ℕ) : ℝ)| * (n : ℝ) /
+          P ^ ((A.filter (fun s => h_fn s ≠ 0)).min' hA_filt_ne) := by
+        set r₀ := (A.filter (fun s => h_fn s ≠ 0)).min' hA_filt_ne
+        have hr₀_flt := Finset.min'_mem (A.filter (fun s => h_fn s ≠ 0)) hA_filt_ne
         have hr₀_mem : r₀ ∈ A := (Finset.mem_filter.mp hr₀_flt).1
         have hr₀_ne : h_fn r₀ ≠ 0 := (Finset.mem_filter.mp hr₀_flt).2
         have hh1 : (1 : ℝ) ≤ |(h_fn r₀ : ℝ)| := by exact_mod_cast Int.one_le_abs hr₀_ne
@@ -441,6 +442,7 @@ theorem collar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
     dsimp only [a_fn]
     rw [Complex.norm_real, Real.norm_eq_abs, abs_zpow, abs_neg, abs_one, one_zpow]
   have hB_pw : ∀ s p, ‖a_fn s p - b_fn s p‖ ≤ B_fn s p := fun s p => by
+    dsimp only [a_fn, b_fn, B_fn, oddH, allH]
     have hpw := h_vaaler_pw ((n : ℝ) / (p : ℝ) ^ s)
     dsimp only at hpw
     exact hpw
