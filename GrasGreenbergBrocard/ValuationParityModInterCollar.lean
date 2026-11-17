@@ -376,13 +376,14 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         have ht_sub_pos : 0 < t - 1 := by linarith [ht.1, hP2]
         rw [abs_of_nonneg (one_div_nonneg.mpr ht_sub_pos.le), one_div, inv_le_comm₀ ht_sub_pos (div_pos (by norm_num) hP_pos), inv_div]
         linarith
-      have h_res := (hexp_n P (B_k k) A h_fn (fun t => 1 / (t - 1)) (2 / P) hA_nz
+      let w : ℝ → ℝ := fun t => 1 / (t - 1)
+      have h_res := (hexp_n P (B_k k) A h_fn w (2 / P) hA_nz
         hP_lo hP_hi hI_prime hA_range hh_le hPhase hW_bound (by positivity)).1.2
       have h_eq_sum : ∑ p ∈ B_k k, ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
             eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) =
-          ∑ p ∈ B_k k, ((fun t => 1 / (t - 1)) (p : ℝ) * Real.log (p : ℝ) : ℂ) *
+          ∑ p ∈ B_k k, (w (p : ℝ) * Real.log (p : ℝ) : ℂ) *
             eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) :=
-        Finset.sum_congr rfl (fun p _ => by push_cast; ring)
+        Finset.sum_congr rfl (fun p _ => by dsimp only [w]; rw [← Complex.ofReal_mul]; congr 1; exact congrArg Complex.ofReal (by ring))
       rw [h_eq_sum]
       exact le_trans h_res (le_of_eq (show C₂e * (2 / P) * P * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) =
         2 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) from by field_simp [hP_pos.ne']; ring))

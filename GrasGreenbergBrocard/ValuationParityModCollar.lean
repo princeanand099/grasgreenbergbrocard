@@ -465,7 +465,8 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         rw [abs_of_nonneg (one_div_nonneg.mpr ht_sub_pos.le)]
         rw [one_div, inv_le_comm₀ ht_sub_pos (div_pos (by norm_num) hP_pos), inv_div]
         linarith
-      have h_res := hexp_n P (J m_r) A h_fn (fun t => 1 / (t - 1)) (2 / P) hA_nz
+      let w : ℝ → ℝ := fun t => 1 / (t - 1)
+      have h_res := hexp_n P (J m_r) A h_fn w (2 / P) hA_nz
         hP_lo hP_hi hI_prime hA_range hh_le hPhase hW_bound (by positivity)
       let r₀ := (A.filter (fun s => h_fn s ≠ 0)).min' (by
         obtain ⟨s, hsA, hs0⟩ := hA_nz; exact ⟨s, Finset.mem_filter.mpr ⟨hsA, hs0⟩⟩)
@@ -507,9 +508,9 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       have h_res2 := h_res.2 hT₀_ge
       have h_eq_sum : ∑ p ∈ J m_r, ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
             eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) =
-          ∑ p ∈ J m_r, ((fun t => 1 / (t - 1)) (p : ℝ) * Real.log (p : ℝ) : ℂ) *
+          ∑ p ∈ J m_r, (w (p : ℝ) * Real.log (p : ℝ) : ℂ) *
             eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) :=
-        Finset.sum_congr rfl (fun p _ => by push_cast; ring)
+        Finset.sum_congr rfl (fun p _ => by dsimp only [w]; rw [← Complex.ofReal_mul]; congr 1; exact congrArg Complex.ofReal (by ring))
       rw [h_eq_sum]
       have h_bd2 : C₃e * (2 / P) * P * (n : ℝ) ^ (-η) ≤ 4 * C₃e * (n : ℝ) ^ (-η) := by
         rw [show C₃e * (2 / P) * P * (n : ℝ) ^ (-η) = 2 * C₃e * (n : ℝ) ^ (-η) from by field_simp [hP_pos.ne']]
