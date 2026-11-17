@@ -67,8 +67,7 @@ theorem dyadic_partition_finset {A B : ℝ} (hA : 1 ≤ A) (hAB : A ≤ B) (I : 
         exact this
       have h_le : Real.log ((p : ℝ) / A) / Real.log 2 ≤ (k : ℝ) + 1 := by
         have := Nat.le_ceil (Real.log ((p : ℝ) / A) / Real.log 2)
-        rw [← hk1] at this
-        push_cast at this
+        rw [show (m : ℝ) = (k : ℝ) + 1 from by exact_mod_cast hk1.symm] at this
         exact this
       have hpow_lt : A * (2 : ℝ) ^ k < (p : ℝ) := by
         have h1 : (k : ℝ) * Real.log 2 < Real.log ((p : ℝ) / A) := (lt_div_iff₀ hlog2).mp h_lt
@@ -77,7 +76,7 @@ theorem dyadic_partition_finset {A B : ℝ} (hA : 1 ≤ A) (hAB : A ≤ B) (I : 
             ← Real.exp_log (by positivity : 0 < (p : ℝ) / A)]
           apply Real.exp_lt_exp.mpr
           rwa [Real.log_pow]
-        exact (lt_div_iff₀ (by linarith)).mp h2
+        rw [mul_comm]; exact (lt_div_iff₀ (by linarith)).mp h2
       have hpow_le : (p : ℝ) ≤ 2 * (A * (2 : ℝ) ^ k) := by
         have h1 : Real.log ((p : ℝ) / A) ≤ ((k : ℝ) + 1) * Real.log 2 := (div_le_iff₀ hlog2).mp h_le
         have h2 : (p : ℝ) / A ≤ (2 : ℝ) ^ (k + 1) := by
@@ -149,7 +148,7 @@ theorem mertens_band_le :
       apply hnot
       exact ⟨⟨hp_icc.1, (Nat.le_floor_iff (by linarith)).mpr hle⟩, hp_prime⟩
   rw [h_eq]
-  have hs := Finset.sum_sdiff hsub (f := fun p => Real.log (p : ℝ) / ((p : ℝ) - 1))
+  have hs := Finset.sum_sdiff_eq_sub (f := fun p => Real.log (p : ℝ) / ((p : ℝ) - 1)) hsub
   have hMB := (abs_le.mp (hM B hB)).2
   have hMA := (abs_le.mp (hM A hA)).1
   rw [Real.log_div (by linarith) (by linarith)]
@@ -177,7 +176,7 @@ theorem prod_sub_prod_le_powerset (S : Finset ℕ) (a b : ℕ → ℂ) (B : ℕ 
     ‖(∏ s ∈ S, a s) - (∏ s ∈ S, b s)‖ ≤
       ∑ T ∈ S.powerset.filter (·.Nonempty), ∏ s ∈ T, B s := by
   induction S using Finset.induction_on with
-  | empty => simp
+  | empty => simp [Finset.not_nonempty_empty]
   | @insert x S hx ih =>
     have ha_S : ∀ s ∈ S, ‖a s‖ = 1 := fun s hs => ha s (Finset.mem_insert_of_mem hs)
     have hB_S : ∀ s ∈ S, ‖a s - b s‖ ≤ B s := fun s hs => hB s (Finset.mem_insert_of_mem hs)
@@ -188,12 +187,23 @@ theorem prod_sub_prod_le_powerset (S : Finset ℕ) (a b : ℕ → ℂ) (B : ℕ 
       rw [norm_prod]
       exact Finset.prod_eq_one (fun s hs => ha_S s hs)
     have hprod_b : ‖∏ s ∈ S, b s‖ ≤ ∏ s ∈ S, (1 + B s) := by
-      rw [norm_prod]
-      refine Finset.prod_le_prod (fun s _ => norm_nonneg _) (fun s hs => ?_)
-      have h1 : ‖b s‖ = ‖a s - (a s - b s)‖ := by ring_nf
-      rw [h1]
-      calc ‖a s - (a s - b s)‖ ≤ ‖a s‖ + ‖a s - b s‖ := norm_sub_le _ _
-        _ ≤ 1 + B s := by linarith [ha_S s hs, hB_S s hs]
+      have hprod_gen : ∀ T : Finset ℕ, (∀ s ∈ T, ‖a s‖ = 1) → (∀ s ∈ T, ‖a s - b s‖ ≤ B s) →
+          ‖∏ s ∈ T, b s‖ ≤ ∏ s ∈ T, (1 + B s) := by
+        intro T
+        induction T using Finset.induction_on with
+        | empty => intro _ _; simp
+        | @insert y U hy ihU =>
+          intro haU hBU
+          have hy1 : ‖b y‖ ≤ 1 + B y := by
+            have h1 : ‖b y‖ = ‖a y - (a y - b y)‖ := by ring_nf
+            rw [h1]
+            calc ‖a y - (a y - b y)‖ ≤ ‖a y‖ + ‖a y - b y‖ := norm_sub_le _ _
+              _ ≤ 1 + B y := by linarith [haU y (Finset.mem_insert_self _ _), hBU y (Finset.mem_insert_self _ _)]
+          rw [Finset.prod_insert hy, Finset.prod_insert hy, norm_mul]
+          exact mul_le_mul hy1
+            (ihU (fun s hs => haU s (Finset.mem_insert_of_mem hs)) (fun s hs => hBU s (Finset.mem_insert_of_mem hs)))
+            (norm_nonneg _) (le_trans (norm_nonneg _) hy1)
+      exact hprod_gen S ha_S hB_S
     have hpow_exp : ∏ s ∈ S, (1 + B s) = 1 + ∑ T ∈ S.powerset.filter (·.Nonempty), ∏ s ∈ T, B s := by
       rw [Finset.prod_one_add]
       have hsplit : S.powerset = insert ∅ (S.powerset.filter (·.Nonempty)) := by
@@ -209,7 +219,7 @@ theorem prod_sub_prod_le_powerset (S : Finset ℕ) (a b : ℕ → ℂ) (B : ℕ 
           · exact hT
       have hnot : (∅ : Finset ℕ) ∉ S.powerset.filter (·.Nonempty) := by
         simp [Finset.not_nonempty_empty]
-      rw [hsplit, Finset.sum_insert hnot, Finset.prod_empty]
+      rw [hsplit, Finset.sum_insert hnot, Finset.prod_empty]; rfl
     have h_split_id : (∏ s ∈ insert x S, a s) - (∏ s ∈ insert x S, b s) =
         a x * ((∏ s ∈ S, a s) - (∏ s ∈ S, b s)) + (a x - b x) * (∏ s ∈ S, b s) := by
       rw [Finset.prod_insert hx, Finset.prod_insert hx]
@@ -224,7 +234,7 @@ theorem prod_sub_prod_le_powerset (S : Finset ℕ) (a b : ℕ → ℂ) (B : ℕ 
         _ ≤ 1 * (∑ T ∈ S.powerset.filter (·.Nonempty), ∏ s ∈ T, B s) +
             B x * (1 + ∑ T ∈ S.powerset.filter (·.Nonempty), ∏ s ∈ T, B s) := by
             apply add_le_add
-            · rw [hax, one_mul]; exact ih'
+            · rw [hax]; exact ih'
             · apply mul_le_mul hBx (by linarith [hprod_b, hpow_exp]) (norm_nonneg _)
                 (le_trans (norm_nonneg _) hBx)
         _ = (∑ T ∈ S.powerset.filter (·.Nonempty), ∏ s ∈ T, B s) +
@@ -253,7 +263,7 @@ theorem prod_sub_prod_le_powerset (S : Finset ℕ) (a b : ℕ → ℂ) (B : ℕ 
             refine ⟨T.erase x, ⟨fun y hy => ?_, Finset.nonempty_iff_ne_empty.mpr hne'⟩, ?_⟩
             · have := hT (Finset.mem_of_mem_erase hy)
               rcases Finset.mem_insert.mp this with rfl | hyS
-              · exact absurd hy (Finset.not_mem_erase _ _)
+              · exact absurd hy (Finset.notMem_erase _ _)
               · exact hyS
             · exact Finset.insert_erase hxT
         · left
@@ -269,7 +279,7 @@ theorem prod_sub_prod_le_powerset (S : Finset ℕ) (a b : ℕ → ℂ) (B : ℕ 
         (insert {x} ((S.powerset.filter (·.Nonempty)).image (insert x))) := by
       rw [Finset.disjoint_left]
       intro T hT1 hT2
-      have hTS : T ⊆ S := (Finset.mem_filter.mp hT1).1
+      have hTS : T ⊆ S := Finset.mem_powerset.mp (Finset.mem_filter.mp hT1).1
       rcases Finset.mem_insert.mp hT2 with rfl | hT2'
       · exact hx (hTS (Finset.mem_singleton_self _))
       · obtain ⟨U, _, rfl⟩ := Finset.mem_image.mp hT2'
@@ -282,12 +292,12 @@ theorem prod_sub_prod_le_powerset (S : Finset ℕ) (a b : ℕ → ℂ) (B : ℕ 
       rw [heq] at hyU
       have hyx : y = x := Finset.mem_singleton.mp hyU
       subst hyx
-      exact hx ((Finset.mem_filter.mp hU).1 hy)
+      exact hx (Finset.mem_powerset.mp (Finset.mem_filter.mp hU).1 hy)
     have hinj : ∀ U₁ ∈ S.powerset.filter (·.Nonempty), ∀ U₂ ∈ S.powerset.filter (·.Nonempty),
         insert x U₁ = insert x U₂ → U₁ = U₂ := by
       intro U₁ hU₁ U₂ hU₂ heq
-      have hx1 : x ∉ U₁ := fun h => hx ((Finset.mem_filter.mp hU₁).1 h)
-      have hx2 : x ∉ U₂ := fun h => hx ((Finset.mem_filter.mp hU₂).1 h)
+      have hx1 : x ∉ U₁ := fun h => hx (Finset.mem_powerset.mp (Finset.mem_filter.mp hU₁).1 h)
+      have hx2 : x ∉ U₂ := fun h => hx (Finset.mem_powerset.mp (Finset.mem_filter.mp hU₂).1 h)
       ext y
       by_cases hy : y = x
       · subst hy; simp [hx1, hx2]
@@ -299,7 +309,7 @@ theorem prod_sub_prod_le_powerset (S : Finset ℕ) (a b : ℕ → ℂ) (B : ℕ 
         B x * ∑ U ∈ S.powerset.filter (·.Nonempty), ∏ s ∈ U, B s := by
       rw [Finset.mul_sum]
       refine Finset.sum_congr rfl (fun U hU => ?_)
-      have hxU : x ∉ U := fun h => hx ((Finset.mem_filter.mp hU).1 h)
+      have hxU : x ∉ U := fun h => hx (Finset.mem_powerset.mp (Finset.mem_filter.mp hU).1 h)
       rw [Finset.prod_insert hxU]
     rw [himg]
     linarith
@@ -311,7 +321,8 @@ theorem alt_harmonic_shifted_even (K : ℕ) (hK : 1 ≤ K) :
       ∑ k ∈ Finset.Icc 1 K, (1 / (2 * (k : ℝ) - 1) - 1 / (2 * (k : ℝ))) - 1 + 1 / (2 * (K : ℝ) + 1) := by
   induction K, hK using Nat.le_induction with
   | base =>
-    norm_num [Finset.sum_Icc_succ_top]
+    rw [show 2 * 1 = 2 from rfl, Finset.sum_Icc_succ_top (by norm_num : 1 ≤ 2), Finset.Icc_self, Finset.sum_singleton, Finset.sum_singleton]
+    norm_num
   | succ m hm ih =>
     have h2m1 : 1 ≤ 2 * m + 1 := by omega
     have h2m2 : 1 ≤ 2 * m + 2 := by omega
@@ -328,12 +339,12 @@ theorem alt_harmonic_shifted_even (K : ℕ) (hK : 1 ≤ K) :
     have hm1 : 2 * (m : ℝ) + 1 ≠ 0 := by positivity
     have hm2 : 2 * (m : ℝ) + 2 ≠ 0 := by positivity
     have hm3 : 2 * (m : ℝ) + 3 ≠ 0 := by positivity
-    field_simp [hm1, hm2, hm3]
+    field_simp
     ring
 
 theorem alt_harmonic_shifted_bound {N : ℕ} (hN : 3 ≤ N) :
     |∑ r ∈ Finset.Icc 1 (N - 1), (-1 : ℝ) ^ r / ((r : ℝ) + 1) - (Real.log 2 - 1)| ≤
-      2 / (N : ℝ) := by
+      3 / (N : ℝ) := by
   rcases Nat.even_or_odd (N - 1) with ⟨K, hK⟩ | ⟨K, hK⟩
   · have hK_eq : N - 1 = 2 * K := by omega
     have hK1 : 1 ≤ K := by omega
@@ -350,7 +361,7 @@ theorem alt_harmonic_shifted_bound {N : ℕ} (hN : 3 ≤ N) :
     rw [abs_of_pos (by positivity : (0 : ℝ) < 1 / (2 * (K : ℝ) + 1))] at htri
     have hN_eq : (N : ℝ) = 2 * (K : ℝ) + 1 := by exact_mod_cast (by omega : N = 2 * K + 1)
     have hK_pos : (0 : ℝ) < (K : ℝ) := by exact_mod_cast hK1
-    have h_le : 1 / (2 * (K : ℝ)) + 1 / (2 * (K : ℝ) + 1) ≤ 2 / (N : ℝ) := by
+    have h_le : 1 / (2 * (K : ℝ)) + 1 / (2 * (K : ℝ) + 1) ≤ 3 / (N : ℝ) := by
       rw [hN_eq, div_add_div _ _ (by positivity) (by positivity), div_le_div_iff₀ (by positivity) (by positivity)]
       nlinarith
     linarith
@@ -377,11 +388,11 @@ theorem alt_harmonic_shifted_bound {N : ℕ} (hN : 3 ≤ N) :
     rw [abs_of_nonneg h_pos_diff] at htri
     have hN_eq : (N : ℝ) = 2 * (K : ℝ) + 2 := by exact_mod_cast (by omega : N = 2 * K + 2)
     have hK_pos : (0 : ℝ) < (K : ℝ) := by exact_mod_cast hK1
-    have h_le : 1 / (2 * (K : ℝ)) + (1 / (2 * (K : ℝ) + 1) - 1 / (2 * (K : ℝ) + 2)) ≤ 2 / (N : ℝ) := by
+    have h_le : 1 / (2 * (K : ℝ)) + (1 / (2 * (K : ℝ) + 1) - 1 / (2 * (K : ℝ) + 2)) ≤ 3 / (N : ℝ) := by
       rw [hN_eq]
       have hsub : 1 / (2 * (K : ℝ) + 1) - 1 / (2 * (K : ℝ) + 2) =
           1 / ((2 * (K : ℝ) + 1) * (2 * (K : ℝ) + 2)) := by
-        field_simp [by positivity : 2 * (K : ℝ) + 1 ≠ 0, by positivity : 2 * (K : ℝ) + 2 ≠ 0]; ring
+        field_simp [(by positivity : (2 * (K : ℝ) + 1) ≠ 0), (by positivity : (2 * (K : ℝ) + 2) ≠ 0)]; ring
       rw [hsub, div_add_div _ _ (by positivity) (by positivity), div_le_div_iff₀ (by positivity) (by positivity)]
       nlinarith
     linarith
@@ -390,7 +401,7 @@ theorem padicValNat_factorial_eq_sum_Icc {p n R : ℕ} (hp : p.Prime)
     (hn : n < p ^ (R + 1)) :
     padicValNat p (Nat.factorial n) = ∑ s ∈ Finset.Icc 1 R, n / p ^ s := by
   haveI : Fact p.Prime := ⟨hp⟩
-  rw [padicValNat_factorial (k := R + 1) hn]
+  rw [padicValNat_factorial (b := R + 1) hn]
   congr 1
   ext s
   simp only [Finset.mem_Ico, Finset.mem_Icc]
@@ -417,7 +428,7 @@ theorem star_eExp (t : ℝ) : star (eExp t) = eExp (-t) := by
   unfold eExp
   rw [Complex.star_def, ← Complex.exp_conj]
   congr 1
-  simp [Complex.conj_ofReal, Complex.conj_I]
+  simp
   ring
 
 theorem eExp_add (x y : ℝ) : eExp x * eExp y = eExp (x + y) := by
@@ -427,7 +438,7 @@ theorem eExp_add (x y : ℝ) : eExp x * eExp y = eExp (x + y) := by
   push_cast
   ring
 
-theorem eExp_sum {ι : Type*} (s : Finset ι) (f : ι → ℝ) :
+theorem eExp_sum {ι : Type*} [DecidableEq ι] (s : Finset ι) (f : ι → ℝ) :
     ∏ i ∈ s, eExp (f i) = eExp (∑ i ∈ s, f i) := by
   induction s using Finset.induction_on with
   | empty => simp [eExp]
@@ -441,7 +452,7 @@ theorem vaaler_B_real_rep (b_tilde : ℤ → ℂ) (K : ℤ) (hK : 0 ≤ K) (t : 
       ∑ h ∈ allK, b_real h * eExp ((h : ℝ) * t) := by
   intro allK b_real
   have hre : ∀ z : ℂ, (z.re : ℂ) = (1 / 2 : ℂ) * (z + star z) := by
-    intro z; apply Complex.ext <;> simp
+    intro z; apply Complex.ext <;> simp <;> ring
   rw [hre, star_sum]
   have h_bij : ∑ h ∈ allK, star (b_tilde h * eExp ((h : ℝ) * t)) =
       ∑ h ∈ allK, star (b_tilde (-h)) * eExp ((h : ℝ) * t) := by
@@ -451,8 +462,8 @@ theorem vaaler_B_real_rep (b_tilde : ℤ → ℂ) (K : ℤ) (hK : 0 ≤ K) (t : 
     · intro h hh; refine ⟨-h, ?_, by omega⟩
       simp only [allK, Finset.mem_Icc] at hh ⊢; omega
     · intro h _
-      rw [star_mul, star_eExp]
-      congr 2; simp; ring
+      rw [star_mul, star_eExp, show -(-h) = h from neg_neg h]
+      congr 1; congr 1; push_cast; ring
   rw [h_bij, ← Finset.sum_add_distrib, Finset.mul_sum]
   refine Finset.sum_congr rfl (fun h _ => ?_)
   dsimp only [b_real]

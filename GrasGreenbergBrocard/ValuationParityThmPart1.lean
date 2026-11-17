@@ -521,18 +521,25 @@ theorem Delta_parity_second_order :
           (Real.log 2 - 1) * (n : ℝ)| ≤ 2 * ((n : ℝ) / Real.log (n : ℝ)) := by
       rw [← Finset.sum_mul, ← sub_mul, abs_mul, abs_of_pos hn_pos]
       have h_b := alt_harmonic_shifted_bound (by omega : 3 ≤ R₁)
-      have h2_le : 2 / (R₁ : ℝ) ≤ 2 / Real.log (n : ℝ) := by
-        apply div_le_div_of_nonneg_left (by norm_num) hlogn_pos
-        have hln_48 : Real.log (n : ℝ) ≤ (Real.log (n : ℝ)) ^ 48 / 2 := by
-          have : 2 ≤ (Real.log (n : ℝ)) ^ 47 := by
-            have := one_le_pow₀ (by linarith : (1 : ℝ) ≤ Real.log (n : ℝ)) (n := 46)
-            have : (Real.log (n : ℝ)) ^ 47 = Real.log (n : ℝ) * (Real.log (n : ℝ)) ^ 46 := by ring
+      have h3_le : 3 / (R₁ : ℝ) ≤ 2 / Real.log (n : ℝ) := by
+        rw [div_le_div_iff₀ (by exact_mod_cast (by omega : 0 < R₁)) hlogn_pos]
+        by_cases hlog2 : Real.log (n : ℝ) ≤ 2
+        · have hR1_ge3 : (3 : ℝ) ≤ (R₁ : ℝ) := by exact_mod_cast (by omega : 3 ≤ R₁)
+          linarith
+        · push_neg at hlog2
+          have hpow47 : (4 : ℝ) ≤ (Real.log (n : ℝ)) ^ 47 := by
+            have : (2 : ℝ) ^ 47 ≤ (Real.log (n : ℝ)) ^ 47 :=
+              pow_le_pow_left₀ (by norm_num) hlog2.le 47
+            linarith [show (4 : ℝ) ≤ (2 : ℝ) ^ 47 by norm_num]
+          have hpow48 : 4 * Real.log (n : ℝ) ≤ (Real.log (n : ℝ)) ^ 48 := by
+            rw [show (Real.log (n : ℝ)) ^ 48 = Real.log (n : ℝ) * (Real.log (n : ℝ)) ^ 47 from by ring]
             nlinarith
-          nlinarith [show (Real.log (n : ℝ)) ^ 48 = Real.log (n : ℝ) * (Real.log (n : ℝ)) ^ 47 from by ring]
-        linarith
+          have hR1_lb : (Real.log (n : ℝ)) ^ 48 - 1 < (R₁ : ℝ) :=
+            Nat.sub_one_lt_floor ((Real.log (n : ℝ)) ^ 48)
+          linarith
       calc |∑ r ∈ Finset.Icc 1 (R₁ - 1), (-1 : ℝ) ^ r / ((r : ℝ) + 1) - (Real.log 2 - 1)| * (n : ℝ)
-          ≤ (2 / (R₁ : ℝ)) * (n : ℝ) := mul_le_mul_of_nonneg_right h_b hn_pos.le
-        _ ≤ (2 / Real.log (n : ℝ)) * (n : ℝ) := mul_le_mul_of_nonneg_right h2_le hn_pos.le
+          ≤ (3 / (R₁ : ℝ)) * (n : ℝ) := mul_le_mul_of_nonneg_right h_b hn_pos.le
+        _ ≤ (2 / Real.log (n : ℝ)) * (n : ℝ) := mul_le_mul_of_nonneg_right h3_le hn_pos.le
         _ = 2 * ((n : ℝ) / Real.log (n : ℝ)) := by ring
     have htri := abs_add_le
       (∑ r ∈ Finset.Icc 1 (R₁ - 1), (-1 : ℝ) ^ r * (r : ℝ) *
