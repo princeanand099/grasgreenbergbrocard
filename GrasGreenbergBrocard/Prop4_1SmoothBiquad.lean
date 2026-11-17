@@ -300,7 +300,7 @@ theorem k_eq_2_identities {n m X₁ Y₁ : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
 /-- **Proposition 4.1(i) (`(n/2)`-Smoothness of `m + 1` and eq. 4.4)**:
 In the `k = 2` regime with `n ≥ 8`, `n! + 1 = m^2`:
 1. Every odd prime `p` divides at most one of `X₁ - 1`, `X₁`, `X₁ + 1`.
-2. Every `p ∈ Podd n` divides `(X₁ - 1)(X₁ + 1) = q_n Y₁^2` to its full factorial power `p^{v_p(n!)}`,
+2. Every odd `p ∈ Podd n` divides `(X₁ - 1)(X₁ + 1) = q_n Y₁^2` to its full factorial power `p^{v_p(n!)}`,
    and `¬ p ∣ X₁`.
 3. Every odd prime `p ∣ X₁` belongs to `Peven n`, satisfies `2 * v_p(X₁) = v_p(n!)`, and `p ≤ n / 2`.
 4. `m + 1 = 2 X₁^2` is `(n / 2)`-smooth (`∀ p, p.Prime → p ∣ m + 1 → p ≤ n / 2`).
@@ -311,7 +311,7 @@ theorem prop_4_1_part1 {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     (hk2 : (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ 2) :
     (∀ p : ℕ, p.Prime → 3 ≤ p →
       ¬ (p ∣ X₁ - 1 ∧ p ∣ X₁) ∧ ¬ (p ∣ X₁ ∧ p ∣ X₁ + 1) ∧ ¬ (p ∣ X₁ - 1 ∧ p ∣ X₁ + 1)) ∧
-    (∀ p ∈ Podd n, p ^ padicValNat p (Nat.factorial n) ∣ q_n n * Y₁ ^ 2 ∧ ¬ p ∣ X₁) ∧
+    (∀ p ∈ Podd n, 3 ≤ p → p ^ padicValNat p (Nat.factorial n) ∣ q_n n * Y₁ ^ 2 ∧ ¬ p ∣ X₁) ∧
     (∀ p : ℕ, p.Prime → 3 ≤ p → p ∣ X₁ →
       p ∈ Peven n ∧ 2 * padicValNat p X₁ = padicValNat p (Nat.factorial n) ∧ p ≤ n / 2) ∧
     (∀ p : ℕ, p.Prime → p ∣ m + 1 → p ≤ n / 2) ∧
@@ -389,24 +389,271 @@ theorem prop_4_1_part1 {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
         rw [padicValNat_factorial_eq_div_of_lt_sq hp hnsq, h1p]
       omega
     exact ⟨hpeven, hval_eq.symm, hp_half⟩
-  have hPodd : ∀ p ∈ Podd n, p ^ padicValNat p (Nat.factorial n) ∣ q_n n * Y₁ ^ 2 ∧ ¬ p ∣ X₁ := by
-    intro p hp_mem
+  have hPodd : ∀ p ∈ Podd n, 3 ≤ p → p ^ padicValNat p (Nat.factorial n) ∣ q_n n * Y₁ ^ 2 ∧ ¬ p ∣ X₁ := by
+    intro p hp_mem hp3
     have hp_pr : p.Prime := (Finset.mem_filter.mp hp_mem).2.1
     have hp_odd_val : ¬ 2 ∣ padicValNat p (Nat.factorial n) := (Finset.mem_filter.mp hp_mem).2.2
-    have hp3 : 3 ≤ p := by
-      by_contra hlt
-      have hp2 : p = 2 := by have := hp_pr.two_le; omega
-      subst hp2
-      have h2_not : ¬ (2 ∈ Podd n) := by
-        --Wait: 2 CAN be in Podd n! Wait: Prop 4.1(i) says "every odd prime p ∈ Podd(n)"!
-        -- Wait: in `Podd n`, `Podd` includes 2 if `v_2(n!)` is odd!
-        -- Wait: does `2^{v_2(n!)} ∣ q_n * Y₁^2`? No, if `X₁` is even, `2 ∣ X₁`!
-        -- Let's check `Podd` in `Basic.lean`: `Podd n := (Icc 2 n).filter (fun p => p.Prime ∧ ¬ 2 ∣ v_p(n!))`!
-        -- So for `p = 2` when `v_2(n!)` is odd, `X₁` MUST be odd (since `v_2(4 X₁^2 (X₁^2 - 1))` is odd -> `2 ∣ X₁^2 - 1` -> `X₁` is odd, and `4 ∣ n!` has `2^2`, wait: `4 * (X₁ - 1)(X₁ + 1) = n!_2 * ...`, so `2^{v_2(n!) - 2} ∣ q_n Y₁^2`, NOT `2^{v_2(n!)}`!).
-        -- Good catch!! In the manuscript, Prop 4.1(i) says "every odd prime p ∈ Podd(n)"!
-        sorry
-      sorry
-    sorry
-  sorry
+    have hndX : ¬ p ∣ X₁ := by
+      intro hpX
+      obtain ⟨hpeven, _, _⟩ := hX_even p hp_pr hp3 hpX
+      exact hp_odd_val (Finset.mem_filter.mp hpeven).2.2
+    haveI : Fact p.Prime := ⟨hp_pr⟩
+    have hdvd_fac : p ^ padicValNat p (Nat.factorial n) ∣ Nat.factorial n := pow_padicValNat_dvd
+    have hfac_qY : Nat.factorial n = 4 * X₁ ^ 2 * (q_n n * Y₁ ^ 2) := by
+      have hdiff : (X₁ - 1) * (X₁ + 1) = q_n n * Y₁ ^ 2 := by
+        have := hfund.2.2.1
+        zify [hX1_pos]
+        have hz : (X₁ : ℤ) ^ 2 = (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 + 1 := by exact_mod_cast this
+        linarith
+      rw [hfac_eq]
+      calc 4 * (X₁ - 1) * X₁ ^ 2 * (X₁ + 1)
+          = 4 * X₁ ^ 2 * ((X₁ - 1) * (X₁ + 1)) := by ring
+        _ = 4 * X₁ ^ 2 * (q_n n * Y₁ ^ 2) := by rw [hdiff]
+    rw [hfac_qY] at hdvd_fac
+    have hcop4 : Nat.Coprime (p ^ padicValNat p (Nat.factorial n)) 4 := by
+      apply Nat.Coprime.pow_left
+      exact hp_pr.coprime_iff_not_dvd.mpr (fun h => by
+        have := Nat.le_of_dvd (by norm_num) h; omega)
+    have hcopX : Nat.Coprime (p ^ padicValNat p (Nat.factorial n)) (X₁ ^ 2) := by
+      apply Nat.Coprime.pow_left
+      apply Nat.Coprime.pow_right
+      exact hp_pr.coprime_iff_not_dvd.mpr hndX
+    have hcop : Nat.Coprime (p ^ padicValNat p (Nat.factorial n)) (4 * X₁ ^ 2) :=
+      hcop4.mul_right hcopX
+    exact ⟨hcop.dvd_of_dvd_mul_left hdvd_fac, hndX⟩
+  have hm_smooth : ∀ p : ℕ, p.Prime → p ∣ m + 1 → p ≤ n / 2 := by
+    intro p hp hpd
+    rw [hm_add1] at hpd
+    rcases hp.dvd_mul.mp hpd with hp2 | hpX2
+    · have : p = 2 := by have := hp.two_le; have := Nat.le_of_dvd (by norm_num) hp2; omega
+      omega
+    · have hpX : p ∣ X₁ := hp.dvd_of_dvd_pow hpX2
+      have hp3 : 3 ≤ p ∨ p = 2 := by have := hp.two_le; omega
+      rcases hp3 with hp3 | rfl
+      · exact (hX_even p hp hp3 hpX).2.2
+      · omega
+  have hm_sub1_pos : 0 < m - 1 := by
+    have hfac_pos : 0 < Nat.factorial n := Nat.factorial_pos n
+    nlinarith [hm]
+  have h_rad_sub : ∑ p ∈ Podd n, Real.log (p : ℝ) ≤ Real.log (rad (m - 1) : ℝ) := by
+    have hsub : Podd n ⊆ (m - 1).primeFactors := by
+      intro p hp_mem
+      have hp_pr : p.Prime := (Finset.mem_filter.mp hp_mem).2.1
+      refine Nat.mem_primeFactors.mpr ⟨hp_pr, ?_, hm_sub1_pos.ne'⟩
+      by_cases hp2 : p = 2
+      · subst hp2
+        rw [hm_sub1]
+        exact dvd_mul_right 2 _
+      · have hp3 : 3 ≤ p := by have := hp_pr.two_le; omega
+        obtain ⟨hdvd, _⟩ := hPodd p hp_mem hp3
+        have h1 : p ∣ q_n n * Y₁ ^ 2 := by
+          have hv_pos : 1 ≤ padicValNat p (Nat.factorial n) := by
+            have := (Finset.mem_filter.mp hp_mem).2.2
+            by_contra h0
+            have hz : padicValNat p (Nat.factorial n) = 0 := by omega
+            rw [hz] at this; exact this (dvd_zero 2)
+          exact dvd_trans (dvd_pow_self p (by omega)) hdvd
+        rw [hm_sub1]
+        exact dvd_mul_of_dvd_right h1 2
+    have hlog_rad : Real.log (rad (m - 1) : ℝ) = ∑ p ∈ (m - 1).primeFactors, Real.log (p : ℝ) := by
+      unfold rad
+      push_cast
+      rw [Real.log_prod (fun p hp => Nat.cast_ne_zero.mpr (Nat.prime_of_mem_primeFactors hp).ne_zero)]
+    rw [hlog_rad]
+    apply Finset.sum_le_sum_of_subset_of_nonneg hsub
+    intro p hp _
+    exact Real.log_nonneg (by exact_mod_cast (Nat.prime_of_mem_primeFactors hp).one_lt.le)
+  have h_rad_add : Real.log (rad (m + 1) : ℝ) ≤
+      Real.log 2 + ∑ p ∈ (Finset.Icc 3 (n / 2)).filter Nat.Prime, Real.log (p : ℝ) := by
+    have hsub : (m + 1).primeFactors ⊆ insert 2 ((Finset.Icc 3 (n / 2)).filter Nat.Prime) := by
+      intro p hp_mem
+      have hp_pr := Nat.prime_of_mem_primeFactors hp_mem
+      have hpd := Nat.dvd_of_mem_primeFactors hp_mem
+      have hle := hm_smooth p hp_pr hpd
+      by_cases hp2 : p = 2
+      · subst hp2; exact Finset.mem_insert_self 2 _
+      · exact Finset.mem_insert_of_mem (Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨by have := hp_pr.two_le; omega, hle⟩, hp_pr⟩)
+    have hlog_rad : Real.log (rad (m + 1) : ℝ) = ∑ p ∈ (m + 1).primeFactors, Real.log (p : ℝ) := by
+      unfold rad
+      push_cast
+      rw [Real.log_prod (fun p hp => Nat.cast_ne_zero.mpr (Nat.prime_of_mem_primeFactors hp).ne_zero)]
+    have h2_not : (2 : ℕ) ∉ (Finset.Icc 3 (n / 2)).filter Nat.Prime := by simp
+    rw [hlog_rad, ← Finset.sum_insert h2_not]
+    apply Finset.sum_le_sum_of_subset_of_nonneg hsub
+    intro p hp _
+    rcases Finset.mem_insert.mp hp with rfl | hp'
+    · exact Real.log_nonneg (by norm_num)
+    · exact Real.log_nonneg (by exact_mod_cast (Finset.mem_filter.mp hp').2.one_lt.le)
+  exact ⟨hdisj, hPodd, hX_even, hm_smooth, h_rad_sub, h_rad_add⟩
+
+/-- **Proposition 4.1(ii) (Biquadratic Splitting and Fermat-Quotient Lock, eqs. 4.5–4.6)**:
+Writing `X₁ - 1 = δ₁ u^2` and `X₁ + 1 = δ₂ v^2` with `δ₁, δ₂` square-free, every odd prime
+`p ∣ X₁` satisfies:
+1. `legendreSym p (-(δ₁ : ℤ)) = 1`, `legendreSym p (δ₂ : ℤ) = 1`, `legendreSym p (-(q_n n : ℤ)) = 1`.
+2. `(q_n n : ZMod (p ^ v_p(n!))) * (Y₁ : ZMod (p ^ v_p(n!)))^2 = -1`.
+3. `p ∣ (((-(q_n n : ℤ))^(p-1) - 1) / p + 2 * ((Y₁ : ℤ)^(p-1) - 1) / p)` (Fermat-quotient lock). -/
+theorem prop_4_1_part2 {n m X₁ Y₁ δ₁ δ₂ u v p : ℕ} (hn : 8 ≤ n)
+    (hm : Nat.factorial n + 1 = m ^ 2)
+    (hfund : IsFundamentalPell (q_n n) X₁ Y₁)
+    (hk2 : (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ 2)
+    (hX_sub : X₁ - 1 = δ₁ * u ^ 2) (hX_add : X₁ + 1 = δ₂ * v ^ 2)
+    (hp : p.Prime) (hp3 : 3 ≤ p) (hpX : p ∣ X₁) :
+    letI : Fact p.Prime := ⟨hp⟩
+    legendreSym p (-(δ₁ : ℤ)) = 1 ∧
+    legendreSym p (δ₂ : ℤ) = 1 ∧
+    legendreSym p (-(q_n n : ℤ)) = 1 ∧
+    ((q_n n : ZMod (p ^ padicValNat p (Nat.factorial n))) *
+      (Y₁ : ZMod (p ^ padicValNat p (Nat.factorial n))) ^ 2 = -1) ∧
+    (p : ℤ) ∣ ((((-(q_n n : ℤ)) ^ (p - 1) - 1) / (p : ℤ)) +
+      2 * (((Y₁ : ℤ) ^ (p - 1) - 1) / (p : ℤ))) := by
+  haveI : Fact p.Prime := ⟨hp⟩
+  have hn6 : n ≠ 6 := by omega
+  obtain ⟨_, _, _, _, _, _, hfac_eq⟩ := k_eq_2_identities (by omega) hn6 hm hfund hk2
+  have hpart1 := prop_4_1_part1 hn hm hfund hk2
+  have hval_X := (hpart1.2.2.1 p hp hp3 hpX).2.1
+  have hX1_pos : 1 ≤ X₁ := hfund.1
+  have hX_zmod0 : (X₁ : ZMod p) = 0 := (ZMod.natCast_zmod_eq_zero_iff_dvd X₁ p).mpr hpX
+  have h_leg1 : legendreSym p (-(δ₁ : ℤ)) = 1 := by
+    have hmod : (-(δ₁ : ℤ) : ZMod p) * (u : ZMod p) ^ 2 = 1 := by
+      have h1 : ((X₁ : ℤ) - 1 : ZMod p) = (δ₁ : ZMod p) * (u : ZMod p) ^ 2 := by
+        have hnat : (X₁ : ℤ) - 1 = (δ₁ : ℤ) * (u : ℤ) ^ 2 := by
+          zify [hX1_pos] at hX_sub; exact hX_sub
+        exact_mod_cast congrArg (Int.cast : ℤ → ZMod p) hnat
+      rw [show ((X₁ : ℤ) : ZMod p) = (X₁ : ZMod p) by norm_cast, hX_zmod0] at h1
+      calc (-(δ₁ : ℤ) : ZMod p) * (u : ZMod p) ^ 2
+          = -((δ₁ : ZMod p) * (u : ZMod p) ^ 2) := by push_cast; ring
+        _ = -(0 - 1 : ZMod p) := by rw [← h1]
+        _ = 1 := by ring
+    have hu_ne : (u : ZMod p) ≠ 0 := by
+      intro h0; rw [h0, zero_pow (by norm_num), mul_zero] at hmod; exact zero_ne_one hmod
+    have hd_ne : ((-(δ₁ : ℤ) : ℤ) : ZMod p) ≠ 0 := by
+      intro h0; rw [h0, zero_mul] at hmod; exact zero_ne_one hmod
+    have hsq : IsSquare ((-(δ₁ : ℤ) : ℤ) : ZMod p) := by
+      refine ⟨(u : ZMod p)⁻¹, ?_⟩
+      calc (-(δ₁ : ℤ) : ZMod p) = (-(δ₁ : ℤ) : ZMod p) * ((u : ZMod p) * (u : ZMod p)⁻¹) ^ 2 := by
+            rw [mul_inv_cancel₀ hu_ne, one_pow, mul_one]
+        _ = ((-(δ₁ : ℤ) : ZMod p) * (u : ZMod p) ^ 2) * ((u : ZMod p)⁻¹) ^ 2 := by ring
+        _ = (u : ZMod p)⁻¹ * (u : ZMod p)⁻¹ := by rw [hmod, one_mul, sq]
+    exact (legendreSym.eq_one_iff p hd_ne).mpr hsq
+  have h_leg2 : legendreSym p (δ₂ : ℤ) = 1 := by
+    have hmod : ((δ₂ : ℤ) : ZMod p) * (v : ZMod p) ^ 2 = 1 := by
+      have h1 : ((X₁ : ℤ) + 1 : ZMod p) = (δ₂ : ZMod p) * (v : ZMod p) ^ 2 := by
+        have hnat : (X₁ : ℤ) + 1 = (δ₂ : ℤ) * (v : ℤ) ^ 2 := by exact_mod_cast hX_add
+        exact_mod_cast congrArg (Int.cast : ℤ → ZMod p) hnat
+      rw [show ((X₁ : ℤ) : ZMod p) = (X₁ : ZMod p) by norm_cast, hX_zmod0] at h1
+      simpa using h1.symm
+    have hv_ne : (v : ZMod p) ≠ 0 := by
+      intro h0; rw [h0, zero_pow (by norm_num), mul_zero] at hmod; exact zero_ne_one hmod
+    have hd_ne : ((δ₂ : ℤ) : ZMod p) ≠ 0 := by
+      intro h0; rw [h0, zero_mul] at hmod; exact zero_ne_one hmod
+    have hsq : IsSquare ((δ₂ : ℤ) : ZMod p) := by
+      refine ⟨(v : ZMod p)⁻¹, ?_⟩
+      calc ((δ₂ : ℤ) : ZMod p) = ((δ₂ : ℤ) : ZMod p) * ((v : ZMod p) * (v : ZMod p)⁻¹) ^ 2 := by
+            rw [mul_inv_cancel₀ hv_ne, one_pow, mul_one]
+        _ = (((δ₂ : ℤ) : ZMod p) * (v : ZMod p) ^ 2) * ((v : ZMod p)⁻¹) ^ 2 := by ring
+        _ = (v : ZMod p)⁻¹ * (v : ZMod p)⁻¹ := by rw [hmod, one_mul, sq]
+    exact (legendreSym.eq_one_iff p hd_ne).mpr hsq
+  have h_qY_mod : (-(q_n n : ℤ) : ZMod p) * (Y₁ : ZMod p) ^ 2 = 1 := by
+    have hpell : (X₁ : ℤ) ^ 2 - (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 = 1 := by
+      have h1 : (X₁ : ℤ) ^ 2 = (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 + 1 := by exact_mod_cast hfund.2.2.1
+      linarith
+    have h1 := congrArg (Int.cast : ℤ → ZMod p) hpell
+    push_cast at h1
+    rw [hX_zmod0] at h1
+    calc (-(q_n n : ℤ) : ZMod p) * (Y₁ : ZMod p) ^ 2
+        = 0 ^ 2 - (q_n n : ZMod p) * (Y₁ : ZMod p) ^ 2 := by ring
+      _ = 1 := h1
+  have h_leg3 : legendreSym p (-(q_n n : ℤ)) = 1 := by
+    have hY_ne : (Y₁ : ZMod p) ≠ 0 := by
+      intro h0; rw [h0, zero_pow (by norm_num), mul_zero] at h_qY_mod; exact zero_ne_one h_qY_mod
+    have hq_ne : (-(q_n n : ℤ) : ZMod p) ≠ 0 := by
+      intro h0; rw [h0, zero_mul] at h_qY_mod; exact zero_ne_one h_qY_mod
+    have hsq : IsSquare (-(q_n n : ℤ) : ZMod p) := by
+      refine ⟨(Y₁ : ZMod p)⁻¹, ?_⟩
+      calc (-(q_n n : ℤ) : ZMod p) = (-(q_n n : ℤ) : ZMod p) * ((Y₁ : ZMod p) * (Y₁ : ZMod p)⁻¹) ^ 2 := by
+            rw [mul_inv_cancel₀ hY_ne, one_pow, mul_one]
+        _ = ((-(q_n n : ℤ) : ZMod p) * (Y₁ : ZMod p) ^ 2) * ((Y₁ : ZMod p)⁻¹) ^ 2 := by ring
+        _ = (Y₁ : ZMod p)⁻¹ * (Y₁ : ZMod p)⁻¹ := by rw [h_qY_mod, one_mul, sq]
+    exact (legendreSym.eq_one_iff p hq_ne).mpr hsq
+  have h_zmod_pow : (q_n n : ZMod (p ^ padicValNat p (Nat.factorial n))) *
+      (Y₁ : ZMod (p ^ padicValNat p (Nat.factorial n))) ^ 2 = -1 := by
+    have hdvd : p ^ padicValNat p (Nat.factorial n) ∣ X₁ ^ 2 := by
+      rw [← hval_X, pow_mul]
+      exact pow_dvd_pow_of_dvd pow_padicValNat_dvd 2
+    have hX2_0 : (X₁ ^ 2 : ZMod (p ^ padicValNat p (Nat.factorial n))) = 0 :=
+      (ZMod.natCast_zmod_eq_zero_iff_dvd (X₁ ^ 2) (p ^ padicValNat p (Nat.factorial n))).mpr hdvd
+    have hpell := hfund.2.2.1
+    have h1 := congrArg (Nat.cast : ℕ → ZMod (p ^ padicValNat p (Nat.factorial n))) hpell
+    push_cast at h1
+    rw [hX2_0] at h1
+    calc (q_n n : ZMod (p ^ padicValNat p (Nat.factorial n))) *
+          (Y₁ : ZMod (p ^ padicValNat p (Nat.factorial n))) ^ 2
+        = (q_n n * Y₁ ^ 2 + 1) - 1 := by ring
+      _ = 0 - 1 := by rw [← h1]
+      _ = -1 := by ring
+  have h_fermat : (p : ℤ) ∣ ((((-(q_n n : ℤ)) ^ (p - 1) - 1) / (p : ℤ)) +
+      2 * (((Y₁ : ℤ) ^ (p - 1) - 1) / (p : ℤ))) := by
+    have hY_ndvd : ¬ p ∣ Y₁ := by
+      intro hY
+      have h0 : (Y₁ : ZMod p) = 0 := (ZMod.natCast_zmod_eq_zero_iff_dvd Y₁ p).mpr hY
+      rw [h0, zero_pow (by norm_num), mul_zero] at h_qY_mod
+      exact zero_ne_one h_qY_mod
+    have hq_ndvd : ¬ (p : ℤ) ∣ -(q_n n : ℤ) := by
+      intro hq
+      have h0 : (-(q_n n : ℤ) : ZMod p) = 0 := (ZMod.intCast_zmod_eq_zero_iff_dvd _ p).mpr hq
+      rw [h0, zero_mul] at h_qY_mod
+      exact zero_ne_one h_qY_mod
+    have hflt_q : (p : ℤ) ∣ (-(q_n n : ℤ)) ^ (p - 1) - 1 := by
+      rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
+      push_cast
+      have hne : (-(q_n n : ℤ) : ZMod p) ≠ 0 := by
+        intro h0; exact hq_ndvd ((ZMod.intCast_zmod_eq_zero_iff_dvd _ p).mp h0)
+      rw [ZMod.pow_card_sub_one_eq_one hne, sub_self]
+    have hflt_Y : (p : ℤ) ∣ (Y₁ : ℤ) ^ (p - 1) - 1 := by
+      rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
+      push_cast
+      have hne : (Y₁ : ZMod p) ≠ 0 := by
+        intro h0; exact hY_ndvd ((ZMod.natCast_zmod_eq_zero_iff_dvd _ p).mp h0)
+      rw [ZMod.pow_card_sub_one_eq_one hne, sub_self]
+    obtain ⟨qq, hqq⟩ := hflt_q
+    obtain ⟨qY, hqY⟩ := hflt_Y
+    have hp_ne0 : (p : ℤ) ≠ 0 := by exact_mod_cast hp.ne_zero
+    have hdiv_q : ((-(q_n n : ℤ)) ^ (p - 1) - 1) / (p : ℤ) = qq := by
+      rw [hqq, mul_comm, Int.mul_ediv_cancel _ hp_ne0]
+    have hdiv_Y : ((Y₁ : ℤ) ^ (p - 1) - 1) / (p : ℤ) = qY := by
+      rw [hqY, mul_comm, Int.mul_ediv_cancel _ hp_ne0]
+    rw [hdiv_q, hdiv_Y]
+    have hp2_dvd_X2 : (p : ℤ) ^ 2 ∣ (X₁ : ℤ) ^ 2 := by
+      have hpX_z : (p : ℤ) ∣ (X₁ : ℤ) := by exact_mod_cast hpX
+      exact pow_dvd_pow_of_dvd hpX_z 2
+    have hneg_qY2_mod : (p : ℤ) ^ 2 ∣ (-(q_n n : ℤ)) * (Y₁ : ℤ) ^ 2 - 1 := by
+      have hpell_z : (X₁ : ℤ) ^ 2 = (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 + 1 := by exact_mod_cast hfund.2.2.1
+      have heq : (-(q_n n : ℤ)) * (Y₁ : ℤ) ^ 2 - 1 = -((X₁ : ℤ) ^ 2) := by linarith
+      rw [heq]
+      exact dvd_neg.mpr hp2_dvd_X2
+    have hpow_mod : (p : ℤ) ^ 2 ∣ ((-(q_n n : ℤ)) * (Y₁ : ℤ) ^ 2) ^ (p - 1) - 1 := by
+      have h1 : ((-(q_n n : ℤ)) * (Y₁ : ℤ) ^ 2) ≡ 1 [ZMOD (p : ℤ) ^ 2] :=
+        (Int.modEq_iff_dvd.mpr hneg_qY2_mod).symm
+      have h2 := h1.pow (p - 1)
+      rw [one_pow] at h2
+      exact (Int.modEq_iff_dvd.mp h2).symm
+    have hq_pow : (-(q_n n : ℤ)) ^ (p - 1) = 1 + (p : ℤ) * qq := by linarith
+    have hY_pow : (Y₁ : ℤ) ^ (p - 1) = 1 + (p : ℤ) * qY := by linarith
+    have hexpand : ((-(q_n n : ℤ)) * (Y₁ : ℤ) ^ 2) ^ (p - 1) - 1 =
+        (p : ℤ) * (qq + 2 * qY) +
+          (p : ℤ) ^ 2 * (qY ^ 2 + 2 * qq * qY + (p : ℤ) * qq * qY ^ 2) := by
+      calc ((-(q_n n : ℤ)) * (Y₁ : ℤ) ^ 2) ^ (p - 1) - 1
+          = (-(q_n n : ℤ)) ^ (p - 1) * ((Y₁ : ℤ) ^ (p - 1)) ^ 2 - 1 := by ring
+        _ = (1 + (p : ℤ) * qq) * (1 + (p : ℤ) * qY) ^ 2 - 1 := by rw [hq_pow, hY_pow]
+        _ = (p : ℤ) * (qq + 2 * qY) +
+              (p : ℤ) ^ 2 * (qY ^ 2 + 2 * qq * qY + (p : ℤ) * qq * qY ^ 2) := by ring
+    rw [hexpand] at hpow_mod
+    have hp2_dvd_lin : (p : ℤ) ^ 2 ∣ (p : ℤ) * (qq + 2 * qY) :=
+      (dvd_add_left (dvd_mul_right _ _)).mp hpow_mod
+    obtain ⟨c, hc⟩ := hp2_dvd_lin
+    refine ⟨c, ?_⟩
+    have hc' : (p : ℤ) * (qq + 2 * qY) = (p : ℤ) * ((p : ℤ) * c) := by linarith
+    exact mul_left_cancel₀ hp_ne0 hc'
+  exact ⟨h_leg1, h_leg2, h_leg3, h_zmod_pow, h_fermat⟩
 
 end GrasGreenbergBrocard
