@@ -11,11 +11,10 @@ set_option pp.proofs false
 # Lemma 2.3: Vaaler's Trigonometric Polynomial Approximation
 
 Formalizes Section 2.3 (eq. 2.8–2.9):
-- `Psi_tilde`, `B_tilde`
-- Exact cancellation of even harmonics `h = 2m` (`1 ≤ |m| ≤ H`)
-- Coefficient bounds `|c_tilde_h| ≤ 2 / (π |h|)` and `‖b_tilde_h‖ < 3 / (H + 1)`
-- `parity_approx_by_Psi_tilde`: `|(-1)^⌊x⌋ - Ψ̃_H(x)| ≤ Re(B̃_H(x))` for all `x ∈ ℝ`
-- `Psi_tilde_L1_bound`: `∑_{1 ≤ |h| ≤ 2H+1, 2 ∤ h} |c_tilde_h(H)| ≤ (4 / π) * (log (2H + 1) + 1)`
+- `sawtoothPsi`, `neg_one_pow_floor_eq_sawtooth`
+- `harmonic_sum_le_log_add_one`
+- `vaaler_parity_approx` (Lemma 2.3): exact odd-frequency support, coefficient bounds,
+  pointwise parity majorization, and `L¹` norm bound.
 -/
 
 noncomputable section
@@ -79,9 +78,9 @@ private theorem norm_two_pi_I_mul_int (h : ℤ) :
   rw [norm_mul, norm_mul, norm_mul, Complex.norm_I, mul_one]
   have h2 : ‖(2 : ℂ)‖ = 2 := by norm_num
   have hpi : ‖(Real.pi : ℂ)‖ = Real.pi := by
-    rw [Complex.norm_real, abs_of_pos Real.pi_pos]
+    rw [Complex.norm_real, Real.norm_eq_abs, abs_of_pos Real.pi_pos]
   have hhC : ‖(h : ℂ)‖ = |(h : ℝ)| := by
-    rw [← Complex.ofReal_intCast, Complex.norm_real]
+    rw [← Complex.ofReal_intCast, Complex.norm_real, Real.norm_eq_abs]
   rw [h2, hpi, hhC]
 
 /-- **Lemma 2.3 (Vaaler's Trigonometric Polynomial Approximation)**:
@@ -140,12 +139,16 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
           ≤ 4 * (1 / (2 * Real.pi * |(h : ℝ)|)) :=
             mul_le_mul_of_nonneg_left hc2_norm (by norm_num)
         _ = 2 / (Real.pi * |(h : ℝ)|) := by ring
-  · simp only [b_tilde, Int.even_zero, ↓reduceIte, Int.zero_ediv, hb1_0, hb2_0]
-    push_cast
+  · simp only [b_tilde, even_zero, ↓reduceIte, Int.zero_ediv, hb1_0, hb2_0]
     have hH0 : (H : ℂ) + 1 ≠ 0 := by
       have : (0 : ℝ) < (H : ℝ) + 1 := by positivity
       exact_mod_cast this.ne'
-    field_simp [hH0]
+    push_cast
+    have h2H : (2 : ℂ) * (H : ℂ) + 2 ≠ 0 := by
+      intro heq; apply hH0; linear_combination heq / 2
+    have h4H : (2 : ℂ) * (2 * (H : ℂ) + 1) + 2 ≠ 0 := by
+      intro heq; apply hH0; linear_combination heq / 4
+    field_simp [hH0, h2H, h4H]
     ring
   · intro h
     have hH_pos : (0 : ℝ) < (H : ℝ) + 1 := by positivity
@@ -193,7 +196,9 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
             ((Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Odd h)) ∪
             ((Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Even h)) := by
           ext h
-          by_cases hodd : Odd h <;> simp [hodd, Int.not_odd_iff_even] <;> tauto
+          rcases Int.even_or_odd h with hev | hodd
+          · simp [hev, Int.not_odd_iff_even.mpr hev]
+          · simp [hodd, Int.not_even_iff_odd.mpr hodd]
         have hdisj2 : Disjoint
             ((Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Odd h))
             ((Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Even h)) := by
@@ -239,8 +244,11 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
             simp only [c2, c1, hne, hk_ne, ↓reduceIte]
             have h_arg : |(h : ℝ)| / ((2 * H + 1 : ℕ) + 1 : ℝ) = |(k : ℝ)| / ((H : ℝ) + 1) := by
               have hkR : (h : ℝ) = 2 * (k : ℝ) := by exact_mod_cast (by omega : h = 2 * k)
-              rw [hkR, abs_mul, abs_of_pos (by norm_num)]
+              rw [hkR, abs_mul, abs_of_pos (by norm_num : (0 : ℝ) < 2)]
+              have hH0 : (H : ℝ) + 1 ≠ 0 := by positivity
               push_cast
+              have h2H : (2 : ℝ) * (H : ℝ) + 1 + 1 ≠ 0 := by linarith
+              field_simp [hH0, h2H]
               ring
             rw [h_arg]
             have hexp : eExp ((h : ℝ) * (x / 2)) = eExp ((k : ℝ) * x) := by
@@ -314,7 +322,7 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
               have hkR : (h : ℝ) = 2 * (k : ℝ) := by exact_mod_cast (by omega : h = 2 * k)
               rw [hkR]
               ring
-            rw [hexp]
+            rw [hexp, mul_assoc]
         have h_odd_part :
             ∑ h ∈ Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1),
               4 * b2 h * eExp ((h : ℝ) * x / 2) =
@@ -351,7 +359,7 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
         have hB2_nonneg := (h2.1 ((m : ℝ) / 2)).1
         rw [hPsi1_zero, mul_zero, zero_sub, hfl, hB1_0]
         have hnorm1 : ‖((-1 : ℝ) ^ m : ℂ)‖ = 1 := by
-          rw [← Complex.ofReal_zpow, Complex.norm_real, abs_zpow, abs_neg, abs_one, one_zpow]
+          rw [← Complex.ofReal_zpow, Complex.norm_real, Real.norm_eq_abs, abs_zpow, abs_neg, abs_one, one_zpow]
         rcases Int.even_or_odd m with ⟨k, hk⟩ | ⟨k, hk⟩
         · have hk_eq : (m : ℝ) / 2 = (k : ℝ) := by
             have : (m : ℝ) = 2 * (k : ℝ) := by exact_mod_cast (by omega : m = 2 * k)
@@ -432,6 +440,7 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
           posSet ∪ negSet := by
         intro h hh
         simp only [Finset.mem_filter, Finset.mem_Icc] at hh
+        rw [Finset.mem_union]
         rcases lt_trichotomy h 0 with hneg | rfl | hpos
         · right
           simp only [negSet, Finset.mem_map, Finset.mem_Icc, Function.Embedding.coeFn_mk]
@@ -462,11 +471,12 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
               congr 1
               · rw [Finset.sum_map]
                 refine Finset.sum_congr rfl (fun k _ => ?_)
-                simp only [Function.Embedding.coeFn_mk, Int.cast_natCast, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
+                dsimp only [Function.Embedding.coeFn_mk]
+                rw [Int.cast_natCast, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
               · rw [Finset.sum_map]
                 refine Finset.sum_congr rfl (fun k _ => ?_)
-                simp only [Function.Embedding.coeFn_mk, Int.cast_neg, Int.cast_natCast, abs_neg,
-                  abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
+                dsimp only [Function.Embedding.coeFn_mk]
+                rw [Int.cast_neg, Int.cast_natCast, abs_neg, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
           _ = 2 * ∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ))) := by ring
       calc ∑ h ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Odd h),
             ‖c_tilde h‖

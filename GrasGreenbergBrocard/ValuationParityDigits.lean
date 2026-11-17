@@ -36,14 +36,16 @@ def E_digit (n : ℕ) : ℝ :=
 theorem legendre_base_p_identity {p n : ℕ} (hp : p.Prime) :
     (p - 1) * padicValNat p (Nat.factorial n) = n - basePDigitSum p n := by
   haveI : Fact p.Prime := ⟨hp⟩
-  exact sub_one_mul_padicValNat_factorial n p
+  exact sub_one_mul_padicValNat_factorial n
 
 /-- `s_p(n) ≤ n`. -/
 theorem basePDigitSum_le (p n : ℕ) : basePDigitSum p n ≤ n := by
   unfold basePDigitSum
   rcases lt_or_ge p 2 with hp | hp
   · rcases eq_or_ne p 0 with rfl | hp0
-    · rcases eq_or_ne n 0 with rfl | hn0 <;> simp [hn0]
+    · rcases eq_or_ne n 0 with rfl | hn0
+      · simp
+      · simp [hn0]
     · have hp1 : p = 1 := by omega
       subst hp1
       simp [Nat.digits_one]
@@ -55,8 +57,8 @@ theorem basePDigitSum_le (p n : ℕ) : basePDigitSum p n ≤ n := by
         have hlt : m / p < m := Nat.div_lt_self (Nat.pos_of_ne_zero hm0) (by omega)
         have hih := ih (m / p) hlt
         have hdm := Nat.div_add_mod m p
-        have hp1 : 1 ≤ p := by omega
-        nlinarith
+        have h1 : 1 * (m / p) ≤ p * (m / p) := Nat.mul_le_mul_right _ (by omega)
+        omega
 
 /-- Eq. (2.6): `∑_{3 ≤ p ≤ √n} (-1)^{v_p(n!)} v_p(n!) log p = -n Σ*_parity(n) + E_digit(n)`. -/
 theorem exact_legendre_base_p_reduction (n : ℕ) :
@@ -91,7 +93,8 @@ theorem exact_legendre_base_p_reduction (n : ℕ) :
     exact one_le_padicValNat_of_dvd (Nat.factorial_ne_zero n) hdvd
   have hpow : (-1 : ℝ) ^ (padicValNat p (Nat.factorial n)) =
       -((-1 : ℝ) ^ (padicValNat p (Nat.factorial n) - 1)) := by
-    have hne : padicValNat p (Nat.factorial n) = (padicValNat p (Nat.factorial n) - 1) + 1 := by omega
+    have hne : padicValNat p (Nat.factorial n) = (padicValNat p (Nat.factorial n) - 1) + 1 := by
+      omega
     conv_lhs => rw [hne, pow_succ]
     ring
   have hv_eq : (padicValNat p (Nat.factorial n) : ℝ) =
@@ -138,14 +141,13 @@ theorem digits_length_le_log {p n : ℕ} (hp : 2 ≤ p) (hn : 1 ≤ n) :
   have hlogp : 0 < Real.log (p : ℝ) := Real.log_pos hpR
   induction n using Nat.strongRecOn with
   | ind m ih =>
-    intro hm
     rcases lt_or_ge m p with hlt | hge
     · have hdig : Nat.digits p m = [m] := by
         rw [Nat.digits_of_two_le_of_pos hp (by omega),
           Nat.div_eq_of_lt hlt, Nat.mod_eq_of_lt hlt]
         simp
       rw [hdig, List.length_singleton, Nat.cast_one]
-      have hlogm : 0 ≤ Real.log (m : ℝ) := Real.log_nonneg (by exact_mod_cast hm)
+      have hlogm : 0 ≤ Real.log (m : ℝ) := Real.log_nonneg (by exact_mod_cast hn)
       have hdiv : 0 ≤ Real.log (m : ℝ) / Real.log (p : ℝ) := div_nonneg hlogm hlogp.le
       linarith
     · rw [Nat.digits_of_two_le_of_pos hp (by omega), List.length_cons, Nat.cast_add, Nat.cast_one]
@@ -167,7 +169,6 @@ theorem digits_length_le_log {p n : ℕ} (hp : 2 ≤ p) (hn : 1 ≤ n) :
           _ = Real.log (m : ℝ) / Real.log (p : ℝ) - 1 := by
               field_simp [hlogp.ne']
       linarith
-  exact hn
 
 /-- Eq. (2.7) explicit bound: `|E_digit(n)| ≤ 2 * π(√n) * log n` for `n ≥ 4`. -/
 theorem E_digit_le_two_pi_sqrt_mul_log {n : ℕ} (hn : 4 ≤ n) :
@@ -192,14 +193,14 @@ theorem E_digit_le_two_pi_sqrt_mul_log {n : ℕ} (hn : 4 ≤ n) :
       |((-1 : ℝ) ^ (padicValNat p (Nat.factorial n) - 1)) *
         (((basePDigitSum p n : ℝ) * Real.log (p : ℝ)) / ((p : ℝ) - 1))| ≤ 2 * Real.log (n : ℝ) := by
     intro p hp
+    have hp_prime : p.Prime := (Finset.mem_filter.mp hp).2
     have hp_icc := Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1
     have hp3 : 3 ≤ p := hp_icc.1
     have hp2 : 2 ≤ p := by omega
     have hpsq : p ≤ Nat.sqrt n := hp_icc.2
     have hp_le_sqrt : (p : ℝ) ≤ Real.sqrt (n : ℝ) := by
       rw [Real.le_sqrt (by positivity) (by positivity)]
-      rw [sq]
-      exact_mod_cast le_trans (Nat.mul_le_mul hpsq hpsq) (Nat.sqrt_le' n)
+      exact_mod_cast le_trans (Nat.pow_le_pow_left hpsq 2) (Nat.sqrt_le' n)
     have hlogp_pos : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ p))
     have hlogp_gt : 0 < Real.log (p : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < p))
     have hlogp_le : Real.log (p : ℝ) ≤ (1 / 2 : ℝ) * Real.log (n : ℝ) := by
@@ -250,6 +251,7 @@ theorem E_digit_isBigO_sqrt :
   have hlog_sqrt : Real.log (Real.sqrt (n : ℝ)) = (1 / 2 : ℝ) * Real.log (n : ℝ) := by
     rw [Real.log_sqrt (by positivity)]; ring
   have hlogn_pos : 0 < Real.log (n : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n))
+  have hlog_sqrt_pos : 0 < Real.log (Real.sqrt (n : ℝ)) := by rw [hlog_sqrt]; positivity
   have hle := E_digit_le_two_pi_sqrt_mul_log hn
   rw [Real.norm_eq_abs, Real.norm_of_nonneg (Real.sqrt_nonneg _)]
   calc |E_digit n|

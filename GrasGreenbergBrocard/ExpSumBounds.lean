@@ -117,7 +117,7 @@ theorem log_pow_div_rpow_tendsto_zero (k : ℕ) {δ : ℝ} (hδ : 0 < δ) :
         _ = x ^ (-(δ / ((k : ℝ) + 1))) := by
             congr 1; field_simp; ring
   have h0 : Tendsto (fun x : ℝ => (Real.log x) ^ k / x ^ δ) atTop (nhds 0) :=
-    tendsto_of_tendsto_of_tendsto_of_eventually_le' tendsto_const_nhds htend
+    tendsto_of_tendsto_of_tendsto_of_eventually_le tendsto_const_nhds htend
       (hev.mono (fun _ h => h.1)) (hev.mono (fun _ h => h.2))
   exact h0.comp tendsto_natCast_atTop_atTop
 
@@ -162,7 +162,7 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
   let c₁_low : ℝ := (1 / 4 : ℝ) * (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ))
   let c₂_high : ℝ := (3 / 2 : ℝ) * Mmax
   let C₂ : ℝ := C * ((2 : ℝ) ^ ((R : ℝ) / 6) + 1)
-  refine ⟨η', η, hη', hη, C, hC, C₂, mul_pos hC (by positivity), C, hC, ?_⟩
+  refine ⟨η', η, hη', hη, C, C₂, C, hC, mul_pos hC (by positivity), hC, ?_⟩
   have htend1 : Tendsto (fun n : ℕ => (Real.log (n : ℝ)) ^ (R + 2) / (n : ℝ) ^ δ) atTop (nhds 0) :=
     log_pow_div_rpow_tendsto_zero (R + 2) hδ0
   have htend2 : Tendsto (fun n : ℕ => (Real.log (n : ℝ)) ^ (R + 5) / (n : ℝ) ^ (δ * η')) atTop (nhds 0) :=

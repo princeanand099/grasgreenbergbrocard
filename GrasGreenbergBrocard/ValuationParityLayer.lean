@@ -29,7 +29,7 @@ theorem padicValNat_factorial_eq_div_of_lt_sq {p n : ℕ} (hp : p.Prime) (hn : n
   have hp1 : 1 ≤ p - 1 := by omega
   have hleg : (p - 1) * padicValNat p (Nat.factorial n) = n - (Nat.digits p n).sum := by
     haveI : Fact p.Prime := ⟨hp⟩
-    exact sub_one_mul_padicValNat_factorial n p
+    exact sub_one_mul_padicValNat_factorial n
   have hsum_eq : n - (Nat.digits p n).sum = (p - 1) * (n / p) := by
     rcases lt_or_ge n p with hlt | hge
     · have hdiv0 : n / p = 0 := Nat.div_eq_of_lt hlt
@@ -71,13 +71,15 @@ theorem padicValNat_factorial_on_harmonicInterval {n j p : ℕ}
   have hj_sq : j + 1 ≤ Nat.sqrt n := by omega
   have hj_sq_le : (j + 1) ^ 2 ≤ n := by
     calc (j + 1) ^ 2 ≤ (Nat.sqrt n) ^ 2 := Nat.pow_le_pow_left hj_sq 2
-      _ ≤ n := by rw [sq]; exact Nat.sqrt_le' n
+      _ ≤ n := Nat.sqrt_le' n
   have hp_pos : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hp.pos
   have hj_pos : (0 : ℝ) < (j : ℝ) := by exact_mod_cast (by omega : 0 < j)
   have hj1_pos : (0 : ℝ) < (j : ℝ) + 1 := by positivity
   have hlt_mul : n < (j + 1) * p := by
     rw [div_lt_iff₀ hj1_pos] at hlo
-    exact_mod_cast (by linarith : (n : ℝ) < ((j + 1 : ℕ) : ℝ) * (p : ℝ))
+    have hcast : (n : ℝ) < ((j + 1 : ℕ) : ℝ) * (p : ℝ) := by
+      push_cast; linarith
+    exact_mod_cast hcast
   have hle_mul : j * p ≤ n := by
     rw [le_div_iff₀ hj_pos] at hhi
     exact_mod_cast (by linarith : ((j : ℝ) * (p : ℝ)) ≤ (n : ℝ))
@@ -92,7 +94,7 @@ theorem padicValNat_factorial_on_harmonicInterval {n j p : ℕ}
   have hdiv_lt : n / p < j + 1 := (Nat.div_lt_iff_lt_mul hp.pos).mpr (by linarith)
   omega
 
-/-- **Lemma 2.1(i), part 2 (odd layers)**: On `I_{2r-1}` (`1 ≤ 2r - 1 ≤ ⌊√n⌋ - 1`),
+/-- **Lemma 2.1(i), part 2**: On odd layers `I_{2r-1}` (`1 ≤ 2r - 1 ≤ ⌊√n⌋ - 1`),
 `p ∈ Podd(n)` with `v_p(q_n) = 1` and `v_p(s_n) = r - 1`. -/
 theorem harmonicLayer_odd_layer {n r p : ℕ} (hr1 : 1 ≤ r) (hr2 : 2 * r - 1 ≤ Nat.sqrt n - 1)
     (hp : p.Prime) (hpI : (p : ℝ) ∈ harmonicInterval n (2 * r - 1)) :
@@ -138,8 +140,6 @@ theorem harmonicLayer_odd_layer {n r p : ℕ} (hr1 : 1 ≤ r) (hr2 : 2 * r - 1 �
     omega
   exact ⟨hp_mem, hq_val, hs_val⟩
 
-/-- **Lemma 2.1(i), part 3 (even layers)**: On `I_{2r}` (`2 ≤ 2r ≤ ⌊√n⌋ - 1`),
-`p ∈ Peven(n)` with `v_p(q_n) = 0` and `v_p(s_n) = r`. -/
 theorem harmonicLayer_even_layer {n r p : ℕ} (hr1 : 1 ≤ r) (hr2 : 2 * r ≤ Nat.sqrt n - 1)
     (hp : p.Prime) (hpI : (p : ℝ) ∈ harmonicInterval n (2 * r)) :
     p ∈ Peven n ∧ padicValNat p (q_n n) = 0 ∧ padicValNat p (s_n n) = r := by
@@ -216,10 +216,14 @@ theorem alt_harmonic_eq_tail_harmonic (N : ℕ) :
       rw [show 2 * (m + 1) = 2 * m + 2 from by omega]
       linarith
     rw [h_lhs_rhs]
-    push_cast
-    have hm1 : (m : ℝ) + 1 ≠ 0 := by positivity
-    have hm2 : 2 * (m : ℝ) + 1 ≠ 0 := by positivity
-    have hm3 : 2 * (m : ℝ) + 2 ≠ 0 := by positivity
+    have hm1 : ((m + 1 : ℕ) : ℝ) ≠ 0 := by positivity
+    have hm2 : (2 * ((m + 1 : ℕ) : ℝ) - 1) ≠ 0 := by
+      have : (1 : ℝ) ≤ ((m + 1 : ℕ) : ℝ) := by exact_mod_cast (by omega : 1 ≤ m + 1)
+      linarith
+    have hm3 : (2 * ((m + 1 : ℕ) : ℝ)) ≠ 0 := by positivity
+    have h21 : ((2 * m + 1 : ℕ) : ℝ) = 2 * ((m + 1 : ℕ) : ℝ) - 1 := by push_cast; ring
+    have h22 : ((2 * m + 2 : ℕ) : ℝ) = 2 * ((m + 1 : ℕ) : ℝ) := by push_cast; ring
+    rw [h21, h22]
     field_simp [hm1, hm2, hm3]
     ring
 
@@ -229,9 +233,16 @@ theorem alt_harmonic_sum_diff_log_two {N : ℕ} (hN : 1 ≤ N) :
       1 / (2 * (N : ℝ)) := by
   rw [alt_harmonic_eq_tail_harmonic]
   have htel : ∑ k ∈ Finset.Icc N (2 * N - 1), (Real.log ((k : ℝ) + 1) - Real.log (k : ℝ)) = Real.log 2 := by
-    have hcon : ∑ k ∈ Finset.Ico N (2 * N), (Real.log ((k + 1 : ℕ) : ℝ) - Real.log (k : ℝ)) =
-        Real.log ((2 * N : ℕ) : ℝ) - Real.log (N : ℝ) :=
-      Finset.sum_Ico_sub' (fun k => Real.log (k : ℝ)) (by omega : N ≤ 2 * N)
+    have htel_gen : ∀ (a b : ℕ), a ≤ b →
+        ∑ k ∈ Finset.Ico a b, (Real.log ((k + 1 : ℕ) : ℝ) - Real.log (k : ℝ)) =
+          Real.log (b : ℝ) - Real.log (a : ℝ) := by
+      intro a b hab
+      induction b, hab using Nat.le_induction with
+      | base => simp
+      | succ k hk ihk =>
+        rw [Finset.sum_Ico_succ_top hk, ihk]
+        ring
+    have hcon := htel_gen N (2 * N) (by omega)
     have hicc : Finset.Icc N (2 * N - 1) = Finset.Ico N (2 * N) := by
       ext k; simp only [Finset.mem_Icc, Finset.mem_Ico]; omega
     rw [hicc]
