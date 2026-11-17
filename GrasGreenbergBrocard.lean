@@ -18,3 +18,6 @@ import GrasGreenbergBrocard.ValuationParityMod
 import GrasGreenbergBrocard.ExternalAxiomsSec3
 import GrasGreenbergBrocard.ChebyshevLucas
 import GrasGreenbergBrocard.PellFundamental
+import GrasGreenbergBrocard.Thm1_1Collapse
+import GrasGreenbergBrocard.Thm1_2Iwasawa
+import GrasGreenbergBrocard.Picard2Torsion
