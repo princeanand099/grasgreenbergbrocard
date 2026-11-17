@@ -16,6 +16,12 @@ external axioms:
 
 namespace GrasGreenbergBrocard
 
+@[simp] private lemma zsqrtd_mul_re' (D : ℤ) (x y : Zsqrtd D) :
+    (x * y).re = x.re * y.re + D * x.im * y.im := by ring_nf; rfl
+
+@[simp] private lemma zsqrtd_mul_im' (D : ℤ) (x y : Zsqrtd D) :
+    (x * y).im = x.re * y.im + x.im * y.re := by ring_nf; rfl
+
 /-- For `n ≥ 4`, `n! + 1 = m^2` implies `m` is odd (`m % 2 = 1`). -/
 lemma m_odd_of_brocard {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2) :
     m % 2 = 1 := by
@@ -41,6 +47,7 @@ theorem zsqrtd_neg_units {D : ℕ} (hD : 2 ≤ D) (w : (Zsqrtd (-(D : ℤ)))ˣ) 
     have h1 := congrArg Zsqrtd.norm hmul
     rw [Zsqrtd.norm_mul] at h1
     simp only [Zsqrtd.norm, Zsqrtd.one_re, Zsqrtd.one_im] at h1
+    have hD_neg : -( -(D : ℤ) ) = (D : ℤ) := neg_neg _
     simpa [a, b, mul_comm, sub_neg_eq_add] using h1
   have hnn1 : 0 ≤ a ^ 2 + (D : ℤ) * b ^ 2 := by positivity
   have hnorm_one : a ^ 2 + (D : ℤ) * b ^ 2 = 1 := by
@@ -73,11 +80,11 @@ theorem J_n_sq_eq {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2) 
   have hfac := factorial_eq_q_n_mul_s_n_sq n
   have hαβ : α * β = ((m : R) ^ 2) := by
     ext
-    · simp only [α, β, Zsqrtd.mul_re, Zsqrtd.natCast_re, Zsqrtd.natCast_im]
+    · simp only [α, β, zsqrtd_mul_re', Zsqrtd.natCast_re, Zsqrtd.natCast_im]
       have h1 : (m : ℤ) ^ 2 = (q_n n : ℤ) * (s_n n : ℤ) ^ 2 + 1 := by
         exact_mod_cast (by linarith : q_n n * (s_n n) ^ 2 + 1 = m ^ 2)
       linarith
-    · simp only [α, β, Zsqrtd.mul_im]
+    · simp only [α, β, zsqrtd_mul_im']
       ring
   have hsum_2 : α + β = (2 : R) := by
     ext <;> simp [α, β]
@@ -148,8 +155,8 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
       intro heq
       have hre : -(z.re ^ 2 - (q_n n : ℤ) * z.im ^ 2) = 1 := by
         have := congrArg Zsqrtd.re heq
-        simp only [Zsqrtd.mul_re, Zsqrtd.neg_re, Zsqrtd.one_re, Zsqrtd.neg_im, Zsqrtd.one_im,
-          sq, Zsqrtd.mul_im] at this
+        simp only [zsqrtd_mul_re', Zsqrtd.neg_re, Zsqrtd.one_re, Zsqrtd.neg_im, Zsqrtd.one_im,
+          sq, zsqrtd_mul_im'] at this
         linarith
       obtain ⟨p, hp, hpq, hmod⟩ := q_n_has_prime_mod4 (by omega) hn6
       exact neg_pell_no_int_sol hp hpq hmod z.re z.im (by linarith)
@@ -159,11 +166,11 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
       · exfalso; exact hneg_impossible (by simpa using hw)
     have hre : z.re ^ 2 - (q_n n : ℤ) * z.im ^ 2 = 1 := by
       have := congrArg Zsqrtd.re hz2_eq
-      simp only [sq, Zsqrtd.mul_re] at this
+      simp only [sq, zsqrtd_mul_re'] at this
       linarith
     have him : 2 * z.re * z.im = (s_n n : ℤ) := by
       have := congrArg Zsqrtd.im hz2_eq
-      simp only [sq, Zsqrtd.mul_im] at this
+      simp only [sq, zsqrtd_mul_im'] at this
       linarith
     refine ⟨z.re.natAbs, z.im.natAbs, ?_, ?_, ?_, ?_⟩
     · by_contra h0
@@ -240,7 +247,7 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
         have := congrArg Int.natAbs hrat
         simpa [Int.natAbs_mul, Int.natAbs_pow] using this
       have hv_lhs : padicValNat p (a.natAbs ^ 2) = 2 * padicValNat p a.natAbs :=
-        padicValNat.pow 2 ha_ne
+        (by rw [sq]; exact padicValNat.mul ha_ne ha_ne)
       have hv_q : padicValNat p (q_n n) = 1 := by
         have hq_ne : q_n n ≠ 0 := by omega
         have h1 : 1 ≤ padicValNat p (q_n n) := (padicValNat_dvd_iff_le hq_ne).mp (by simpa using hpq)
@@ -249,7 +256,7 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
         omega
       have hv_rhs : padicValNat p (q_n n * b.natAbs ^ 2) = 1 + 2 * padicValNat p b.natAbs := by
         have hb_nat_ne : b.natAbs ≠ 0 := Int.natAbs_ne_zero.mpr hb0
-        rw [padicValNat.mul (by omega) (pow_ne_zero 2 hb_nat_ne), hv_q, padicValNat.pow 2 hb_nat_ne]
+        rw [padicValNat.mul (by omega) (pow_ne_zero 2 hb_nat_ne), hv_q, (by rw [sq]; exact padicValNat.mul hb_nat_ne hb_nat_ne)]
       omega
     have hm_eq : m = u ^ 2 + q_n n * v ^ 2 := by
       have hsq : Real.sqrt (q_n n : ℝ) ^ 2 = (q_n n : ℝ) := Real.sq_sqrt (by positivity)
@@ -294,16 +301,16 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
     refine ⟨z, ?_⟩
     have hz_conj : z * ⟨(u : ℤ), -(v : ℤ)⟩ = (m : R) := by
       ext
-      · simp only [z, Zsqrtd.mul_re, Zsqrtd.natCast_re]
+      · simp only [z, zsqrtd_mul_re', Zsqrtd.natCast_re]
         have : (m : ℤ) = (u : ℤ) ^ 2 + (q_n n : ℤ) * (v : ℤ) ^ 2 := by exact_mod_cast hm_eq
         linarith
-      · simp only [z, Zsqrtd.mul_im, Zsqrtd.natCast_im]; ring
+      · simp only [z, zsqrtd_mul_im', Zsqrtd.natCast_im]; ring
     have hz_sq : z ^ 2 = ⟨1, (s_n n : ℤ)⟩ := by
       ext
-      · simp only [z, sq, Zsqrtd.mul_re]
+      · simp only [z, sq, zsqrtd_mul_re']
         have : (u : ℤ) ^ 2 - (q_n n : ℤ) * (v : ℤ) ^ 2 = 1 := by exact_mod_cast (by linarith : (u ^ 2 : ℕ) = q_n n * v ^ 2 + 1)
         linarith
-      · simp only [z, sq, Zsqrtd.mul_im]
+      · simp only [z, sq, zsqrtd_mul_im']
         have : (s_n n : ℤ) = 2 * (u : ℤ) * (v : ℤ) := by exact_mod_cast hs_eq
         linarith
     apply le_antisymm
@@ -353,11 +360,11 @@ theorem k_eq_1_picard_identity {n m δ₁ δ₂ z₁ z₂ : ℕ}
     ((δ₂ : Zsqrtd (-(q_n n : ℤ))) * ⟨1, (s_n n : ℤ)⟩) =
       (⟨(δ₂ : ℤ) * (z₂ : ℤ), (z₁ : ℤ)⟩ : Zsqrtd (-(q_n n : ℤ))) ^ 2 := by
   ext
-  · simp only [Zsqrtd.mul_re, Zsqrtd.natCast_re, Zsqrtd.natCast_im, sq]
+  · simp only [zsqrtd_mul_re', Zsqrtd.natCast_re, Zsqrtd.natCast_im, sq]
     have hq_z : (q_n n : ℤ) = (δ₁ : ℤ) * (δ₂ : ℤ) := by exact_mod_cast hq.symm
     rw [hq_z]
     linarith
-  · simp only [Zsqrtd.mul_im, Zsqrtd.natCast_re, Zsqrtd.natCast_im, sq]
+  · simp only [zsqrtd_mul_im', Zsqrtd.natCast_re, Zsqrtd.natCast_im, sq]
     have hs_z : (s_n n : ℤ) = 2 * (z₁ : ℤ) * (z₂ : ℤ) := by exact_mod_cast hs.symm
     rw [hs_z]
     ring
@@ -373,11 +380,11 @@ theorem second_stage_nonprincipal_k_eq_2 {n X₁ Y₁ : ℕ} (hn : 3 ≤ n) (hn6
   · intro h
     have hre : u ^ 2 - (q_n n : ℤ) * v ^ 2 = 1 := by
       have := congrArg Zsqrtd.re h
-      simp only [sq, Zsqrtd.mul_re] at this
+      simp only [sq, zsqrtd_mul_re'] at this
       linarith
     have him : 2 * u * v = (Y₁ : ℤ) := by
       have := congrArg Zsqrtd.im h
-      simp only [sq, Zsqrtd.mul_im] at this
+      simp only [sq, zsqrtd_mul_im'] at this
       linarith
     have hv_pos : 0 < v.natAbs := by
       by_contra h0
@@ -403,7 +410,7 @@ theorem second_stage_nonprincipal_k_eq_2 {n X₁ Y₁ : ℕ} (hn : 3 ≤ n) (hn6
   · intro h
     have hre : -(u ^ 2 - (q_n n : ℤ) * v ^ 2) = 1 := by
       have := congrArg Zsqrtd.re h
-      simp only [sq, Zsqrtd.neg_re, Zsqrtd.mul_re] at this
+      simp only [sq, Zsqrtd.neg_re, zsqrtd_mul_re'] at this
       linarith
     obtain ⟨p, hp, hpq, hmod⟩ := q_n_has_prime_mod4 hn hn6
     exact neg_pell_no_int_sol hp hpq hmod u v (by linarith)

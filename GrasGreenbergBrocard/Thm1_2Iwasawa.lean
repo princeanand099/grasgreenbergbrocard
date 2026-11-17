@@ -158,7 +158,9 @@ theorem val_s_n_ge_one_on_half {n p : ℕ} (hp : p.Prime) (hp5 : 5 ≤ p) (hp_ha
     rw [Finset.sum_eq_single p]
     · rw [hp.factorization_self, mul_one]
     · intro q hq hqp
-      rw [(Finset.mem_filter.mp hq).2.factorization_eq_zero_of_ne hqp, mul_zero]
+      have hq_pr : q.Prime := (Finset.mem_filter.mp hq).2
+      have hnd : ¬ p ∣ q := fun h => hqp ((Nat.prime_dvd_prime_iff_eq hp hq_pr).mp h).symm
+      rw [Nat.factorization_eq_zero_of_not_dvd hnd, mul_zero]
     · intro habs; exact absurd hmem habs
   exact ⟨hv2, hs_val, by omega⟩
 
