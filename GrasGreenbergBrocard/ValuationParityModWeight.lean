@@ -60,7 +60,7 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
   let S_hi := S.filter (fun p : ℕ => Nat.sqrt n < p)
   have hS_eq : S = S_2 ∪ S_low ∪ S_hi := by
     ext p
-    simp only [Finset.mem_union, S, S_low, S_hi, Finset.mem_filter, Finset.mem_Icc]
+    simp only [Finset.mem_union, S, S_2, S_low, S_hi, Finset.mem_filter, Finset.mem_Icc]
     split_ifs with h2
     · simp only [Finset.mem_singleton]
       constructor
@@ -126,7 +126,7 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
     refine Finset.sum_congr rfl (fun p hp => ?_)
     have hp_pr : p.Prime := (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2.1
     have hp3 : 3 ≤ p := (Finset.mem_filter.mp hp).2.1
-    have hp1 : (p : ℝ) - 1 ≠ 0 := by exact_mod_cast (by omega : p - 1 ≠ 0)
+    have hp1 : (p : ℝ) - 1 ≠ 0 := sub_ne_zero.mpr (by exact_mod_cast (by omega : p ≠ 1))
     have hleg : (p - 1) * padicValNat p (Nat.factorial n) = n - (Nat.digits p n).sum := by
       haveI : Fact p.Prime := ⟨hp_pr⟩
       exact sub_one_mul_padicValNat_factorial n
@@ -136,14 +136,16 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
         _ = n := this
     have hlegR : ((p : ℝ) - 1) * (padicValNat p (Nat.factorial n) : ℝ) =
         (n : ℝ) - ((Nat.digits p n).sum : ℝ) := by
-      have : ((p - 1 : ℕ) : ℝ) = (p : ℝ) - 1 := by rw [Nat.cast_sub (by omega : 1 ≤ p)]; push_cast; ring
-      rw [← this]
-      exact_mod_cast (by rw [hleg]; omega : (p - 1) * padicValNat p (Nat.factorial n) + (Nat.digits p n).sum = n) |> fun h => by
-        have hR : ((p - 1 : ℕ) : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) + ((Nat.digits p n).sum : ℝ) = (n : ℝ) := by
-          exact_mod_cast h
-        linarith
-    field_simp [hp1]
-    nlinarith
+      have hsub : ((p - 1 : ℕ) : ℝ) = (p : ℝ) - 1 := by
+        rw [Nat.cast_sub (by omega : 1 ≤ p)]; push_cast; ring
+      have hleg' : (p - 1) * padicValNat p (Nat.factorial n) + (Nat.digits p n).sum = n := by omega
+      have hR : ((p - 1 : ℕ) : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) + ((Nat.digits p n).sum : ℝ) = (n : ℝ) := by
+        exact_mod_cast hleg'
+      linarith
+    have hdiv : (padicValNat p (Nat.factorial n) : ℝ) =
+        ((n : ℝ) - ((Nat.digits p n).sum : ℝ)) / ((p : ℝ) - 1) :=
+      (eq_div_iff hp1).mpr (by linarith)
+    rw [hdiv]; ring
   have h_dig_err : |∑ p ∈ S_low, ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) * Real.log (p : ℝ)| ≤ (n : ℝ) := by
     have h_each : ∀ p ∈ S_low, 0 ≤ ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) * Real.log (p : ℝ) ∧
         ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) * Real.log (p : ℝ) ≤ 2 * Real.log (n : ℝ) := by
@@ -151,27 +153,30 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
       have hp_pr : p.Prime := (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2.1
       have hp3 : 3 ≤ p := (Finset.mem_filter.mp hp).2.1
       have hpn : p ≤ n := (Finset.mem_Icc.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).1).2
-      have hp1_pos : (0 : ℝ) < (p : ℝ) - 1 := by exact_mod_cast (by omega : 1 < p)
+      have hp1_pos : (0 : ℝ) < (p : ℝ) - 1 := sub_pos.mpr (by exact_mod_cast (by omega : 1 < p))
       have hlogp_pos : 0 < Real.log (p : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < p))
       constructor
       · positivity
       · have hdig_len : (Nat.digits p n).length ≤ Nat.floor (Real.log (n : ℝ) / Real.log (p : ℝ)) + 1 := by
           have h1 : p ^ ((Nat.digits p n).length - 1) ≤ n := by
             rcases eq_or_ne (Nat.digits p n).length 0 with hl0 | hlne
-            · simp [hl0]
-            · exact Nat.base_pow_length_digits_le p n hp_pr.one_lt (by omega)
-          have h2 : ((Nat.digits p n).length - 1 : ℝ) * Real.log (p : ℝ) ≤ Real.log (n : ℝ) := by
+            · simp [hl0]; omega
+            · have h_mul : p * p ^ ((Nat.digits p n).length - 1) ≤ p * n := by
+                rw [← pow_succ', Nat.sub_add_cancel (Nat.pos_of_ne_zero hlne)]
+                exact Nat.base_pow_length_digits_le p n hp_pr.one_lt (by omega)
+              exact Nat.le_of_mul_le_mul_left h_mul hp_pr.pos
+          have h2 : (((Nat.digits p n).length - 1 : ℕ) : ℝ) * Real.log (p : ℝ) ≤ Real.log (n : ℝ) := by
             have : ((p ^ ((Nat.digits p n).length - 1) : ℕ) : ℝ) ≤ (n : ℝ) := by exact_mod_cast h1
             have hlog := Real.log_le_log (by positivity) this
             rwa [Nat.cast_pow, Real.log_pow] at hlog
-          have h3 : ((Nat.digits p n).length - 1 : ℝ) ≤ Real.log (n : ℝ) / Real.log (p : ℝ) :=
+          have h3 : (((Nat.digits p n).length - 1 : ℕ) : ℝ) ≤ Real.log (n : ℝ) / Real.log (p : ℝ) :=
             (le_div_iff₀ hlogp_pos).mpr h2
           have h4 : (Nat.digits p n).length - 1 ≤ Nat.floor (Real.log (n : ℝ) / Real.log (p : ℝ)) :=
             (Nat.le_floor_iff (div_nonneg hlogn_nn hlogp_pos.le)).mpr h3
           omega
         have hdig_sum : (Nat.digits p n).sum ≤ (Nat.digits p n).length * (p - 1) := by
           have hlt : ∀ d ∈ Nat.digits p n, d ≤ p - 1 := fun d hd =>
-            Nat.lt_succ_iff.mp (Nat.digits_lt_base hp_pr.one_lt hd)
+            Nat.le_sub_one_of_lt (Nat.digits_lt_base hp_pr.one_lt hd)
           calc (Nat.digits p n).sum ≤ (Nat.digits p n).length * (p - 1) := by
                 induction Nat.digits p n with
                 | nil => simp
@@ -193,11 +198,12 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
           linarith
         have hlogp_le : Real.log (p : ℝ) ≤ Real.log (n : ℝ) :=
           Real.log_le_log (by positivity) (by exact_mod_cast hpn)
-        calc ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) * Real.log (p : ℝ)
-            ≤ (Real.log (n : ℝ) / Real.log (p : ℝ) + 1) * Real.log (p : ℝ) :=
-              mul_le_mul_of_nonneg_right hsum_R hlogp_pos.le
-          _ = Real.log (n : ℝ) + Real.log (p : ℝ) := by field_simp [hlogp_pos.ne']
-          _ ≤ 2 * Real.log (n : ℝ) := by linarith
+        have h_mul_le : ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) * Real.log (p : ℝ) ≤
+            (Real.log (n : ℝ) / Real.log (p : ℝ) + 1) * Real.log (p : ℝ) :=
+          mul_le_mul_of_nonneg_right hsum_R hlogp_pos.le
+        have h_eq_add : (Real.log (n : ℝ) / Real.log (p : ℝ) + 1) * Real.log (p : ℝ) =
+            Real.log (n : ℝ) + Real.log (p : ℝ) := by field_simp [hlogp_pos.ne']
+        linarith
     have hnn : 0 ≤ ∑ p ∈ S_low, ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) * Real.log (p : ℝ) :=
       Finset.sum_nonneg (fun p hp => (h_each p hp).1)
     rw [abs_of_nonneg hnn]
@@ -413,7 +419,7 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
         refine Finset.sum_congr rfl (fun p hp => ?_)
         have hp2 : 2 ≤ p := (Finset.mem_Icc.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).1).1
         have hp0 : (p : ℝ) ≠ 0 := by exact_mod_cast (by omega : p ≠ 0)
-        have hp1 : (p : ℝ) - 1 ≠ 0 := by exact_mod_cast (by omega : p - 1 ≠ 0)
+        have hp1 : (p : ℝ) - 1 ≠ 0 := sub_ne_zero.mpr (by exact_mod_cast (by omega : p ≠ 1))
         field_simp [hp0, hp1]; ring
       rw [h_eq]
       have h_nn : 0 ≤ ∑ p ∈ S_hi, Real.log (p : ℝ) / ((p : ℝ) * ((p : ℝ) - 1)) := by
@@ -462,7 +468,7 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
             have hp2 : 2 ≤ p := (Finset.mem_Icc.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).1).1
             have hpn : p ≤ n := (Finset.mem_Icc.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).1).2
             have hp0 : (p : ℝ) ≠ 0 := by exact_mod_cast (by omega : p ≠ 0)
-            have hp1 : (p : ℝ) - 1 ≠ 0 := by exact_mod_cast (by omega : p - 1 ≠ 0)
+            have hp1 : (p : ℝ) - 1 ≠ 0 := sub_ne_zero.mpr (by exact_mod_cast (by omega : p ≠ 1))
             have h_id : (1 : ℝ) / ((p : ℝ) - 1) - (1 : ℝ) / (p : ℝ) = 1 / ((p : ℝ) * ((p : ℝ) - 1)) := by
               field_simp [hp0, hp1]; ring
             rw [h_id, ← mul_div_assoc, mul_one]
