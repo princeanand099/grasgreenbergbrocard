@@ -335,9 +335,8 @@ theorem alt_harmonic_shifted_even (K : ℕ) (hK : 1 ≤ K) :
       rw [show (2 * m + 1) + 1 = 2 * (m + 1) from by omega, pow_mul, neg_one_sq, one_pow]
     rw [hpow1, hpow2]
     push_cast
-    have hm1 : 2 * (m : ℝ) + 1 ≠ 0 := by positivity
-    have hm2 : 2 * (m : ℝ) + 2 ≠ 0 := by positivity
-    have hm3 : 2 * (m : ℝ) + 3 ≠ 0 := by positivity
+    rw [show (2 : ℝ) * ((m : ℝ) + 1) - 1 = 2 * (m : ℝ) + 1 from by ring,
+        show (2 : ℝ) * ((m : ℝ) + 1) = 2 * (m : ℝ) + 2 from by ring]
     field_simp
     ring
 
@@ -395,7 +394,9 @@ theorem alt_harmonic_shifted_bound {N : ℕ} (hN : 3 ≤ N) :
           1 / ((2 * (K : ℝ) + 1) * (2 * (K : ℝ) + 2)) := by
         field_simp [(by positivity : (2 * (K : ℝ) + 1) ≠ 0), (by positivity : (2 * (K : ℝ) + 2) ≠ 0)]; ring
       rw [hsub, div_add_div _ _ (by positivity) (by positivity), div_le_div_iff₀ (by positivity) (by positivity)]
-      nlinarith [hK1R]
+      have hquad : 0 ≤ 8 * (K : ℝ) ^ 2 - 2 * (K : ℝ) - 2 := by nlinarith [hK1R]
+      have hmul : 0 ≤ (2 * (K : ℝ) + 2) * (8 * (K : ℝ) ^ 2 - 2 * (K : ℝ) - 2) := by positivity
+      linarith
     linarith
 
 theorem padicValNat_factorial_eq_sum_Icc {p n R : ℕ} (hp : p.Prime)
@@ -408,10 +409,6 @@ theorem padicValNat_factorial_eq_sum_Icc {p n R : ℕ} (hp : p.Prime)
     · by_contra h; push_neg at h
       exact absurd (le_trans (Nat.pow_le_pow_right hp.pos h) (Nat.pow_log_le_self p hn0)) (not_le_of_gt hn)
   rw [padicValNat_factorial (b := R + 1) hlog]
-  congr 1
-  ext s
-  simp only [Finset.mem_Ico, Finset.mem_Icc]
-  omega
 
 theorem Mertens_div_p_band_le :
     ∃ C : ℝ, 0 < C ∧ ∀ A B : ℝ, 3 ≤ A → A ≤ B →
