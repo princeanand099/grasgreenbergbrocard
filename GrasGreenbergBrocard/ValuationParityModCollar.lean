@@ -250,10 +250,14 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
             apply Real.rpow_le_rpow_of_exponent_le (by linarith)
             exact div_le_self (by positivity) (by exact_mod_cast (by omega : 1 ≤ r))
           have h1 : (Real.log (n : ℝ)) ^ A_R < (n : ℝ) ^ (1 / ((r : ℝ) * ((r : ℝ) + 1))) := by
-            have := (div_lt_iff₀ (by positivity)).mp hdiv_sm; linarith
+            have h_le1 := (div_le_iff₀ (by positivity)).mp hdiv_sm
+            have h_pos_npow : 0 < (n : ℝ) ^ (1 / ((r : ℝ) * ((r : ℝ) + 1))) := by positivity
+            linarith
           have h2 : (n : ℝ) ^ (1 / ((r : ℝ) + 1)) * (n : ℝ) ^ (1 / ((r : ℝ) * ((r : ℝ) + 1))) = (n : ℝ) ^ (1 / (r : ℝ)) := by
             rw [← Real.rpow_add hn_pos]
-            congr 1; field_simp [hr_pos.ne', by positivity : (r : ℝ) + 1 ≠ 0]; ring
+            congr 1
+            have hr1_ne : (r : ℝ) + 1 ≠ 0 := by positivity
+            field_simp [hr_pos.ne', hr1_ne]; ring
           have h_lt := lt_of_le_of_lt hpow_gt h1
           calc (n : ℝ) ^ (1 / ((r : ℝ) + 1)) * (Real.log (n : ℝ)) ^ ((A_R : ℝ) / (r : ℝ))
               < (n : ℝ) ^ (1 / ((r : ℝ) + 1)) * (n : ℝ) ^ (1 / ((r : ℝ) * ((r : ℝ) + 1))) :=
@@ -434,7 +438,9 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
             _ = (n : ℝ) := Real.rpow_one _
         have h_log_le : (2 : ℝ) ^ (-(R : ℤ)) * (Real.log (n : ℝ)) ^ A_R ≤ (n : ℝ) ^ (1 / (r : ℝ)) := by
           have h1 : (Real.log (n : ℝ)) ^ A_R ≤ (n : ℝ) ^ (1 / ((r : ℝ) * ((r : ℝ) + 1))) := by
-            have := (div_lt_iff₀ (by positivity)).mp hdiv_sm; linarith
+            have h_le1 := (div_le_iff₀ (by positivity)).mp hdiv_sm
+            have h_pos_npow : 0 < (n : ℝ) ^ (1 / ((r : ℝ) * ((r : ℝ) + 1))) := by positivity
+            linarith
           have h2 : (n : ℝ) ^ (1 / ((r : ℝ) * ((r : ℝ) + 1))) ≤ (n : ℝ) ^ (1 / (r : ℝ)) := by
             apply Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast (by omega : 1 ≤ n))
             apply one_div_le_one_div_of_le hr_pos

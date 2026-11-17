@@ -15,6 +15,7 @@ set_option pp.maxSteps 50
 set_option pp.deepTerms false
 set_option pp.deepTerms.threshold 3
 set_option pp.proofs false
+set_option maxHeartbeats 400000
 
 noncomputable section
 
@@ -384,10 +385,7 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
             eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) :=
         Finset.sum_congr rfl (fun p _ => by congr 2; ring)
       rw [h_eq_sum]
-      calc ‖∑ p ∈ B_k k, (((fun t => 1 / (t - 1)) (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
-            eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s))‖
-          ≤ P * (C₂e * (2 / P)) * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := h_res
-        _ = 2 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := by field_simp [hP_pos.ne']
+      exact le_trans h_res (le_of_eq (by field_simp [hP_pos.ne']))
   -- Bound ∑_{p ∈ D_r}
   have h_sum_split : ∑ p ∈ D_r, eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ)) *
         ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) =
