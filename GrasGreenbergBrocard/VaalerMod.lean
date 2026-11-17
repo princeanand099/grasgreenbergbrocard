@@ -374,18 +374,19 @@ theorem vaaler_mod_approx (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
             (((sawtoothPsi ((x - (k : ℝ) - 1) / (h_mod : ℝ)) : ℂ) - Psi ((x - (k : ℝ) - 1) / (h_mod : ℝ))) -
              ((sawtoothPsi ((x - (k : ℝ)) / (h_mod : ℝ)) : ℂ) - Psi ((x - (k : ℝ)) / (h_mod : ℝ)))) *
               eExp ((z : ℝ) * (k : ℝ) / (h_mod : ℝ)) := by
-        rw [← sub_zero (∑ k ∈ Finset.range h_mod,
+        rw [← add_zero (∑ k ∈ Finset.range h_mod,
             (Psi ((x - (k : ℝ) - 1) / (h_mod : ℝ)) - Psi ((x - (k : ℝ)) / (h_mod : ℝ))) *
               eExp ((z : ℝ) * (k : ℝ) / (h_mod : ℝ)))]
         conv_lhs => rhs; rhs; rw [← h0_cancel]
-        rw [← Finset.sum_sub_distrib, ← Finset.sum_sub_distrib]
+        rw [← Finset.sum_add_distrib, ← Finset.sum_sub_distrib]
         refine Finset.sum_congr rfl (fun k hk => ?_)
         have hfl := floor_mod_eq_sawtooth h_mod hh_mod x k (Finset.mem_range.mp hk)
         have hflC : ((if Int.floor x % (h_mod : ℤ) = (k : ℤ) then (1 : ℝ) else 0) : ℂ) =
             ((sawtoothPsi ((x - (k : ℝ) - 1) / (h_mod : ℝ)) : ℂ) -
               (sawtoothPsi ((x - (k : ℝ)) / (h_mod : ℝ)) : ℂ) + ((1 / (h_mod : ℝ) : ℝ) : ℂ)) := by
           have h1 := congrArg Complex.ofReal hfl
-          simpa only [Complex.ofReal_add, Complex.ofReal_sub] using h1
+          rw [Complex.ofReal_add, Complex.ofReal_sub] at h1
+          rwa [apply_ite Complex.ofReal, Complex.ofReal_one, Complex.ofReal_zero] at h1
         rw [hflC]
         ring
       rw [h_diff_eq]
