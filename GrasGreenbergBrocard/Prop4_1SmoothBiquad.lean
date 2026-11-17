@@ -61,13 +61,13 @@ lemma sfCore_squarefree (m : ℕ) : Squarefree (sfCore m) := by
     rw [hsub, Finset.prod_insert hnot] at hpp
     have hp_dvd : p ∣ ∏ q ∈ S.erase p, q :=
       Nat.dvd_of_mul_dvd_mul_left hp.pos hpp
-    obtain ⟨q, hq, hpd⟩ := (Nat.Prime.dvd_finset_prod_iff hp).mp hp_dvd
+    obtain ⟨q, hq, hpd⟩ := (Prime.dvd_finset_prod_iff hp.prime id).mp hp_dvd
     have hq_pr : q.Prime := hS_pr q (Finset.mem_erase.mp hq).2
     have heq : p = q := (Nat.prime_dvd_prime_iff_eq hp hq_pr).mp hpd
     subst heq
     exact hnot (Finset.mem_erase.mp hq |>.1 ▸ hq)
   · have hp_dvd : p ∣ ∏ q ∈ S, q := dvd_trans (dvd_mul_right p p) hpp
-    obtain ⟨q, hq, hpd⟩ := (Nat.Prime.dvd_finset_prod_iff hp).mp hp_dvd
+    obtain ⟨q, hq, hpd⟩ := (Prime.dvd_finset_prod_iff hp.prime id).mp hp_dvd
     have hq_pr : q.Prime := hS_pr q hq
     have heq : p = q := (Nat.prime_dvd_prime_iff_eq hp hq_pr).mp hpd
     subst heq
@@ -358,7 +358,7 @@ theorem prop_4_1_part1 {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     have hpn : p ≤ n := by
       have hdvd_fac : p ∣ Nat.factorial n := by
         rw [hfac_eq]
-        exact dvd_mul_of_dvd_left (dvd_mul_of_dvd_right (pow_dvd_pow_of_dvd hpX 2) _) _
+        exact dvd_mul_of_dvd_left (dvd_mul_of_dvd_right (dvd_pow hpX (by norm_num)) _) _
       exact hp.dvd_factorial.mp hdvd_fac
     have hval_eq : padicValNat p (Nat.factorial n) = 2 * padicValNat p X₁ := by
       rw [hfac_eq]
