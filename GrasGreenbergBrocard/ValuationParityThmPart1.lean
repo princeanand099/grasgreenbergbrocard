@@ -591,6 +591,9 @@ theorem Delta_parity_second_order :
           |∑ r ∈ Finset.Icc 1 (R₁ - 1), (-1 : ℝ) ^ r / ((r : ℝ) + 1) * (n : ℝ) - (Real.log 2 - 1) * (n : ℝ)| := htri
       _ ≤ 2 * |C₁| * ((n : ℝ) / Real.log (n : ℝ)) + 2 * ((n : ℝ) / Real.log (n : ℝ)) := add_le_add hsum_tri h_alt_err
       _ = (2 * |C₁| + 2) * ((n : ℝ) / Real.log (n : ℝ)) := by ring
+      _ ≤ (4 * |C₁| + 2) * ((n : ℝ) / Real.log (n : ℝ)) := by
+          apply mul_le_mul_of_nonneg_right _ (by positivity)
+          linarith [abs_nonneg C₁]
   have hmid_bound : |∑ p ∈ S_mid, f_term p| ≤
       (Cθ * 2 + (2 + 4 * C₂e * (1 + Real.log 2) + (2 + 2 * Cm + 36 * C₂e))) * ((n : ℝ) / Real.log (n : ℝ)) := by
     have hp_val_mid : ∀ p ∈ S_mid, padicValNat p (Nat.factorial n) = n / p := by
@@ -737,12 +740,7 @@ theorem Delta_parity_second_order :
                   · simp [eExp]
                   · congr 1; ext h; simp [Finset.mem_erase, Finset.mem_filter]; tauto
                 dsimp only at hpw
-                have hsplit0' : ∑ h ∈ Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1),
-                    b_tilde h * eExp ((h : ℝ) * ((n : ℝ) / (p : ℝ) / 2)) =
-                    b_tilde 0 + ∑ h ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (· ≠ 0),
-                      b_tilde h * eExp ((h : ℝ) * ((n : ℝ) / (p : ℝ) / 2)) := by
-                  simp_rw [← mul_div_assoc]; exact hsplit0
-                rw [hsplit0'] at hpw
+                rw [hsplit0] at hpw
                 convert hpw using 2 <;>
                   simp only [mul_div_assoc, Complex.ofReal_zpow, Complex.ofReal_neg, Complex.ofReal_one]
         have h_block_exp : ∀ (k : ℕ) (hk : k ∈ dyadicBlocks (Nat.sqrt n : ℝ) ((n : ℝ) / (R₁ : ℝ)))
@@ -798,6 +796,8 @@ theorem Delta_parity_second_order :
             congr 2; simp [Finset.sum_singleton]; ring
           rw [h_sum_eq]
           convert hexp_app.1.2 using 2
+          refine Finset.sum_congr rfl (fun p _ => ?_)
+          push_cast; rfl
         have hdy_card_le : ((dyadicBlocks (Nat.sqrt n : ℝ) ((n : ℝ) / (R₁ : ℝ))).card : ℝ) ≤
             Real.log (n : ℝ) / Real.log 2 + 2 := by
           calc ((dyadicBlocks (Nat.sqrt n : ℝ) ((n : ℝ) / (R₁ : ℝ))).card : ℝ)
@@ -818,7 +818,7 @@ theorem Delta_parity_second_order :
             have h_lhs : mainSum = ∑ p ∈ S_mid,
                 ∑ h ∈ oddH, (((n : ℝ) / (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
                   (c_tilde h * eExp ((h : ℝ) * ((n : ℝ) / (p : ℝ)) / 2)) := by
-              unfold mainSum; simp_rw [Finset.mul_sum]
+              unfold mainSum; dsimp only [oddH]; simp_rw [Finset.mul_sum]
             rw [h_lhs, Finset.sum_comm]
             refine Finset.sum_congr rfl (fun h _ => ?_)
             simp_rw [show ∀ p : ℕ, (((n : ℝ) / (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
@@ -895,8 +895,7 @@ theorem Delta_parity_second_order :
               (2 + 2 * Cm) * ((n : ℝ) / Real.log (n : ℝ)) := by
             have hb0_re : (b_tilde 0).re = 2 / ((H : ℝ) + 1) := by
               rw [h_btilde0]
-              have : (2 : ℂ) / ((Nat.floor ((Real.log (n : ℝ)) ^ 5) : ℂ) + 1) =
-                  ((2 / ((H : ℝ) + 1) : ℝ) : ℂ) := by push_cast; rfl
+              have : (2 : ℂ) / ((H : ℂ) + 1) = ((2 / ((H : ℝ) + 1) : ℝ) : ℂ) := by push_cast; rfl
               rw [this, Complex.ofReal_re]
             rw [hb0_re]
             have hsub : S_mid ⊆ (Finset.Icc 3 (Nat.floor (n : ℝ))).filter Nat.Prime := by
