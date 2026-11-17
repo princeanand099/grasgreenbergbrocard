@@ -311,7 +311,7 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       | empty => simp [eExp]
       | @insert a S ha ih =>
         rw [Finset.prod_insert ha, ih, Finset.sum_insert ha, Nat.cast_add, mul_add, add_div, eExp_add]
-    rw [h_prod_e, Nat.cast_add, mul_add, add_div, eExp_add, mul_comm]
+    rw [h_prod_e, Nat.cast_add, mul_add, add_div, eExp_add, add_comm]
   obtain ⟨c_mod, b_mod, hb_mod0, hb_mod_norm, h_vaaler_pw, h_L1⟩ :=
     vaaler_mod_approx h_mod hh_mod z hz1 hz2 H hH_ge1
   let allH := Finset.Icc (-(H : ℤ)) (H : ℤ)
@@ -507,9 +507,9 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       have h_res2 := h_res.2 hT₀_ge
       have h_eq_sum : ∑ p ∈ J m_r, ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
             eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) =
-          ∑ p ∈ J m_r, (((fun t => 1 / (t - 1)) (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
+          ∑ p ∈ J m_r, (((fun t => 1 / (t - 1)) (p : ℝ) * Real.log (p : ℝ)) : ℂ) *
             eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) :=
-        Finset.sum_congr rfl (fun p _ => by congr 2; ring)
+        Finset.sum_congr rfl (fun p _ => by push_cast; ring)
       rw [h_eq_sum]
       have h_bd2 : C₃e * (2 / P) * P * (n : ℝ) ^ (-η) ≤ 4 * C₃e * (n : ℝ) ^ (-η) := by
         rw [show C₃e * (2 / P) * P * (n : ℝ) ^ (-η) = 2 * C₃e * (n : ℝ) ^ (-η) from by field_simp [hP_pos.ne']]
@@ -586,7 +586,7 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
                   ∑ s ∈ I_s, (B_mod ((n : ℝ) / (p : ℝ) ^ s)).re) * (Real.log (p : ℝ) / ((p : ℝ) - 1))
                 = (1 + 2 * (h_mod : ℝ)) ^ I_s.card * ∑ s ∈ I_s, ∑ p ∈ J m_r,
                     (Real.log (p : ℝ) / ((p : ℝ) - 1)) * (B_mod ((n : ℝ) / (p : ℝ) ^ s)).re := by
-                  conv_rhs => simp_rw [Finset.mul_sum]; rw [Finset.sum_comm]
+                  conv_rhs => { simp_rw [Finset.mul_sum]; rw [Finset.sum_comm] }
                   refine Finset.sum_congr rfl (fun p _ => ?_)
                   rw [Finset.sum_mul, Finset.mul_sum]
                   refine Finset.sum_congr rfl (fun s _ => by ring)

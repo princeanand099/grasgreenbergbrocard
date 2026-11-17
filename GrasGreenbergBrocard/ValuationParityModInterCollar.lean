@@ -381,9 +381,9 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         hP_lo hP_hi hI_prime hA_range hh_le hPhase hW_bound (by positivity)).1.2
       have h_eq_sum : ∑ p ∈ B_k k, ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
             eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) =
-          ∑ p ∈ B_k k, (((fun t => 1 / (t - 1)) (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
+          ∑ p ∈ B_k k, (((fun t => 1 / (t - 1)) (p : ℝ) * Real.log (p : ℝ)) : ℂ) *
             eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) :=
-        Finset.sum_congr rfl (fun p _ => by congr 2; ring)
+        Finset.sum_congr rfl (fun p _ => by push_cast; ring)
       rw [h_eq_sum]
       exact le_trans h_res (le_of_eq (show C₂e * (2 / P) * P * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) =
         2 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) from by field_simp [hP_pos.ne']; ring))
@@ -448,7 +448,7 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
                   ∑ s ∈ I_s, (B_mod ((n : ℝ) / (p : ℝ) ^ s)).re) * (Real.log (p : ℝ) / ((p : ℝ) - 1))
                 = (1 + 2 * (h_mod : ℝ)) ^ I_s.card * ∑ s ∈ I_s, ∑ p ∈ D_r,
                     (Real.log (p : ℝ) / ((p : ℝ) - 1)) * (B_mod ((n : ℝ) / (p : ℝ) ^ s)).re := by
-                  conv_rhs => simp_rw [Finset.mul_sum]; rw [Finset.sum_comm]
+                  conv_rhs => { simp_rw [Finset.mul_sum]; rw [Finset.sum_comm] }
                   refine Finset.sum_congr rfl (fun p _ => ?_)
                   rw [Finset.sum_mul, Finset.mul_sum]
                   refine Finset.sum_congr rfl (fun s _ => by ring)
