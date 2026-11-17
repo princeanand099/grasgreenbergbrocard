@@ -51,8 +51,9 @@ theorem small_prime_parity_band_bound (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 
        (∑ p ∈ ((Finset.Icc 3 (Nat.sqrt n)).filter (fun p : ℕ =>
           p.Prime ∧ (n : ℝ) ^ δ < (p : ℝ) ∧ (p : ℝ) ∈ interCollar n r A_R)),
         ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n) - 1)) * (Real.log (p : ℝ) / ((p : ℝ) - 1)))))
-      =O[atTop] (fun n : ℕ => 1 / Real.log (n : ℝ)) :=
-    Asymptotics.IsBigO.sum (fun r hr => (h_col_sum r hr).add (h_int_sum r hr))
+      =O[atTop] (fun n : ℕ => 1 / Real.log (n : ℝ)) := by
+    simpa only [Finset.sum_apply] using
+      Asymptotics.IsBigO.sum (fun r hr => (h_col_sum r hr).add (h_int_sum r hr))
   refine h_fin_sum.congr' ?_ EventuallyEq.rfl
   have h_rpow_all : ∀ᶠ n : ℕ in atTop, ∀ r ∈ Finset.Icc 2 R,
       (Real.log (n : ℝ)) ^ A_R / (n : ℝ) ^ (1 / ((r : ℝ) * ((r : ℝ) + 1))) ≤ 1 := by
@@ -63,6 +64,8 @@ theorem small_prime_parity_band_bound (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 
     exact (ht.eventually (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1))).mono (fun _ h => h.le)
   filter_upwards [(tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 2),
     Filter.eventually_ge_atTop 16, h_rpow_all] with n hln hn hrpow_all
+  dsimp only [Function.comp_apply] at hln
+  have hlogn_pos : 0 < Real.log (n : ℝ) := by linarith
   have hn_pos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast (by omega : 0 < n)
   let S := (Finset.Icc 3 (Nat.sqrt n)).filter (fun p : ℕ => p.Prime ∧ (n : ℝ) ^ δ < (p : ℝ))
   let B : ℕ → Finset ℕ := fun r =>
@@ -97,10 +100,10 @@ theorem small_prime_parity_band_bound (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 
           have hr1_icc : r + 1 ∈ Finset.Icc 2 R := Finset.mem_Icc.mpr ⟨by omega, by omega⟩
           by_contra hle; push Not at hle
           have hle' : r + 1 ≤ r := Finset.le_max' _ (r + 1)
-            (Finset.mem_filter.mpr ⟨hr1_icc, by push_cast; exact hle.le⟩)
+            (Finset.mem_filter.mpr ⟨hr1_icc, by push_cast; exact hle⟩)
           omega
       obtain ⟨r, hr_icc, hlo, hhi⟩ := hex
-      refine ⟨r, hr_icc, hp, ?_⟩
+      refine ⟨r, Finset.mem_Icc.mp hr_icc, hp, ?_⟩
       rcases le_or_gt (p : ℝ) ((n : ℝ) ^ (1 / (r : ℝ)) / (Real.log (n : ℝ)) ^ ((A_R : ℝ) / (r : ℝ))) with h_ic | h_co
       · right; exact ⟨hlo, h_ic⟩
       · left; exact ⟨h_co, hhi⟩
@@ -132,15 +135,15 @@ theorem small_prime_parity_band_bound (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 
               (n : ℝ) ^ (1 / (r : ℝ)) := by
             rw [← Real.rpow_add hn_pos]
             have hr1_ne : (r : ℝ) + 1 ≠ 0 := by positivity
-            congr 1; field_simp [hr_pos.ne', hr1_ne]; ring
+            congr 1; field_simp [hr_pos.ne', hr1_ne]
           nlinarith [Real.rpow_pos_of_pos hn_pos (1 / ((r : ℝ) + 1))]
         exact lt_of_le_of_lt h_gap hlo
       · refine ⟨hlo, le_trans hhi ?_⟩
         exact div_le_self (by positivity) (Real.one_le_rpow (by linarith) (by positivity))
     obtain ⟨h1_lo, h1_hi⟩ := hrange r₁ hr₁ h1
     obtain ⟨h2_lo, h2_hi⟩ := hrange r₂ hr₂ h2
-    have h12 : (n : ℝ) ^ (1 / ((r₁ : ℝ) + 1)) < (n : ℝ) ^ (1 / (r₂ : ℝ)) := lt_trans h1_lo h2_hi
-    have h21 : (n : ℝ) ^ (1 / ((r₂ : ℝ) + 1)) < (n : ℝ) ^ (1 / (r₁ : ℝ)) := lt_trans h2_lo h1_hi
+    have h12 : (n : ℝ) ^ (1 / ((r₁ : ℝ) + 1)) < (n : ℝ) ^ (1 / (r₂ : ℝ)) := lt_of_lt_of_le h1_lo h2_hi
+    have h21 : (n : ℝ) ^ (1 / ((r₂ : ℝ) + 1)) < (n : ℝ) ^ (1 / (r₁ : ℝ)) := lt_of_lt_of_le h2_lo h1_hi
     have hn1 : (1 : ℝ) < (n : ℝ) := by exact_mod_cast (by omega : 1 < n)
     have h_lt1 : r₂ < r₁ + 1 := by
       by_contra hle; push Not at hle
@@ -155,6 +158,8 @@ theorem small_prime_parity_band_bound (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 
       have hpow := Real.rpow_le_rpow_of_exponent_le hn1.le hexp
       linarith
     omega
+  symm
+  change ∑ p ∈ S, _ = _
   rw [hS_eq, Finset.sum_biUnion hdisj_B]
   refine Finset.sum_congr rfl (fun r _ => ?_)
   have hB_eq : B r =
@@ -171,7 +176,7 @@ theorem small_prime_parity_band_bound (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 
     have h1 := (Finset.mem_filter.mp hp1).2.2.2.1
     have h2 := (Finset.mem_filter.mp hp2).2.2.2.2
     linarith
-  rw [hB_eq, Finset.sum_union hdisj_ci, add_comm]
+  rw [hB_eq, Finset.sum_union hdisj_ci]
 
 /-- **Theorem 2.5(ii), eq. (2.17), part 1**:
 `Σ*_parity(n) = o(log n)`. -/
@@ -295,7 +300,8 @@ theorem Delta_parity_isLittleO_mul_log :
       calc 1 / ε = (1 / Real.sqrt ε) ^ 2 := by rw [div_pow, one_pow, Real.sq_sqrt hε.le]
         _ ≤ (Real.log (n : ℝ)) ^ 2 := pow_le_pow_left₀ (by positivity) hsq 2
     have h1_le : 1 ≤ ε * (Real.log (n : ℝ)) ^ 2 := by
-      rwa [div_le_iff₀ hε] at hsq2
+      have hsq3 := (div_le_iff₀ hε).mp hsq2
+      linarith
     rw [div_le_iff₀ hlogn_pos]
     nlinarith
   have h1' : (fun n : ℕ => Delta_parity n - (Real.log 2 - 1 - Sigma_star_parity n) * (n : ℝ))
@@ -366,19 +372,20 @@ theorem S_odd_asymptotic :
             rw [hq_pr.factorization_self, mul_one, Nat.factorization_def _ hq_pr]
           · intro p hp hpq
             have hp_pr : p.Prime := (Finset.mem_filter.mp hp).2
-            rw [Nat.Prime.factorization_eq_zero_of_ne hp_pr hpq, mul_zero]
+            rw [hp_pr.factorization, Finsupp.single_apply, if_neg hpq, mul_zero]
           · intro hq_abs; exact absurd hq hq_abs
         · rw [Finset.sum_eq_zero]
           · symm
+            rw [Nat.factorization_eq_zero_iff]
             by_cases hq_pr : q.Prime
-            · apply Nat.factorization_eq_zero_of_not_dvd
+            · right; left
               intro hdvd
               exact hq (Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hq_pr.two_le, hq_pr.dvd_factorial.mp hdvd⟩, hq_pr⟩)
-            · exact Nat.factorization_eq_zero_of_non_prime _ hq_pr
+            · left; exact hq_pr
           · intro p hp
             have hp_pr : p.Prime := (Finset.mem_filter.mp hp).2
             have hpq : p ≠ q := fun h => hq (h ▸ hp)
-            rw [Nat.Prime.factorization_eq_zero_of_ne hp_pr hpq, mul_zero]
+            rw [hp_pr.factorization, Finsupp.single_apply, if_neg hpq, mul_zero]
     have hlog_fac : Real.log ((Nat.factorial n : ℕ) : ℝ) =
         ∑ p ∈ (Finset.Icc 2 n).filter Nat.Prime,
           (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) := by
@@ -388,7 +395,7 @@ theorem S_odd_asymptotic :
         have hprime : p.Prime := (Finset.mem_filter.mp hp).2
         exact_mod_cast pow_ne_zero _ hprime.ne_zero)]
       refine Finset.sum_congr rfl (fun p hp => ?_)
-      rw [Nat.cast_pow, Real.log_pow]
+      rw [Real.log_pow]
     have h2_mem : (2 : ℕ) ∈ (Finset.Icc 2 n).filter Nat.Prime :=
       Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨le_rfl, hn⟩, Nat.prime_two⟩
     have h_ins : (Finset.Icc 2 n).filter Nat.Prime =
