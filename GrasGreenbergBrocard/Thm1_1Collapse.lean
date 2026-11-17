@@ -508,12 +508,8 @@ theorem fundamental_regulator_quantization :
       (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ k →
       |Real.log (pellUnit (q_n n) X₁ Y₁) / ((n : ℝ) * Real.log (n : ℝ)) - 1 / (2 * (k : ℝ))| ≤
         C / Real.log (n : ℝ) := by
-  -- From `log_s_n_sqrt_q_n_asymptotic`: `|log(s_n √q_n) - ((1/2) n log n - (1/2) n + (1/4) log(2πn))| ≤ C₁ * n⁻¹`
   obtain ⟨C₁, hC₁⟩ := log_s_n_sqrt_q_n_asymptotic.bound
   obtain ⟨N₁, hN₁⟩ := Filter.eventually_atTop.mp hC₁
-  -- Since we quantify over all `n ≥ 8`, `log(s_n √q_n) - (1/2) n log n = O(n)` for all `n ≥ 8`
-  -- Let's use `log(n!) = n log n - n + O(log n)` or directly `|log(s_n √q_n) - (1/2) n log n| ≤ C₀ * n` for `n ≥ 8`!
-  -- Actually `log(n!) ≤ n log n` and `n log n - n ≤ log(n!)` (already in `ValuationParityThm.lean` as `n_log_n_sub_n_le_log_factorial`!)
   refine ⟨10, by norm_num, fun n m k X₁ Y₁ hn hm hk1 hfund hk_eq => ?_⟩
   have hn_pos : (0 : ℝ) < (n : ℝ) := by positivity
   have hlogn_pos : 0 < Real.log (n : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n))
@@ -620,7 +616,6 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
       rw [hfac2, hfac1, hq_eq, ht_eq, mul_pow]
       ring
     rw [hmul, Nat.mul_div_cancel_left _ (Nat.factorial_pos n₁)]
-  -- Also `n₂! / n₁! = ∏ j ∈ Finset.range (n₂ - n₁), (n₁ + 1 + j)`
   have hprod_eq : Nat.factorial n₂ / Nat.factorial n₁ =
       ∏ j ∈ Finset.range (n₂ - n₁), (n₁ + 1 + j) := by
     have hmul : Nat.factorial n₂ = Nat.factorial n₁ * ∏ j ∈ Finset.range (n₂ - n₁), (n₁ + 1 + j) := by
@@ -651,7 +646,6 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
     have ht_le2 : t ≤ 2 := by omega
     have hsq4 : t ^ 2 ≤ 4 := by nlinarith
     omega
-  -- `(t * m₁ - m₂) * (t * m₁ + m₂) = t^2 - 1`
   have hid : (t * m₁) ^ 2 = m₂ ^ 2 + (t ^ 2 - 1) := by
     have hfac_succ : Nat.factorial (n₁ + 1) = (n₁ + 1) * Nat.factorial n₁ := Nat.factorial_succ n₁
     have h1 : m₂ ^ 2 = t ^ 2 * Nat.factorial n₁ + 1 := by rw [← hm₂, hfac_succ, ← hn1_sq]; ring
@@ -675,7 +669,6 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
     calc t * m₁ + m₂ = 1 * (t * m₁ + m₂) := by ring
       _ ≤ (t * m₁ - m₂) * (t * m₁ + m₂) := Nat.mul_le_mul_right _ hdiff_ge1
       _ = t ^ 2 - 1 := hprod_factor
-  -- On the other hand, `n₁ ≥ 8` and `n₁ + 1 = t^2` gives `m₁^2 > t^2`, so `m₁ > t`, hence `t * m₁ + m₂ > t^2`!
   have hm1_gt_t : t < m₁ := by
     have hfac_gt : t ^ 2 < Nat.factorial n₁ + 1 := by
       have h1 : n₁ < Nat.factorial n₁ := by
@@ -696,8 +689,9 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
     have hsq : t ^ 2 < m₁ ^ 2 := by linarith [hm₁, hfac_gt]
     exact (Nat.pow_lt_pow_iff_left (by norm_num : 2 ≠ 0)).mp hsq
   have hsum_gt : t ^ 2 < t * m₁ + m₂ := by
-    have : t * t < t * m₁ := Nat.mul_lt_mul_of_pos_left hm1_gt_t (by omega)
-    nlinarith
-  linarith
+    have h1 : t * t < t * m₁ := Nat.mul_lt_mul_of_pos_left hm1_gt_t (by omega)
+    have h2 : t ^ 2 < t * m₁ := by simpa [sq] using h1
+    omega
+  omega
 
 end GrasGreenbergBrocard
