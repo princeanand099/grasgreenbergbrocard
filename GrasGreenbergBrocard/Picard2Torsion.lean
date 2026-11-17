@@ -152,8 +152,8 @@ theorem J_n_sq_eq {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2) 
     · exact Ideal.mem_span_singleton.mpr ⟨(m : Zsqrtd (-(q_n n : ℤ))), rfl⟩
     · exact Ideal.mem_span_singleton.mpr ⟨α, rfl⟩
   · rw [Ideal.span_singleton_le_iff_mem]
-    have hα_eq : α = (t : Zsqrtd (-(q_n n : ℤ))) * α ^ 2 +
-        ((t : Zsqrtd (-(q_n n : ℤ))) + α) * (m : Zsqrtd (-(q_n n : ℤ))) ^ 2 := by
+    have hα_eq : α = (t : Zsqrtd (-(q_n n : ℤ))) * (α * α) +
+        ((t : Zsqrtd (-(q_n n : ℤ))) + α) * ((m : Zsqrtd (-(q_n n : ℤ))) * (m : Zsqrtd (-(q_n n : ℤ)))) := by
       have h1 : (1 : Zsqrtd (-(q_n n : ℤ))) = (t : Zsqrtd (-(q_n n : ℤ))) * (α + β) + α * β := by
         rw [hsum_2, hαβ]
         ext
@@ -166,11 +166,11 @@ theorem J_n_sq_eq {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2) 
           ring
       calc α = α * 1 := (mul_one α).symm
         _ = α * ((t : Zsqrtd (-(q_n n : ℤ))) * (α + β) + α * β) := by rw [← h1]
-        _ = (t : Zsqrtd (-(q_n n : ℤ))) * α ^ 2 + ((t : Zsqrtd (-(q_n n : ℤ))) + α) * (α * β) := by ring
-        _ = (t : Zsqrtd (-(q_n n : ℤ))) * α ^ 2 +
-              ((t : Zsqrtd (-(q_n n : ℤ))) + α) * (m : Zsqrtd (-(q_n n : ℤ))) ^ 2 := by rw [hαβ]
-    change α ∈ (Ideal.span {(m : Zsqrtd (-(q_n n : ℤ))), α}) ^ 2
-    conv_lhs => rw [hα_eq]
+        _ = (t : Zsqrtd (-(q_n n : ℤ))) * (α * α) + ((t : Zsqrtd (-(q_n n : ℤ))) + α) * (α * β) := by ring
+        _ = (t : Zsqrtd (-(q_n n : ℤ))) * (α * α) +
+              ((t : Zsqrtd (-(q_n n : ℤ))) + α) *
+                ((m : Zsqrtd (-(q_n n : ℤ))) * (m : Zsqrtd (-(q_n n : ℤ)))) := by
+            rw [hαβ, sq]
     have hα_in : α ∈ Ideal.span {(m : Zsqrtd (-(q_n n : ℤ))), α} :=
       Ideal.subset_span (Set.mem_insert_of_mem _ rfl)
     have hm_in : (m : Zsqrtd (-(q_n n : ℤ))) ∈ Ideal.span {(m : Zsqrtd (-(q_n n : ℤ))), α} :=
@@ -180,8 +180,12 @@ theorem J_n_sq_eq {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2) 
     have hm2_in : (m : Zsqrtd (-(q_n n : ℤ))) * (m : Zsqrtd (-(q_n n : ℤ))) ∈
         (Ideal.span {(m : Zsqrtd (-(q_n n : ℤ))), α}) ^ 2 := by
       rw [pow_two]; exact Ideal.mul_mem_mul hm_in hm_in
-    rw [pow_two, pow_two]
-    exact Ideal.add_mem _ (Ideal.mul_mem_left _ _ hα2_in) (Ideal.mul_mem_left _ _ hm2_in)
+    have hmem : (t : Zsqrtd (-(q_n n : ℤ))) * (α * α) +
+        ((t : Zsqrtd (-(q_n n : ℤ))) + α) *
+          ((m : Zsqrtd (-(q_n n : ℤ))) * (m : Zsqrtd (-(q_n n : ℤ)))) ∈
+        (Ideal.span {(m : Zsqrtd (-(q_n n : ℤ))), α}) ^ 2 :=
+      Ideal.add_mem _ (Ideal.mul_mem_left _ _ hα2_in) (Ideal.mul_mem_left _ _ hm2_in)
+    exact hα_eq.symm ▸ hmem
 
 /-- **Proposition 3.3, part 2 (`[𝔍_n] = 1 ⟺ k = 2`)**:
 For `n ≥ 4`, `n ≠ 6` with `n! + 1 = m^2`, the ideal `𝔍_n = (m, 1 + s_n √(-q_n))` is principal
@@ -272,10 +276,7 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
           linarith
         have h1 : (z.re.natAbs : ℤ) * (z.im.natAbs : ℤ) = z.re * z.im := by
           rw [← Int.abs_eq_natAbs, ← Int.abs_eq_natAbs, ← abs_mul, abs_of_pos him_pos]
-        calc (z.re.natAbs : ℝ) * (z.im.natAbs : ℝ)
-            = (((z.re.natAbs : ℤ) * (z.im.natAbs : ℤ) : ℤ) : ℝ) := by push_cast; rfl
-          _ = ((z.re * z.im : ℤ) : ℝ) := by rw [h1]
-          _ = (z.re : ℝ) * (z.im : ℝ) := by push_cast; rfl
+        simpa only [Int.cast_mul, Int.cast_natCast] using congrArg (Int.cast : ℤ → ℝ) h1
       have hsq_q : Real.sqrt (q_n n : ℝ) ^ 2 = (q_n n : ℝ) := Real.sq_sqrt (by positivity)
       have hu2_v2 : (z.re.natAbs : ℝ) ^ 2 + (q_n n : ℝ) * (z.im.natAbs : ℝ) ^ 2 = (m : ℝ) := by
         have hm_sq : (m : ℝ) ^ 2 = ((z.re.natAbs : ℝ) ^ 2 + (q_n n : ℝ) * (z.im.natAbs : ℝ) ^ 2) ^ 2 := by
@@ -283,13 +284,9 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
             have hzre : (z.re.natAbs : ℤ) ^ 2 = z.re ^ 2 := by rw [← Int.abs_eq_natAbs, sq_abs]
             have hzim : (z.im.natAbs : ℤ) ^ 2 = z.im ^ 2 := by rw [← Int.abs_eq_natAbs, sq_abs]
             have hzre_r : (z.re.natAbs : ℝ) ^ 2 = (z.re : ℝ) ^ 2 := by
-              calc (z.re.natAbs : ℝ) ^ 2 = (((z.re.natAbs : ℤ) ^ 2 : ℤ) : ℝ) := by push_cast; rfl
-                _ = ((z.re ^ 2 : ℤ) : ℝ) := by rw [hzre]
-                _ = (z.re : ℝ) ^ 2 := by push_cast; rfl
+              simpa only [Int.cast_pow, Int.cast_natCast] using congrArg (Int.cast : ℤ → ℝ) hzre
             have hzim_r : (z.im.natAbs : ℝ) ^ 2 = (z.im : ℝ) ^ 2 := by
-              calc (z.im.natAbs : ℝ) ^ 2 = (((z.im.natAbs : ℤ) ^ 2 : ℤ) : ℝ) := by push_cast; rfl
-                _ = ((z.im ^ 2 : ℤ) : ℝ) := by rw [hzim]
-                _ = (z.im : ℝ) ^ 2 := by push_cast; rfl
+              simpa only [Int.cast_pow, Int.cast_natCast] using congrArg (Int.cast : ℤ → ℝ) hzim
             rw [hzre_r, hzim_r]
             exact_mod_cast hre
           have h2 : (2 * (z.re.natAbs : ℝ) * (z.im.natAbs : ℝ)) ^ 2 = (s_n n : ℝ) ^ 2 := by
