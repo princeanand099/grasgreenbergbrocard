@@ -409,7 +409,7 @@ theorem padicValNat_factorial_eq_sum_Icc {p n R : ℕ} (hp : p.Prime)
     · by_contra h; push Not at h
       exact absurd (le_trans (Nat.pow_le_pow_right hp.pos h) (Nat.pow_log_le_self p hn0)) (not_le_of_gt hn)
   rw [padicValNat_factorial (b := R + 1) hlog]
-  congr 1; ext s; simp only [Finset.mem_Ico, Finset.mem_Icc]; omega
+  congr 1
 
 theorem Mertens_div_p_band_le :
     ∃ C : ℝ, 0 < C ∧ ∀ A B : ℝ, 3 ≤ A → A ≤ B →
