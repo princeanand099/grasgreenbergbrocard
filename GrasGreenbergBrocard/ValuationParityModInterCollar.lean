@@ -511,12 +511,14 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
                 = (b_mod m * ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
                     eExp ((m : ℝ) * ((n : ℝ) / (p : ℝ) ^ s) / (h_mod : ℝ))).re := by
                   rw [← hre]; congr 1; ring
-              _ = _ := by congr 2; ring
+              _ = _ := by
+                  rw [show (m : ℝ) * ((n : ℝ) / (p : ℝ) ^ s) / (h_mod : ℝ) =
+                    (m : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s) from by ring]
         rw [Finset.sum_congr rfl (fun p _ => h_p_eq p), Finset.sum_add_distrib]
         congr 1
         rw [Finset.sum_comm]
-        simp_rw [← Complex.re_sum]
         refine Finset.sum_congr rfl (fun m _ => ?_)
+        simp only [← Complex.re_sum]
         congr 1
         conv_lhs => rw [hD_eq, Finset.sum_biUnion (fun k₁ hk₁ k₂ hk₂ hne => hB_disj hk₁ hk₂ hne)]
         rw [Finset.mul_sum]
@@ -618,7 +620,7 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
           _ ≤ 8 * (h_mod : ℝ) * C₂e / Real.log (n : ℝ) := by
               have h_rpow : (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) = 1 / (Real.log (n : ℝ)) ^ (R + 2) := by
                 rw [Real.rpow_neg hlogn_pos.le, one_div]
-                congr 1; norm_cast; rw [Real.rpow_natCast]
+                congr 1; norm_cast
               rw [h_rpow]
               have h_pow_ge : (Real.log (n : ℝ)) ^ 2 ≤ (Real.log (n : ℝ)) ^ (R + 2) :=
                 pow_le_pow_right₀ (by linarith) (by omega)
@@ -640,9 +642,9 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
           mul_le_mul_of_nonneg_left (Finset.sum_le_sum (fun s hs => h_B_s s hs)) (by positivity)
       _ ≤ (1 + 2 * (h_mod : ℝ)) ^ R * (R : ℝ) *
             (((h_mod : ℝ) * (1 + Cm) + 8 * (h_mod : ℝ) * C₂e) / Real.log (n : ℝ)) := by
-          rw [Finset.sum_const, Nat.card_Icc, nsmul_eq_mul, show r + 1 - 1 = r from by omega]
+          rw [Finset.sum_const, Nat.card_Icc, nsmul_eq_mul, show r + 1 - 1 = r from by omega, ← mul_assoc]
           have hr_le : (r : ℝ) ≤ (R : ℝ) := by exact_mod_cast hrR
-          gcongr; positivity
+          exact mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left hr_le (by positivity)) (by positivity)
       _ = (1 + 2 * (h_mod : ℝ)) ^ R * (R : ℝ) * ((h_mod : ℝ) * (1 + Cm) + 8 * (h_mod : ℝ) * C₂e) / Real.log (n : ℝ) := by ring
   have h_main_bd : ‖∑ k ∈ Finset.range (K + 1), ∑ p ∈ B_k k,
         (∏ s ∈ Finset.Icc 1 r, Psi_mod ((n : ℝ) / (p : ℝ) ^ s)) *
