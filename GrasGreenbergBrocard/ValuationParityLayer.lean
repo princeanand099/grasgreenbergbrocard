@@ -53,13 +53,8 @@ theorem padicValNat_factorial_eq_div_of_lt_sq {p n : ℕ} (hp : p.Prime) (hn : n
         simp
       rw [hdig]
       simp only [List.sum_cons, List.sum_nil, add_zero]
-      have hdm : p * (n / p) + n % p = n := Nat.div_add_mod n p
-      have hle1 : n % p + n / p ≤ n := by
-        have : 1 * (n / p) ≤ p * (n / p) := Nat.mul_le_mul_right _ (by omega)
-        omega
-      zify [hle1, (by omega : 1 ≤ p)]
-      have hdmZ : (p : ℤ) * ((n / p : ℕ) : ℤ) + ((n % p : ℕ) : ℤ) = (n : ℤ) := by exact_mod_cast hdm
-      linarith
+      have hdm := Nat.div_add_mod n p
+      omega
   rw [hsum_eq] at hleg
   exact Nat.eq_of_mul_eq_mul_left hp1 hleg
 
@@ -111,34 +106,28 @@ theorem harmonicLayer_odd_layer {n r p : ℕ} (hr1 : 1 ≤ r) (hr2 : 2 * r - 1 �
     exact_mod_cast hpn
   have hodd : ¬ 2 ∣ padicValNat p (Nat.factorial n) := by rw [hv]; omega
   have hp_mem : p ∈ Podd n := Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hple⟩, hp, hodd⟩
-  have hq_ne : q_n n ≠ 0 := by
-    unfold q_n Podd
-    exact Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
-  have hs_ne : s_n n ≠ 0 := by
-    unfold s_n
-    exact Finset.prod_ne_zero_iff.mpr (fun x hx => pow_ne_zero _ (Finset.mem_filter.mp hx).2.ne_zero)
+  haveI : Fact p.Prime := ⟨hp⟩
   have hq_val : padicValNat p (q_n n) = 1 := by
-    rw [← Nat.factorization_def (q_n n) hp]
     unfold q_n
-    rw [Nat.factorization_prod (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)]
-    simp only [Finset.sum_apply']
+    have hprod_ne : ∏ x ∈ Podd n, x ≠ 0 :=
+      Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
+    rw [padicValNat_finset_prod _ hprod_ne]
     rw [Finset.sum_eq_single p]
-    · exact hp.factorization_self
+    · exact padicValNat.self hp.one_lt
     · intro x hx hne
       have hx_prime : x.Prime := (Finset.mem_filter.mp hx).2.1
-      exact Nat.factorization_eq_zero_of_not_dvd
+      exact padicValNat.eq_zero_of_not_dvd
         (fun hdvd => hne ((Nat.prime_dvd_prime_iff_eq hp hx_prime).mp hdvd).symm)
     · intro hnot; exact absurd hp_mem hnot
   have hs_val : padicValNat p (s_n n) = r - 1 := by
     have hfac := factorial_eq_q_mul_s_sq n
-    have hfv : (Nat.factorial n).factorization p = padicValNat p (Nat.factorial n) :=
-      Nat.factorization_def _ hp
-    have hfq : (q_n n).factorization p = padicValNat p (q_n n) := Nat.factorization_def _ hp
-    have hfs : (s_n n).factorization p = padicValNat p (s_n n) := Nat.factorization_def _ hp
-    have hval := congrArg (fun m : ℕ => m.factorization p) hfac
-    rw [Nat.factorization_mul hq_ne (pow_ne_zero 2 hs_ne), Nat.factorization_pow,
-      Finsupp.add_apply, Finsupp.coe_smul, Pi.smul_apply, smul_eq_mul,
-      hfv, hfq, hfs, hv, hq_val] at hval
+    have hq_ne : q_n n ≠ 0 :=
+      Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
+    have hs_ne : s_n n ≠ 0 := by
+      unfold s_n
+      exact Finset.prod_ne_zero_iff.mpr (fun x hx => pow_ne_zero _ (Finset.mem_filter.mp hx).2.ne_zero)
+    have hval := congrArg (padicValNat p) hfac
+    rw [padicValNat.mul hq_ne (pow_ne_zero 2 hs_ne), padicValNat.pow 2 hs_ne, hv, hq_val] at hval
     omega
   exact ⟨hp_mem, hq_val, hs_val⟩
 
@@ -155,35 +144,29 @@ theorem harmonicLayer_even_layer {n r p : ℕ} (hr1 : 1 ≤ r) (hr2 : 2 * r ≤ 
     exact_mod_cast hpn
   have heven : 2 ∣ padicValNat p (Nat.factorial n) := by rw [hv]; exact ⟨r, rfl⟩
   have hp_mem : p ∈ Peven n := Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hple⟩, hp, heven⟩
-  have hq_ne : q_n n ≠ 0 := by
-    unfold q_n Podd
-    exact Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
-  have hs_ne : s_n n ≠ 0 := by
-    unfold s_n
-    exact Finset.prod_ne_zero_iff.mpr (fun x hx => pow_ne_zero _ (Finset.mem_filter.mp hx).2.ne_zero)
+  haveI : Fact p.Prime := ⟨hp⟩
   have hq_val : padicValNat p (q_n n) = 0 := by
-    rw [← Nat.factorization_def (q_n n) hp]
     unfold q_n
-    rw [Nat.factorization_prod (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)]
-    simp only [Finset.sum_apply']
+    have hprod_ne : ∏ x ∈ Podd n, x ≠ 0 :=
+      Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
+    rw [padicValNat_finset_prod _ hprod_ne]
     refine Finset.sum_eq_zero (fun x hx => ?_)
     have hx_prime : x.Prime := (Finset.mem_filter.mp hx).2.1
     have hx_odd : ¬ 2 ∣ padicValNat x (Nat.factorial n) := (Finset.mem_filter.mp hx).2.2
     have hne : p ≠ x := by
       rintro rfl
       exact hx_odd heven
-    exact Nat.factorization_eq_zero_of_not_dvd
+    exact padicValNat.eq_zero_of_not_dvd
       (fun hdvd => hne ((Nat.prime_dvd_prime_iff_eq hp hx_prime).mp hdvd))
   have hs_val : padicValNat p (s_n n) = r := by
     have hfac := factorial_eq_q_mul_s_sq n
-    have hfv : (Nat.factorial n).factorization p = padicValNat p (Nat.factorial n) :=
-      Nat.factorization_def _ hp
-    have hfq : (q_n n).factorization p = padicValNat p (q_n n) := Nat.factorization_def _ hp
-    have hfs : (s_n n).factorization p = padicValNat p (s_n n) := Nat.factorization_def _ hp
-    have hval := congrArg (fun m : ℕ => m.factorization p) hfac
-    rw [Nat.factorization_mul hq_ne (pow_ne_zero 2 hs_ne), Nat.factorization_pow,
-      Finsupp.add_apply, Finsupp.coe_smul, Pi.smul_apply, smul_eq_mul,
-      hfv, hfq, hfs, hv, hq_val] at hval
+    have hq_ne : q_n n ≠ 0 :=
+      Finset.prod_ne_zero_iff.mpr (fun x hx => (Finset.mem_filter.mp hx).2.1.ne_zero)
+    have hs_ne : s_n n ≠ 0 := by
+      unfold s_n
+      exact Finset.prod_ne_zero_iff.mpr (fun x hx => pow_ne_zero _ (Finset.mem_filter.mp hx).2.ne_zero)
+    have hval := congrArg (padicValNat p) hfac
+    rw [padicValNat.mul hq_ne (pow_ne_zero 2 hs_ne), padicValNat.pow 2 hs_ne, hv, hq_val] at hval
     omega
   exact ⟨hp_mem, hq_val, hs_val⟩
 
@@ -218,14 +201,15 @@ theorem alt_harmonic_eq_tail_harmonic (N : ℕ) :
       rw [show 2 * (m + 1) = 2 * m + 2 from by omega]
       linarith
     rw [h_lhs_rhs]
-    push_cast
-    have hm1 : (m : ℝ) + 1 ≠ 0 := by positivity
-    have hm2 : 2 * ((m : ℝ) + 1) - 1 ≠ 0 := by positivity
-    have hm3 : 2 * ((m : ℝ) + 1) ≠ 0 := by positivity
-    have hm21 : 2 * (m : ℝ) + 1 ≠ 0 := by positivity
-    have hm22 : 2 * (m : ℝ) + 2 ≠ 0 := by positivity
-    field_simp [hm1, hm2, hm3, hm21, hm22]
-    ring
+    have hm1 : ((m + 1 : ℕ) : ℝ) ≠ 0 := by positivity
+    have hm2 : (2 * ((m + 1 : ℕ) : ℝ) - 1) ≠ 0 := by
+      have : (1 : ℝ) ≤ ((m + 1 : ℕ) : ℝ) := by exact_mod_cast (by omega : 1 ≤ m + 1)
+      linarith
+    have hm3 : (2 * ((m + 1 : ℕ) : ℝ)) ≠ 0 := by positivity
+    have h21 : ((2 * m + 1 : ℕ) : ℝ) = 2 * ((m + 1 : ℕ) : ℝ) - 1 := by push_cast; ring
+    have h22 : ((2 * m + 2 : ℕ) : ℝ) = 2 * ((m + 1 : ℕ) : ℝ) := by push_cast; ring
+    rw [h21, h22]
+    field_simp [hm1, hm2, hm3]
 
 /-- Quantitative alternating harmonic bound: `|∑_{r=1}^N (1/(2r-1) - 1/(2r)) - log 2| ≤ 1 / (2N)`. -/
 theorem alt_harmonic_sum_diff_log_two {N : ℕ} (hN : 1 ≤ N) :
@@ -273,7 +257,8 @@ theorem alt_harmonic_sum_diff_log_two {N : ℕ} (hN : 1 ≤ N) :
     have h1 : Real.log ((k : ℝ) / ((k : ℝ) + 1)) ≤ (k : ℝ) / ((k : ℝ) + 1) - 1 :=
       Real.log_le_sub_one_of_pos (by positivity)
     rw [Real.log_div (by positivity) (by positivity)] at h1
-    have h2 : (k : ℝ) / ((k : ℝ) + 1) - 1 = -(1 / ((k : ℝ) + 1)) := by field_simp; ring
+    have heq : (k : ℝ) / ((k : ℝ) + 1) - 1 = -(1 / ((k : ℝ) + 1)) := by
+      field_simp [by positivity : (k : ℝ) + 1 ≠ 0]; ring
     linarith
   have hhi : Real.log 2 ≤ ∑ k ∈ Finset.Icc (N + 1) (2 * N), (1 : ℝ) / (k : ℝ) + 1 / (2 * (N : ℝ)) := by
     rw [← htel]
@@ -380,16 +365,16 @@ theorem log_q_n_eq_sum_log (n : ℕ) :
     exact_mod_cast hprime.ne_zero)
 
 theorem Podd_upper_partition (n K : ℕ) (hn : 4 ≤ n) (hK : 1 ≤ K) (hKsq : 2 * K + 1 ≤ Nat.sqrt n) :
-    (∑ p ∈ (Podd n).filter (fun p => (n : ℝ) / (2 * (K : ℝ) + 1) < (p : ℝ)), Real.log (p : ℝ) =
+    (∑ p ∈ (Podd n).filter (fun p : ℕ => (n : ℝ) / (2 * (K : ℝ) + 1) < (p : ℝ)), Real.log (p : ℝ) =
       ∑ r ∈ Finset.Icc 1 K,
         (thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - thetaPrime ((n : ℝ) / (2 * (r : ℝ))))) ∧
-    ((((Podd n).filter (fun p => (n : ℝ) / (2 * (K : ℝ) + 1) < (p : ℝ))).card : ℝ) =
+    ((((Podd n).filter (fun p : ℕ => (n : ℝ) / (2 * (K : ℝ) + 1) < (p : ℝ))).card : ℝ) =
       ∑ r ∈ Finset.Icc 1 K,
         (piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - piPrime ((n : ℝ) / (2 * (r : ℝ))))) := by
   let L : ℕ → Finset ℕ := fun r =>
     ((Finset.Icc 2 (Nat.floor ((n : ℝ) / (2 * (r : ℝ) - 1)))).filter Nat.Prime).filter
-      (fun p => (n : ℝ) / (2 * (r : ℝ)) < (p : ℝ))
-  have hL_part : (Podd n).filter (fun p => (n : ℝ) / (2 * (K : ℝ) + 1) < (p : ℝ)) =
+      (fun p : ℕ => (n : ℝ) / (2 * (r : ℝ)) < (p : ℝ))
+  have hL_part : (Podd n).filter (fun p : ℕ => (n : ℝ) / (2 * (K : ℝ) + 1) < (p : ℝ)) =
       (Finset.Icc 1 K).biUnion L := by
     ext p
     simp only [Finset.mem_filter, Finset.mem_biUnion, Finset.mem_Icc, L]
@@ -468,6 +453,7 @@ theorem Podd_upper_partition (n K : ℕ) (hn : 4 ≤ n) (hK : 1 ≤ K) (hKsq : 2
       rw [hv, hdiv_eq]; omega
   have hdisj : (Finset.Icc 1 K : Set ℕ).PairwiseDisjoint L := by
     intro r₁ hr₁ r₂ hr₂ hne
+    dsimp only [Function.onFun]
     rw [Finset.disjoint_left]
     intro p hp1 hp2
     simp only [Finset.mem_coe, Finset.mem_Icc] at hr₁ hr₂
@@ -526,6 +512,7 @@ theorem Podd_upper_partition (n K : ℕ) (hn : 4 ≤ n) (hK : 1 ≤ K) (hKsq : 2
       (Finset.Icc 2 (Nat.floor ((n : ℝ) / (2 * (r : ℝ) - 1)))).filter Nat.Prime := by
     intro r hr p hp
     have hr1 : 1 ≤ r := (Finset.mem_Icc.mp hr).1
+    have hr1R : (1 : ℝ) ≤ (r : ℝ) := by exact_mod_cast hr1
     have hr_pos : (0 : ℝ) < (r : ℝ) := by exact_mod_cast hr1
     simp only [Finset.mem_filter, Finset.mem_Icc] at hp ⊢
     refine ⟨⟨hp.1.1, le_trans hp.1.2 (Nat.floor_mono ?_)⟩, hp.2⟩
@@ -558,9 +545,8 @@ theorem log_q_n_asymptotic :
     have h1 : (fun t : ℝ => Real.sqrt t / t) =ᶠ[atTop] (fun t : ℝ => t ^ (-(1 / 2 : ℝ))) := by
       filter_upwards [eventually_ge_atTop (1 : ℝ)] with t ht
       have ht_pos : 0 < t := by linarith
-      rw [Real.sqrt_eq_rpow, Real.rpow_neg ht_pos.le]
-      calc t ^ (1 / 2 : ℝ) / t = t ^ (1 / 2 : ℝ) * t ^ (-1 : ℝ) := by
-            rw [div_eq_mul_inv, Real.rpow_neg_one]
+      calc Real.sqrt t / t = t ^ (1 / 2 : ℝ) * t ^ (-1 : ℝ) := by
+            rw [Real.sqrt_eq_rpow, div_eq_mul_inv, Real.rpow_neg_one]
         _ = t ^ ((1 / 2 : ℝ) + (-1 : ℝ)) := (Real.rpow_add ht_pos _ _).symm
         _ = t ^ (-(1 / 2 : ℝ)) := by norm_num
     exact (tendsto_rpow_neg_atTop (by norm_num : (0 : ℝ) < 1 / 2)).congr' h1.symm
@@ -602,12 +588,13 @@ theorem log_q_n_asymptotic :
             (fun t : ℝ => (1 / (c₁ * Real.sqrt (3 / 4 : ℝ) - c₀) ^ 2) *
               (((c₁ * Real.sqrt (3 / 4 : ℝ) - c₀) * t) ^ 2 *
                 Real.exp (-((c₁ * Real.sqrt (3 / 4 : ℝ) - c₀) * t)))) := by
-          ext t; field_simp [hdiff_pos.ne']; ring
+          ext t; field_simp [hdiff_pos.ne']
         rw [heq]
-        simpa using hcomp.const_mul _
+        simpa using hcomp.const_mul (1 / (c₁ * Real.sqrt (3 / 4 : ℝ) - c₀) ^ 2)
       have h_one : Tendsto (fun t : ℝ => Real.exp (-(c₁ * Real.sqrt (3 / 4 : ℝ) - c₀) * t))
-          atTop (nhds 0) :=
-        Real.tendsto_exp_neg_atTop_nhds_zero.comp (tendsto_id.const_mul_atTop hdiff_pos)
+          atTop (nhds 0) := by
+        simpa [neg_mul] using
+          Real.tendsto_exp_neg_atTop_nhds_zero.comp (tendsto_id.const_mul_atTop hdiff_pos)
       have heq2 : (fun t : ℝ => (t ^ 2 + 1) * Real.exp (-(c₁ * Real.sqrt (3 / 4 : ℝ) - c₀) * t)) =
           (fun t : ℝ => t ^ 2 * Real.exp (-(c₁ * Real.sqrt (3 / 4 : ℝ) - c₀) * t) +
             Real.exp (-(c₁ * Real.sqrt (3 / 4 : ℝ) - c₀) * t)) := by
@@ -644,8 +631,8 @@ theorem log_q_n_asymptotic :
   have hJ_le_rpow : (J : ℝ) ≤ (n : ℝ) ^ (1 / 4 : ℝ) := by
     calc (J : ℝ) ≤ Real.exp ((c₁ / 2) * Real.sqrt (Real.log (n : ℝ))) := Nat.floor_le (by positivity)
       _ ≤ Real.exp ((1 / 4 : ℝ) * Real.log (n : ℝ)) := Real.exp_le_exp.mpr hsq_sm
-      _ = (n : ℝ) ^ (1 / 4 : ℝ) := by
-          rw [← Real.rpow_def_of_pos hn_pos, mul_comm]
+      _ = Real.exp (Real.log (n : ℝ) * (1 / 4 : ℝ)) := by ring_nf
+      _ = (n : ℝ) ^ (1 / 4 : ℝ) := (Real.rpow_def_of_pos hn_pos (1 / 4 : ℝ)).symm
   have h2K1_le_sqrt : 2 * K + 1 ≤ Nat.sqrt n := by
     have h2K1_le : (2 * K + 1 : ℝ) ≤ (n : ℝ) ^ (1 / 4 : ℝ) + 1 := by
       have : (2 * K : ℝ) ≤ (J : ℝ) := by exact_mod_cast (by omega : 2 * K ≤ J)
@@ -670,8 +657,8 @@ theorem log_q_n_asymptotic :
     omega
   have hpart := (Podd_upper_partition n K (by omega) hK_ge1 h2K1_le_sqrt).1
   have hsplit : (Podd n) =
-      (Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)) ∪
-      (Podd n).filter (fun p => (n : ℝ) / (2 * (K : ℝ) + 1) < (p : ℝ)) := by
+      (Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)) ∪
+      (Podd n).filter (fun p : ℕ => (n : ℝ) / (2 * (K : ℝ) + 1) < (p : ℝ)) := by
     ext p
     simp only [Finset.mem_union, Finset.mem_filter]
     constructor
@@ -681,18 +668,18 @@ theorem log_q_n_asymptotic :
       · right; exact ⟨hp, hgt⟩
     · rintro (⟨hp, _⟩ | ⟨hp, _⟩) <;> exact hp
   have hdisj : Disjoint
-      ((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)))
-      ((Podd n).filter (fun p => (n : ℝ) / (2 * (K : ℝ) + 1) < (p : ℝ))) := by
+      ((Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)))
+      ((Podd n).filter (fun p : ℕ => (n : ℝ) / (2 * (K : ℝ) + 1) < (p : ℝ))) := by
     rw [Finset.disjoint_left]
     intro p hp1 hp2
     simp only [Finset.mem_filter] at hp1 hp2
     linarith
   have hlog_eq := log_q_n_eq_sum_log n
   rw [hsplit, Finset.sum_union hdisj, hpart] at hlog_eq
-  have hlo_bound : 0 ≤ ∑ p ∈ (Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ) ∧
-      ∑ p ∈ (Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ) ≤
+  have hlo_bound : 0 ≤ ∑ p ∈ (Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ) ∧
+      ∑ p ∈ (Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ) ≤
         thetaPrime ((n : ℝ) / (2 * (K : ℝ) + 1)) := by
-    have hsub : (Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)) ⊆
+    have hsub : (Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)) ⊆
         (Finset.Icc 2 (Nat.floor ((n : ℝ) / (2 * (K : ℝ) + 1)))).filter Nat.Prime := by
       intro p hp
       simp only [Finset.mem_filter, Finset.mem_Icc] at hp ⊢
@@ -861,31 +848,6 @@ theorem log_q_n_asymptotic :
           apply mul_le_mul_of_nonneg_right _ (by positivity)
           exact mul_le_mul_of_nonneg_left hle_sm (by positivity)
       _ = 2 * |C₁| * (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := by ring
-  have halt_err : |(n : ℝ) * (∑ r ∈ Finset.Icc 1 K, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2)| ≤
-      2 * (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := by
-    rw [abs_mul, abs_of_pos hn_pos]
-    have hK_exp : (1 / 4 : ℝ) * Real.exp ((c₁ / 2) * Real.sqrt (Real.log (n : ℝ))) ≤ 2 * (K : ℝ) := by
-      have hJ1 : Real.exp ((c₁ / 2) * Real.sqrt (Real.log (n : ℝ))) ≤ (J : ℝ) + 1 := by
-        linarith [Nat.lt_floor_add_one (Real.exp ((c₁ / 2) * Real.sqrt (Real.log (n : ℝ))))]
-      have hJK : (J : ℝ) ≤ 2 * (K : ℝ) + 1 := by exact_mod_cast (by omega : J ≤ 2 * K + 1)
-      linarith [hexp4]
-    calc (n : ℝ) * |∑ r ∈ Finset.Icc 1 K, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2|
-        ≤ (n : ℝ) * (1 / (2 * (K : ℝ))) :=
-          mul_le_mul_of_nonneg_left (alt_harmonic_sum_diff_log_two hK_ge1) hn_pos.le
-      _ ≤ (n : ℝ) * (1 / ((1 / 4 : ℝ) * Real.exp ((c₁ / 2) * Real.sqrt (Real.log (n : ℝ))))) := by
-          apply mul_le_mul_of_nonneg_left _ hn_pos.le
-          exact one_div_le_one_div_of_le (by positivity) hK_exp
-      _ = 4 * (n : ℝ) * Real.exp (-(c₁ / 2) * Real.sqrt (Real.log (n : ℝ))) := by
-          rw [Real.exp_neg]; field_simp; ring
-      _ ≤ 4 * (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := by
-          apply mul_le_mul_of_nonneg_left hc0_le (by positivity)
-      _ = 4 * (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := rfl
-  -- Note: 4 instead of 2 in M: M = Cθ * 4 + 2 * |C₁| + 4! Let's adjust via 4 * |C₁| ≥ 2 * |C₁| and check 4 vs 2:
-  -- Wait: M := Cθ * 4 + 4 * |C₁| + 2 had +2, whereas halt_err has 4!
-  -- Wait: hK_exp can be ≥ 1/2 * exp because J ≥ 4 => 2*K ≥ J - 1 ≥ (3/4)*J ≥ (3/4)*(4/5)*exp ≥ 1/2 * exp!
-  -- Let's check: J + 1 > exp ≥ 4 => J ≥ 4, 2*K ≥ J - 1. Since exp - 1 ≤ J ≤ 2*K + 1, 2*K ≥ exp - 2 ≥ (1/2)*exp (for exp ≥ 4)!
-  -- YES! 2*K ≥ exp - 2 ≥ (1/2) * exp for exp ≥ 4! Then 1/(2K) ≤ 2 * exp(-...)!
-  -- Let's prove `hK_exp_half : (1/2) * exp ≤ 2 * K`!
   have hK_exp_half : (1 / 2 : ℝ) * Real.exp ((c₁ / 2) * Real.sqrt (Real.log (n : ℝ))) ≤ 2 * (K : ℝ) := by
     have hJ1 : Real.exp ((c₁ / 2) * Real.sqrt (Real.log (n : ℝ))) ≤ (J : ℝ) + 1 := by
       linarith [Nat.lt_floor_add_one (Real.exp ((c₁ / 2) * Real.sqrt (Real.log (n : ℝ))))]
@@ -905,28 +867,28 @@ theorem log_q_n_asymptotic :
       _ ≤ 2 * (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := by
           apply mul_le_mul_of_nonneg_left hc0_le (by positivity)
   rw [Real.norm_eq_abs, Real.norm_of_nonneg (by positivity), hlog_eq]
-  have hlo_abs : |∑ p ∈ (Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ)| ≤
+  have hlo_abs : |∑ p ∈ (Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ)| ≤
       Cθ * 4 * (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := by
     rw [abs_of_nonneg hlo_bound.1]
     exact le_trans hlo_bound.2 hlo_err
-  have h_id : (∑ p ∈ (Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ) +
+  have h_id : (∑ p ∈ (Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ) +
         ∑ r ∈ Finset.Icc 1 K, (thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - thetaPrime ((n : ℝ) / (2 * (r : ℝ))))) -
       Real.log 2 * (n : ℝ) =
-      (∑ p ∈ (Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ)) +
+      (∑ p ∈ (Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ)) +
       (∑ r ∈ Finset.Icc 1 K, (thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - thetaPrime ((n : ℝ) / (2 * (r : ℝ)))) -
         (n : ℝ) * ∑ r ∈ Finset.Icc 1 K, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ)))) +
       (n : ℝ) * (∑ r ∈ Finset.Icc 1 K, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2) := by ring
   rw [h_id]
   have htri1 := abs_add_le
-    ((∑ p ∈ (Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ)) +
+    ((∑ p ∈ (Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ)) +
       (∑ r ∈ Finset.Icc 1 K, (thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - thetaPrime ((n : ℝ) / (2 * (r : ℝ)))) -
         (n : ℝ) * ∑ r ∈ Finset.Icc 1 K, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ)))))
     ((n : ℝ) * (∑ r ∈ Finset.Icc 1 K, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2))
   have htri2 := abs_add_le
-    (∑ p ∈ (Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ))
+    (∑ p ∈ (Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ))
     (∑ r ∈ Finset.Icc 1 K, (thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - thetaPrime ((n : ℝ) / (2 * (r : ℝ)))) -
       (n : ℝ) * ∑ r ∈ Finset.Icc 1 K, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))))
-  calc |((∑ p ∈ (Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ)) +
+  calc |((∑ p ∈ (Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ)) +
           (∑ r ∈ Finset.Icc 1 K, (thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - thetaPrime ((n : ℝ) / (2 * (r : ℝ)))) -
             (n : ℝ) * ∑ r ∈ Finset.Icc 1 K, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))))) +
           (n : ℝ) * (∑ r ∈ Finset.Icc 1 K, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2)|
@@ -952,30 +914,32 @@ private theorem piPrime_div_asymptotic (d : ℕ) (hd : 1 ≤ d) :
       simpa using tendsto_const_nhds.sub h0
     have hev : (fun n : ℕ => Real.log ((n : ℝ) / (d : ℝ)) / Real.log (n : ℝ)) =ᶠ[atTop]
         (fun n : ℕ => 1 - Real.log (d : ℝ) / Real.log (n : ℝ)) := by
-      filter_upwards [(tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1)] with n hn
-      have hn_pos : (0 : ℝ) < (n : ℝ) := by
-        by_contra hle; push Not at hle
-        have : Real.log (n : ℝ) = 0 := Real.log_of_nonpos hle
-        linarith
+      filter_upwards [(tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1),
+        Filter.eventually_ge_atTop 2] with n hln hn2
+      dsimp only [Function.comp_def] at hln
+      have hn_pos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast (by omega : 0 < n)
+      have hln0 : Real.log (n : ℝ) ≠ 0 := by linarith
       rw [Real.log_div hn_pos.ne' hd_pos.ne']
-      field_simp [by linarith : Real.log (n : ℝ) ≠ 0]
+      field_simp [hln0]
     have hinv := (hlog.congr' hev.symm).inv₀ (by norm_num)
-    simpa using hinv
+    simpa [inv_div] using hinv
   have h2 : (fun n : ℕ => ((n : ℝ) / (d : ℝ)) / Real.log ((n : ℝ) / (d : ℝ)))
       =O[atTop] (fun n : ℕ => (n : ℝ) / Real.log (n : ℝ)) := by
     refine Asymptotics.IsBigO.of_bound (2 / (d : ℝ)) ?_
     filter_upwards [h_ratio.eventually (ge_mem_nhds (by norm_num : (1 : ℝ) < 2)),
       (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1),
       Filter.eventually_ge_atTop (max 2 (2 * d))] with n hr hln hn
+    dsimp only [Function.comp_def] at hln
     have hn_pos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast (by omega : 0 < n)
     have hnd_ge : (2 : ℝ) ≤ (n : ℝ) / (d : ℝ) := by
       rw [le_div_iff₀ hd_pos]
       exact_mod_cast (by omega : 2 * d ≤ n)
     have hlog_nd_pos : 0 < Real.log ((n : ℝ) / (d : ℝ)) := Real.log_pos (by linarith)
+    have hln0 : Real.log (n : ℝ) ≠ 0 := by linarith
     rw [Real.norm_of_nonneg (by positivity), Real.norm_of_nonneg (by positivity)]
     calc ((n : ℝ) / (d : ℝ)) / Real.log ((n : ℝ) / (d : ℝ))
         = (1 / (d : ℝ)) * (Real.log (n : ℝ) / Real.log ((n : ℝ) / (d : ℝ))) * ((n : ℝ) / Real.log (n : ℝ)) := by
-          field_simp [hd_pos.ne', hlog_nd_pos.ne', (by linarith : Real.log (n : ℝ) ≠ 0)]
+          field_simp [hd_pos.ne', hlog_nd_pos.ne', hln0]
       _ ≤ (1 / (d : ℝ)) * 2 * ((n : ℝ) / Real.log (n : ℝ)) := by
           apply mul_le_mul_of_nonneg_right _ (by positivity)
           exact mul_le_mul_of_nonneg_left hr (by positivity)
@@ -993,14 +957,16 @@ private theorem piPrime_div_asymptotic (d : ℕ) (hd : 1 ≤ d) :
     filter_upwards [h_diff0.eventually (Metric.ball_mem_nhds 0 hc),
       (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1),
       Filter.eventually_ge_atTop (max 2 (2 * d))] with n hn hln hn_ge
+    dsimp only [Function.comp_def] at hln
     have hn_pos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast (by omega : 0 < n)
     have hnd_ge : (2 : ℝ) ≤ (n : ℝ) / (d : ℝ) := by
       rw [le_div_iff₀ hd_pos]; exact_mod_cast (by omega : 2 * d ≤ n)
     have hlog_nd_pos : 0 < Real.log ((n : ℝ) / (d : ℝ)) := Real.log_pos (by linarith)
+    have hln0 : Real.log (n : ℝ) ≠ 0 := by linarith
     rw [Metric.mem_ball, dist_zero_right, Real.norm_eq_abs] at hn
     have heq : ((n : ℝ) / (d : ℝ)) / Real.log ((n : ℝ) / (d : ℝ)) - ((1 : ℝ) / (d : ℝ)) * ((n : ℝ) / Real.log (n : ℝ)) =
         ((1 / (d : ℝ)) * (Real.log (n : ℝ) / Real.log ((n : ℝ) / (d : ℝ)) - 1)) * ((n : ℝ) / Real.log (n : ℝ)) := by
-      field_simp [hd_pos.ne', hlog_nd_pos.ne', (by linarith : Real.log (n : ℝ) ≠ 0)]
+      field_simp [hd_pos.ne', hlog_nd_pos.ne', hln0]
     rw [heq, Real.norm_mul, Real.norm_eq_abs, Real.norm_of_nonneg (by positivity)]
     exact mul_le_mul_of_nonneg_right hn.le (by positivity)
   simpa [sub_add_sub_cancel] using h1'.add h3
@@ -1016,15 +982,17 @@ theorem card_Podd_asymptotic :
       1 / (2 * (M : ℝ)) ≤ ε / 8 ∧ Cpi / (2 * (M : ℝ) + 1) ≤ ε / 8 := by
     obtain ⟨M0, hM0⟩ := exists_nat_gt (max (4 / ε) (8 * Cpi / ε))
     refine ⟨max M0 1, le_max_right _ _, ?_, ?_⟩
-    · have hM_gt : 4 / ε < (max M0 1 : ℝ) :=
-        lt_of_lt_of_le (lt_of_le_of_lt (le_max_left _ _) hM0) (by exact_mod_cast le_max_left M0 1)
+    · have hM_le : (M0 : ℝ) ≤ ((max M0 1 : ℕ) : ℝ) := by exact_mod_cast le_max_left M0 1
+      have hM_gt : 4 / ε < ((max M0 1 : ℕ) : ℝ) :=
+        lt_of_lt_of_le (lt_of_le_of_lt (le_max_left _ _) hM0) hM_le
       rw [div_le_div_iff₀ (by positivity) (by norm_num)]
-      have : 4 < ε * (max M0 1 : ℝ) := (div_lt_iff₀ hε).mp hM_gt
+      have : 4 < ε * ((max M0 1 : ℕ) : ℝ) := (div_lt_iff₀ hε).mp hM_gt
       linarith
-    · have hM_gt : 8 * Cpi / ε < (max M0 1 : ℝ) :=
-        lt_of_lt_of_le (lt_of_le_of_lt (le_max_right _ _) hM0) (by exact_mod_cast le_max_left M0 1)
+    · have hM_le : (M0 : ℝ) ≤ ((max M0 1 : ℕ) : ℝ) := by exact_mod_cast le_max_left M0 1
+      have hM_gt : 8 * Cpi / ε < ((max M0 1 : ℕ) : ℝ) :=
+        lt_of_lt_of_le (lt_of_le_of_lt (le_max_right _ _) hM0) hM_le
       rw [div_le_div_iff₀ (by positivity) (by norm_num)]
-      have : 8 * Cpi < ε * (max M0 1 : ℝ) := (div_lt_iff₀ hε).mp hM_gt
+      have : 8 * Cpi < ε * ((max M0 1 : ℕ) : ℝ) := (div_lt_iff₀ hε).mp hM_gt
       linarith
   let η : ℝ := min (ε / (8 * (M : ℝ))) (min (ε / (8 * Real.log 2 + 1)) (1 / 4))
   have hη_pos : 0 < η := by positivity
@@ -1040,6 +1008,7 @@ theorem card_Podd_asymptotic :
     have h2r1 := (Asymptotics.isLittleO_iff.mp (piPrime_div_asymptotic (2 * r - 1) (by omega))) hη_pos
     have h2r := (Asymptotics.isLittleO_iff.mp (piPrime_div_asymptotic (2 * r) (by omega))) hη_pos
     filter_upwards [h2r1, h2r, (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1)] with n ha hb hln
+    dsimp only [Function.comp_def] at hln
     have hn_pos : 0 ≤ (n : ℝ) / Real.log (n : ℝ) := by positivity
     rw [Real.norm_of_nonneg hn_pos] at ha hb
     have hcast1 : ((2 * r - 1 : ℕ) : ℝ) = 2 * (r : ℝ) - 1 := by
@@ -1054,29 +1023,33 @@ theorem card_Podd_asymptotic :
         simpa using tendsto_const_nhds.sub (tendsto_const_nhds.div_atTop (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop))
       have hev : (fun n : ℕ => Real.log ((n : ℝ) / (2 * (M : ℝ) + 1)) / Real.log (n : ℝ)) =ᶠ[atTop]
           (fun n : ℕ => 1 - Real.log (2 * (M : ℝ) + 1) / Real.log (n : ℝ)) := by
-        filter_upwards [(tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1)] with n hln
-        have hn_pos : (0 : ℝ) < (n : ℝ) := by
-          by_contra hle; push Not at hle; rw [Real.log_of_nonpos hle] at hln; linarith
+        filter_upwards [(tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1),
+          Filter.eventually_ge_atTop 2] with n hln hn2
+        dsimp only [Function.comp_def] at hln
+        have hn_pos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast (by omega : 0 < n)
+        have hln0 : Real.log (n : ℝ) ≠ 0 := by linarith
         rw [Real.log_div hn_pos.ne' (by positivity)]
-        field_simp [by linarith : Real.log (n : ℝ) ≠ 0]
+        field_simp [hln0]
       exact h0.congr' hev.symm
     filter_upwards [ht.eventually (ge_mem_nhds (by norm_num : (1 / 2 : ℝ) < 1)),
       (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1)] with n hr hln
+    dsimp only [Function.comp_def] at hln
     rw [le_div_iff₀ (by linarith)] at hr
     linarith
   filter_upwards [Filter.eventually_ge_atTop ((2 * M + 1) ^ 2 + 4), h_pnt1, h_pnt_all, hlog_ratio_lo,
     (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1)] with
     n hn hpnt1 hpnt_all hlog_rat hln
+  dsimp only [Function.comp_def] at hln
   have hn_pos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast (by omega : 0 < n)
   have h2M1_sq : 2 * M + 1 ≤ Nat.sqrt n := by
     rw [Nat.le_sqrt]; nlinarith
   have hpart := (Podd_upper_partition n M (by omega) hM1 h2M1_sq).2
   have hsplit : (Podd n).card =
-      ((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card +
-      ((Podd n).filter (fun p => (n : ℝ) / (2 * (M : ℝ) + 1) < (p : ℝ))).card := by
+      ((Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card +
+      ((Podd n).filter (fun p : ℕ => (n : ℝ) / (2 * (M : ℝ) + 1) < (p : ℝ))).card := by
     have hU : Podd n =
-        (Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1)) ∪
-        (Podd n).filter (fun p => (n : ℝ) / (2 * (M : ℝ) + 1) < (p : ℝ)) := by
+        (Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1)) ∪
+        (Podd n).filter (fun p : ℕ => (n : ℝ) / (2 * (M : ℝ) + 1) < (p : ℝ)) := by
       ext p; simp only [Finset.mem_union, Finset.mem_filter]
       constructor
       · intro hp; rcases le_or_gt (p : ℝ) ((n : ℝ) / (2 * (M : ℝ) + 1)) with h | h
@@ -1084,26 +1057,26 @@ theorem card_Podd_asymptotic :
         · right; exact ⟨hp, h⟩
       · rintro (⟨hp, _⟩ | ⟨hp, _⟩) <;> exact hp
     have hD : Disjoint
-        ((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1)))
-        ((Podd n).filter (fun p => (n : ℝ) / (2 * (M : ℝ) + 1) < (p : ℝ))) := by
+        ((Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1)))
+        ((Podd n).filter (fun p : ℕ => (n : ℝ) / (2 * (M : ℝ) + 1) < (p : ℝ))) := by
       rw [Finset.disjoint_left]; intro p hp1 hp2
       simp only [Finset.mem_filter] at hp1 hp2; linarith
     rw [← Finset.card_union_of_disjoint hD, ← hU]
   have hcard_eq : ((Podd n).card : ℝ) =
-      (((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) +
+      (((Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) +
       ∑ r ∈ Finset.Icc 1 M,
         (piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - piPrime ((n : ℝ) / (2 * (r : ℝ)))) := by
     rw [hsplit, Nat.cast_add, hpart]
-  have hlo_le : (((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) ≤
+  have hlo_le : (((Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) ≤
       (ε / 4) * ((n : ℝ) / Real.log (n : ℝ)) := by
-    have hsub : (Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1)) ⊆
+    have hsub : (Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1)) ⊆
         (Finset.Icc 2 (Nat.floor ((n : ℝ) / (2 * (M : ℝ) + 1)))).filter Nat.Prime := by
       intro p hp
       simp only [Finset.mem_filter, Finset.mem_Icc] at hp ⊢
       unfold Podd at hp
       simp only [Finset.mem_filter, Finset.mem_Icc] at hp
       exact ⟨⟨hp.1.1.1, (Nat.le_floor_iff (by positivity)).mpr hp.2⟩, hp.1.2.1⟩
-    have hle_pi : (((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) ≤
+    have hle_pi : (((Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) ≤
         piPrime ((n : ℝ) / (2 * (M : ℝ) + 1)) := by
       unfold piPrime; exact_mod_cast Finset.card_le_card hsub
     have hge2 : (2 : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1) := by
@@ -1112,7 +1085,7 @@ theorem card_Podd_asymptotic :
       exact_mod_cast (by omega : 2 * (2 * M + 1) ≤ n)
     have hcpi := hCpi ((n : ℝ) / (2 * (M : ℝ) + 1)) hge2
     have hlog_pos : 0 < Real.log ((n : ℝ) / (2 * (M : ℝ) + 1)) := Real.log_pos (by linarith)
-    calc (((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ)
+    calc (((Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ)
         ≤ Cpi * (((n : ℝ) / (2 * (M : ℝ) + 1)) / Real.log ((n : ℝ) / (2 * (M : ℝ) + 1))) := le_trans hle_pi hcpi
       _ ≤ Cpi * (((n : ℝ) / (2 * (M : ℝ) + 1)) / ((1 / 2 : ℝ) * Real.log (n : ℝ))) := by
           apply mul_le_mul_of_nonneg_left _ hCpi_pos.le
@@ -1180,34 +1153,34 @@ theorem card_Podd_asymptotic :
     rw [abs_mul, abs_of_nonneg (by positivity : 0 ≤ (n : ℝ) / Real.log (n : ℝ))]
     exact mul_le_mul_of_nonneg_right (le_trans (alt_harmonic_sum_diff_log_two hM1) hM_alt) (by positivity)
   rw [Real.norm_eq_abs, Real.norm_of_nonneg (by unfold piPrime; positivity), hcard_eq]
-  have h_id : (((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) +
+  have h_id : (((Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) +
         ∑ r ∈ Finset.Icc 1 M, (piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - piPrime ((n : ℝ) / (2 * (r : ℝ)))) -
       Real.log 2 * piPrime (n : ℝ) =
-      (((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) +
+      (((Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) +
       (∑ r ∈ Finset.Icc 1 M, (piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - piPrime ((n : ℝ) / (2 * (r : ℝ)))) -
         (∑ r ∈ Finset.Icc 1 M, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ)))) * ((n : ℝ) / Real.log (n : ℝ))) +
       (∑ r ∈ Finset.Icc 1 M, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2) * ((n : ℝ) / Real.log (n : ℝ)) -
       Real.log 2 * (piPrime (n : ℝ) - (n : ℝ) / Real.log (n : ℝ)) := by ring
   rw [h_id]
   have h1 := abs_sub
-    ((((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) +
+    ((((Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) +
       (∑ r ∈ Finset.Icc 1 M, (piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - piPrime ((n : ℝ) / (2 * (r : ℝ)))) -
         (∑ r ∈ Finset.Icc 1 M, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ)))) * ((n : ℝ) / Real.log (n : ℝ))) +
       (∑ r ∈ Finset.Icc 1 M, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2) * ((n : ℝ) / Real.log (n : ℝ)))
     (Real.log 2 * (piPrime (n : ℝ) - (n : ℝ) / Real.log (n : ℝ)))
   have h2 := abs_add_le
-    ((((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) +
+    ((((Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) +
       (∑ r ∈ Finset.Icc 1 M, (piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - piPrime ((n : ℝ) / (2 * (r : ℝ)))) -
         (∑ r ∈ Finset.Icc 1 M, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ)))) * ((n : ℝ) / Real.log (n : ℝ))))
     ((∑ r ∈ Finset.Icc 1 M, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2) * ((n : ℝ) / Real.log (n : ℝ)))
   have h3 := abs_add_le
-    (((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ)
+    (((Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ)
     (∑ r ∈ Finset.Icc 1 M, (piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - piPrime ((n : ℝ) / (2 * (r : ℝ)))) -
       (∑ r ∈ Finset.Icc 1 M, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ)))) * ((n : ℝ) / Real.log (n : ℝ)))
-  have hlo_abs : |(((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ)| ≤
+  have hlo_abs : |(((Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ)| ≤
       (ε / 4) * ((n : ℝ) / Real.log (n : ℝ)) := by
     rw [abs_of_nonneg (Nat.cast_nonneg _)]; exact hlo_le
-  calc |(((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) +
+  calc |(((Podd n).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) +
           (∑ r ∈ Finset.Icc 1 M, (piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - piPrime ((n : ℝ) / (2 * (r : ℝ)))) -
             (∑ r ∈ Finset.Icc 1 M, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ)))) * ((n : ℝ) / Real.log (n : ℝ))) +
           (∑ r ∈ Finset.Icc 1 M, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2) * ((n : ℝ) / Real.log (n : ℝ)) -
