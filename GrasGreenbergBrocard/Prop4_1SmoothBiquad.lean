@@ -65,7 +65,7 @@ lemma sfCore_squarefree (m : ℕ) : Squarefree (sfCore m) := by
     have hq_pr : q.Prime := hS_pr q (Finset.mem_erase.mp hq).2
     have heq : p = q := (Nat.prime_dvd_prime_iff_eq hp hq_pr).mp hpd
     subst heq
-    exact hnot (Finset.mem_erase.mp hq |>.1 ▸ hq)
+    exact (Finset.mem_erase.mp hq).1 rfl
   · have hp_dvd : p ∣ ∏ q ∈ S, q := dvd_trans (dvd_mul_right p p) hpp
     obtain ⟨q, hq, hpd⟩ := (Prime.dvd_finset_prod_iff hp.prime id).mp hp_dvd
     have hq_pr : q.Prime := hS_pr q hq
