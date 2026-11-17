@@ -246,7 +246,7 @@ theorem neg_pell_no_rat_sol {n : ℕ} (hn : 3 ≤ n) (hn6 : n ≠ 6) (x y : ℚ)
       have hp2_nat : p ^ 2 ∣ q_n n * b0.natAbs ^ 2 := by
         rw [← Int.natCast_dvd_natCast]
         push_cast
-        rw [← sq_abs b0]
+        rw [sq_abs b0]
         exact hp2_dvd
       have hpb_sq : p ∣ b0.natAbs ^ 2 := by
         by_contra hnb
