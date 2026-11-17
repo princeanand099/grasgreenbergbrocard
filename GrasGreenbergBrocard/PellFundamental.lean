@@ -60,6 +60,7 @@ lemma prime_in_upper_half_dvd_q_n {n p : ℕ} (hp : p.Prime) (hlo : n / 2 < p) (
     have h_eq : padicValNat p (Nat.factorial n) = n / p := by
       apply padicValNat_factorial_eq_div_of_lt_sq hp
       have hp2 : 2 ≤ p := hp.two_le
+      have hlt : n < 2 * p := by omega
       nlinarith
     rw [h_eq]
     exact Nat.div_eq_of_lt_le (by omega) (by omega)
@@ -95,8 +96,7 @@ theorem q_n_has_prime_mod4 {n : ℕ} (hn : 3 ≤ n) (hn6 : n ≠ 6) :
     · refine ⟨7, by decide, ?_, by decide⟩
       exact (prime_in_upper_half_dvd_q_n (by decide) (by omega) h7).2
     · refine ⟨3, by decide, ?_, by decide⟩
-      have hn5 : n ≤ 5 := by omega
-      exact (@prime_in_upper_half_dvd_q_n n 3 Nat.prime_three (by omega) hn5).2
+      exact (@prime_in_upper_half_dvd_q_n n 3 Nat.prime_three (by omega) hn).2
 
 private lemma zmod_sq_ne_neg_one_of_mod4_eq_3 {p : ℕ} (hp : p.Prime) (hmod : p % 4 = 3)
     (z : ZMod p) : z ^ 2 ≠ -1 := by
@@ -232,7 +232,8 @@ theorem neg_pell_no_rat_sol {n : ℕ} (hn : 3 ≤ n) (hn6 : n ≠ 6) (x y : ℚ)
       exact zmod_sq_ne_neg_one_of_mod4_eq_3 hp hmod _ hsq
     have hpd0 : p ∣ d0 := (CharP.cast_eq_zero_iff (ZMod p) p d0).mp hd0_zero
     have ha0_zero : (a0 : ZMod p) = 0 := by
-      rw [hd0_zero, sq, zero_mul, add_zero] at hmod_z
+      rw [hd0_zero] at hmod_z
+      simp only [ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, add_zero] at hmod_z
       exact sq_eq_zero_iff.mp hmod_z
     have hpa0 : (p : ℤ) ∣ a0 := (ZMod.intCast_zmod_eq_zero_iff_dvd a0 p).mp ha0_zero
     obtain ⟨d1, rfl⟩ := hpd0
@@ -245,11 +246,11 @@ theorem neg_pell_no_rat_sol {n : ℕ} (hn : 3 ≤ n) (hn6 : n ≠ 6) (x y : ℚ)
       have hp2_nat : p ^ 2 ∣ q_n n * b0.natAbs ^ 2 := by
         rw [← Int.natCast_dvd_natCast]
         push_cast
-        rw [← Int.abs_eq_natAbs, sq_abs]
+        rw [← sq_abs]
         exact hp2_dvd
       have hpb_sq : p ∣ b0.natAbs ^ 2 := by
         by_contra hnb
-        have hcop : Nat.Coprime p (b0.natAbs ^ 2) := hp.coprime_iff_not_dvd.mpr hnb
+        have hcop : Nat.Coprime (p ^ 2) (b0.natAbs ^ 2) := (hp.coprime_iff_not_dvd.mpr hnb).pow_left 2
         exact hsqf (hcop.dvd_of_dvd_mul_right hp2_nat)
       have hpb : p ∣ b0.natAbs := hp.dvd_of_dvd_pow hpb_sq
       exact Int.natCast_dvd.mpr hpb
@@ -460,7 +461,6 @@ theorem log_s_n_sqrt_q_n_asymptotic :
       have : Nat.factorial n = (s_n n) ^ 2 * q_n n := by rw [hfac]; ring
       exact_mod_cast this.symm
     rw [hprod, Real.sqrt_eq_rpow, Real.log_rpow (by positivity)]
-    ring
   have hst := stirling_log_factorial_remainder.const_mul_left (1 / 2 : ℝ)
   refine hst.congr' (Eventually.of_forall fun n => ?_) (Eventually.of_forall fun n => rfl)
   dsimp only
@@ -555,9 +555,9 @@ theorem log_s_n_asymptotic :
           _ ≤ Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) :=
               Real.exp_le_exp.mpr (by linarith)
       calc Real.sqrt (n : ℝ) = (n : ℝ) ^ (1 / 2 : ℝ) := Real.sqrt_eq_rpow _
-          _ = (n : ℝ) ^ (1 + (-(1 / 2 : ℝ))) := by norm_num
-          _ = (n : ℝ) ^ (1 : ℝ) * (n : ℝ) ^ (-(1 / 2 : ℝ)) := Real.rpow_add hn_pos 1 (-(1 / 2))
-          _ = (n : ℝ) * (n : ℝ) ^ (-(1 / 2 : ℝ)) := by rw [Real.rpow_one]
+        _ = (n : ℝ) ^ (1 + (-(1 / 2 : ℝ))) := by norm_num
+        _ = (n : ℝ) ^ (1 : ℝ) * (n : ℝ) ^ (-(1 / 2 : ℝ)) := Real.rpow_add hn_pos 1 (-(1 / 2))
+        _ = (n : ℝ) * (n : ℝ) ^ (-(1 / 2 : ℝ)) := by rw [Real.rpow_one]
         _ ≤ (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) :=
             mul_le_mul_of_nonneg_left h1 hn_pos.le
     have hlog_le_sqrt : (1 / 4 : ℝ) * Real.log (2 * Real.pi * (n : ℝ)) ≤ Real.sqrt (n : ℝ) := by
