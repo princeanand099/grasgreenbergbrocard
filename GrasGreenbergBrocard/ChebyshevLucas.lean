@@ -345,7 +345,7 @@ private lemma pow_dvd_choose_mul_M {p k j : ℕ} {M : ℤ}
       rw [pow_succ, mul_comm]
       calc p * p ^ a ∣ ((2 * j + 1) / p ^ a) * p ^ a := Nat.mul_dvd_mul_right hdvd (p ^ a)
         _ = p ^ a * ((2 * j + 1) / p ^ a) := mul_comm _ _
-        _ = 2 * j + 1 := (Nat.mul_div_cancel' pow_padicValNat_dvd).symm
+        _ = 2 * j + 1 := by dsimp only [a]; exact (Nat.mul_div_cancel' pow_padicValNat_dvd).symm
     have hle := (padicValNat_dvd_iff_le (by omega : 2 * j + 1 ≠ 0)).mp hpow_dvd
     dsimp only [a] at hle
     omega
@@ -559,7 +559,7 @@ theorem factorial_eq_q_n_mul_s_n_sq (n : ℕ) : Nat.factorial n = q_n n * (s_n n
       · have hrq : r ≠ q := fun h => hq_mem (h ▸ hr)
         have hnd : ¬ q ∣ r := fun h => hrq ((Nat.prime_dvd_prime_iff_eq hq_pr hr_pr).mp h).symm
         rw [Nat.factorization_eq_zero_of_not_dvd hnd, mul_zero]
-      · rw [(by by_contra h0; exact hq_pr (Nat.prime_of_mem_primeFactors (Nat.support_factorization _ ▸ Finsupp.mem_support_iff.mpr h0))), mul_zero]
+      · rw [(by by_contra h0; exact hq_pr (Nat.prime_of_mem_primeFactors (Nat.support_factorization _ ▸ Finsupp.mem_support_iff.mpr h0)) : r.factorization q = 0), mul_zero]
     rw [hq_sum, hs_sum, zero_add, mul_zero]
     by_cases hq_pr : q.Prime
     · have hgt : n < q := by
