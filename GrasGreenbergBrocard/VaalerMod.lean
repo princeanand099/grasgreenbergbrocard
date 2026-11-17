@@ -23,6 +23,7 @@ namespace GrasGreenbergBrocard
 
 theorem eExp_int (k : ℤ) : eExp (k : ℝ) = 1 := by
   unfold eExp
+  push_cast
   rw [show (2 : ℂ) * Real.pi * Complex.I * (k : ℂ) = (k : ℂ) * (2 * Real.pi * Complex.I) from by ring]
   exact Complex.exp_int_mul_two_pi_mul_I k
 
@@ -80,9 +81,8 @@ theorem indicator_mod_eq_sum_eExp (v c h_mod : ℕ) (hh_mod : 1 ≤ h_mod) :
   have hhC : (h_mod : ℂ) ≠ 0 := by exact_mod_cast (by omega : h_mod ≠ 0)
   by_cases hvc : v ≡ c [MOD h_mod]
   · rw [if_pos hvc]
-    have hdvd : (h_mod : ℤ) ∣ (v : ℤ) - (c : ℤ) := by
-      rw [Int.modEq_iff_dvd]
-      exact_mod_cast hvc.symm
+    have hdvd : (h_mod : ℤ) ∣ (v : ℤ) - (c : ℤ) :=
+      Int.modEq_iff_dvd.mp (Int.natCast_modEq_iff.mpr hvc.symm)
     obtain ⟨k, hk⟩ := hdvd
     have heach : ∀ z ∈ Finset.range h_mod,
         eExp ((z : ℝ) * ((v : ℝ) - (c : ℝ)) / (h_mod : ℝ)) = 1 := by
@@ -149,7 +149,7 @@ theorem floor_mod_eq_sawtooth (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
   rw [hsaw]
   set q := Int.floor x / (h_mod : ℤ)
   set r := Int.floor x % (h_mod : ℤ)
-  have hqr : Int.floor x = (h_mod : ℤ) * q + r := (Int.ediv_add_emod (Int.floor x) (h_mod : ℤ)).symm
+  have hqr : Int.floor x = (h_mod : ℤ) * q + r := (Int.mul_ediv_add_emod (Int.floor x) (h_mod : ℤ)).symm
   have hr_ge : 0 ≤ r := Int.emod_nonneg _ (by exact_mod_cast (by omega : (h_mod : ℤ) ≠ 0))
   have hr_lt : r < (h_mod : ℤ) := Int.emod_lt_of_pos _ (by exact_mod_cast (by omega : 0 < h_mod))
   have hx_lo : ((h_mod : ℝ) * (q : ℝ) + (r : ℝ)) ≤ x := by
@@ -165,13 +165,17 @@ theorem floor_mod_eq_sawtooth (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
     have hfl1 : Int.floor ((x - (k : ℝ)) / (h_mod : ℝ)) = q - 1 := by
       rw [Int.floor_eq_iff, le_div_iff₀ hh_pos, div_lt_iff₀ hh_pos]
       have hrkR : (r : ℝ) ≤ (k : ℝ) - 1 := by exact_mod_cast (by omega : r ≤ (k : ℤ) - 1)
-      have hkR : (k : ℝ) ≤ (h_mod : ℝ) - 1 := by exact_mod_cast (by omega : k ≤ h_mod - 1)
+      have hkR : (k : ℝ) ≤ (h_mod : ℝ) - 1 := by
+        have : (k : ℝ) + 1 ≤ (h_mod : ℝ) := by exact_mod_cast hk
+        linarith
       have hr0 : (0 : ℝ) ≤ (r : ℝ) := by exact_mod_cast hr_ge
       push_cast; constructor <;> nlinarith
     have hfl2 : Int.floor ((x - (k : ℝ) - 1) / (h_mod : ℝ)) = q - 1 := by
       rw [Int.floor_eq_iff, le_div_iff₀ hh_pos, div_lt_iff₀ hh_pos]
       have hrkR : (r : ℝ) ≤ (k : ℝ) - 1 := by exact_mod_cast (by omega : r ≤ (k : ℤ) - 1)
-      have hkR : (k : ℝ) ≤ (h_mod : ℝ) - 1 := by exact_mod_cast (by omega : k ≤ h_mod - 1)
+      have hkR : (k : ℝ) ≤ (h_mod : ℝ) - 1 := by
+        have : (k : ℝ) + 1 ≤ (h_mod : ℝ) := by exact_mod_cast hk
+        linarith
       have hr0 : (0 : ℝ) ≤ (r : ℝ) := by exact_mod_cast hr_ge
       push_cast; constructor <;> nlinarith
     rw [hfl1, hfl2]; ring
@@ -230,8 +234,8 @@ theorem vaaler_mod_approx (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
   · dsimp only [b_mod]
     rw [hb0]
     have heach0 : ∀ k ∈ Finset.range h_mod,
-        (eExp (-(0 : ℤ : ℝ) * ((k : ℝ) + 1) / (h_mod : ℝ)) +
-          eExp (-(0 : ℤ : ℝ) * (k : ℝ) / (h_mod : ℝ))) = 2 := by
+        (eExp (-((0 : ℤ) : ℝ) * ((k : ℝ) + 1) / (h_mod : ℝ)) +
+          eExp (-((0 : ℤ) : ℝ) * (k : ℝ) / (h_mod : ℝ))) = 2 := by
       intro k _
       simp [eExp]; norm_num
     rw [Finset.sum_congr rfl heach0, Finset.sum_const, Finset.card_range, nsmul_eq_mul]
@@ -283,7 +287,7 @@ theorem vaaler_mod_approx (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
         rw [Finset.sum_eq_single r]
         · rw [if_pos hr_cast.symm, Complex.ofReal_one, one_mul]
           have hqr : Int.floor x = (h_mod : ℤ) * (Int.floor x / (h_mod : ℤ)) + (r : ℤ) := by
-            rw [hr_cast]; exact (Int.ediv_add_emod (Int.floor x) (h_mod : ℤ)).symm
+            rw [hr_cast]; exact (Int.mul_ediv_add_emod (Int.floor x) (h_mod : ℤ)).symm
           have hqrR : (Int.floor x : ℝ) = (h_mod : ℝ) * ((Int.floor x / (h_mod : ℤ) : ℤ) : ℝ) + (r : ℝ) := by
             exact_mod_cast hqr
           rw [hqrR]
