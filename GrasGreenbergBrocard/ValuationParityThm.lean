@@ -52,8 +52,9 @@ theorem small_prime_parity_band_bound (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 
           p.Prime ∧ (n : ℝ) ^ δ < (p : ℝ) ∧ (p : ℝ) ∈ interCollar n r A_R)),
         ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n) - 1)) * (Real.log (p : ℝ) / ((p : ℝ) - 1)))))
       =O[atTop] (fun n : ℕ => 1 / Real.log (n : ℝ)) := by
-    simpa only [Finset.sum_apply] using
-      Asymptotics.IsBigO.sum (fun r hr => (h_col_sum r hr).add (h_int_sum r hr))
+    refine (Asymptotics.IsBigO.sum (fun r hr => (h_col_sum r hr).add (h_int_sum r hr))).congr' ?_ EventuallyEq.rfl
+    filter_upwards with n
+    simp only [Finset.sum_apply]
   refine h_fin_sum.congr' ?_ EventuallyEq.rfl
   have h_rpow_all : ∀ᶠ n : ℕ in atTop, ∀ r ∈ Finset.Icc 2 R,
       (Real.log (n : ℝ)) ^ A_R / (n : ℝ) ^ (1 / ((r : ℝ) * ((r : ℝ) + 1))) ≤ 1 := by
@@ -375,8 +376,7 @@ theorem S_odd_asymptotic :
             rw [hp_pr.factorization, Finsupp.single_apply, if_neg hpq, mul_zero]
           · intro hq_abs; exact absurd hq hq_abs
         · rw [Finset.sum_eq_zero]
-          · symm
-            rw [Nat.factorization_eq_zero_iff]
+          · rw [Nat.factorization_eq_zero_iff]
             by_cases hq_pr : q.Prime
             · right; left
               intro hdvd
