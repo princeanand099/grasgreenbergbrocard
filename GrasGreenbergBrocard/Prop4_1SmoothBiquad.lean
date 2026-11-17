@@ -61,13 +61,13 @@ lemma sfCore_squarefree (m : ℕ) : Squarefree (sfCore m) := by
     rw [hsub, Finset.prod_insert hnot] at hpp
     have hp_dvd : p ∣ ∏ q ∈ S.erase p, q :=
       Nat.dvd_of_mul_dvd_mul_left hp.pos hpp
-    obtain ⟨q, hq, hpd⟩ := hp.prime.dvd_finset_prod_iff.mp hp_dvd
+    obtain ⟨q, hq, hpd⟩ := (Nat.Prime.dvd_finset_prod_iff hp).mp hp_dvd
     have hq_pr : q.Prime := hS_pr q (Finset.mem_erase.mp hq).2
     have heq : p = q := (Nat.prime_dvd_prime_iff_eq hp hq_pr).mp hpd
     subst heq
     exact hnot (Finset.mem_erase.mp hq |>.1 ▸ hq)
   · have hp_dvd : p ∣ ∏ q ∈ S, q := dvd_trans (dvd_mul_right p p) hpp
-    obtain ⟨q, hq, hpd⟩ := hp.prime.dvd_finset_prod_iff.mp hp_dvd
+    obtain ⟨q, hq, hpd⟩ := (Nat.Prime.dvd_finset_prod_iff hp).mp hp_dvd
     have hq_pr : q.Prime := hS_pr q hq
     have heq : p = q := (Nat.prime_dvd_prime_iff_eq hp hq_pr).mp hpd
     subst heq
@@ -129,7 +129,6 @@ lemma eq_sfCore_mul_sqPart_sq {m : ℕ} (hm : 0 < m) :
     · have hp_ndvd : ¬ p ∣ m := fun hd => hmem (Nat.mem_primeFactors.mpr ⟨hp, hd, hm_ne⟩)
       have h0 : padicValNat p m = 0 := padicValNat.eq_zero_of_not_dvd hp_ndvd
       simp only [Finset.mem_filter, hmem, false_and, ↓reduceIte, h0]
-      norm_num
   · have h0a : m.factorization p = 0 := by
       by_contra h0
       exact hp (Nat.prime_of_mem_primeFactors (Nat.support_factorization m ▸ Finsupp.mem_support_iff.mpr h0))
@@ -354,12 +353,12 @@ theorem prop_4_1_part1 {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     have hnd1 : ¬ p ∣ X₁ - 1 := fun h => h12 ⟨h, hpX⟩
     have hnd3 : ¬ p ∣ X₁ + 1 := fun h => h23 ⟨hpX, h⟩
     have hnd4 : ¬ p ∣ 4 := fun h => by
-      have : p ∣ 2 := hp.dvd_of_dvd_pow (by simpa [show (4 : ℕ) = 2 ^ 2 by norm_num] using h)
-      have := Nat.le_of_dvd (by norm_num) this; omega
+      have h22 : p ∣ 2 ^ 2 := by simpa [show (4 : ℕ) = 2 ^ 2 by norm_num] using h
+      have := Nat.le_of_dvd (by norm_num) (hp.dvd_of_dvd_pow h22); omega
     have hpn : p ≤ n := by
       have hdvd_fac : p ∣ Nat.factorial n := by
         rw [hfac_eq]
-        exact dvd_mul_of_dvd_left (dvd_mul_of_dvd_right (dvd_pow_self p (by decide : 2 ≠ 0)) _) _
+        exact dvd_mul_of_dvd_left (dvd_mul_of_dvd_right (pow_dvd_pow_of_dvd hpX 2) _) _
       exact hp.dvd_factorial.mp hdvd_fac
     have hval_eq : padicValNat p (Nat.factorial n) = 2 * padicValNat p X₁ := by
       rw [hfac_eq]
@@ -374,7 +373,7 @@ theorem prop_4_1_part1 {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
           padicValNat.eq_zero_of_not_dvd hnd4,
           padicValNat.eq_zero_of_not_dvd hnd1,
           padicValNat.eq_zero_of_not_dvd hnd3,
-          padicValNat.pow 2 hneX]
+          sq, padicValNat.mul hneX hneX]
       ring
     have hpeven : p ∈ Peven n :=
       Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hpn⟩, hp, ⟨padicValNat p X₁, hval_eq⟩⟩
@@ -414,8 +413,8 @@ theorem prop_4_1_part1 {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     have hcop4 : Nat.Coprime (p ^ padicValNat p (Nat.factorial n)) 4 := by
       apply Nat.Coprime.pow_left
       exact hp_pr.coprime_iff_not_dvd.mpr (fun h => by
-        have : p ∣ 2 := hp_pr.dvd_of_dvd_pow (by simpa [show (4 : ℕ) = 2 ^ 2 by norm_num] using h)
-        have := Nat.le_of_dvd (by norm_num) this; omega)
+        have h22 : p ∣ 2 ^ 2 := by simpa [show (4 : ℕ) = 2 ^ 2 by norm_num] using h
+        have := Nat.le_of_dvd (by norm_num) (hp_pr.dvd_of_dvd_pow h22); omega)
     have hcopX : Nat.Coprime (p ^ padicValNat p (Nat.factorial n)) (X₁ ^ 2) := by
       apply Nat.Coprime.pow_left
       apply Nat.Coprime.pow_right
@@ -588,8 +587,8 @@ theorem prop_4_1_part2 {n m X₁ Y₁ δ₁ δ₂ u v p : ℕ} (hn : 8 ≤ n)
     have hdvd : p ^ padicValNat p (Nat.factorial n) ∣ X₁ ^ 2 := by
       rw [← hval_X, mul_comm, pow_mul]
       exact pow_dvd_pow_of_dvd pow_padicValNat_dvd 2
-    have hX2_0 : (X₁ ^ 2 : ZMod (p ^ padicValNat p (Nat.factorial n))) = 0 :=
-      (ZMod.natCast_eq_zero_iff (X₁ ^ 2) (p ^ padicValNat p (Nat.factorial n))).mpr hdvd
+    have hX2_0 : (X₁ : ZMod (p ^ padicValNat p (Nat.factorial n))) ^ 2 = 0 := by
+      simpa using (ZMod.natCast_eq_zero_iff (X₁ ^ 2) (p ^ padicValNat p (Nat.factorial n))).mpr hdvd
     have hpell := hfund.2.2.1
     have h1 := congrArg (Nat.cast : ℕ → ZMod (p ^ padicValNat p (Nat.factorial n))) hpell
     push_cast at h1
