@@ -10,6 +10,7 @@ Formalizes Section 3.1 (eqs. 3.1–3.3) of the manuscript completely without ext
 - `lucasY_eq_mul_chebyshevU`: `Y_k = Y₁ * U_{k-1}(X₁)`
 - `gcd_pell_chebyshevU_dvd`: `gcd(X₁^2 - 1, U_{k-1}(X₁)^2) ∣ k^2`
 - `padicValInt_chebyshevU`: `v_p(U_{k-1}(X₁)) = v_p(k)` for `p ∣ D * Y₁` under `p ≠ 3 ∨ ¬ 3 ∣ k ∨ 3 ∣ Y₁` (eq. 3.2)
+- `factorial_eq_q_n_mul_s_n_sq`: `n! = q_n * s_n^2`
 - `padicValNat_pell_absorption`: `v_p(q_n * Y₁^2) = v_p(n!) - 2 * v_p(k)` for `p ∈ Podd(n) \ {3}` (eq. 3.3)
 -/
 
@@ -33,9 +34,9 @@ def chebyshevU_eval (D X₁ Y₁ : ℤ) (k : ℕ) : ℤ :=
 private lemma zsqrtd_base_pow_even (D : ℤ) (j : ℕ) :
     ((⟨0, 1⟩ : Zsqrtd D) ^ (2 * j)) = ⟨D ^ j, 0⟩ := by
   induction j with
-  | zero => rfl
+  | zero => ext <;> simp
   | succ j ih =>
-    rw [show 2 * (j + 1) = 2 * j + 2 by omega, pow_add, ih]
+    rw [show 2 * (j + 1) = 2 * j + 2 by omega, pow_add, ih, pow_two]
     ext <;> simp <;> ring
 
 private lemma zsqrtd_base_pow_odd (D : ℤ) (j : ℕ) :
@@ -44,13 +45,13 @@ private lemma zsqrtd_base_pow_odd (D : ℤ) (j : ℕ) :
   ext <;> simp
 
 private lemma zsqrtd_split (D X₁ Y₁ : ℤ) :
-    (⟨X₁, Y₁⟩ : Zsqrtd D) = (⟨X₁, 0⟩ : Zsqrtd D) + (⟨Y₁, 0⟩ : Zsqrtd D) * ⟨0, 1⟩ := by
+    (⟨X₁, Y₁⟩ : Zsqrtd D) = (⟨Y₁, 0⟩ : Zsqrtd D) * ⟨0, 1⟩ + (⟨X₁, 0⟩ : Zsqrtd D) := by
   ext <;> simp
 
 private lemma zsqrtd_int_pow (D a : ℤ) (m : ℕ) :
     ((⟨a, 0⟩ : Zsqrtd D) ^ m) = ⟨a ^ m, 0⟩ := by
   induction m with
-  | zero => rfl
+  | zero => ext <;> simp
   | succ m ih =>
     rw [pow_succ, ih]
     ext <;> simp
@@ -64,30 +65,31 @@ theorem lucasY_eq_mul_chebyshevU (D X₁ Y₁ : ℤ) (k : ℕ) :
     lucasY D X₁ Y₁ k = Y₁ * chebyshevU_eval D X₁ Y₁ k := by
   unfold lucasY chebyshevU_eval
   rw [zsqrtd_split D X₁ Y₁]
-  have hcomm : Commute (⟨X₁, 0⟩ : Zsqrtd D) ((⟨Y₁, 0⟩ : Zsqrtd D) * ⟨0, 1⟩) :=
+  have hcomm : Commute ((⟨Y₁, 0⟩ : Zsqrtd D) * ⟨0, 1⟩) (⟨X₁, 0⟩ : Zsqrtd D) :=
     Commute.all _ _
   rw [hcomm.add_pow]
-  have him_sum : ∀ s : Finset ℕ, (∑ i ∈ s, (⟨(Nat.choose k i : ℤ), 0⟩ : Zsqrtd D) *
-      (⟨X₁, 0⟩ : Zsqrtd D) ^ (k - i) * ((⟨Y₁, 0⟩ : Zsqrtd D) * ⟨0, 1⟩) ^ i).im =
-      ∑ i ∈ s, ((⟨(Nat.choose k i : ℤ), 0⟩ : Zsqrtd D) *
-      (⟨X₁, 0⟩ : Zsqrtd D) ^ (k - i) * ((⟨Y₁, 0⟩ : Zsqrtd D) * ⟨0, 1⟩) ^ i).im := by
+  have him_sum : ∀ s : Finset ℕ, (∑ i ∈ s,
+      ((⟨Y₁, 0⟩ : Zsqrtd D) * ⟨0, 1⟩) ^ i * (⟨X₁, 0⟩ : Zsqrtd D) ^ (k - i) *
+        ((Nat.choose k i : ℕ) : Zsqrtd D)).im =
+      ∑ i ∈ s, (((⟨Y₁, 0⟩ : Zsqrtd D) * ⟨0, 1⟩) ^ i * (⟨X₁, 0⟩ : Zsqrtd D) ^ (k - i) *
+        ((Nat.choose k i : ℕ) : Zsqrtd D)).im := by
     intro s
     induction s using Finset.induction_on with
     | empty => simp
     | insert a s ha ih => simp [Finset.sum_insert ha, ih]
+  rw [him_sum]
   have hcast : ∀ i : ℕ, ((Nat.choose k i : ℕ) : Zsqrtd D) = ⟨(Nat.choose k i : ℤ), 0⟩ := by
     intro i; ext <;> simp
   simp_rw [hcast, zsqrtd_int_pow, zsqrtd_mul_int_base_pow]
-  rw [him_sum]
   have hterm_even : ∀ j : ℕ,
-      ((⟨(Nat.choose k (2 * j) : ℤ), 0⟩ : Zsqrtd D) * ⟨X₁ ^ (k - 2 * j), 0⟩ *
-        (⟨Y₁ ^ (2 * j), 0⟩ * (⟨0, 1⟩ : Zsqrtd D) ^ (2 * j))).im = 0 := by
+      (⟨Y₁ ^ (2 * j), 0⟩ * (⟨0, 1⟩ : Zsqrtd D) ^ (2 * j) *
+        ⟨X₁ ^ (k - 2 * j), 0⟩ * ⟨(Nat.choose k (2 * j) : ℤ), 0⟩).im = 0 := by
     intro j
     rw [zsqrtd_base_pow_even]
     simp
   have hterm_odd : ∀ j : ℕ, 2 * j + 1 ≤ k →
-      ((⟨(Nat.choose k (2 * j + 1) : ℤ), 0⟩ : Zsqrtd D) * ⟨X₁ ^ (k - (2 * j + 1)), 0⟩ *
-        (⟨Y₁ ^ (2 * j + 1), 0⟩ * (⟨0, 1⟩ : Zsqrtd D) ^ (2 * j + 1))).im =
+      (⟨Y₁ ^ (2 * j + 1), 0⟩ * (⟨0, 1⟩ : Zsqrtd D) ^ (2 * j + 1) *
+        ⟨X₁ ^ (k - (2 * j + 1)), 0⟩ * ⟨(Nat.choose k (2 * j + 1) : ℤ), 0⟩).im =
       Y₁ * ((Nat.choose k (2 * j + 1) : ℤ) * X₁ ^ (k - 1 - 2 * j) * (D * Y₁ ^ 2) ^ j) := by
     intro j hj
     rw [zsqrtd_base_pow_odd]
@@ -97,16 +99,16 @@ theorem lucasY_eq_mul_chebyshevU (D X₁ Y₁ : ℤ) (k : ℕ) :
     ring
   have hsum_split :
       (∑ i ∈ Finset.range (k + 1),
-        ((⟨(Nat.choose k i : ℤ), 0⟩ : Zsqrtd D) * ⟨X₁ ^ (k - i), 0⟩ *
-          (⟨Y₁ ^ i, 0⟩ * (⟨0, 1⟩ : Zsqrtd D) ^ i)).im) =
+        (⟨Y₁ ^ i, 0⟩ * (⟨0, 1⟩ : Zsqrtd D) ^ i *
+          ⟨X₁ ^ (k - i), 0⟩ * ⟨(Nat.choose k i : ℤ), 0⟩).im) =
       ∑ j ∈ Finset.range ((k + 1) / 2),
-        ((⟨(Nat.choose k (2 * j + 1) : ℤ), 0⟩ : Zsqrtd D) * ⟨X₁ ^ (k - (2 * j + 1)), 0⟩ *
-          (⟨Y₁ ^ (2 * j + 1), 0⟩ * (⟨0, 1⟩ : Zsqrtd D) ^ (2 * j + 1))).im := by
+        (⟨Y₁ ^ (2 * j + 1), 0⟩ * (⟨0, 1⟩ : Zsqrtd D) ^ (2 * j + 1) *
+          ⟨X₁ ^ (k - (2 * j + 1)), 0⟩ * ⟨(Nat.choose k (2 * j + 1) : ℤ), 0⟩).im := by
     rw [← Finset.sum_filter_add_sum_filter_not (Finset.range (k + 1)) (fun i => i % 2 = 1)]
     have heven_zero :
         ∑ i ∈ (Finset.range (k + 1)).filter (fun i => ¬ i % 2 = 1),
-          ((⟨(Nat.choose k i : ℤ), 0⟩ : Zsqrtd D) * ⟨X₁ ^ (k - i), 0⟩ *
-            (⟨Y₁ ^ i, 0⟩ * (⟨0, 1⟩ : Zsqrtd D) ^ i)).im = 0 := by
+          (⟨Y₁ ^ i, 0⟩ * (⟨0, 1⟩ : Zsqrtd D) ^ i *
+            ⟨X₁ ^ (k - i), 0⟩ * ⟨(Nat.choose k i : ℤ), 0⟩).im = 0 := by
       apply Finset.sum_eq_zero
       intro i hi
       have hmod : i % 2 = 0 := by
@@ -178,22 +180,24 @@ theorem gcd_pell_chebyshevU_dvd (D X₁ Y₁ : ℤ) (k : ℕ) (hk : 1 ≤ k)
       have := dvd_sub h2 h5
       simpa using this
     simpa [mul_pow] using h6
-  have hcop : Nat.Coprime (Int.gcd M (U ^ 2)) (X₁ ^ (k - 1)).natAbs ^ 2 := by
-    have hcop1 : IsCoprime M X₁ := by
-      refine ⟨-1, X₁, ?_⟩
-      linarith
-    have hcop2 : IsCoprime (Int.gcd M (U ^ 2) : ℤ) X₁ :=
-      hcop1.of_isCoprime_left_of_dvd (Int.gcd_dvd_left M (U ^ 2))
+  have hcop : Nat.Coprime (Int.gcd M (U ^ 2)) ((X₁ ^ (k - 1)).natAbs ^ 2) := by
+    have hcop1 : IsCoprime M X₁ := ⟨-1, X₁, by linarith⟩
+    have hcop2 : IsCoprime (Int.gcd M (U ^ 2) : ℤ) X₁ := by
+      rcases hcop1 with ⟨a, b, hab⟩
+      obtain ⟨t, ht⟩ := Int.gcd_dvd_left M (U ^ 2)
+      refine ⟨a * t, b, ?_⟩
+      linarith [show a * M = a * t * (Int.gcd M (U ^ 2) : ℤ) by rw [ht]; ring]
     have hcop3 : IsCoprime (Int.gcd M (U ^ 2) : ℤ) (X₁ ^ (k - 1)) :=
       hcop2.pow_right
     have hcop4 : Nat.Coprime (Int.gcd M (U ^ 2)) (X₁ ^ (k - 1)).natAbs := by
-      rw [← Int.isCoprime_iff_nat_coprime, Int.natCast_natAbs]
-      exact hcop3.abs_right
+      have h3 : IsCoprime ((Int.gcd M (U ^ 2) : ℕ) : ℤ) ((X₁ ^ (k - 1)).natAbs : ℤ) :=
+        hcop3.abs_right
+      exact Int.isCoprime_iff_nat_coprime.mp h3
     exact hcop4.pow_right 2
   have hdvd_nat : Int.gcd M (U ^ 2) ∣ k ^ 2 * (X₁ ^ (k - 1)).natAbs ^ 2 := by
     rw [← Int.natCast_dvd_natCast]
     push_cast
-    rw [← Int.abs_eq_natAbs, sq_abs]
+    rw [sq_abs]
     exact hdvd_U
   rw [hM]
   exact hcop.dvd_of_dvd_mul_right hdvd_nat
@@ -236,6 +240,32 @@ private lemma three_pow_two_mul_gt (j : ℕ) (hj : 1 ≤ j) : 2 * j + 1 < 3 ^ (2
         _ ≤ 3 ^ (2 * j) * 9 := by omega
         _ = 3 ^ (2 * (j + 1)) := by rw [show 2 * (j + 1) = 2 * j + 2 by omega, pow_add]; norm_num
 
+private lemma mul_choose_eq_choose_mul (k j : ℕ) (hj : 2 * j + 1 ≤ k) :
+    (2 * j + 1) * Nat.choose k (2 * j + 1) = k * Nat.choose (k - 1) (2 * j) := by
+  have h1 := Nat.choose_mul_factorial_mul_factorial hj
+  have h2 := Nat.choose_mul_factorial_mul_factorial (show 2 * j ≤ k - 1 by omega)
+  have hfac_k : Nat.factorial k = k * Nat.factorial (k - 1) := by
+    rw [show k = (k - 1) + 1 by omega, Nat.factorial_succ]
+  have hfac_2j : Nat.factorial (2 * j + 1) = (2 * j + 1) * Nat.factorial (2 * j) :=
+    Nat.factorial_succ (2 * j)
+  have hsub : k - 1 - 2 * j = k - (2 * j + 1) := by omega
+  rw [hsub] at h2
+  have hpos : 0 < Nat.factorial (2 * j) * Nat.factorial (k - (2 * j + 1)) :=
+    Nat.mul_pos (Nat.factorial_pos _) (Nat.factorial_pos _)
+  apply Nat.eq_of_mul_eq_mul_right hpos
+  calc (2 * j + 1) * Nat.choose k (2 * j + 1) *
+        (Nat.factorial (2 * j) * Nat.factorial (k - (2 * j + 1)))
+      = Nat.choose k (2 * j + 1) * ((2 * j + 1) * Nat.factorial (2 * j)) *
+          Nat.factorial (k - (2 * j + 1)) := by ring
+    _ = Nat.choose k (2 * j + 1) * Nat.factorial (2 * j + 1) *
+          Nat.factorial (k - (2 * j + 1)) := by rw [← hfac_2j]
+    _ = Nat.factorial k := h1
+    _ = k * Nat.factorial (k - 1) := hfac_k
+    _ = k * (Nat.choose (k - 1) (2 * j) * Nat.factorial (2 * j) *
+          Nat.factorial (k - (2 * j + 1))) := by rw [← h2]
+    _ = k * Nat.choose (k - 1) (2 * j) *
+          (Nat.factorial (2 * j) * Nat.factorial (k - (2 * j + 1))) := by ring
+
 private lemma pow_dvd_choose_mul_M {p k j : ℕ} {M : ℤ}
     (hp : p.Prime) (hk : 1 ≤ k) (hj1 : 1 ≤ j) (hj2 : 2 * j + 1 ≤ k)
     (hpM : (p : ℤ) ∣ M)
@@ -249,14 +279,15 @@ private lemma pow_dvd_choose_mul_M {p k j : ℕ} {M : ℤ}
     exact dvd_mul_of_dvd_right hpM _
   have hM_dvd : (p : ℤ) ^ (padicValNat p (2 * j + 1) + 1) ∣ M ^ j := by
     have hv_le : p ^ padicValNat p (2 * j + 1) ≤ 2 * j + 1 :=
-      Nat.le_of_dvd (by omega) (pow_padicValNat_dvd)
+      Nat.le_of_dvd (by omega) pow_padicValNat_dvd
     have hpow_gt : padicValNat p (2 * j + 1) + 1 ≤ (if p = 3 ∧ (3 : ℤ) ^ 2 ∣ M then 2 * j else j) := by
       split_ifs with h3m
       · have hgt : 2 * j + 1 < 3 ^ (2 * j) := three_pow_two_mul_gt j hj1
         have hlt : p ^ padicValNat p (2 * j + 1) < p ^ (2 * j) := by
-          rw [h3m.1]
-          exact lt_of_le_of_lt hv_le hgt
-        exact Nat.lt_of_pow_lt_pow_left' hp.one_lt hlt
+          calc p ^ padicValNat p (2 * j + 1) ≤ 2 * j + 1 := hv_le
+            _ < 3 ^ (2 * j) := hgt
+            _ = p ^ (2 * j) := by rw [h3m.1]
+        exact (Nat.pow_lt_pow_iff_right hp.one_lt).mp hlt
       · by_cases hp2 : p = 2
         · subst hp2
           have hodd : ¬ 2 ∣ (2 * j + 1) := by omega
@@ -273,14 +304,14 @@ private lemma pow_dvd_choose_mul_M {p k j : ℕ} {M : ℤ}
               · exact absurd ⟨rfl, h3m2⟩ h3m
             have hgt : 2 * j + 1 < 3 ^ j := three_pow_gt_two_mul_add_one j hj2_ge
             have hlt : 3 ^ padicValNat 3 (2 * j + 1) < 3 ^ j := lt_of_le_of_lt hv_le hgt
-            exact Nat.lt_of_pow_lt_pow_left' hp.one_lt hlt
+            exact (Nat.pow_lt_pow_iff_right hp.one_lt).mp hlt
           · have hp5 : 5 ≤ p := by
               have := hp.two_le
               omega
             have h5j : 2 * j + 1 < p ^ j :=
               lt_of_lt_of_le (five_pow_gt_two_mul_add_one j hj1) (Nat.pow_le_pow_left (by omega) j)
             have hlt : p ^ padicValNat p (2 * j + 1) < p ^ j := lt_of_le_of_lt hv_le h5j
-            exact Nat.lt_of_pow_lt_pow_left' hp.one_lt hlt
+            exact (Nat.pow_lt_pow_iff_right hp.one_lt).mp hlt
     split_ifs at hpow_gt with h3m
     · have h3M2 : (p : ℤ) ^ 2 ∣ M := by rw [h3m.1]; exact h3m.2
       have hpow2 : (p : ℤ) ^ (2 * j) ∣ M ^ j := by
@@ -289,24 +320,19 @@ private lemma pow_dvd_choose_mul_M {p k j : ℕ} {M : ℤ}
       exact dvd_trans (pow_dvd_pow (p : ℤ) hpow_gt) hpow2
     · have hpowj : (p : ℤ) ^ j ∣ M ^ j := pow_dvd_pow_of_dvd hpM j
       exact dvd_trans (pow_dvd_pow (p : ℤ) hpow_gt) hpowj
-  have hchoose_eq : (2 * j + 1) * Nat.choose k (2 * j + 1) = k * Nat.choose (k - 1) (2 * j) := by
-    have hk_eq : k = (k - 1) + 1 := by omega
-    conv_lhs => rw [hk_eq, mul_comm]
-    conv_rhs => rw [hk_eq]
-    exact (Nat.succ_mul_choose_eq (k - 1) (2 * j)).symm
+  have hchoose_eq : (2 * j + 1) * Nat.choose k (2 * j + 1) = k * Nat.choose (k - 1) (2 * j) :=
+    mul_choose_eq_choose_mul k j hj2
   set a := padicValNat p (2 * j + 1)
   set b := padicValNat p k
   obtain ⟨u, hu_eq, hu_ndvd⟩ : ∃ u : ℕ, 2 * j + 1 = p ^ a * u ∧ ¬ p ∣ u := by
-    refine ⟨(2 * j + 1) / p ^ a, ?_, ?_⟩
-    · exact (Nat.mul_div_cancel' pow_padicValNat_dvd).symm
-    · intro hdvd
-      have hpow_dvd : p ^ (a + 1) ∣ 2 * j + 1 := by
-        rw [pow_succ, mul_comm]
-        calc p * p ^ a ∣ u * p ^ a := Nat.mul_dvd_mul_right hdvd (p ^ a)
-          _ = p ^ a * u := mul_comm _ _
-          _ = 2 * j + 1 := (Nat.mul_div_cancel' pow_padicValNat_dvd).symm
-      have hle := padicValNat_dvd_iff_le (by omega : 2 * j + 1 ≠ 0) |>.mp hpow_dvd
-      omega
+    refine ⟨(2 * j + 1) / p ^ a, (Nat.mul_div_cancel' pow_padicValNat_dvd).symm, fun hdvd => ?_⟩
+    have hpow_dvd : p ^ (a + 1) ∣ 2 * j + 1 := by
+      rw [pow_succ, mul_comm]
+      calc p * p ^ a ∣ u * p ^ a := Nat.mul_dvd_mul_right hdvd (p ^ a)
+        _ = p ^ a * u := mul_comm _ _
+        _ = 2 * j + 1 := (Nat.mul_div_cancel' pow_padicValNat_dvd).symm
+    have hle := (padicValNat_dvd_iff_le (by omega : 2 * j + 1 ≠ 0)).mp hpow_dvd
+    omega
   obtain ⟨k', hk'_eq⟩ : ∃ k' : ℕ, k = p ^ b * k' :=
     ⟨k / p ^ b, (Nat.mul_div_cancel' pow_padicValNat_dvd).symm⟩
   obtain ⟨m', hm'_eq⟩ : ∃ m' : ℤ, M ^ j = (p : ℤ) ^ (a + 1) * m' := hM_dvd
@@ -366,7 +392,7 @@ theorem padicValInt_chebyshevU {D X₁ Y₁ : ℤ} {k p : ℕ}
         (Nat.choose k (2 * j + 1) : ℤ) * X₁ ^ (k - 1 - 2 * j) * M ^ j := by
     unfold chebyshevU_eval
     rw [← Finset.add_sum_erase _ _ h0_mem]
-    simp
+    simp [M]
   set v := padicValNat p k
   have htail_dvd : (p : ℤ) ^ (v + 1) ∣
       ∑ j ∈ (Finset.range ((k + 1) / 2)).erase 0,
@@ -388,11 +414,15 @@ theorem padicValInt_chebyshevU {D X₁ Y₁ : ℤ} {k p : ℕ}
     exact dvd_mul_of_dvd_left (Int.natCast_dvd_natCast.mpr hk_dvd) _
   have hhead_ndvd : ¬ (p : ℤ) ^ (v + 1) ∣ (k : ℤ) * X₁ ^ (k - 1) := by
     intro h
-    have hcop : IsCoprime ((p : ℤ) ^ (v + 1)) (X₁ ^ (k - 1)) := by
-      have hpX_cop : IsCoprime (p : ℤ) X₁ := (Int.Prime.coprime_iff_not_dvd hp).mpr hpX
-      exact (hpX_cop.pow_left (v + 1)).pow_right
-    have hk_dvd1 : (p : ℤ) ^ (v + 1) ∣ (k : ℤ) := hcop.dvd_of_dvd_mul_right h
-    have hk_dvd1_nat : p ^ (v + 1) ∣ k := Int.natCast_dvd_natCast.mp hk_dvd1
+    have hpX_nat : ¬ p ∣ X₁.natAbs := fun hd => hpX (Int.natCast_dvd.mpr hd)
+    have hcop_nat : Nat.Coprime (p ^ (v + 1)) (X₁.natAbs ^ (k - 1)) :=
+      ((hp.coprime_iff_not_dvd.mpr hpX_nat).pow_left (v + 1)).pow_right (k - 1)
+    have h_nat : p ^ (v + 1) ∣ k * X₁.natAbs ^ (k - 1) := by
+      have h1 : (((p ^ (v + 1) : ℕ) : ℤ)) ∣ (k : ℤ) * X₁ ^ (k - 1) := by
+        push_cast; exact h
+      have h2 := Int.natCast_dvd.mp h1
+      simpa [Int.natAbs_mul, Int.natAbs_pow] using h2
+    have hk_dvd1_nat : p ^ (v + 1) ∣ k := hcop_nat.dvd_of_dvd_mul_right h_nat
     have hle := (padicValNat_dvd_iff_le (by omega : k ≠ 0)).mp hk_dvd1_nat
     omega
   have hU_dvd : (p : ℤ) ^ v ∣ chebyshevU_eval D X₁ Y₁ k := by
@@ -409,12 +439,14 @@ theorem padicValInt_chebyshevU {D X₁ Y₁ : ℤ} {k p : ℕ}
   unfold padicValInt
   have hU_natAbs_ne : (chebyshevU_eval D X₁ Y₁ k).natAbs ≠ 0 := Int.natAbs_ne_zero.mpr hU_ne
   have h1 : p ^ v ∣ (chebyshevU_eval D X₁ Y₁ k).natAbs := by
-    rw [← Int.natCast_dvd_natCast]
-    exact Int.natCast_dvd.mpr hU_dvd
+    have h1' : (((p ^ v : ℕ) : ℤ)) ∣ chebyshevU_eval D X₁ Y₁ k := by push_cast; exact hU_dvd
+    exact Int.natCast_dvd.mp h1'
   have h2 : ¬ p ^ (v + 1) ∣ (chebyshevU_eval D X₁ Y₁ k).natAbs := by
     intro h
     apply hU_ndvd
-    exact Int.natCast_dvd.mp (Int.natCast_dvd_natCast.mpr h)
+    have h2' := Int.natCast_dvd.mpr h
+    push_cast at h2'
+    exact h2'
   have hle1 := (padicValNat_dvd_iff_le hU_natAbs_ne).mp h1
   have hlt2 : padicValNat p (chebyshevU_eval D X₁ Y₁ k).natAbs < v + 1 := by
     by_contra hge
@@ -436,8 +468,8 @@ theorem factorial_eq_q_n_mul_s_n_sq (n : ℕ) : Nat.factorial n = q_n n * (s_n n
   unfold q_n s_n Podd
   rw [Nat.factorization_prod (fun r hr => (Finset.mem_filter.mp hr).2.1.ne_zero)]
   rw [Nat.factorization_prod (fun r hr => pow_ne_zero _ (Finset.mem_filter.mp hr).2.ne_zero)]
-  simp only [Finsupp.coe_finset_sum, Finset.sum_apply, Nat.factorization_pow, Finsupp.smul_apply,
-    smul_eq_mul, Pi.add_apply, Pi.smul_apply]
+  simp only [Finsupp.coe_add, Finsupp.coe_smul, Finsupp.coe_finset_sum, Finset.sum_apply,
+    Nat.factorization_pow, Finsupp.smul_apply, smul_eq_mul, Pi.add_apply, Pi.smul_apply]
   by_cases hq_mem : q ∈ (Finset.Icc 2 n).filter Nat.Prime
   · have hq_pr : q.Prime := (Finset.mem_filter.mp hq_mem).2
     haveI : Fact q.Prime := ⟨hq_pr⟩
@@ -449,51 +481,67 @@ theorem factorial_eq_q_n_mul_s_n_sq (n : ℕ) : Nat.factorial n = q_n n * (s_n n
       · rw [hq_pr.factorization_self, mul_one]
       · intro r hr hrq
         have hr_pr : r.Prime := (Finset.mem_filter.mp hr).2
-        rw [hr_pr.factorization_eq_zero_of_ne hrq, mul_zero]
+        have hnd : ¬ q ∣ r := fun h => hrq ((Nat.prime_dvd_prime_iff_eq hq_pr hr_pr).mp h).symm
+        rw [Nat.factorization_eq_zero_of_not_dvd hnd, mul_zero]
       · intro habs; exact absurd hq_mem habs
     rw [hs_sum]
-    by_cases hq_odd : padicValNat q (Nat.factorial n) % 2 = 1
+    by_cases hq_odd : ¬ 2 ∣ padicValNat q (Nat.factorial n)
     · have hmem1 : q ∈ (Finset.Icc 2 n).filter (fun r => r.Prime ∧ padicValNat r (Nat.factorial n) % 2 = 1) :=
-        Finset.mem_filter.mpr ⟨(Finset.mem_filter.mp hq_mem).1, hq_pr, hq_odd⟩
+        Finset.mem_filter.mpr ⟨(Finset.mem_filter.mp hq_mem).1, hq_pr, by omega⟩
       have hq_sum :
           (∑ x ∈ (Finset.Icc 2 n).filter (fun r => r.Prime ∧ padicValNat r (Nat.factorial n) % 2 = 1),
             x.factorization q) = 1 := by
         rw [Finset.sum_eq_single q]
         · exact hq_pr.factorization_self
         · intro r hr hrq
-          exact (Finset.mem_filter.mp hr).2.1.factorization_eq_zero_of_ne hrq
+          have hr_pr : r.Prime := (Finset.mem_filter.mp hr).2.1
+          have hnd : ¬ q ∣ r := fun h => hrq ((Nat.prime_dvd_prime_iff_eq hq_pr hr_pr).mp h).symm
+          exact Nat.factorization_eq_zero_of_not_dvd hnd
         · intro habs; exact absurd hmem1 habs
-      rw [hq_sum, Nat.factorization_def _ hq_pr]
+      have hq_sum' :
+          (∑ x ∈ (Finset.Icc 2 n).filter (fun r => r.Prime ∧ ¬ 2 ∣ padicValNat r (Nat.factorial n)),
+            x.factorization q) = 1 := by
+        convert hq_sum using 2
+        ext r; simp [Nat.dvd_iff_mod_eq_zero]
+      rw [hq_sum', Nat.factorization_def _ hq_pr]
       omega
     · have hq_sum :
-          (∑ x ∈ (Finset.Icc 2 n).filter (fun r => r.Prime ∧ padicValNat r (Nat.factorial n) % 2 = 1),
+          (∑ x ∈ (Finset.Icc 2 n).filter (fun r => r.Prime ∧ ¬ 2 ∣ padicValNat r (Nat.factorial n)),
             x.factorization q) = 0 := by
         apply Finset.sum_eq_zero
         intro r hr
+        have hr_pr : r.Prime := (Finset.mem_filter.mp hr).2.1
         have hrq : r ≠ q := by
           intro h; subst h
-          exact hq_odd (Finset.mem_filter.mp hr).2.2
-        exact (Finset.mem_filter.mp hr).2.1.factorization_eq_zero_of_ne hrq
+          exact (Finset.mem_filter.mp hr).2.2 (by simpa using hq_odd)
+        have hnd : ¬ q ∣ r := fun h => hrq ((Nat.prime_dvd_prime_iff_eq hq_pr hr_pr).mp h).symm
+        exact Nat.factorization_eq_zero_of_not_dvd hnd
       rw [hq_sum, zero_add, Nat.factorization_def _ hq_pr]
       omega
   · have hq_sum :
-        (∑ x ∈ (Finset.Icc 2 n).filter (fun r => r.Prime ∧ padicValNat r (Nat.factorial n) % 2 = 1),
+        (∑ x ∈ (Finset.Icc 2 n).filter (fun r => r.Prime ∧ ¬ 2 ∣ padicValNat r (Nat.factorial n)),
           x.factorization q) = 0 := by
       apply Finset.sum_eq_zero
       intro r hr
-      have hrq : r ≠ q := by
-        intro h; subst h
-        exact hq_mem (Finset.mem_filter.mpr ⟨(Finset.mem_filter.mp hr).1, (Finset.mem_filter.mp hr).2.1⟩)
-      exact (Finset.mem_filter.mp hr).2.1.factorization_eq_zero_of_ne hrq
+      have hr_pr : r.Prime := (Finset.mem_filter.mp hr).2.1
+      by_cases hq_pr : q.Prime
+      · have hrq : r ≠ q := by
+          intro h; subst h
+          exact hq_mem (Finset.mem_filter.mpr ⟨(Finset.mem_filter.mp hr).1, hr_pr⟩)
+        have hnd : ¬ q ∣ r := fun h => hrq ((Nat.prime_dvd_prime_iff_eq hq_pr hr_pr).mp h).symm
+        exact Nat.factorization_eq_zero_of_not_dvd hnd
+      · exact Nat.factorization_eq_zero_of_non_prime _ hq_pr
     have hs_sum :
         (∑ x ∈ (Finset.Icc 2 n).filter Nat.Prime,
           (padicValNat x (Nat.factorial n) / 2) * x.factorization q) = 0 := by
       apply Finset.sum_eq_zero
       intro r hr
-      have hrq : r ≠ q := by
-        intro h; subst h
-        exact hq_mem hr
-      rw [(Finset.mem_filter.mp hr).2.factorization_eq_zero_of_ne hrq, mul_zero]
+      have hr_pr : r.Prime := (Finset.mem_filter.mp hr).2
+      by_cases hq_pr : q.Prime
+      · have hrq : r ≠ q := fun h => hq_mem (h ▸ hr)
+        have hnd : ¬ q ∣ r := fun h => hrq ((Nat.prime_dvd_prime_iff_eq hq_pr hr_pr).mp h).symm
+        rw [Nat.factorization_eq_zero_of_not_dvd hnd, mul_zero]
+      · rw [Nat.factorization_eq_zero_of_non_prime _ hq_pr, mul_zero]
     rw [hq_sum, hs_sum, zero_add, mul_zero]
     by_cases hq_pr : q.Prime
     · have hgt : n < q := by
@@ -546,7 +594,8 @@ theorem padicValNat_pell_absorption {n k X₁ Y₁ p : ℕ}
     exact hs_ne hs_nat
   have hval_add : padicValNat p (Nat.factorial n) =
       padicValNat p (q_n n * Y₁ ^ 2) + 2 * padicValNat p U := by
-    rw [hfac_eq, padicValNat.mul hqY_ne (pow_ne_zero 2 hU_ne), padicValNat.pow 2 hU_ne]
+    rw [hfac_eq, padicValNat.mul hqY_ne (pow_ne_zero 2 hU_ne), sq U, padicValNat.mul hU_ne hU_ne]
+    omega
   rw [hU_nat_val] at hval_add
   omega
 
