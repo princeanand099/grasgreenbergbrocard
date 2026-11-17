@@ -23,6 +23,27 @@ namespace GrasGreenbergBrocard
 
 /-! ### Total Weight Asymptotic on Power Bands -/
 
+private lemma log_le_sqrt_of_two_mul_sqrt_log {n : ℕ} (hn : 16 ≤ n)
+    (hsq_log : 2 * (Nat.sqrt n : ℝ) * Real.log (n : ℝ) ≤ (n : ℝ)) :
+    Real.log (n : ℝ) ≤ (Nat.sqrt n : ℝ) := by
+  have hsq4 : (4 : ℝ) ≤ (Nat.sqrt n : ℝ) := by
+    have : 4 ≤ Nat.sqrt n := by rw [Nat.le_sqrt]; omega
+    exact_mod_cast this
+  have hn_le_sq : (n : ℝ) ≤ ((Nat.sqrt n + 1 : ℕ) : ℝ) ^ 2 := by
+    have := Nat.lt_succ_sqrt' n
+    exact_mod_cast (by nlinarith : n ≤ (Nat.sqrt n + 1) ^ 2)
+  have h_sq_bound : ((Nat.sqrt n + 1 : ℕ) : ℝ) ^ 2 ≤ 2 * (Nat.sqrt n : ℝ) ^ 2 := by
+    push_cast; nlinarith [hsq4]
+  nlinarith [hsq_log, hn_le_sq, h_sq_bound]
+
+private lemma abs5_bound {a b c d e B1 B2 B3 B4 B5 M : ℝ}
+    (h1 : |a| ≤ B1) (h2 : |b| ≤ B2) (h3 : |c| ≤ B3) (h4 : |d| ≤ B4) (h5 : |e| ≤ B5)
+    (hsum : B1 + B2 + B3 + B4 + B5 ≤ M) :
+    |a + b - c + d - e| ≤ M := by
+  have h_abs5 : |a + b - c + d - e| ≤ |a| + |b| + |c| + |d| + |e| := by
+    linarith [abs_sub (a + b - c + d) e, abs_add_le (a + b - c) d, abs_sub (a + b) c, abs_add_le a b]
+  linarith
+
 theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
     (fun n : ℕ =>
       (∑ p ∈ (Finset.Icc 2 n).filter (fun p : ℕ => p.Prime ∧ (p : ℝ) ≤ (n : ℝ) ^ α),
@@ -450,7 +471,7 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
           have h2 : ∑ k ∈ Finset.Ico (Nat.sqrt n + 1) (n + 1),
                 ((1 : ℝ) / ((k - 1 : ℕ) : ℝ) - (1 : ℝ) / (k : ℝ)) =
               ∑ k ∈ Finset.Ico (Nat.sqrt n) n, ((1 : ℝ) / (k : ℝ) - (1 : ℝ) / ((k + 1 : ℕ) : ℝ)) := by
-            rw [Finset.sum_Ico_add (fun k : ℕ => (1 : ℝ) / ((k - 1 : ℕ) : ℝ) - (1 : ℝ) / (k : ℝ)) (Nat.sqrt n) n 1]
+            rw [← Finset.sum_Ico_add (fun k : ℕ => (1 : ℝ) / ((k - 1 : ℕ) : ℝ) - (1 : ℝ) / (k : ℝ)) (Nat.sqrt n) n 1]
             simp only [Nat.add_sub_cancel]
           rw [h2, Finset.sum_Ico_eq_sum_range]
           have h3 : ∑ k ∈ Finset.range (n - Nat.sqrt n),
@@ -489,13 +510,7 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
         _ ≤ 1 := by
             have hsq4_nat : 4 ≤ Nat.sqrt n := by rw [Nat.le_sqrt]; omega
             rw [mul_one_div, div_le_one (by exact_mod_cast (by omega : 0 < Nat.sqrt n))]
-            have hsq4 : (4 : ℝ) ≤ (Nat.sqrt n : ℝ) := by exact_mod_cast hsq4_nat
-            have hn_le_sq : (n : ℝ) ≤ ((Nat.sqrt n + 1 : ℕ) : ℝ) ^ 2 := by
-              have := Nat.lt_succ_sqrt' n
-              exact_mod_cast (by nlinarith : n ≤ (Nat.sqrt n + 1) ^ 2)
-            have h_sq_bound : ((Nat.sqrt n + 1 : ℕ) : ℝ) ^ 2 ≤ 2 * (Nat.sqrt n : ℝ) ^ 2 := by
-              push_cast; nlinarith [hsq4]
-            nlinarith [hsq_log, hn_le_sq, h_sq_bound]
+            exact log_le_sqrt_of_two_mul_sqrt_log hn hsq_log
     -- Combine everything for α > 1/2
     have h_diff : (∑ p ∈ S, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ)) -
           α * ((n : ℝ) * Real.log (n : ℝ)) =
@@ -507,14 +522,7 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
         (∑ p ∈ S_low, ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) * Real.log (p : ℝ)) := by
       rw [hS_sum, hS_hi_val, hS_low_eq, ← h_mert_sum]; ring
     rw [h_diff]
-    have h_abs5 : ∀ a b c d e : ℝ, |a + b - c + d - e| ≤ |a| + |b| + |c| + |d| + |e| := by
-      intro a b c d e
-      calc |a + b - c + d - e| ≤ |a + b - c + d| + |e| := abs_sub _ _
-        _ ≤ (|a + b - c| + |d|) + |e| := add_le_add_right (abs_add_le _ _) _
-        _ ≤ ((|a + b| + |c|) + |d|) + |e| := add_le_add_right (add_le_add_right (abs_sub _ _) _) _
-        _ ≤ (((|a| + |b|) + |c|) + |d|) + |e| := add_le_add_right (add_le_add_right (add_le_add_right (abs_add_le _ _) _) _) _
-    refine le_trans (h_abs5 _ _ _ _ _) ?_
-    refine le_trans (add_le_add (add_le_add (add_le_add (add_le_add hS2_bound ?_) ?_) h_frac_err) h_dig_err) ?_
+    refine abs5_bound hS2_bound ?_ ?_ h_frac_err h_dig_err ?_
     · rw [abs_mul, abs_of_nonneg hn_pos.le]
       exact mul_le_mul_of_nonneg_left hmert_nα hn_pos.le
     · rw [abs_mul, abs_of_nonneg hn_pos.le]
