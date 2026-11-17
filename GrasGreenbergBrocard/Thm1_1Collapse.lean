@@ -64,7 +64,9 @@ private lemma q_n_s_n_unique {n q s : ℕ} (hq_sf : Squarefree q) (hfac : Nat.fa
   refine ⟨hq_eq, ?_⟩
   have hsq : (s_n n) ^ 2 = s ^ 2 := by
     apply Nat.eq_of_mul_eq_mul_left (Nat.pos_of_ne_zero hq_ne)
-    rw [hq_eq, ← hfac_n, hfac]
+    calc q * (s_n n) ^ 2 = q_n n * (s_n n) ^ 2 := by rw [hq_eq]
+      _ = Nat.factorial n := hfac_n.symm
+      _ = q * s ^ 2 := hfac
   exact (Nat.pow_left_inj (by norm_num : 2 ≠ 0)).mp hsq
 
 private lemma squarefree_6 : Squarefree 6 := by
@@ -72,21 +74,21 @@ private lemma squarefree_6 : Squarefree 6 := by
   intro p hp hpp
   have hle : p * p ≤ 6 := Nat.le_of_dvd (by norm_num) hpp
   have hp2 : p ≤ 2 := by nlinarith
-  interval_cases p <;> norm_num at hp hpp
+  interval_cases p <;> (try norm_num at hp) <;> (try norm_num at hpp)
 
 private lemma squarefree_30 : Squarefree 30 := by
   rw [Nat.squarefree_iff_prime_squarefree]
   intro p hp hpp
   have hle : p * p ≤ 30 := Nat.le_of_dvd (by norm_num) hpp
   have hp5 : p ≤ 5 := by nlinarith
-  interval_cases p <;> norm_num at hp hpp
+  interval_cases p <;> (try norm_num at hp) <;> (try norm_num at hpp)
 
 private lemma squarefree_35 : Squarefree 35 := by
   rw [Nat.squarefree_iff_prime_squarefree]
   intro p hp hpp
   have hle : p * p ≤ 35 := Nat.le_of_dvd (by norm_num) hpp
   have hp5 : p ≤ 5 := by nlinarith
-  interval_cases p <;> norm_num at hp hpp
+  interval_cases p <;> (try norm_num at hp) <;> (try norm_num at hpp)
 
 /-- `k(4) = 1` with `q_4 = 6`, `s_4 = 2`, `ε_4 = 5 + 2√6`. -/
 theorem known_k4 :
@@ -506,8 +508,12 @@ theorem fundamental_regulator_quantization :
       (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ k →
       |Real.log (pellUnit (q_n n) X₁ Y₁) / ((n : ℝ) * Real.log (n : ℝ)) - 1 / (2 * (k : ℝ))| ≤
         C / Real.log (n : ℝ) := by
+  -- From `log_s_n_sqrt_q_n_asymptotic`: `|log(s_n √q_n) - ((1/2) n log n - (1/2) n + (1/4) log(2πn))| ≤ C₁ * n⁻¹`
   obtain ⟨C₁, hC₁⟩ := log_s_n_sqrt_q_n_asymptotic.bound
   obtain ⟨N₁, hN₁⟩ := Filter.eventually_atTop.mp hC₁
+  -- Since we quantify over all `n ≥ 8`, `log(s_n √q_n) - (1/2) n log n = O(n)` for all `n ≥ 8`
+  -- Let's use `log(n!) = n log n - n + O(log n)` or directly `|log(s_n √q_n) - (1/2) n log n| ≤ C₀ * n` for `n ≥ 8`!
+  -- Actually `log(n!) ≤ n log n` and `n log n - n ≤ log(n!)` (already in `ValuationParityThm.lean` as `n_log_n_sub_n_le_log_factorial`!)
   refine ⟨10, by norm_num, fun n m k X₁ Y₁ hn hm hk1 hfund hk_eq => ?_⟩
   have hn_pos : (0 : ℝ) < (n : ℝ) := by positivity
   have hlogn_pos : 0 < Real.log (n : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n))
@@ -645,8 +651,6 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
     have ht_le2 : t ≤ 2 := by omega
     have hsq4 : t ^ 2 ≤ 4 := by nlinarith
     omega
-  have ht2_ge9 : 9 ≤ t ^ 2 := by nlinarith
-  have hn1_ge8 : 8 ≤ n₁ := by omega
   -- `(t * m₁ - m₂) * (t * m₁ + m₂) = t^2 - 1`
   have hid : (t * m₁) ^ 2 = m₂ ^ 2 + (t ^ 2 - 1) := by
     have hfac_succ : Nat.factorial (n₁ + 1) = (n₁ + 1) * Nat.factorial n₁ := Nat.factorial_succ n₁
@@ -689,7 +693,7 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
               nlinarith
         exact this n₁ hn₁
       omega
-    have hsq : t ^ 2 < m₁ ^ 2 := by clear hfac1 hfac2 hq_eq; omega
+    have hsq : t ^ 2 < m₁ ^ 2 := by linarith [hm₁, hfac_gt]
     exact (Nat.pow_lt_pow_iff_left (by norm_num : 2 ≠ 0)).mp hsq
   have hsum_gt : t ^ 2 < t * m₁ + m₂ := by
     have : t * t < t * m₁ := Nat.mul_lt_mul_of_pos_left hm1_gt_t (by omega)

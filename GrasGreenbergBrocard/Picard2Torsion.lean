@@ -237,7 +237,7 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
             rw [← mul_assoc, this]
           have hfac := factorial_eq_q_n_mul_s_n_sq n
           have hm_r : (m : ℝ) ^ 2 = (q_n n : ℝ) * (s_n n : ℝ) ^ 2 + 1 := by
-            exact_mod_cast (by linarith : q_n n * (s_n n) ^ 2 + 1 = m ^ 2)
+            exact_mod_cast (by linarith : m ^ 2 = q_n n * (s_n n) ^ 2 + 1)
           nlinarith
         have hm_nn : 0 ≤ (m : ℝ) := by positivity
         have hr_nn : 0 ≤ (z.re.natAbs : ℝ) ^ 2 + (q_n n : ℝ) * (z.im.natAbs : ℝ) ^ 2 := by positivity
@@ -245,14 +245,19 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
       calc (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ)
           = ((z.re.natAbs : ℝ) ^ 2 + (q_n n : ℝ) * (z.im.natAbs : ℝ) ^ 2) +
               (2 * (z.re.natAbs : ℝ) * (z.im.natAbs : ℝ)) * Real.sqrt (q_n n : ℝ) := by
-            rw [hu2_v2, mul_assoc, hsign]; congr 2; exact_mod_cast him.symm
+            have hs_r : (s_n n : ℝ) = 2 * (z.re : ℝ) * (z.im : ℝ) := by exact_mod_cast him.symm
+            rw [hu2_v2, hs_r, show 2 * (z.re : ℝ) * (z.im : ℝ) = 2 * ((z.re : ℝ) * (z.im : ℝ)) by ring, ← hsign]; ring
         _ = ((z.re.natAbs : ℝ) + (z.im.natAbs : ℝ) * Real.sqrt (q_n n : ℝ)) ^ 2 := by
             ring_nf; rw [hsq_q]; ring
   · rintro ⟨u, v, _, _, huv, hms⟩
+    -- Conversely, `z = ⟨u, v⟩` satisfies `z^2 = ⟨1, s_n⟩` and `z ∣ m`
+    -- Wait: `(u^2 + q_n v^2) = m` and `2 u v = s_n` follow from irrationality of `√q_n`, or from `z^2 = ⟨1, s_n⟩`!
+    -- Indeed, `m + s_n √q_n = (u^2 + q_n v^2) + (2 u v) √q_n` and `m^2 - q_n s_n^2 = 1 = (u^2 + q_n v^2)^2 - q_n (2 u v)^2`!
+    -- Wait: `√q_n ∉ ℚ` since `q_n` is square-free and `≥ 2`!
     have hq_nsq : ¬ IsSquare (q_n n) := by
       rintro ⟨r, hr⟩
       have hsqf := q_n_squarefree n
-      have hr2 : r ^ 2 ∣ q_n n := ⟨1, by linarith⟩
+      have hr2 : r * r ∣ q_n n := ⟨1, by nlinarith⟩
       have hru : IsUnit r := hsqf r hr2
       have hr1 : r = 1 := Nat.isUnit_iff.mp hru
       subst hr1
@@ -266,23 +271,24 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
           rw [← hab, Real.sq_sqrt (by positivity)]
         have hb_r : (b : ℝ) ≠ 0 := by exact_mod_cast hb0
         have h2 : (a : ℝ) ^ 2 = (q_n n : ℝ) * (b : ℝ) ^ 2 := by
-          field_simp [hb_r] at h1; exact h1
+          field_simp [hb_r] at h1; linarith
         exact_mod_cast h2
+      -- Compare `padicValNat p` for any prime `p ∣ q_n n`
       obtain ⟨p, hp, hpq, _⟩ := q_n_has_prime_mod4 (by omega) hn6
       haveI : Fact p.Prime := ⟨hp⟩
-      have hsqf : ¬ p ^ 2 ∣ q_n n := (Nat.squarefree_iff_prime_squarefree.mp (q_n_squarefree n)) p hp
+      have hsqf : ¬ p ^ 2 ∣ q_n n := by simpa [sq] using (Nat.squarefree_iff_prime_squarefree.mp (q_n_squarefree n)) p hp
       have ha_ne : a.natAbs ≠ 0 := by
         intro h0
         have ha0 : a = 0 := Int.natAbs_eq_zero.mp h0
         rw [ha0] at hrat; simp at hrat
         rcases hrat with hq0 | hb_eq0
-        · exact hq_ge2.not_lt (by omega)
+        · exact absurd hq_ge2 (by omega)
         · exact hb0 (by exact_mod_cast hb_eq0)
       have hnat : a.natAbs ^ 2 = q_n n * b.natAbs ^ 2 := by
         have := congrArg Int.natAbs hrat
         simpa [Int.natAbs_mul, Int.natAbs_pow] using this
-      have hv_lhs : padicValNat p (a.natAbs ^ 2) = 2 * padicValNat p a.natAbs :=
-        (by rw [sq]; exact padicValNat.mul ha_ne ha_ne)
+      have hv_lhs : padicValNat p (a.natAbs ^ 2) = 2 * padicValNat p a.natAbs := by
+        rw [sq, padicValNat.mul ha_ne ha_ne]; ring
       have hv_q : padicValNat p (q_n n) = 1 := by
         have hq_ne : q_n n ≠ 0 := by omega
         have h1 : 1 ≤ padicValNat p (q_n n) := (padicValNat_dvd_iff_le hq_ne).mp (by simpa using hpq)
@@ -291,7 +297,9 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
         omega
       have hv_rhs : padicValNat p (q_n n * b.natAbs ^ 2) = 1 + 2 * padicValNat p b.natAbs := by
         have hb_nat_ne : b.natAbs ≠ 0 := Int.natAbs_ne_zero.mpr hb0
-        rw [padicValNat.mul (by omega) (pow_ne_zero 2 hb_nat_ne), hv_q, (by rw [sq]; exact padicValNat.mul hb_nat_ne hb_nat_ne)]
+        have hvb : padicValNat p (b.natAbs ^ 2) = 2 * padicValNat p b.natAbs := by
+          rw [sq, padicValNat.mul hb_nat_ne hb_nat_ne]; ring
+        rw [padicValNat.mul (by omega) (pow_ne_zero 2 hb_nat_ne), hv_q, hvb]
       omega
     have hm_eq : m = u ^ 2 + q_n n * v ^ 2 := by
       have hsq : Real.sqrt (q_n n : ℝ) ^ 2 = (q_n n : ℝ) := Real.sq_sqrt (by positivity)
@@ -309,8 +317,8 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
       have hcoeff0 : 2 * (u : ℝ) * (v : ℝ) - (s_n n : ℝ) = 0 := by
         by_contra hne
         have hrat : Real.sqrt (q_n n : ℝ) =
-            ((m : ℤ) - ((u : ℤ) ^ 2 + (q_n n : ℤ) * (v : ℤ) ^ 2) : ℤ) /
-              ((2 * (u : ℤ) * (v : ℤ) - (s_n n : ℤ) : ℤ) : ℝ) := by
+            ((((m : ℤ) - ((u : ℤ) ^ 2 + (q_n n : ℤ) * (v : ℤ) ^ 2) : ℤ) : ℚ) /
+              (((2 * (u : ℤ) * (v : ℤ) - (s_n n : ℤ) : ℤ) : ℚ)) : ℝ) := by
           push_cast
           field_simp [hne]
           linarith
@@ -334,19 +342,24 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
       exact_mod_cast (by linarith : (s_n n : ℝ) = 2 * (u : ℝ) * (v : ℝ))
     let z : R := ⟨(u : ℤ), (v : ℤ)⟩
     refine ⟨z, ?_⟩
+    -- Prove `span {m, ⟨1, s_n⟩} = span {z}` using `z * z_conj = m` and `z^2 = ⟨1, s_n⟩`!
     have hz_conj : z * ⟨(u : ℤ), -(v : ℤ)⟩ = (m : R) := by
       ext
-      · simp only [z, zsqrtd_mul_re', zsqrtd_natCast_re]
+      · dsimp only [z]
+        rw [zsqrtd_mul_re', zsqrtd_natCast_re]
         have : (m : ℤ) = (u : ℤ) ^ 2 + (q_n n : ℤ) * (v : ℤ) ^ 2 := by exact_mod_cast hm_eq
         linarith
-      · simp only [z, zsqrtd_mul_im', zsqrtd_natCast_im]; ring_nf
+      · dsimp only [z]
+        rw [zsqrtd_mul_im', zsqrtd_natCast_im]
+        ring
     have hz_sq : z ^ 2 = ⟨1, (s_n n : ℤ)⟩ := by
       ext
-      · simp only [z, sq, zsqrtd_mul_re']
+      · dsimp only [z]
+        rw [sq, zsqrtd_mul_re']
         have h1 : (u : ℤ) ^ 2 = (q_n n : ℤ) * (v : ℤ) ^ 2 + 1 := by exact_mod_cast huv
-        have : (u : ℤ) ^ 2 - (q_n n : ℤ) * (v : ℤ) ^ 2 = 1 := by linarith
         linarith
-      · simp only [z, sq, zsqrtd_mul_im']
+      · dsimp only [z]
+        rw [sq, zsqrtd_mul_im']
         have : (s_n n : ℤ) = 2 * (u : ℤ) * (v : ℤ) := by exact_mod_cast hs_eq
         linarith
     apply le_antisymm
@@ -358,6 +371,15 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
       · rw [← hz_sq, sq]
         exact Ideal.mem_span_singleton.mpr ⟨z, rfl⟩
     · rw [Ideal.span_singleton_le_iff_mem]
+      -- Since `span {z}^2 ⊆ span {m, ⟨1, s_n⟩}`... wait: `z = ⟨u, v⟩` and `m = z * z_bar`, `⟨1, s_n⟩ = z^2`.
+      -- Wait: `gcd(z_bar, z) = 1` because `z + z_bar = 2u` and `z - z_bar = 2v√-q_n`, or simpler:
+      -- `J_n_sq_eq` gives `(span {m, α})^2 = span {z}^2`! Wait: in general `I^2 = J^2` doesn't imply `I = J` unless invertible.
+      -- Here `m` is odd and `u^2 + q_n v^2 = m`, `2 u v = s_n`, and `z` divides `m` and `α`!
+      -- Even simpler: `z * (z_bar + z) = z * (2u)` and `z * (z_bar - z) = ...`, wait:
+      -- `span {m, α} = span {z * z_bar, z * z} = span {z} * span {z_bar, z}`, and `span {z_bar, z} = ⊤`!
+      -- Why is `span {z_bar, z} = ⊤`? Because `z_bar * z = m` (odd!) and `z + z_bar = 2u`? No, `2` divides `2u`, so `2` and `m` are coprime, wait: `2u` has `u`! What if `u` shares a factor with `m`? Wait: `u^2 + q_n v^2 = m` and `u^2 - q_n v^2 = 1`, so `2 u^2 = m + 1` and `2 q_n v^2 = m - 1`!
+      -- Thus `gcd(u, m) = 1` (since any `d ∣ u, m` divides `2 u^2 - m = 1`!)!
+      -- So `2 u` and `m` are coprime in `ℤ`!
       have hcop_2u_m : IsCoprime (2 * (u : ℤ)) (m : ℤ) := by
         have h2u2_nat : 2 * u ^ 2 = m + 1 := by nlinarith [hm_eq, huv]
         have h2u2 : 2 * (u : ℤ) ^ 2 - (m : ℤ) = 1 := by
@@ -370,9 +392,7 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
         have h2u : z + ⟨(u : ℤ), -(v : ℤ)⟩ = ((2 * (u : ℤ) : ℤ) : R) := by
           ext <;> simp [z] <;> ring
         rw [h2u]
-        calc (1 : R) = ((1 : ℤ) : R) := by simp
-          _ = ((c₁ * (2 * (u : ℤ)) + c₂ * (m : ℤ) : ℤ) : R) := by rw [hc]
-          _ = (c₁ : R) * ((2 * (u : ℤ) : ℤ) : R) + (c₂ : R) * (m : R) := by push_cast; ring
+        ext <;> simp [hc] <;> ring
       have hz_eq : z = (c₁ : R) * (z ^ 2 + (m : R)) + (c₂ : R) * (z * (m : R)) := by
         calc z = z * 1 := (mul_one z).symm
           _ = z * ((c₁ : R) * (z + ⟨(u : ℤ), -(v : ℤ)⟩) + (c₂ : R) * (m : R)) := by rw [← h1_eq]
