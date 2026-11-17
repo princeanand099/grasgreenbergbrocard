@@ -170,6 +170,14 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
   let c₁_low : ℝ := (1 / 4 : ℝ) * (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ))
   let c₂_high : ℝ := (3 / 2 : ℝ) * Mmax
   let C₂ : ℝ := C * ((2 : ℝ) ^ ((R : ℝ) / 6) + 1)
+  have hR1 : 1 ≤ R := by
+    rw [Nat.floor_pos]
+    exact (le_div_iff₀ hδ0).mpr (by linarith)
+  have hM1 : (1 : ℝ) ≤ Mmax := by
+    unfold Mmax
+    have hN : 1 ≤ ∏ k ∈ Finset.range (5 * R + 2), (R + k) :=
+      Nat.one_le_iff_ne_zero.mpr (Finset.prod_ne_zero_iff.mpr (fun k _ => by omega))
+    exact_mod_cast hN
   refine ⟨η', η, hη', hη, C, C₂, C, hC, mul_pos hC (by positivity), hC, ?_⟩
   have htend1 : Tendsto (fun n : ℕ => (Real.log (n : ℝ)) ^ (R + 2) / (n : ℝ) ^ δ) atTop (nhds 0) :=
     log_pow_div_rpow_tendsto_zero (R + 2) hδ0
@@ -229,13 +237,7 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
       unfold c₁_low
       exact mul_pos (by norm_num) (zpow_pos (by norm_num) _)
     refine ⟨c₁_low, c₂_high, hc₁_pos, ?_, ?_⟩
-    · unfold c₁_low c₂_high Mmax
-      have hM1 : (1 : ℝ) ≤ ∏ k ∈ Finset.range (5 * R + 2), ((R + k : ℕ) : ℝ) := by
-        refine Finset.one_le_prod' (fun k _ => ?_)
-        have hR1 : 1 ≤ R := by
-          rw [Nat.floor_pos]
-          exact (le_div_iff₀ hδ0).mpr (by linarith)
-        exact_mod_cast (by omega : 1 ≤ R + k)
+    · unfold c₁_low c₂_high
       have hpow_le : (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) ≤ 1 :=
         zpow_le_one_of_nonpos₀ (by norm_num) (by omega)
       linarith
@@ -272,10 +274,12 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
           unfold negPowDerivCoeff
           rw [abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul,
             abs_of_nonneg (Finset.prod_nonneg (fun k _ => by positivity))]
-          exact Finset.one_le_prod' (fun k _ => by exact_mod_cast (by omega : 1 ≤ r₀ + k))
+          have hN : 1 ≤ ∏ k ∈ Finset.range j, (r₀ + k) :=
+            Nat.one_le_iff_ne_zero.mpr (Finset.prod_ne_zero_iff.mpr (fun k _ => by omega))
+          exact_mod_cast hN
         have ht_le : t ^ (-((r₀ + j : ℕ) : ℤ)) ≥ (2 * P) ^ (-((r₀ + j : ℕ) : ℤ)) := by
           rw [zpow_neg, zpow_neg, zpow_natCast, zpow_natCast]
-          exact one_div_le_one_div_of_le (pow_pos ht_pos _) (pow_le_pow_left₀ ht_pos.le ht.2 _)
+          exact inv_anti₀ (pow_pos ht_pos _) (pow_le_pow_left₀ ht_pos.le ht.2 _)
         have h2P : (2 * P) ^ (-((r₀ + j : ℕ) : ℤ)) ≥
             (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) * P ^ (-((r₀ + j : ℕ) : ℤ)) := by
           rw [mul_zpow]
@@ -310,15 +314,13 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
                 refine Finset.prod_le_prod (fun k _ => by positivity) (fun k _ => ?_)
                 exact_mod_cast (by omega : r₀ + k ≤ R + k)
             _ ≤ ∏ k ∈ Finset.range (5 * R + 2), ((R + k : ℕ) : ℝ) := by
-                refine Finset.prod_le_prod_of_subset_of_one_le' (Finset.range_mono hj2)
-                  (fun k _ _ => by exact_mod_cast (by
-                    have hR1 : 1 ≤ R := by
-                      rw [Nat.floor_pos]
-                      exact (le_div_iff₀ hδ0).mpr (by linarith)
-                    omega : 1 ≤ R + k))
+                have hN : ∏ k ∈ Finset.range j, (R + k) ≤ ∏ k ∈ Finset.range (5 * R + 2), (R + k) :=
+                  Finset.prod_le_prod_of_subset_of_one_le' (Finset.range_mono hj2)
+                    (fun k _ _ => by omega)
+                exact_mod_cast hN
         have ht_ge : t ^ (-((r₀ + j : ℕ) : ℤ)) ≤ P ^ (-((r₀ + j : ℕ) : ℤ)) := by
           rw [zpow_neg, zpow_neg, zpow_natCast, zpow_natCast]
-          exact one_div_le_one_div_of_le (pow_pos hP_pos _) (pow_le_pow_left₀ hP_pos.le ht.1 _)
+          exact inv_anti₀ (pow_pos hP_pos _) (pow_le_pow_left₀ hP_pos.le ht.1 _)
         have hP_eq : P ^ (-((r₀ + j : ℕ) : ℤ)) = (1 / P ^ r₀) / P ^ j := by
           rw [zpow_neg, zpow_natCast, pow_add]
           field_simp [hP_pos.ne']
@@ -369,20 +371,19 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
                     refine Finset.prod_le_prod (fun k _ => by positivity) (fun k _ => ?_)
                     exact_mod_cast (by omega : r + k ≤ R + k)
                 _ ≤ ∏ k ∈ Finset.range (5 * R + 2), ((R + k : ℕ) : ℝ) := by
-                    refine Finset.prod_le_prod_of_subset_of_one_le' (Finset.range_mono hj2)
-                      (fun k _ _ => by exact_mod_cast (by
-                        have hR1 : 1 ≤ R := by
-                          rw [Nat.floor_pos]
-                          exact (le_div_iff₀ hδ0).mpr (by linarith)
-                        omega : 1 ≤ R + k))
+                    have hN : ∏ k ∈ Finset.range j, (R + k) ≤ ∏ k ∈ Finset.range (5 * R + 2), (R + k) :=
+                      Finset.prod_le_prod_of_subset_of_one_le' (Finset.range_mono hj2)
+                        (fun k _ _ => by omega)
+                    exact_mod_cast hN
             have ht_le : t ^ (-((r + j : ℕ) : ℤ)) ≤ (1 / P) * P ^ (-((r₀ + j : ℕ) : ℤ)) := by
               rw [zpow_neg, zpow_neg, zpow_natCast, zpow_natCast]
               have hpow_le : P ^ (r₀ + 1 + j) ≤ t ^ (r + j) := by
                 calc P ^ (r₀ + 1 + j) ≤ P ^ (r + j) := pow_le_pow_right₀ hP_ge1 (by omega)
                   _ ≤ t ^ (r + j) := pow_le_pow_left₀ hP_pos.le ht.1 _
-              calc 1 / t ^ (r + j) ≤ 1 / P ^ (r₀ + 1 + j) :=
-                    one_div_le_one_div_of_le (pow_pos hP_pos _) hpow_le
-                _ = (1 / P) * (1 / P ^ (r₀ + j)) := by rw [pow_add, pow_add, pow_one]; ring
+              calc (t ^ (r + j))⁻¹ ≤ (P ^ (r₀ + 1 + j))⁻¹ :=
+                    inv_anti₀ (pow_pos hP_pos _) hpow_le
+                _ = (1 / P) * (P ^ (r₀ + j))⁻¹ := by
+                    rw [pow_add, pow_add, pow_one, one_div, mul_inv, mul_inv]; ring
             have hh0 : (1 : ℝ) ≤ |(h r₀ : ℝ)| := by exact_mod_cast Int.one_le_abs hr₀_ne
             have hP_eq : P ^ (-((r₀ + j : ℕ) : ℤ)) = (1 / P ^ r₀) / P ^ j := by
               rw [zpow_neg, zpow_natCast, pow_add]
@@ -453,20 +454,10 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
           (((h r₀ : ℝ) * (n : ℝ) / 2) * negPowDerivCoeff r₀ j * t ^ (-((r₀ + j : ℕ) : ℤ)))
           (∑ r ∈ A.erase r₀, ((h r : ℝ) * (n : ℝ) / 2) * negPowDerivCoeff r j * t ^ (-((r + j : ℕ) : ℤ)))
         have hc1_le : c₁_low ≤ (1 / 2 : ℝ) * Mmax := by
-          unfold c₁_low Mmax
-          have hM1 : (1 : ℝ) ≤ ∏ k ∈ Finset.range (5 * R + 2), ((R + k : ℕ) : ℝ) := by
-            refine Finset.one_le_prod' (fun k _ => ?_)
-            have hR1 : 1 ≤ R := by
-              rw [Nat.floor_pos]
-              exact (le_div_iff₀ hδ0).mpr (by linarith)
-            exact_mod_cast (by omega : 1 ≤ R + k)
+          unfold c₁_low
           have hpow_le : (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) ≤ 1 :=
             zpow_le_one_of_nonpos₀ (by norm_num) (by omega)
-          calc (1 / 4 : ℝ) * (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ))
-              ≤ (1 / 4 : ℝ) * 1 := mul_le_mul_of_nonneg_left hpow_le (by norm_num)
-            _ ≤ (1 / 2 : ℝ) * 1 := by norm_num
-            _ ≤ (1 / 2 : ℝ) * ∏ k ∈ Finset.range (5 * R + 2), ((R + k : ℕ) : ℝ) :=
-              mul_le_mul_of_nonneg_left hM1 (by norm_num)
+          linarith
         have hc1_T : c₁_low * T₀ / P ^ j ≤ ((1 / 2 : ℝ) * Mmax) * T₀ / P ^ j := by
           apply div_le_div_of_nonneg_right (mul_le_mul_of_nonneg_right hc1_le (by positivity)) (by positivity)
         have h32 : c₂_high * T₀ / P ^ j = Mmax * T₀ / P ^ j + ((1 / 2 : ℝ) * Mmax) * T₀ / P ^ j := by
@@ -511,14 +502,17 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
         pow_le_pow_left₀ hlogP_nonneg hlogP_le 3
       have h4 : (n : ℝ) ^ (-(δ * η')) * (Real.log (n : ℝ)) ^ 3 =
           ((Real.log (n : ℝ)) ^ (R + 5) / (n : ℝ) ^ (δ * η')) * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := by
-        rw [Real.rpow_neg (Nat.cast_nonneg n),
-          ← Real.rpow_natCast (Real.log (n : ℝ)) 3,
-          ← Real.rpow_natCast (Real.log (n : ℝ)) (R + 5),
-          ← Real.rpow_add (by linarith)]
-        have hexp : ((R + 5 : ℕ) : ℝ) + (-((R : ℝ) + 2)) = (3 : ℝ) := by push_cast; ring
-        rw [mul_assoc, div_eq_mul_inv, mul_assoc]
-        congr 1
-        rw [← Real.rpow_add (by linarith), hexp]
+        rw [Real.rpow_neg (Nat.cast_nonneg n), div_eq_mul_inv]
+        have hlog_eq : (Real.log (n : ℝ)) ^ (R + 5) * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) =
+            (Real.log (n : ℝ)) ^ 3 := by
+          rw [← Real.rpow_natCast (Real.log (n : ℝ)) (R + 5),
+            ← Real.rpow_add (by linarith),
+            show ((R + 5 : ℕ) : ℝ) + (-((R : ℝ) + 2)) = ((3 : ℕ) : ℝ) from by push_cast; ring,
+            Real.rpow_natCast]
+        calc ((n : ℝ) ^ (δ * η'))⁻¹ * (Real.log (n : ℝ)) ^ 3
+            = ((n : ℝ) ^ (δ * η'))⁻¹ * ((Real.log (n : ℝ)) ^ (R + 5) * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2))) := by
+              rw [hlog_eq]
+          _ = ((Real.log (n : ℝ)) ^ (R + 5) * ((n : ℝ) ^ (δ * η'))⁻¹) * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := by ring
       calc P ^ (-η') * (Real.log P) ^ 3
           ≤ (n : ℝ) ^ (-(δ * η')) * (Real.log (n : ℝ)) ^ 3 :=
             mul_le_mul (le_trans h1 h2.le) h3 (by positivity) (by positivity)
