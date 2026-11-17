@@ -15,7 +15,7 @@ set_option pp.maxSteps 50
 set_option pp.deepTerms false
 set_option pp.deepTerms.threshold 3
 set_option pp.proofs false
-set_option maxHeartbeats 400000
+set_option maxHeartbeats 800000
 
 noncomputable section
 
@@ -448,7 +448,7 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
                   ∑ s ∈ I_s, (B_mod ((n : ℝ) / (p : ℝ) ^ s)).re) * (Real.log (p : ℝ) / ((p : ℝ) - 1))
                 = (1 + 2 * (h_mod : ℝ)) ^ I_s.card * ∑ s ∈ I_s, ∑ p ∈ D_r,
                     (Real.log (p : ℝ) / ((p : ℝ) - 1)) * (B_mod ((n : ℝ) / (p : ℝ) ^ s)).re := by
-                  conv_rhs => rw [Finset.mul_sum, Finset.sum_comm]
+                  conv_rhs => simp_rw [Finset.mul_sum]; rw [Finset.sum_comm]
                   refine Finset.sum_congr rfl (fun p _ => ?_)
                   rw [Finset.sum_mul, Finset.mul_sum]
                   refine Finset.sum_congr rfl (fun s _ => by ring)
@@ -559,7 +559,7 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
               rw [div_le_div_iff₀ (by positivity) hlogn_pos]
               have h2ln : 2 * Real.log (n : ℝ) ≤ (Real.log (n : ℝ)) ^ 2 := by nlinarith [hln100]
               have h_mul := mul_le_mul_of_nonneg_left h2ln (by positivity : 0 ≤ (h_mod : ℝ) * (1 + Cm))
-              linarith
+              exact le_trans (le_of_eq (by ring)) h_mul
       have h_nz_bd : ∑ m ∈ nzH, (b_mod m * ∑ k ∈ Finset.range (K + 1), ∑ p ∈ B_k k,
             ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
               eExp ((m : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s))).re ≤
@@ -735,7 +735,7 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
     _ ≤ M_clean * (1 / Real.log (n : ℝ)) := by
         rw [show (1 + 2 * (h_mod : ℝ)) ^ R * (R : ℝ) * ((h_mod : ℝ) * (1 + Cm) + 8 * (h_mod : ℝ) * C₂e) / Real.log (n : ℝ) +
             4 * C₂e / Real.log (n : ℝ) =
-            ((1 + 2 * (h_mod : ℝ)) ^ R * (R : ℝ) * ((h_mod : ℝ) * (1 + Cm) + 8 * (h_mod : ℝ) * C₂e) + 4 * C₂e) *
+            ((1 + 2 * (h_mod : ℝ)) ^ R * (R : ℝ) * ((h_mod : ℝ) * (1 + Cm) + 8 * (h_mod : ℝ) * C₂e) + 4 * C₃e * 0 + 4 * C₂e) *
               (1 / Real.log (n : ℝ)) from by ring]
         exact mul_le_mul_of_nonneg_right (by dsimp only [M_clean]; linarith) (by positivity)
 

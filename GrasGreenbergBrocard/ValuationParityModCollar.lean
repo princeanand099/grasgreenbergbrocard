@@ -15,7 +15,7 @@ set_option pp.maxSteps 50
 set_option pp.deepTerms false
 set_option pp.deepTerms.threshold 3
 set_option pp.proofs false
-set_option maxHeartbeats 400000
+set_option maxHeartbeats 800000
 
 noncomputable section
 
@@ -233,7 +233,7 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       rw [div_lt_iff₀ (by positivity)] at h1
       rw [le_div_iff₀ hm_pos] at h2
       have h_ltN : n < (m_r + 1) * p ^ r := by exact_mod_cast (by push_cast; linarith : (n : ℝ) < ((m_r + 1 : ℕ) : ℝ) * ((p ^ r : ℕ) : ℝ))
-      have h_leN : m_r * p ^ r ≤ n := by exact_mod_cast (by linarith : ((m_r * p ^ r : ℕ) : ℝ) ≤ (n : ℝ))
+      have h_leN : m_r * p ^ r ≤ n := by exact_mod_cast (by push_cast; linarith : ((m_r * p ^ r : ℕ) : ℝ) ≤ (n : ℝ))
       have := (Nat.le_div_iff_mul_le (pow_pos hp_pr.pos r)).mpr h_leN
       have := (Nat.div_lt_iff_lt_mul (pow_pos hp_pr.pos r)).mpr h_ltN
       omega
@@ -414,6 +414,7 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
             calc (n : ℝ) = (n : ℝ) * 1 := (mul_one _).symm
               _ ≤ (n : ℝ) * (2 * (m_r : ℝ) / ((m_r : ℝ) + 1)) := by
                   apply mul_le_mul_of_nonneg_left _ hn_pos.le
+                  have hm1_ge : (1 : ℝ) ≤ (m_r : ℝ) := by exact_mod_cast (Finset.mem_Icc.mp hm_r).1
                   rw [one_le_div (by positivity)]; linarith
               _ = 2 * ((m_r : ℝ) * ((n : ℝ) / ((m_r : ℝ) + 1))) := by ring
               _ ≤ (2 : ℝ) ^ r * ((m_r : ℝ) * ((n : ℝ) / ((m_r : ℝ) + 1))) := by
@@ -511,7 +512,7 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         Finset.sum_congr rfl (fun p _ => by congr 2; ring)
       rw [h_eq_sum]
       have h_bd2 : C₃e * (2 / P) * P * (n : ℝ) ^ (-η) ≤ 4 * C₃e * (n : ℝ) ^ (-η) := by
-        rw [show C₃e * (2 / P) * P * (n : ℝ) ^ (-η) = 2 * C₃e * (n : ℝ) ^ (-η) from by field_simp [hP_pos.ne']; ring]
+        rw [show C₃e * (2 / P) * P * (n : ℝ) ^ (-η) = 2 * C₃e * (n : ℝ) ^ (-η) from by field_simp [hP_pos.ne']]
         have : 0 ≤ C₃e * (n : ℝ) ^ (-η) := by positivity
         linarith
       exact le_trans h_res2 h_bd2
@@ -585,7 +586,7 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
                   ∑ s ∈ I_s, (B_mod ((n : ℝ) / (p : ℝ) ^ s)).re) * (Real.log (p : ℝ) / ((p : ℝ) - 1))
                 = (1 + 2 * (h_mod : ℝ)) ^ I_s.card * ∑ s ∈ I_s, ∑ p ∈ J m_r,
                     (Real.log (p : ℝ) / ((p : ℝ) - 1)) * (B_mod ((n : ℝ) / (p : ℝ) ^ s)).re := by
-                  conv_rhs => rw [Finset.mul_sum, Finset.sum_comm]
+                  conv_rhs => simp_rw [Finset.mul_sum]; rw [Finset.sum_comm]
                   refine Finset.sum_congr rfl (fun p _ => ?_)
                   rw [Finset.sum_mul, Finset.mul_sum]
                   refine Finset.sum_congr rfl (fun s _ => by ring)
@@ -735,7 +736,7 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       · rw [hS_eq, Finset.sum_biUnion (fun m₁ hm₁ m₂ hm₂ hne => hJ_disj hm₁ hm₂ hne)]
       · rw [Finset.sum_congr rfl (fun m_r _ => Finset.sum_comm (s := J m_r) (t := nzH)), Finset.sum_comm]
         refine Finset.sum_congr rfl (fun m _ => ?_)
-        rw [← Complex.re_sum]
+        simp only [← Complex.re_sum]
         congr 1
         rw [Finset.mul_sum]
         refine Finset.sum_congr rfl (fun m_r _ => ?_)
@@ -794,7 +795,7 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
             rw [div_le_div_iff₀ (by positivity) hlogn_pos]
             have h2ln : 2 * Real.log (n : ℝ) ≤ (Real.log (n : ℝ)) ^ 2 := by nlinarith [hln100]
             have h_mul := mul_le_mul_of_nonneg_left h2ln (by positivity : 0 ≤ (h_mod : ℝ) * (1 + Cm))
-            linarith
+            exact le_trans (le_of_eq (by ring)) h_mul
     have h_nz_bd : ∑ m ∈ nzH, (b_mod m * ∑ m_r ∈ Finset.Icc 1 M_r, ∑ p ∈ J m_r,
           ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
             eExp ((m : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s))).re ≤
