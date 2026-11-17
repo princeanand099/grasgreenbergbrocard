@@ -69,7 +69,7 @@ theorem small_prime_mod_band_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
           ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ))))
       =O[atTop] (fun n : ℕ => 1 / Real.log (n : ℝ)) :=
     (Asymptotics.IsBigO.sum (fun r hr => (h_col_sum r hr).add (h_int_sum r hr))).congr'
-      EventuallyEq.rfl EventuallyEq.rfl
+      (Eventually.of_forall (fun n => Finset.sum_apply n _ _)) EventuallyEq.rfl
   refine h_fin_sum.congr' ?_ EventuallyEq.rfl
   have h_rpow_all : ∀ᶠ n : ℕ in atTop, ∀ r ∈ Finset.Icc 2 R,
       (Real.log (n : ℝ)) ^ A_R / (n : ℝ) ^ (1 / ((r : ℝ) * ((r : ℝ) + 1))) ≤ 1 := by
@@ -627,14 +627,9 @@ theorem upper_band_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         rw [Finset.sum_congr rfl (fun p _ => h_p_eq p), Finset.sum_add_distrib]
         congr 1
         rw [Finset.sum_comm]
-        have h_lhs_re : ∑ m ∈ nzH, ∑ p ∈ U, (b_mod m * ((Real.log (p : ℝ) / (p : ℝ) : ℝ) : ℂ) *
-              eExp ((m : ℝ) * ((n : ℝ) / (p : ℝ)) / (h_mod : ℝ))).re =
-            (∑ m ∈ nzH, ∑ p ∈ U, b_mod m * ((Real.log (p : ℝ) / (p : ℝ) : ℝ) : ℂ) *
-              eExp ((m : ℝ) * ((n : ℝ) / (p : ℝ)) / (h_mod : ℝ))).re := by
-          rw [Complex.re_sum]; refine Finset.sum_congr rfl (fun m _ => (Complex.re_sum _ _).symm)
-        rw [h_lhs_re]
-        congr 1
         refine Finset.sum_congr rfl (fun m _ => ?_)
+        rw [← Complex.re_sum]
+        congr 1
         conv_lhs => rw [hU_eq, Finset.sum_biUnion (fun k₁ hk₁ k₂ hk₂ hne => hB_disj hk₁ hk₂ hne)]
         rw [Finset.mul_sum]
         refine Finset.sum_congr rfl (fun k _ => ?_)
@@ -1195,9 +1190,11 @@ theorem multi_modulus_power_band_equidistribution (h_mod c : ℕ) (hh_mod : 2 �
                 have hp1_nn : 0 ≤ (p : ℝ) - 1 := (sub_pos.mpr (by exact_mod_cast (by omega : 1 < p))).le
                 have hlogp_nn : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ p))
                 rw [norm_mul, norm_eExp, mul_one]
+                have hd_nn : 0 ≤ ((Nat.digits p n).sum : ℝ) := Nat.cast_nonneg _
                 simp only [norm_mul, norm_div, Complex.norm_real,
-                  Real.norm_of_nonneg (Nat.cast_nonneg _), Real.norm_of_nonneg hp1_nn,
+                  Real.norm_of_nonneg hd_nn, Real.norm_of_nonneg hp1_nn,
                   Real.norm_of_nonneg hlogp_nn]
+                ring
             _ ≤ ∑ _p ∈ S_mid3, 2 * Real.log (n : ℝ) := Finset.sum_le_sum h_each
             _ = (S_mid3.card : ℝ) * (2 * Real.log (n : ℝ)) := by simp [Finset.sum_const, nsmul_eq_mul]
             _ ≤ (Nat.sqrt n : ℝ) * (2 * Real.log (n : ℝ)) := mul_le_mul_of_nonneg_right h_card (by positivity)
@@ -1313,7 +1310,7 @@ theorem multi_modulus_power_band_equidistribution (h_mod c : ℕ) (hh_mod : 2 �
               eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ)))
         =o[atTop] (fun n : ℕ => (n : ℝ) * Real.log (n : ℝ)) := by
       refine (Asymptotics.IsLittleO.sum (fun z hz => ?_)).congr'
-        EventuallyEq.rfl EventuallyEq.rfl
+        (Eventually.of_forall (fun n => Finset.sum_apply n _ _)) EventuallyEq.rfl
       have hz_mem := Finset.mem_filter.mp hz
       have hz1 : 1 ≤ z := by have := Finset.mem_range.mp hz_mem.1; have := hz_mem.2; omega
       have hz2 : z < h_mod := Finset.mem_range.mp hz_mem.1
