@@ -96,7 +96,7 @@ theorem q_n_has_prime_mod4 {n : ℕ} (hn : 3 ≤ n) (hn6 : n ≠ 6) :
       exact (prime_in_upper_half_dvd_q_n (by decide) (by omega) h7).2
     · refine ⟨3, by decide, ?_, by decide⟩
       have hn5 : n ≤ 5 := by omega
-      exact (prime_in_upper_half_dvd_q_n (by decide) (by omega) hn5).2
+      exact (@prime_in_upper_half_dvd_q_n n 3 Nat.prime_three (by omega) hn5).2
 
 private lemma zmod_sq_ne_neg_one_of_mod4_eq_3 {p : ℕ} (hp : p.Prime) (hmod : p % 4 = 3)
     (z : ZMod p) : z ^ 2 ≠ -1 := by
@@ -120,12 +120,10 @@ private lemma zmod_sq_ne_neg_one_of_mod4_eq_3 {p : ℕ} (hp : p.Prime) (hmod : p
     simp
   rw [hodd] at hflt
   have h2 : ((2 : ℕ) : ZMod p) = 0 := by
-    have : (1 : ZMod p) + 1 = 0 := by
-      calc (1 : ZMod p) + 1 = 1 - (-1 : ZMod p) := by ring
-        _ = 1 - 1 := by rw [hflt]
-        _ = 0 := sub_self 1
-    simpa [Nat.cast_ofNat] using this
-  have hdvd : p ∣ 2 := (ZMod.natCast_zmod_eq_zero_iff_dvd 2 p).mp h2
+    calc ((2 : ℕ) : ZMod p) = 1 - (-1 : ZMod p) := by norm_num
+      _ = 1 - 1 := by rw [hflt]
+      _ = 0 := sub_self 1
+  have hdvd : p ∣ 2 := (CharP.cast_eq_zero_iff (ZMod p) p 2).mp h2
   have hle : p ≤ 2 := Nat.le_of_dvd (by norm_num) hdvd
   omega
 
@@ -137,8 +135,7 @@ theorem neg_pell_no_int_sol {D p : ℕ} (hp : p.Prime) (hpD : p ∣ D) (hmod : p
   haveI : Fact p.Prime := ⟨hp⟩
   have hmod_zmod : ((x ^ 2 - (D : ℤ) * y ^ 2 : ℤ) : ZMod p) = ((-1 : ℤ) : ZMod p) := by
     rw [h]
-  have hpD_zmod : ((D : ℤ) : ZMod p) = 0 := by
-    rw [← Int.cast_natCast, ZMod.natCast_zmod_eq_zero_iff_dvd.mpr hpD]
+  have hpD_zmod : (D : ZMod p) = 0 := (CharP.cast_eq_zero_iff (ZMod p) p D).mpr hpD
   push_cast at hmod_zmod
   rw [hpD_zmod, zero_mul, sub_zero] at hmod_zmod
   exact zmod_sq_ne_neg_one_of_mod4_eq_3 hp hmod (x : ZMod p) hmod_zmod
@@ -159,16 +156,18 @@ theorem q_n_squarefree (n : ℕ) : Squarefree (q_n n) := by
     · rw [Finset.sum_eq_single p]
       · rw [hp.factorization_self]
       · intro q hq hqp
-        exact (Finset.mem_filter.mp hq).2.1.factorization_eq_zero_of_ne hqp
+        have hq_pr : q.Prime := (Finset.mem_filter.mp hq).2.1
+        exact Nat.factorization_eq_zero_of_not_dvd (fun h => hqp ((Nat.prime_dvd_prime_iff_eq hp hq_pr).mp h).symm)
       · intro habs; exact absurd hmem habs
     · rw [Finset.sum_eq_zero]
       · exact Nat.zero_le 1
       · intro q hq
         have hqp : q ≠ p := fun h => hmem (h ▸ hq)
-        exact (Finset.mem_filter.mp hq).2.1.factorization_eq_zero_of_ne hqp
+        have hq_pr : q.Prime := (Finset.mem_filter.mp hq).2.1
+        exact Nat.factorization_eq_zero_of_not_dvd (fun h => hqp ((Nat.prime_dvd_prime_iff_eq hp hq_pr).mp h).symm)
   have h2 : 2 ≤ padicValNat p (∏ q ∈ Podd n, q) := by
-    have := (padicValNat_dvd_iff_le hq_ne).mp hpp
-    exact this
+    rw [← sq] at hpp
+    exact (padicValNat_dvd_iff_le hq_ne).mp hpp
   omega
 
 /-- **Lemma 3.1(i), part 2b**: For `n ≥ 3` with `n ≠ 6`, `x^2 - q_n * y^2 = -1` has no rational
@@ -178,9 +177,10 @@ theorem neg_pell_no_rat_sol {n : ℕ} (hn : 3 ≤ n) (hn6 : n ≠ 6) (x y : ℚ)
   obtain ⟨p, hp, hpq, hmod⟩ := q_n_has_prime_mod4 hn hn6
   have hsqf : ¬ p ^ 2 ∣ q_n n := by
     have := (Nat.squarefree_iff_prime_squarefree.mp (q_n_squarefree n)) p hp
-    exact this
+    simpa [sq] using this
   haveI : Fact p.Prime := ⟨hp⟩
   intro hxy
+  -- Clear denominators: `x = a / d`, `y = b / d` with `d ≥ 1`
   let d : ℕ := x.den * y.den
   have hd_pos : 0 < d := Nat.mul_pos x.pos y.pos
   let a : ℤ := x.num * (y.den : ℤ)
@@ -206,6 +206,7 @@ theorem neg_pell_no_rat_sol {n : ℕ} (hn : 3 ≤ n) (hn6 : n ≠ 6) (x y : ℚ)
       field_simp [hd_q] at hxy
       linarith
     exact_mod_cast hq_rat
+  -- Strong induction on `d`
   suffices h : ∀ d0 : ℕ, 0 < d0 → ∀ a0 b0 : ℤ, a0 ^ 2 + (d0 : ℤ) ^ 2 ≠ (q_n n : ℤ) * b0 ^ 2 from
     h d hd_pos a b hint
   intro d0
@@ -214,8 +215,7 @@ theorem neg_pell_no_rat_sol {n : ℕ} (hn : 3 ≤ n) (hn6 : n ≠ 6) (x y : ℚ)
     intro hd0_pos a0 b0 heq
     have hmod_z : ((a0 ^ 2 + (d0 : ℤ) ^ 2 : ℤ) : ZMod p) = (((q_n n : ℤ) * b0 ^ 2 : ℤ) : ZMod p) := by
       rw [heq]
-    have hpq_z : ((q_n n : ℤ) : ZMod p) = 0 := by
-      rw [← Int.cast_natCast, ZMod.natCast_zmod_eq_zero_iff_dvd.mpr hpq]
+    have hpq_z : (q_n n : ZMod p) = 0 := (CharP.cast_eq_zero_iff (ZMod p) p (q_n n)).mpr hpq
     push_cast at hmod_z
     rw [hpq_z, zero_mul] at hmod_z
     have hd0_zero : (d0 : ZMod p) = 0 := by
@@ -230,7 +230,7 @@ theorem neg_pell_no_rat_sol {n : ℕ} (hn : 3 ≤ n) (hn6 : n ≠ 6) (x y : ℚ)
               have hd2 : (d0 : ZMod p) ^ 2 ≠ 0 := pow_ne_zero 2 hne
               field_simp [hd2]
       exact zmod_sq_ne_neg_one_of_mod4_eq_3 hp hmod _ hsq
-    have hpd0 : p ∣ d0 := (ZMod.natCast_zmod_eq_zero_iff_dvd d0 p).mp hd0_zero
+    have hpd0 : p ∣ d0 := (CharP.cast_eq_zero_iff (ZMod p) p d0).mp hd0_zero
     have ha0_zero : (a0 : ZMod p) = 0 := by
       rw [hd0_zero, sq, zero_mul, add_zero] at hmod_z
       exact sq_eq_zero_iff.mp hmod_z
@@ -306,7 +306,6 @@ theorem log_fund_pell_gt_point2 {n X₁ Y₁ : ℕ}
       Real.log 2 + (1 / 2 : ℝ) * Real.log (q_n n : ℝ) := by
     rw [Real.log_mul (by norm_num) (by positivity), Real.sqrt_eq_rpow,
       Real.log_rpow (by positivity)]
-    ring
   have hlog2_pos : 0 < Real.log 2 := Real.log_pos (by norm_num)
   linarith
 
@@ -329,6 +328,7 @@ private lemma twelve_point_five_log_lt {n : ℕ} (hn : 116 ≤ n) :
     (12.5 : ℝ) * Real.log (n : ℝ) < (n : ℝ) := by
   have hn_pos : (0 : ℝ) < (n : ℝ) := by positivity
   have hn_ge : (116 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
+  -- `log(n / 20) ≤ n / 20 - 1`, and `log 20 < 3` since `20 < e^3`
   have hlog_div : Real.log ((n : ℝ) / 20) ≤ (n : ℝ) / 20 - 1 :=
     Real.log_le_sub_one_of_pos (by positivity)
   have hlog20 : Real.log 20 < 3 := by
@@ -337,7 +337,7 @@ private lemma twelve_point_five_log_lt {n : ℕ} (hn : 116 ≤ n) :
       have := Real.exp_one_gt_d9
       linarith
     have he3 : (2.718 : ℝ) ^ 3 < Real.exp 3 := by
-      rw [show (3 : ℝ) = ((3 : ℕ) : ℝ) by norm_num, Real.exp_nat_mul, mul_one]
+      rw [show (3 : ℝ) = ((3 : ℕ) : ℝ) * 1 by norm_num, Real.exp_nat_mul]
       exact pow_lt_pow_left₀ he1 (by norm_num) (by norm_num)
     norm_num at he3
     linarith
@@ -389,7 +389,7 @@ theorem pell_index_upper_bound {n m k X₁ Y₁ : ℕ} (hn : 8 ≤ n)
       have hfac_ge1 : (1 : ℝ) ≤ ((Nat.factorial n : ℕ) : ℝ) := by
         exact_mod_cast Nat.factorial_pos n
       rw [mul_pow, Real.sq_sqrt (by positivity)]
-      have hm_real : (m : ℝ) ^ 2 = ((Nat.factorial n : ℕ) : ℝ) + 1 := by exact_mod_cast hm
+      have hm_real : (m : ℝ) ^ 2 = ((Nat.factorial n : ℕ) : ℝ) + 1 := by exact_mod_cast hm.symm
       linarith
     have h1 : Real.sqrt ((m : ℝ) ^ 2) < Real.sqrt ((2 * Real.sqrt ((Nat.factorial n : ℕ) : ℝ)) ^ 2) :=
       Real.sqrt_lt_sqrt (by positivity) hsq
@@ -416,9 +416,9 @@ theorem pell_index_upper_bound {n m k X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     exact lt_trans h1 h3_lt_pow
   have hlog_ms : 2 * Real.log ((m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ)) <
       (n : ℝ) * Real.log (n : ℝ) := by
-    rw [← Real.log_pow, ← Real.log_pow]
     have hpos1 : 0 < ((m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ)) ^ 2 := by positivity
-    exact Real.log_lt_log hpos1 hms_sq_lt
+    have hlog_lt := Real.log_lt_log hpos1 hms_sq_lt
+    rwa [Real.log_pow, Real.log_pow, show ((2 : ℕ) : ℝ) = (2 : ℝ) by norm_num] at hlog_lt
   have hlog_pow : Real.log ((m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ)) =
       (k : ℝ) * Real.log (pellUnit (q_n n) X₁ Y₁) := by
     rw [hk_eq, Real.log_pow]
@@ -446,12 +446,14 @@ theorem log_s_n_sqrt_q_n_asymptotic :
       (1 / 2 : ℝ) * Real.log ((Nat.factorial n : ℕ) : ℝ) := by
     intro n
     have hfac := factorial_eq_q_n_mul_s_n_sq n
-    have hs_pos : (0 : ℝ) < (s_n n : ℝ) := by
+    have hs_pos_nat : 0 < s_n n := by
       unfold s_n
-      exact_mod_cast Finset.prod_pos (fun q hq => pow_pos (Finset.mem_filter.mp hq).2.pos _)
-    have hq_pos : (0 : ℝ) < (q_n n : ℝ) := by
+      exact Finset.prod_pos (fun q hq => pow_pos (Finset.mem_filter.mp hq).2.pos _)
+    have hq_pos_nat : 0 < q_n n := by
       unfold q_n
-      exact_mod_cast Finset.prod_pos (fun q hq => (Finset.mem_filter.mp hq).2.1.pos)
+      exact Finset.prod_pos (fun q hq => (Finset.mem_filter.mp hq).2.1.pos)
+    have hs_pos : (0 : ℝ) < (s_n n : ℝ) := by exact_mod_cast hs_pos_nat
+    have hq_pos : (0 : ℝ) < (q_n n : ℝ) := by exact_mod_cast hq_pos_nat
     have hprod : (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = Real.sqrt ((Nat.factorial n : ℕ) : ℝ) := by
       rw [← Real.sqrt_sq hs_pos.le, ← Real.sqrt_mul (by positivity)]
       congr 1
@@ -461,6 +463,7 @@ theorem log_s_n_sqrt_q_n_asymptotic :
     ring
   have hst := stirling_log_factorial_remainder.const_mul_left (1 / 2 : ℝ)
   refine hst.congr' (Eventually.of_forall fun n => ?_) (Eventually.of_forall fun n => rfl)
+  dsimp only
   rw [heq n]
   ring
 
@@ -476,6 +479,7 @@ theorem log_s_n_asymptotic :
   refine ⟨c₀, hc₀, ?_⟩
   have hlog_n_le : (fun n : ℕ => (n : ℝ)⁻¹) =O[atTop]
       (fun n : ℕ => (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ)))) := by
+    -- `n⁻¹ = n * n⁻²`, and `n⁻² ≤ exp(-c₀ √(log n))` eventually since `c₀ √(log n) ≤ 2 log n`
     have hsqrt_le : ∀ᶠ n : ℕ in atTop,
         c₀ * Real.sqrt (Real.log (n : ℝ)) ≤ 2 * Real.log (n : ℝ) := by
       have ht : Tendsto (fun n : ℕ => Real.sqrt (Real.log (n : ℝ)) / Real.log (n : ℝ)) atTop (nhds 0) := by
@@ -491,6 +495,7 @@ theorem log_s_n_asymptotic :
         exact h2.comp (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop)
       filter_upwards [ht.eventually (eventually_le_nhds (by positivity : (0 : ℝ) < 2 / c₀)),
         (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_gt_atTop 0)] with n hn hlog_pos
+      dsimp only [Function.comp_def] at hlog_pos
       rw [div_le_iff₀ hlog_pos] at hn
       have := mul_le_mul_of_nonneg_left hn hc₀.le
       have hc0_ne : c₀ ≠ 0 := hc₀.ne'
@@ -527,6 +532,7 @@ theorem log_s_n_asymptotic :
         exact h2.comp (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop)
       filter_upwards [ht.eventually (eventually_le_nhds (by positivity : (0 : ℝ) < (1 / 2) / c₀)),
         (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_gt_atTop 0)] with n hn hlog_pos
+      dsimp only [Function.comp_def] at hlog_pos
       rw [div_le_iff₀ hlog_pos] at hn
       have := mul_le_mul_of_nonneg_left hn hc₀.le
       have hc0_ne : c₀ ≠ 0 := hc₀.ne'
@@ -548,11 +554,10 @@ theorem log_s_n_asymptotic :
               rw [Real.rpow_def_of_pos hn_pos]; ring_nf
           _ ≤ Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) :=
               Real.exp_le_exp.mpr (by linarith)
-      calc Real.sqrt (n : ℝ) = (n : ℝ) * (n : ℝ) ^ (-(1 / 2 : ℝ)) := by
-            rw [Real.sqrt_eq_rpow]
-            conv_lhs => rw [← Real.rpow_one (n : ℝ)]
-            rw [← Real.rpow_add hn_pos]
-            norm_num
+      calc Real.sqrt (n : ℝ) = (n : ℝ) ^ (1 / 2 : ℝ) := Real.sqrt_eq_rpow _
+          _ = (n : ℝ) ^ (1 + (-(1 / 2 : ℝ))) := by norm_num
+          _ = (n : ℝ) ^ (1 : ℝ) * (n : ℝ) ^ (-(1 / 2 : ℝ)) := Real.rpow_add hn_pos 1 (-(1 / 2))
+          _ = (n : ℝ) * (n : ℝ) ^ (-(1 / 2 : ℝ)) := by rw [Real.rpow_one]
         _ ≤ (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) :=
             mul_le_mul_of_nonneg_left h1 hn_pos.le
     have hlog_le_sqrt : (1 / 4 : ℝ) * Real.log (2 * Real.pi * (n : ℝ)) ≤ Real.sqrt (n : ℝ) := by
@@ -567,7 +572,7 @@ theorem log_s_n_asymptotic :
           have := Real.exp_one_gt_d9
           linarith
         have he3 : (2.718 : ℝ) ^ 3 < Real.exp 3 := by
-          rw [show (3 : ℝ) = ((3 : ℕ) : ℝ) by norm_num, Real.exp_nat_mul, mul_one]
+          rw [show (3 : ℝ) = ((3 : ℕ) : ℝ) * 1 by norm_num, Real.exp_nat_mul]
           exact pow_lt_pow_left₀ he1 (by norm_num) (by norm_num)
         norm_num at he3
         linarith
@@ -582,12 +587,15 @@ theorem log_s_n_asymptotic :
   have h2 := h1.add hlog2pi_le
   have h3 := h2.sub (hq_asym.const_mul_left (1 / 2 : ℝ))
   refine h3.congr' (Eventually.of_forall fun n => ?_) (Eventually.of_forall fun n => rfl)
-  have hs_pos : (0 : ℝ) < (s_n n : ℝ) := by
+  have hs_pos_nat : 0 < s_n n := by
     unfold s_n
-    exact_mod_cast Finset.prod_pos (fun q hq => pow_pos (Finset.mem_filter.mp hq).2.pos _)
-  have hq_pos : (0 : ℝ) < (q_n n : ℝ) := by
+    exact Finset.prod_pos (fun q hq => pow_pos (Finset.mem_filter.mp hq).2.pos _)
+  have hq_pos_nat : 0 < q_n n := by
     unfold q_n
-    exact_mod_cast Finset.prod_pos (fun q hq => (Finset.mem_filter.mp hq).2.1.pos)
+    exact Finset.prod_pos (fun q hq => (Finset.mem_filter.mp hq).2.1.pos)
+  have hs_pos : (0 : ℝ) < (s_n n : ℝ) := by exact_mod_cast hs_pos_nat
+  have hq_pos : (0 : ℝ) < (q_n n : ℝ) := by exact_mod_cast hq_pos_nat
+  dsimp only
   rw [Real.log_mul hs_pos.ne' (by positivity), Real.sqrt_eq_rpow, Real.log_rpow hq_pos]
   ring
 
