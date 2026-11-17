@@ -68,12 +68,14 @@ theorem small_prime_mod_band_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ)) *
           ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ))))
       =O[atTop] (fun n : ℕ => 1 / Real.log (n : ℝ)) :=
-    Asymptotics.IsBigO.sum (fun r hr => (h_col_sum r hr).add (h_int_sum r hr))
+    (Asymptotics.IsBigO.sum (fun r hr => (h_col_sum r hr).add (h_int_sum r hr))).congr'
+      EventuallyEq.rfl EventuallyEq.rfl
   refine h_fin_sum.congr' ?_ EventuallyEq.rfl
   have h_rpow_all : ∀ᶠ n : ℕ in atTop, ∀ r ∈ Finset.Icc 2 R,
       (Real.log (n : ℝ)) ^ A_R / (n : ℝ) ^ (1 / ((r : ℝ) * ((r : ℝ) + 1))) ≤ 1 := by
     rw [Filter.eventually_all_finset]
-    intro r _
+    intro r hr
+    have hr_pos : (0 : ℝ) < (r : ℝ) := by have := (Finset.mem_Icc.mp hr).1; exact_mod_cast (by omega : 0 < r)
     have ht := log_pow_div_rpow_tendsto_zero A_R (by positivity : (0 : ℝ) < 1 / ((r : ℝ) * ((r : ℝ) + 1)))
     exact (ht.eventually (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1))).mono (fun _ h => h.le)
   filter_upwards [(tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 2),
@@ -86,7 +88,7 @@ theorem small_prime_mod_band_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
     S.filter (fun p : ℕ => (p : ℝ) ∈ collar n r A_R ∪ interCollar n r A_R)
   have hS_eq : S = (Finset.Icc 2 R).biUnion B := by
     ext p
-    simp only [Finset.mem_biUnion, Finset.mem_Icc, B, Finset.mem_filter]
+    simp only [Finset.mem_biUnion, Finset.mem_Icc, B, S, Finset.mem_filter]
     constructor
     · intro hp
       have hp_nd : (n : ℝ) ^ δ < (p : ℝ) := hp.2.2.1
@@ -119,7 +121,7 @@ theorem small_prime_mod_band_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
           have : r + 1 ∈ T := Finset.mem_filter.mpr ⟨hr1_mem, by simpa using hle⟩
           have := Finset.le_max' T (r + 1) this
           omega
-      refine ⟨r, hr_Icc, hp, ?_⟩
+      refine ⟨r, Finset.mem_Icc.mp hr_Icc, hp, ?_⟩
       by_cases hcol : (n : ℝ) ^ (1 / (r : ℝ)) / (Real.log (n : ℝ)) ^ ((A_R : ℝ) / (r : ℝ)) < (p : ℝ)
       · left; exact ⟨hcol, hr_le⟩
       · right; exact ⟨hr_gt_next, le_of_not_gt hcol⟩
@@ -145,7 +147,7 @@ theorem small_prime_mod_band_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         linarith
       have h2 : (n : ℝ) ^ (1 / ((r : ℝ) + 1)) * (n : ℝ) ^ (1 / ((r : ℝ) * ((r : ℝ) + 1))) = (n : ℝ) ^ (1 / (r : ℝ)) := by
         rw [← Real.rpow_add hn_pos]
-        congr 1; field_simp [hr_pos.ne', (by positivity : (0 : ℝ) < (r : ℝ) + 1).ne']; ring
+        congr 1; field_simp [hr_pos.ne', (by positivity : (0 : ℝ) < (r : ℝ) + 1).ne']
       have hlt_pow : (Real.log (n : ℝ)) ^ ((A_R : ℝ) / (r : ℝ)) < (n : ℝ) ^ (1 / ((r : ℝ) * ((r : ℝ) + 1))) := by
         by_cases h_eq : (Real.log (n : ℝ)) ^ A_R = (n : ℝ) ^ (1 / ((r : ℝ) * ((r : ℝ) + 1)))
         · have hr2' : 2 ≤ r := (Finset.mem_Icc.mp hr).1
@@ -165,7 +167,7 @@ theorem small_prime_mod_band_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       intro r hr hp
       rcases hp with hcol | hint
       · exact ⟨lt_trans (h_gap r hr) hcol.1, hcol.2⟩
-      · exact ⟨hint.1, le_trans hint.2 (div_le_self (by positivity) (Real.rpow_ge_one (by linarith) (by positivity)))⟩
+      · exact ⟨hint.1, le_trans hint.2 (div_le_self (by positivity) (Real.one_le_rpow (by linarith) (by positivity)))⟩
     have hb₁ := h_bounds r₁ hr₁ hmem₁
     have hb₂ := h_bounds r₂ hr₂ hmem₂
     rcases lt_or_gt_of_ne hne with hlt | hlt
@@ -334,7 +336,7 @@ theorem upper_band_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         · rw [Int.cast_natCast, le_div_iff₀ hp_pos]; exact_mod_cast Nat.div_mul_le_self n p
         · rw [Int.cast_natCast, div_lt_iff₀ hp_pos]
           have h_nat : n < (n / p + 1) * p := by have := Nat.lt_div_mul_add (a := n) hp_pr.pos; nlinarith
-          exact_mod_cast (by push_cast; linarith : (n : ℝ) < ((n / p + 1 : ℕ) : ℝ) * (p : ℝ))
+          exact_mod_cast h_nat
       rw [hv_U p hp, hfl, Int.cast_natCast]
       push_cast; field_simp [hp_pos.ne']
     rw [h_eq]
@@ -629,7 +631,7 @@ theorem upper_band_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
               eExp ((m : ℝ) * ((n : ℝ) / (p : ℝ)) / (h_mod : ℝ))).re =
             (∑ m ∈ nzH, ∑ p ∈ U, b_mod m * ((Real.log (p : ℝ) / (p : ℝ) : ℝ) : ℂ) *
               eExp ((m : ℝ) * ((n : ℝ) / (p : ℝ)) / (h_mod : ℝ))).re := by
-          rw [Complex.re_sum]; refine Finset.sum_congr rfl (fun m _ => Complex.re_sum _ _)
+          rw [Complex.re_sum]; refine Finset.sum_congr rfl (fun m _ => (Complex.re_sum _ _).symm)
         rw [h_lhs_re]
         congr 1
         refine Finset.sum_congr rfl (fun m _ => ?_)
@@ -1039,15 +1041,16 @@ theorem multi_modulus_power_band_equidistribution (h_mod c : ℕ) (hh_mod : 2 �
         · have hS2 : S_mid2 = {2} := by
             ext p; simp only [S_mid2, Finset.mem_filter, Finset.mem_singleton]
             exact ⟨fun h => h.2, fun h => by subst h; exact ⟨h2_mem, rfl⟩⟩
-          rw [hS2, Finset.sum_singleton, norm_mul, norm_mul, norm_eExp, mul_one,
-            Nat.cast_ofNat, Complex.norm_real, Complex.norm_real]
+          rw [hS2, Finset.sum_singleton, norm_mul, norm_eExp, mul_one,
+            Nat.cast_ofNat]
           have hv2 : padicValNat 2 (Nat.factorial n) ≤ n := by
             haveI : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
             have hleg := sub_one_mul_padicValNat_factorial (p := 2) n
             simp only [Nat.reduceSub, one_mul] at hleg
             omega
           have hlog2_pos : 0 < Real.log 2 := Real.log_pos (by norm_num)
-          rw [Real.norm_of_nonneg (mul_nonneg (Nat.cast_nonneg _) hlog2_pos.le)]
+          rw [norm_mul, Complex.norm_real, Complex.norm_real,
+            Real.norm_of_nonneg (Nat.cast_nonneg _), Real.norm_of_nonneg hlog2_pos.le]
           have : (padicValNat 2 (Nat.factorial n) : ℝ) ≤ (n : ℝ) := by exact_mod_cast hv2
           nlinarith
         · have hS2 : S_mid2 = ∅ := by
@@ -1191,7 +1194,10 @@ theorem multi_modulus_power_band_equidistribution (h_mod c : ℕ) (hh_mod : 2 �
                 have hp3 := (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).1
                 have hp1_nn : 0 ≤ (p : ℝ) - 1 := (sub_pos.mpr (by exact_mod_cast (by omega : 1 < p))).le
                 have hlogp_nn : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ p))
-                rw [norm_mul, norm_eExp, mul_one, Complex.norm_real, Real.norm_of_nonneg (by positivity)]
+                rw [norm_mul, norm_eExp, mul_one]
+                simp only [norm_mul, norm_div, Complex.norm_real,
+                  Real.norm_of_nonneg (Nat.cast_nonneg _), Real.norm_of_nonneg hp1_nn,
+                  Real.norm_of_nonneg hlogp_nn]
             _ ≤ ∑ _p ∈ S_mid3, 2 * Real.log (n : ℝ) := Finset.sum_le_sum h_each
             _ = (S_mid3.card : ℝ) * (2 * Real.log (n : ℝ)) := by simp [Finset.sum_const, nsmul_eq_mul]
             _ ≤ (Nat.sqrt n : ℝ) * (2 * Real.log (n : ℝ)) := mul_le_mul_of_nonneg_right h_card (by positivity)
@@ -1306,7 +1312,8 @@ theorem multi_modulus_power_band_equidistribution (h_mod c : ℕ) (hh_mod : 2 �
             ((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) : ℂ) *
               eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ)))
         =o[atTop] (fun n : ℕ => (n : ℝ) * Real.log (n : ℝ)) := by
-      refine Asymptotics.IsLittleO.sum (fun z hz => ?_)
+      refine (Asymptotics.IsLittleO.sum (fun z hz => ?_)).congr'
+        EventuallyEq.rfl EventuallyEq.rfl
       have hz_mem := Finset.mem_filter.mp hz
       have hz1 : 1 ≤ z := by have := Finset.mem_range.mp hz_mem.1; have := hz_mem.2; omega
       have hz2 : z < h_mod := Finset.mem_range.mp hz_mem.1
