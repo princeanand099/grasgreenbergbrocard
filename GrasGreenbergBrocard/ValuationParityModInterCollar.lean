@@ -424,11 +424,11 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
             refine Finset.sum_le_sum (fun p hp => ?_)
             have hp3 : 3 ≤ p := (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).1
             have hw_nn : 0 ≤ Real.log (p : ℝ) / ((p : ℝ) - 1) := by
-              have : (1 : ℝ) ≤ (p : ℝ) := by exact_mod_cast (by omega : 1 ≤ p)
-              have : (0 : ℝ) < (p : ℝ) - 1 := by
+              have hp1 : (1 : ℝ) ≤ (p : ℝ) := by exact_mod_cast (by omega : 1 ≤ p)
+              have hp_sub : (0 : ℝ) < (p : ℝ) - 1 := by
                 have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast (by omega : 2 ≤ p)
                 linarith
-              exact div_nonneg (Real.log_nonneg this) this.le
+              exact div_nonneg (Real.log_nonneg hp1) hp_sub.le
             rw [norm_mul, Complex.norm_real, Real.norm_of_nonneg hw_nn]
             apply mul_le_mul_of_nonneg_right _ hw_nn
             exact prod_sub_prod_norm_le I_s
@@ -448,7 +448,7 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
                   ∑ s ∈ I_s, (B_mod ((n : ℝ) / (p : ℝ) ^ s)).re) * (Real.log (p : ℝ) / ((p : ℝ) - 1))
                 = (1 + 2 * (h_mod : ℝ)) ^ I_s.card * ∑ s ∈ I_s, ∑ p ∈ D_r,
                     (Real.log (p : ℝ) / ((p : ℝ) - 1)) * (B_mod ((n : ℝ) / (p : ℝ) ^ s)).re := by
-                  rw [Finset.mul_sum, Finset.sum_comm]
+                  conv_rhs => rw [Finset.mul_sum, Finset.sum_comm]
                   refine Finset.sum_congr rfl (fun p _ => ?_)
                   rw [Finset.sum_mul, Finset.mul_sum]
                   refine Finset.sum_congr rfl (fun s _ => by ring)
@@ -458,11 +458,11 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
                   refine Finset.sum_nonneg (fun s _ => Finset.sum_nonneg (fun p hp => ?_))
                   have hp3 : 3 ≤ p := (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).1
                   have hw_nn : 0 ≤ Real.log (p : ℝ) / ((p : ℝ) - 1) := by
-                    have : (1 : ℝ) ≤ (p : ℝ) := by exact_mod_cast (by omega : 1 ≤ p)
-                    have : (0 : ℝ) < (p : ℝ) - 1 := by
+                    have hp1 : (1 : ℝ) ≤ (p : ℝ) := by exact_mod_cast (by omega : 1 ≤ p)
+                    have hp_sub : (0 : ℝ) < (p : ℝ) - 1 := by
                       have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast (by omega : 2 ≤ p)
                       linarith
-                    exact div_nonneg (Real.log_nonneg this) this.le
+                    exact div_nonneg (Real.log_nonneg hp1) hp_sub.le
                   exact mul_nonneg hw_nn (le_trans (norm_nonneg _) (h_vaaler_pw _))
     have h_B_s : ∀ s ∈ I_s,
         ∑ p ∈ D_r, (Real.log (p : ℝ) / ((p : ℝ) - 1)) * (B_mod ((n : ℝ) / (p : ℝ) ^ s)).re ≤
@@ -516,7 +516,7 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       have h_m0_bd : ∑ p ∈ D_r, (Real.log (p : ℝ) / ((p : ℝ) - 1)) * (b_mod 0).re ≤
           (h_mod : ℝ) * (1 + Cm) / Real.log (n : ℝ) := by
         have hb0_re : (b_mod 0).re = (h_mod : ℝ) / ((H : ℝ) + 1) := by
-          rw [hb_mod0, show ((h_mod : ℂ) / ((H : ℂ) + 1)) = (((h_mod : ℝ) / ((H : ℝ) + 1) : ℝ) : ℂ) from by push_cast; rfl, Complex.ofReal_re]
+          rw [hb_mod0]; simp only [← Complex.ofReal_one, ← Complex.ofReal_natCast, ← Complex.ofReal_add, ← Complex.ofReal_div, Complex.ofReal_re]
         rw [← Finset.sum_mul, hb0_re]
         have hsub : D_r ⊆ (Finset.Icc 3 n).filter Nat.Prime := fun p hp =>
           Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨(Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).1,
@@ -527,11 +527,11 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
               ≤ ∑ p ∈ (Finset.Icc 3 n).filter Nat.Prime, Real.log (p : ℝ) / ((p : ℝ) - 1) := by
                 refine Finset.sum_le_sum_of_subset_of_nonneg hsub (fun p hp _ => ?_)
                 have hp3 := (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).1
-                have : (1 : ℝ) ≤ (p : ℝ) := by exact_mod_cast (by omega : 1 ≤ p)
-                have : (0 : ℝ) < (p : ℝ) - 1 := by
+                have hp1 : (1 : ℝ) ≤ (p : ℝ) := by exact_mod_cast (by omega : 1 ≤ p)
+                have hp_sub : (0 : ℝ) < (p : ℝ) - 1 := by
                   have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast (by omega : 2 ≤ p)
                   linarith
-                exact div_nonneg (Real.log_nonneg this) this.le
+                exact div_nonneg (Real.log_nonneg hp1) hp_sub.le
             _ ≤ Real.log (n : ℝ) + Cm := by
                 have := hCm (n : ℝ) (by exact_mod_cast (by omega : 3 ≤ n))
                 rwa [Nat.floor_natCast] at this
@@ -556,7 +556,10 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
           _ ≤ (h_mod : ℝ) * (1 + Cm) / Real.log (n : ℝ) := by
               rw [show 2 * (h_mod : ℝ) * ((1 + Cm) / (Real.log (n : ℝ)) ^ 2) =
                   (2 * (h_mod : ℝ) * (1 + Cm)) / (Real.log (n : ℝ)) ^ 2 from by ring]
-              rw [div_le_div_iff₀ (by positivity) hlogn_pos]; nlinarith [hCm_pos]
+              rw [div_le_div_iff₀ (by positivity) hlogn_pos]
+              have h2ln : 2 * Real.log (n : ℝ) ≤ (Real.log (n : ℝ)) ^ 2 := by nlinarith [hln100]
+              have h_mul := mul_le_mul_of_nonneg_left h2ln (by positivity : 0 ≤ (h_mod : ℝ) * (1 + Cm))
+              linarith
       have h_nz_bd : ∑ m ∈ nzH, (b_mod m * ∑ k ∈ Finset.range (K + 1), ∑ p ∈ B_k k,
             ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
               eExp ((m : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s))).re ≤
@@ -580,7 +583,7 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
                     have h_res := h_B_exp k {s} (Finset.singleton_subset_iff.mpr hs)
                       (fun _ => m) ⟨s, Finset.mem_singleton_self s, (Finset.mem_filter.mp hm).2⟩
                       (fun _ _ => abs_le.mpr (Finset.mem_Icc.mp (Finset.mem_filter.mp hm).1))
-                    simpa using h_res
+                    simp only [Finset.sum_singleton] at h_res; exact h_res
                 _ = ((K : ℝ) + 1) * (2 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2))) := by
                     simp [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
           _ = (nzH.card : ℝ) * ((h_mod : ℝ) / ((H : ℝ) + 1)) *
