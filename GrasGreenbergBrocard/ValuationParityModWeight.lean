@@ -44,6 +44,11 @@ private lemma abs5_bound {a b c d e B1 B2 B3 B4 B5 M : ℝ}
     linarith [abs_sub (a + b - c + d) e, abs_add_le (a + b - c) d, abs_sub (a + b) c, abs_add_le a b]
   linarith
 
+private lemma mod_weight_M_bound {Cm Cθ x : ℝ} (hCm : 0 < Cm) (hCθ : 0 < Cθ) (hx : 0 < x) :
+    Real.log 2 * x + x * (Real.log 3 + Cm) + x * 1 + Cθ * x + x ≤
+      (Real.log 2 + Real.log 3 + 2 * Cm + 2 * Cθ + 4) * x := by
+  nlinarith
+
 theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
     (fun n : ℕ =>
       (∑ p ∈ (Finset.Icc 2 n).filter (fun p : ℕ => p.Prime ∧ (p : ℝ) ≤ (n : ℝ) ^ α),
@@ -532,7 +537,7 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
     · rw [abs_mul, abs_of_nonneg hn_pos.le]
       exact mul_le_mul_of_nonneg_left h_p_p1 hn_pos.le
     · dsimp only [M]
-      nlinarith [hCm_pos, hCθ_pos]
+      exact mod_weight_M_bound hCm_pos hCθ_pos hn_pos
 
 theorem band_total_weight_isBigO (a b : ℝ) (ha : 0 ≤ a) (hab : a < b) (hb : b ≤ 1) :
     (fun n : ℕ =>
