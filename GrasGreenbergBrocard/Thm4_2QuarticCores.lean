@@ -1071,12 +1071,13 @@ private lemma odd_prime_core_properties {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     (hB_mul : B_i * B_other = B_k2 n X₁ / (Nat.gcd (X₁ - 1) (X₁ + 1)) ^ 2)
     (hB_cop : Nat.Coprime B_i B_other)
     (hc₀_12 : Nat.gcd (X₁ - 1) (X₁ + 1) = 1 ∨ Nat.gcd (X₁ - 1) (X₁ + 1) = 2)
-    (hu_eq : u_i = B_i * Z_i ^ 2) (hδ_eq : δ = sfCore u_i) :
+    (hu_eq : u_i = B_i * Z_i ^ 2) (hδ_eq : δ = sfCore (Nat.gcd (X₁ - 1) (X₁ + 1) * u_i)) :
     (∀ p ∈ B_i.primeFactors, p ≠ 2 →
       p ∈ Podd n ∧ padicValNat p B_i = padicValNat p (Nat.factorial n) ∧ p ∣ δ) ∧
     padicValNat 2 B_i ≤ padicValNat 2 (Nat.factorial n) := by
   have hq1 := thm_4_2_part1_quartic_law hn hm hfund hk2
   set c₀ := Nat.gcd (X₁ - 1) (X₁ + 1)
+  have hc₀_pos : 0 < c₀ := by rcases hc₀_12 with h | h <;> omega
   have hc₀_sq_dvd : c₀ ^ 2 ∣ B_k2 n X₁ := by
     rcases hc₀_12 with hc1 | hc2
     · rw [hc1]; simp
@@ -1167,21 +1168,27 @@ private lemma odd_prime_core_properties {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     have heq := (Nat.prime_dvd_prime_iff_eq hp_pr hq_pr).mp (hp_pr.dvd_of_dvd_pow hqd)
     subst heq
     exact (Finset.mem_filter.mp hp_Podd).2.2 (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).2.2
+  have hp_nd_c0 : ¬ p ∣ c₀ := by
+    rcases hc₀_12 with h1 | h2
+    · rw [h1]; exact hp_pr.not_dvd_one
+    · rw [h2]; intro h; have := (Nat.prime_dvd_prime_iff_eq hp_pr Nat.prime_two).mp h; omega
   have hp_dvd_δ : p ∣ δ := by
     have hu_pos : 0 < u_i := by rw [hu_eq]; exact mul_pos hB_pos (pow_pos hZ_pos 2)
-    have hcore_eq := eq_sfCore_mul_sqPart_sq u_i
-    have hδ_ne : sfCore u_i ≠ 0 := by
+    have hcu_pos : 0 < c₀ * u_i := mul_pos hc₀_pos hu_pos
+    have hcore_eq := eq_sfCore_mul_sqPart_sq (c₀ * u_i)
+    have hδ_ne : sfCore (c₀ * u_i) ≠ 0 := by
       intro h0; rw [h0, zero_mul] at hcore_eq; omega
-    have hsq_ne : (sqPart u_i) ^ 2 ≠ 0 := by
+    have hsq_ne : (sqPart (c₀ * u_i)) ^ 2 ≠ 0 := by
       intro h0; rw [h0, mul_zero] at hcore_eq; omega
-    have hval_u : padicValNat p u_i = padicValNat p (Nat.factorial n) := by
-      rw [hu_eq, padicValNat.mul hB_pos.ne' (pow_ne_zero 2 hZ_pos.ne'),
+    have hval_cu : padicValNat p (c₀ * u_i) = padicValNat p (Nat.factorial n) := by
+      rw [padicValNat.mul hc₀_pos.ne' hu_pos.ne', padicValNat.eq_zero_of_not_dvd hp_nd_c0, zero_add,
+          hu_eq, padicValNat.mul hB_pos.ne' (pow_ne_zero 2 hZ_pos.ne'),
           padicValNat.pow 2 hZ_pos.ne', padicValNat.eq_zero_of_not_dvd hp_nd_Z, mul_zero, add_zero, hp_val_Bi]
-    have hval_split : padicValNat p u_i = padicValNat p (sfCore u_i) + 2 * padicValNat p (sqPart u_i) := by
+    have hval_split : padicValNat p (c₀ * u_i) = padicValNat p (sfCore (c₀ * u_i)) + 2 * padicValNat p (sqPart (c₀ * u_i)) := by
       conv_lhs => rw [← hcore_eq]
       rw [padicValNat.mul hδ_ne hsq_ne, padicValNat.pow 2 (by intro h0; rw [h0] at hsq_ne; simp at hsq_ne)]
     have hodd_val : ¬ 2 ∣ padicValNat p (Nat.factorial n) := (Finset.mem_filter.mp hp_Podd).2.2
-    have hval_δ_pos : 0 < padicValNat p (sfCore u_i) := by omega
+    have hval_δ_pos : 0 < padicValNat p (sfCore (c₀ * u_i)) := by omega
     rw [hδ_eq]
     exact (padicValNat.dvd_iff_le hδ_ne).mpr (by omega)
   exact ⟨hp_Podd, hp_val_Bi, hp_dvd_δ⟩
@@ -1346,7 +1353,7 @@ theorem thm_4_2_part3_midpoint_core_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
       B_i * B_other = B_k2 n X₁ / (Nat.gcd (X₁ - 1) (X₁ + 1)) ^ 2 →
       Nat.Coprime B_i B_other →
       u_i = B_i * Z_i ^ 2 → (X₁ - 1) / 2 ≤ u_i →
-      δ = sfCore u_i →
+      δ = sfCore (Nat.gcd (X₁ - 1) (X₁ + 1) * u_i) →
       (∃ p : ℕ, p.Prime ∧ p ∣ δ ∧ (n : ℝ) ^ (1 / 2 - ε) < (p : ℝ)) ∧
       (ε / 5) * (n : ℝ) ^ (1 / 2 - ε) ≤ (δ.primeFactors.card : ℝ) ∧
       (ε / 15) * (n : ℝ) ^ (1 / 2 - ε) * Real.log (n : ℝ) ≤ Real.log (δ : ℝ) := by
@@ -1457,18 +1464,20 @@ theorem thm_4_2_part3_midpoint_core_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
       rw [Finset.not_nonempty_iff_eq_empty] at h_empty
       rw [h_empty, Finset.sum_empty] at hU_sum_ge
       nlinarith
+    have hδ_ne : δ ≠ 0 := by
+      rw [hδ_eq]
+      intro h0
+      have hc₀_pos : 0 < Nat.gcd (X₁ - 1) (X₁ + 1) := by rcases hc₀_12 with h | h <;> omega
+      have hu_pos : 0 < u_i := by rw [hu_eq]; exact mul_pos hB_pos (pow_pos hZ_pos 2)
+      have := eq_sfCore_mul_sqPart_sq (Nat.gcd (X₁ - 1) (X₁ + 1) * u_i)
+      rw [h0, zero_mul] at this
+      have hcu_pos : 0 < Nat.gcd (X₁ - 1) (X₁ + 1) * u_i := mul_pos hc₀_pos hu_pos
+      omega
     have hU_sub_δ : U ⊆ δ.primeFactors := by
       intro p hp
       have hpS := Finset.mem_filter.mp (Finset.mem_filter.mp hp).1
       have hp_pr := Nat.prime_of_mem_primeFactors hpS.1
       have hp_dvd := (hB_odd_primes p hpS.1 hpS.2).2.2
-      have hδ_ne : δ ≠ 0 := by
-        rw [hδ_eq]
-        intro h0
-        have := eq_sfCore_mul_sqPart_sq u_i
-        rw [h0, zero_mul] at this
-        have hu_pos : 0 < u_i := by rw [hu_eq]; exact mul_pos hB_pos (pow_pos hZ_pos 2)
-        omega
       exact Nat.mem_primeFactors.mpr ⟨hp_pr, hp_dvd, hδ_ne⟩
     have h_exists_p : ∃ p : ℕ, p.Prime ∧ p ∣ δ ∧ (n : ℝ) ^ (1 / 2 - ε) < (p : ℝ) := by
       obtain ⟨p, hpU⟩ := hU_nonempty
@@ -1492,7 +1501,9 @@ theorem thm_4_2_part3_midpoint_core_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
       have hv_nat : (p - 1) * padicValNat p (Nat.factorial n) ≤ n := by omega
       have hv_real : ((p : ℝ) - 1) * (padicValNat p (Nat.factorial n) : ℝ) ≤ (n : ℝ) := by
         have h1 : 1 ≤ p := hp_pr.one_lt.le
-        exact_mod_cast (by rwa [Nat.cast_mul, Nat.cast_sub h1] at * : ((p : ℝ) - 1) * (padicValNat p (Nat.factorial n) : ℝ) ≤ (n : ℝ))
+        have h1' : ((p - 1 : ℕ) : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) ≤ (n : ℝ) := by
+          exact_mod_cast hv_nat
+        rwa [Nat.cast_sub h1] at h1'
       have hv_bound : (padicValNat p (Nat.factorial n) : ℝ) ≤ 2 * (n : ℝ) / (n : ℝ) ^ (1 / 2 - ε) := by
         have hpos1 : 0 < (p : ℝ) - 1 := by linarith
         have h1 : (padicValNat p (Nat.factorial n) : ℝ) ≤ (n : ℝ) / ((p : ℝ) - 1) :=
@@ -1533,13 +1544,7 @@ theorem thm_4_2_part3_midpoint_core_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
         nlinarith
       linarith
     have hδ_log_ge : (ε / 15) * (n : ℝ) ^ (1 / 2 - ε) * Real.log (n : ℝ) ≤ Real.log (δ : ℝ) := by
-      have hδ_pos : 0 < δ := by
-        rw [hδ_eq]
-        exact Nat.pos_of_ne_zero (fun h0 => by
-          have := eq_sfCore_mul_sqPart_sq u_i
-          rw [h0, zero_mul] at this
-          have hu_pos : 0 < u_i := by rw [hu_eq]; exact mul_pos hB_pos (pow_pos hZ_pos 2)
-          omega)
+      have hδ_pos : 0 < δ := Nat.pos_of_ne_zero hδ_ne
       have h_prod_dvd : ∏ p ∈ U, p ∣ δ := by
         apply Finset.prod_primes_dvd
         · intro p hp
@@ -1585,16 +1590,67 @@ theorem thm_4_2_part3_midpoint_core_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
   · exact h_core_from_B (sfCore (X₁ - 1)) ((X₁ - 1) / c₀) B₋ B₊ Z₋ hB₋_pos hB₊_pos hZ₋_pos
       ⟨Z₊, hZ_prod.symm⟩ hB_prod hcop_B hu₁_eq.symm
       (Nat.div_le_div_left hc₀_le2 (by omega))
-      (sfCore_eq_of_eq_mul_sq (by rw [← hu₁_eq]; exact Nat.div_pos (Nat.le_of_dvd (by omega) (Nat.gcd_dvd_left _ _)) (by omega))
-        (by
-          have h1 : X₁ - 1 = ((X₁ - 1) / c₀) * c₀ := (Nat.div_mul_cancel (Nat.gcd_dvd_left _ _)).symm
-          rcases hc₀_12 with hc1 | hc2
-          · rw [hc1] at h1 ⊢; exact ⟨1, by simpa using h1⟩
-          · -- Wait: `c₀ = 2` means `c₀` is NOT a square! Wait: `X₁ - 1 = 2 * u₁` vs `u₁ = (X₁ - 1) / 2`!
-            -- Look at `prop_4_1_part2` and `thm_4_2_part3_midpoint_core_bounds`:
-            -- `sfCore (X₁ - 1)` vs `sfCore ((X₁ - 1) / c₀)` differ at most by a factor of `2`!
-            -- Wait: if `c₀ = 2`, then `X₁ - 1 = 2 * u₁`, so `sfCore (X₁ - 1)` has the EXACT SAME odd prime factors as `sfCore u₁`!
-            sorry))
-  · sorry
+      (by rw [Nat.mul_div_cancel' (Nat.gcd_dvd_left _ _)])
+  · exact h_core_from_B (sfCore (X₁ + 1)) ((X₁ + 1) / c₀) B₊ B₋ Z₊ hB₊_pos hB₋_pos hZ₊_pos
+      ⟨Z₋, by rw [← hZ_prod, mul_comm]⟩ (by rw [mul_comm, hB_prod]) hcop_B.symm hu₂_eq.symm
+      (by have := Nat.div_le_div_left hc₀_le2 (by omega : 0 < c₀); have : (X₁ - 1) / 2 ≤ (X₁ + 1) / 2 := Nat.div_le_div_right (by omega); omega)
+      (by rw [Nat.mul_div_cancel' (Nat.gcd_dvd_right _ _)])
+
+private lemma log_div_sub_one_antitone :
+    AntitoneOn (fun x : ℝ => Real.log x / (x - 1)) (Set.Ici 3) := by
+  apply antitoneOn_of_deriv_nonpos (convex_Ici 3)
+  · apply ContinuousOn.div (Real.continuousOn_log.mono (fun x hx => ne_of_gt (by linarith [Set.mem_Ici.mp hx])))
+      (continuous_id.sub continuous_const).continuousOn
+    intro x hx; linarith [Set.mem_Ici.mp hx]
+  · apply DifferentiableOn.div (Real.differentiableOn_log.mono (fun x hx => ne_of_gt (by linarith [interior_subset hx])))
+      (differentiable_id.sub (differentiable_const 1)).differentiableOn
+    intro x hx; linarith [Set.mem_Ici.mp (interior_subset hx)]
+  · intro x hx
+    have hx3 : 3 < x := by
+      have := interior_Ici (a := (3 : ℝ)) ▸ hx
+      exact this
+    have hx0 : x ≠ 0 := by linarith
+    have hx1 : x - 1 ≠ 0 := by linarith
+    have hlog_gt1 : 1 < Real.log x := by
+      rw [← Real.log_exp 1]
+      exact Real.log_lt_log (Real.exp_pos 1) (by linarith [Real.exp_one_lt_d9])
+    have hderiv : deriv (fun y : ℝ => Real.log y / (y - 1)) x =
+        ((1 / x) * (x - 1) - Real.log x * 1) / (x - 1) ^ 2 := by
+      have h1 : HasDerivAt Real.log (1 / x) x := by simpa [one_div] using Real.hasDerivAt_log hx0
+      have h2 : HasDerivAt (fun y : ℝ => y - 1) 1 x := (hasDerivAt_id x).sub_const 1
+      exact (h1.div h2 hx1).deriv
+    rw [hderiv]
+    have hnum : (1 / x) * (x - 1) - Real.log x * 1 ≤ 0 := by
+      have : (1 / x) * (x - 1) = 1 - 1 / x := by field_simp
+      have : 0 < 1 / x := by positivity
+      linarith
+    exact div_nonpos_of_nonpos_of_nonneg hnum (sq_nonneg _)
+
+private lemma sum_log_div_sub_one_le_nth_primes (S : Finset ℕ)
+    (hS : ∀ p ∈ S, p.Prime ∧ 3 ≤ p) :
+    ∑ p ∈ S, Real.log (p : ℝ) / ((p : ℝ) - 1) ≤
+    ∑ p ∈ (Finset.Icc 3 (Nat.nth Nat.Prime S.card)).filter Nat.Prime,
+      Real.log (p : ℝ) / ((p : ℝ) - 1) := by
+  set t := S.card
+  let e := S.orderEmbOfFin rfl
+  have he_ge : ∀ i : Fin t, Nat.nth Nat.Prime (i.1 + 1) ≤ e i := by
+    intro ⟨i, hi⟩
+    induction i with
+    | zero =>
+      have h3 : 3 ≤ e ⟨0, hi⟩ := (hS _ (e.coe_mem _)).2
+      have hnth1 : Nat.nth Nat.Prime 1 = 3 := by
+        have hp0 : Nat.nth Nat.Prime 0 = 2 := Nat.nth_prime_zero_eq_two
+        have hp1_gt : 2 < Nat.nth Nat.Prime 1 := hp0 ▸ Nat.nth_strictMono Nat.infinite_setOf_prime (by norm_num)
+        have hp1_pr : (Nat.nth Nat.Prime 1).Prime := Nat.nth_mem_of_infinite Nat.infinite_setOf_prime 1
+        have hp1_le3 : Nat.nth Nat.Prime 1 ≤ 3 := by
+          by_contra hlt
+          have h_lt : Nat.nth Nat.Prime 1 < 3 := by omega
+          -- wait: `¬ (≤ 3)` means `3 < Nat.nth Nat.Prime 1`
+          have := Nat.nth_lt_nth_of_lt_order ...
+          sorry
+        sorry
+      sorry
+    | succ k ih => sorry
+  sorry
 
 end GrasGreenbergBrocard
