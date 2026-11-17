@@ -1,25 +1,19 @@
-# Formalization Progress Record
+# Formalization Progress Log
 
-- **Repository**: `princeanand099/grasgreenbergbrocard`
-- **Branch**: `main`
-- **Scope**: Complete formalization of **Section 2** ("Valuation-Parity Equidistribution of Factorials") of `brocard_arithmetic_structure_and_counting_bounds.tex`
-- **Last Verified Lean Build Commit**: `b8de00f08c2efd79eb30a41ede4be7d672818f2f`
-- **CI Log Commit**: `4b521cc6160e2449fa21cad84285c289cce4ccc7` (`exit 0`, `9065/9065` jobs succeeded)
-- **Timestamp**: `2026-11-17T14:10:30Z`
+## Milestone 1: Section 2 Valuation-Parity Distribution — COMPLETED (`main` CI `exit 0`)
+- Formalized `Basic.lean`, `ExternalAxiomsAnalytic.lean`, and all `ValuationParity*` / `ValuationParityMod*` modules.
 
-## Status Summary
+## Milestone 2: Section 3 Core Pell & Chebyshev–Lucas Foundations — COMPLETED (`sec3` CI `exit 0`)
+- `ExternalAxiomsSec3.lean`: External analytic & Iwasawa-theoretic axioms.
+- `PellFundamental.lean`: Lemma 3.1(i)–(ii) (`q_n_has_prime_mod4`, `neg_pell_no_int_sol`, `log_q_n_gt_point4`, `log_fund_pell_gt_point2`, `pell_index_upper_bound`, `log_s_n_sqrt_q_n_asymptotic`).
+- `ChebyshevLucas.lean`: Lemma 3.2, eqs. 3.1–3.3 (`chebyshevU_eval`, `pell_lucas_identity`, `chebyshevU_prime_power_divisibility`, `padicValNat_pell_absorption`).
 
-| Stage / Component | Status | Notes |
-|---|---|---|
-| Stage 1: Lean 4 + Mathlib v4.35.0 Environment | **CI verified** | `lake build` passes cleanly on GitHub Actions |
-| Stage 2: Project Architecture & Protocol Docs | **CI verified** | 17 Lean modules + `README.md`, `EXTERNAL_AXIOMS.md`, `MATHEMATICAL_CORRECTIONS.md`, `THEOREM_CORRESPONDENCE.md`, `PROGRESS.md` |
-| Section 2 Definitions (Eqs. 2.1–2.3) | **CI verified** | `Basic.lean` |
-| Lemma 2.1(i)–(ii) | **CI verified** | `ValuationParityLayer.lean` |
-| Lemma 2.2 | **CI verified** | `ValuationParityDigits.lean` |
-| Lemma 2.3 | **CI verified** | `ValuationParityVaaler.lean` |
-| Lemma 2.4(i)–(ii) | **CI verified** | `ExpSumBounds.lean` |
-| Theorem 2.5(i) (Eq. 2.15) | **CI verified** | `ValuationParityThmPart1.lean` |
-| Theorem 2.5(ii) (Eqs. 2.16–2.17) | **CI verified** | `ValuationParityThmCollar.lean`, `ValuationParityThmInterCollar.lean`, `ValuationParityThm.lean` |
-| Theorem 2.5(iii) (Eq. 2.18) | **CI verified** | `ExpSumBoundsMod.lean`, `VaalerMod.lean`, `ValuationParityModWeight.lean`, `ValuationParityModCollar.lean`, `ValuationParityModInterCollar.lean`, `ValuationParityMod.lean` |
-| Remaining `sorry` / `admit` in Section 2 | **0** | Verified across all 17 modules |
-| Manuscript-owned axioms | **0** | All external axioms strictly in `ExternalAxiomsAnalytic.lean` |
+## Milestone 3: Section 3 Main Theorems & Proposition 3.3 — COMPLETED (`sec3` CI `exit 0`, commit `4244e7bb`)
+- `Thm1_1Collapse.lean`: Theorem 1.1 (`known_k4`, `known_k5`, `known_k7`, `pell_index_collapse_large`, `fundamental_regulator_quantization`, `q_n_ne_of_solutions`).
+- `Picard2Torsion.lean`: Proposition 3.3 (`J_n_sq_eq`, `zsqrtd_neg_units`, `J_n_principal_iff_k_eq_2`, `k_eq_1_picard_identity`, `second_stage_nonprincipal_k_eq_2`).
+- `Thm1_2Iwasawa.lean`: Theorem 1.2(i)–(iii) (`nagura_prime_in_band`, `prime_in_band_val_and_coprime_k`, `val_s_n_ge_one_on_half`, `thm_1_2_part1_valuation_law`, `thm_1_2_part2_split_primes`, `thm_1_2_part3_conditional_finiteness`).
+- Full `lake build` passed (`9071/9071` jobs, `exit 0`, 0 errors, 0 `sorry`s, 0 `admit`s).
+
+## Milestone 4: Protocol Documentation & Merge to `main` — IN PROGRESS
+- Updated `README.md`, `EXTERNAL_AXIOMS.md`, `MATHEMATICAL_CORRECTIONS.md`, `THEOREM_CORRESPONDENCE.md`, and `PROGRESS.md`.
+- Opening and merging PR from `sec3` to `main` and verifying final `main` CI pass.
