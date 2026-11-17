@@ -21,6 +21,7 @@ set_option pp.proofs false
 noncomputable section
 
 open Real Finset BigOperators Asymptotics Filter
+open Classical
 
 namespace GrasGreenbergBrocard
 
@@ -37,7 +38,7 @@ theorem small_prime_mod_band_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
   set R := Nat.floor (1 / δ)
   set A_R := 6 * R + 30
   have hR3 : 3 ≤ R := by
-    rw [Nat.le_floor_iff (by positivity), le_div_iff₀ hδ0]; linarith
+    rw [Nat.le_floor_iff (by positivity), le_div_iff₀ hδ0]; push_cast; linarith
   have h_col_sum : ∀ r ∈ Finset.Icc 2 R,
       (fun n : ℕ => ∑ p ∈ ((Finset.Icc 3 (Nat.sqrt n)).filter (fun p : ℕ =>
           p.Prime ∧ (n : ℝ) ^ δ < (p : ℝ) ∧ (n : ℝ) ^ a < (p : ℝ) ∧ (p : ℝ) ≤ (n : ℝ) ^ b ∧
@@ -123,6 +124,7 @@ theorem small_prime_mod_band_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
     · rintro ⟨r, _, hp, _⟩; exact hp
   have hB_disj : Set.PairwiseDisjoint (Finset.Icc 2 R : Set ℕ) B := by
     intro r₁ hr₁ r₂ hr₂ hne
+    dsimp only [Function.onFun]
     rw [Finset.disjoint_left]
     intro p hp₁ hp₂
     have hmem₁ := (Finset.mem_filter.mp hp₁).2
@@ -229,7 +231,8 @@ theorem upper_band_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       (ht.eventually (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1))).mono (fun _ h => h.le)] with n hn hsm
     have hn_pos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast (by omega : 0 < n)
     have h1 := (div_le_iff₀ (by positivity)).mp hsm
-    rw [le_div_iff₀ (by positivity)]
+    have hlogn_pos : 0 < Real.log (n : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n))
+    rw [le_div_iff₀ (pow_pos hlogn_pos 12)]
     calc (n : ℝ) ^ (1 - δ) * (Real.log (n : ℝ)) ^ 12 ≤ (n : ℝ) ^ (1 - δ) * (n : ℝ) ^ δ := by
           apply mul_le_mul_of_nonneg_left _ (by positivity); linarith
       _ = (n : ℝ) ^ ((1 - δ) + δ) := (Real.rpow_add hn_pos _ _).symm
@@ -244,30 +247,40 @@ theorem upper_band_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
     linarith
   have h_log_pow_R : ∀ᶠ n : ℕ in atTop,
       2 * (h_mod : ℝ) * (Real.log (Nat.floor ((Real.log (n : ℝ)) ^ (R + 2)) : ℝ) + 1) ≤ Real.log (n : ℝ) := by
-    filter_upwards [hlog_inf.eventually (eventually_ge_atTop (4 * (h_mod : ℝ) * (R + 4) + 10000))] with n hn
-    have hln_ge10000 : 10000 ≤ Real.log (n : ℝ) := by
-      have : 0 ≤ 4 * (h_mod : ℝ) * (R + 4) := by positivity
+    let C_log : ℝ := 8 * (h_mod : ℝ) * ((R : ℝ) + 3) + 100
+    filter_upwards [hlog_inf.eventually (eventually_ge_atTop (C_log ^ 2))] with n hn
+    have hC_pos : 0 < C_log := by positivity
+    have hln_pos : 0 < Real.log (n : ℝ) := lt_of_lt_of_le (by positivity) hn
+    have hln_ge1 : 1 ≤ Real.log (n : ℝ) := by
+      have : (100 : ℝ) ^ 2 ≤ C_log ^ 2 := by nlinarith [show (100 : ℝ) ≤ C_log from by dsimp [C_log]; linarith [show (0 : ℝ) ≤ 8 * (h_mod : ℝ) * ((R : ℝ) + 3) from by positivity]]
       linarith
     have hfl_le : (Nat.floor ((Real.log (n : ℝ)) ^ (R + 2)) : ℝ) ≤ (Real.log (n : ℝ)) ^ (R + 2) :=
       Nat.floor_le (by positivity)
-    have h1 : Real.log (Nat.floor ((Real.log (n : ℝ)) ^ (R + 2)) : ℝ) ≤ (R + 2 : ℝ) * Real.log (Real.log (n : ℝ)) := by
+    have h1 : Real.log (Nat.floor ((Real.log (n : ℝ)) ^ (R + 2)) : ℝ) ≤ ((R : ℝ) + 2) * Real.log (Real.log (n : ℝ)) := by
       have hH_ge1 : (1 : ℝ) ≤ (Nat.floor ((Real.log (n : ℝ)) ^ (R + 2)) : ℝ) := by
-        exact_mod_cast Nat.one_le_floor_iff.mpr (one_le_pow₀ (by linarith))
+        exact_mod_cast Nat.le_floor (by norm_num; exact one_le_pow₀ hln_ge1)
       calc Real.log (Nat.floor ((Real.log (n : ℝ)) ^ (R + 2)) : ℝ)
           ≤ Real.log ((Real.log (n : ℝ)) ^ (R + 2)) := Real.log_le_log (by linarith) hfl_le
-        _ = (R + 2 : ℝ) * Real.log (Real.log (n : ℝ)) := Real.log_pow _ _
-    have h2 : Real.log (Real.log (n : ℝ)) ≤ (Real.log (n : ℝ)) ^ (1 / 2 : ℝ) := by
-      have := Real.log_le_rpow_div (by linarith : 0 ≤ Real.log (n : ℝ)) (by norm_num : (0 : ℝ) < 1 / 2)
+        _ = ((R : ℝ) + 2) * Real.log (Real.log (n : ℝ)) := by rw [Real.log_pow]; push_cast; rfl
+    have h2 : Real.log (Real.log (n : ℝ)) ≤ 2 * Real.sqrt (Real.log (n : ℝ)) := by
+      have h_rpow := Real.log_le_rpow_div hln_pos.le (by norm_num : (0 : ℝ) < 1 / 2)
+      rw [← Real.sqrt_eq_rpow] at h_rpow
       linarith
-    have h3 : 2 * (h_mod : ℝ) * ((R + 2 : ℝ) * (Real.log (n : ℝ)) ^ (1 / 2 : ℝ) + 1) ≤ Real.log (n : ℝ) := by
-      have hsq : (Real.log (n : ℝ)) ^ (1 / 2 : ℝ) ≤ Real.log (n : ℝ) / 100 := by
-        rw [← Real.sqrt_eq_rpow]
-        have hsqrt100 : 100 ≤ Real.sqrt (Real.log (n : ℝ)) := by
-          rw [Real.le_sqrt (by norm_num) (by linarith)]; linarith
-        nlinarith [Real.sq_sqrt (by linarith : 0 ≤ Real.log (n : ℝ))]
-      have : 2 * (h_mod : ℝ) * ((R + 2 : ℝ) * (Real.log (n : ℝ)) ^ (1 / 2 : ℝ) + 1) ≤
-          2 * (h_mod : ℝ) * ((R + 2 : ℝ) * (Real.log (n : ℝ) / 100) + 1) := by gcongr
+    have h_sqrt_ge : C_log ≤ Real.sqrt (Real.log (n : ℝ)) := by
+      rw [Real.le_sqrt hC_pos.le hln_pos.le]; exact hn
+    have h_sq : Real.sqrt (Real.log (n : ℝ)) * Real.sqrt (Real.log (n : ℝ)) = Real.log (n : ℝ) :=
+      Real.mul_self_sqrt hln_pos.le
+    have h3 : 2 * (h_mod : ℝ) * (((R : ℝ) + 2) * (2 * Real.sqrt (Real.log (n : ℝ))) + 1) ≤ Real.log (n : ℝ) := by
+      have h_lin : 2 * (h_mod : ℝ) * (((R : ℝ) + 2) * (2 * Real.sqrt (Real.log (n : ℝ))) + 1) ≤
+          C_log * Real.sqrt (Real.log (n : ℝ)) := by
+        dsimp [C_log]
+        have h_s1 : (1 : ℝ) ≤ Real.sqrt (Real.log (n : ℝ)) := by
+          rw [Real.le_sqrt (by norm_num) hln_pos.le]; exact hln_ge1
+        nlinarith [show (0 : ℝ) ≤ (h_mod : ℝ) from by positivity, show (0 : ℝ) ≤ (R : ℝ) from by positivity]
       nlinarith
+    have h4 : 2 * (h_mod : ℝ) * (Real.log (Nat.floor ((Real.log (n : ℝ)) ^ (R + 2)) : ℝ) + 1) ≤
+        2 * (h_mod : ℝ) * (((R : ℝ) + 2) * (2 * Real.sqrt (Real.log (n : ℝ))) + 1) := by
+      gcongr
     linarith
   let M_clean : ℝ := Cθ + (h_mod : ℝ) * (1 + Cm) + 4 * (h_mod : ℝ) * C₂e + 4 * C₂e + 1
   refine Asymptotics.IsBigO.of_bound M_clean ?_
@@ -279,7 +292,7 @@ theorem upper_band_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
   have hlogn_pos : 0 < Real.log (n : ℝ) := by linarith
   rw [Real.norm_of_nonneg hn_pos.le]
   let H := Nat.floor ((Real.log (n : ℝ)) ^ (R + 2))
-  have hH_ge1 : 1 ≤ H := Nat.one_le_floor_iff.mpr (one_le_pow₀ (by linarith))
+  have hH_ge1 : 1 ≤ H := Nat.le_floor (by norm_num; exact one_le_pow₀ (by linarith))
   have hH_ge_log : (Real.log (n : ℝ)) ^ (R + 2) / 2 ≤ (H : ℝ) + 1 := by
     have := Nat.lt_floor_add_one ((Real.log (n : ℝ)) ^ (R + 2))
     linarith [show (0 : ℝ) ≤ (Real.log (n : ℝ)) ^ (R + 2) from by positivity]
@@ -401,6 +414,7 @@ theorem upper_band_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
     · rintro ⟨_, _, hp, _⟩; exact hp
   have hB_disj : Set.PairwiseDisjoint (Finset.range (K + 1) : Set ℕ) B_k := by
     intro k₁ _ k₂ _ hne
+    dsimp only [Function.onFun]
     rw [Finset.disjoint_left]
     intro p hp₁ hp₂
     have h1 := (Finset.mem_filter.mp hp₁).2
@@ -519,7 +533,7 @@ theorem upper_band_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       simpa [pow_one] using calc
         ‖∑ p ∈ B_k k, ((Real.log (p : ℝ) / (p : ℝ) : ℝ) : ℂ) *
             eExp (∑ s ∈ ({1} : Finset ℕ), ((m : ℤ) : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s))‖
-          ≤ C₂e * (1 / P) * P * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := by simpa [neg_add, sub_eq_add_neg] using h_res
+          ≤ C₂e * (1 / P) * P * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := by simpa [div_eq_mul_inv, mul_comm] using h_res
         _ = C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := by field_simp [hP_pos.ne']; ring
   -- Split U into Vaaler error + main term
   have h_U_bd : ‖∑ p ∈ U, ((Real.log (p : ℝ) / (p : ℝ) : ℝ) : ℂ) *
@@ -736,7 +750,7 @@ theorem upper_band_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         _ = ((K : ℝ) + 1) * (Real.log (n : ℝ) * (C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)))) := by
             simp [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
         _ ≤ (2 * Real.log (n : ℝ)) * (Real.log (n : ℝ) * (C₂e * (1 / (Real.log (n : ℝ)) ^ (R + 2)))) := by
-            rw [h_rpow]; gcongr
+            rw [h_rpow]; exact mul_le_mul hK_le le_rfl (by positivity) (by positivity)
         _ ≤ 4 * C₂e := by
             have h1 : (Real.log (n : ℝ)) ^ 2 / (Real.log (n : ℝ)) ^ (R + 2) ≤ 1 := by
               rw [div_le_one (by positivity)]
