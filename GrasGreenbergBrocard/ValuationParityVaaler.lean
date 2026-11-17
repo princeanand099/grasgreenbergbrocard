@@ -459,6 +459,18 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
         have h1 : 1 ≤ k1 := (Finset.mem_Icc.mp hk1).1
         have h2 : 1 ≤ k2 := (Finset.mem_Icc.mp hk2).1
         omega
+      have h_pos_sum : ∑ h ∈ posSet, (2 / (Real.pi * |(h : ℝ)|)) =
+          ∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ))) := by
+        dsimp only [posSet]
+        rw [Finset.sum_image (g := fun k : ℕ => (k : ℤ)) (fun k1 _ k2 _ h => by omega)]
+        refine Finset.sum_congr rfl (fun k _ => ?_)
+        rw [Int.cast_natCast, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
+      have h_neg_sum : ∑ h ∈ negSet, (2 / (Real.pi * |(h : ℝ)|)) =
+          ∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ))) := by
+        dsimp only [negSet]
+        rw [Finset.sum_image (g := fun k : ℕ => -(k : ℤ)) (fun k1 _ k2 _ h => by omega)]
+        refine Finset.sum_congr rfl (fun k _ => ?_)
+        simp only [Int.cast_neg, Int.cast_natCast, abs_neg, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
       have hsum_pos_neg :
           ∑ h ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Odd h),
             (2 / (Real.pi * |(h : ℝ)|)) ≤
@@ -469,20 +481,8 @@ theorem vaaler_parity_approx (H : ℕ) (hH : 1 ≤ H) :
               Finset.sum_le_sum_of_subset_of_nonneg hsub (fun _ _ _ => by positivity)
           _ = (∑ h ∈ posSet, (2 / (Real.pi * |(h : ℝ)|))) +
               (∑ h ∈ negSet, (2 / (Real.pi * |(h : ℝ)|))) := Finset.sum_union hdisj_pn
-          _ = (∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ)))) +
-              (∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ)))) := by
-              congr 1
-              · dsimp only [posSet]
-                trans ∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * |((k : ℤ) : ℝ)|))
-                · exact Finset.sum_image (fun k1 _ k2 _ h => by omega)
-                · refine Finset.sum_congr rfl (fun k _ => ?_)
-                  rw [Int.cast_natCast, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
-              · dsimp only [negSet]
-                trans ∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * |(-(k : ℤ) : ℝ)|))
-                · exact Finset.sum_image (fun k1 _ k2 _ h => by omega)
-                · refine Finset.sum_congr rfl (fun k _ => ?_)
-                  rw [Int.cast_neg, Int.cast_natCast, abs_neg, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (k : ℝ))]
-          _ = 2 * ∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ))) := by ring
+          _ = 2 * ∑ k ∈ Finset.Icc (1 : ℕ) (2 * H + 1), (2 / (Real.pi * (k : ℝ))) := by
+              rw [h_pos_sum, h_neg_sum]; ring
       calc ∑ h ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Odd h),
             ‖c_tilde h‖
           ≤ ∑ h ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Odd h),

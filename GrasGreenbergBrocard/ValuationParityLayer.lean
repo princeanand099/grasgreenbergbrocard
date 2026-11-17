@@ -218,15 +218,14 @@ theorem alt_harmonic_eq_tail_harmonic (N : ℕ) :
       rw [show 2 * (m + 1) = 2 * m + 2 from by omega]
       linarith
     rw [h_lhs_rhs]
-    have hm1 : ((m + 1 : ℕ) : ℝ) ≠ 0 := by positivity
-    have hm2 : (2 * ((m + 1 : ℕ) : ℝ) - 1) ≠ 0 := by
-      have : (1 : ℝ) ≤ ((m + 1 : ℕ) : ℝ) := by exact_mod_cast (by omega : 1 ≤ m + 1)
-      linarith
-    have hm3 : (2 * ((m + 1 : ℕ) : ℝ)) ≠ 0 := by positivity
-    have h21 : ((2 * m + 1 : ℕ) : ℝ) = 2 * ((m + 1 : ℕ) : ℝ) - 1 := by push_cast; ring
-    have h22 : ((2 * m + 2 : ℕ) : ℝ) = 2 * ((m + 1 : ℕ) : ℝ) := by push_cast; ring
-    rw [h21, h22]
-    field_simp [hm1, hm2, hm3]
+    push_cast
+    have hm1 : (m : ℝ) + 1 ≠ 0 := by positivity
+    have hm2 : 2 * ((m : ℝ) + 1) - 1 ≠ 0 := by positivity
+    have hm3 : 2 * ((m : ℝ) + 1) ≠ 0 := by positivity
+    have hm21 : 2 * (m : ℝ) + 1 ≠ 0 := by positivity
+    have hm22 : 2 * (m : ℝ) + 2 ≠ 0 := by positivity
+    field_simp [hm1, hm2, hm3, hm21, hm22]
+    try ring
 
 /-- Quantitative alternating harmonic bound: `|∑_{r=1}^N (1/(2r-1) - 1/(2r)) - log 2| ≤ 1 / (2N)`. -/
 theorem alt_harmonic_sum_diff_log_two {N : ℕ} (hN : 1 ≤ N) :
@@ -415,17 +414,20 @@ theorem Podd_upper_partition (n K : ℕ) (hn : 4 ≤ n) (hK : 1 ≤ K) (hKsq : 2
         rw [Nat.div_lt_iff_lt_mul hp_prime.pos]
         have hmul : (n : ℝ) < (p : ℝ) * (2 * (K : ℝ) + 1) := by
           rw [div_lt_iff₀ (by positivity)] at hp_gt; exact hp_gt
-        exact_mod_cast (by push_cast; exact hmul : (n : ℝ) < ((p * (2 * K + 1) : ℕ) : ℝ))
+        have hmulN : n < p * (2 * K + 1) := by
+          exact_mod_cast (by push_cast; exact hmul : (n : ℝ) < ((p * (2 * K + 1) : ℕ) : ℝ))
+        linarith
       let r := (n / p + 1) / 2
       have hr_eq : n / p = 2 * r - 1 := by omega
+      have hr1R : (1 : ℝ) ≤ (r : ℝ) := by exact_mod_cast (by omega : 1 ≤ r)
       refine ⟨r, ⟨by omega, by omega⟩, ⟨⟨hp_icc.1, ?_⟩, hp_prime⟩, ?_⟩
       · rw [Nat.le_floor_iff (by positivity)]
-        rw [le_div_iff₀ (by have : (1 : ℝ) ≤ (r : ℝ) := by exact_mod_cast (by omega : 1 ≤ r); linarith)]
+        rw [le_div_iff₀ (by linarith)]
         have hmul : (2 * r - 1) * p ≤ n := by rw [← hr_eq]; exact Nat.div_mul_le_self n p
         have hmulR : ((2 * r - 1 : ℕ) : ℝ) * (p : ℝ) ≤ (n : ℝ) := by exact_mod_cast hmul
         rw [Nat.cast_sub (by omega : 1 ≤ 2 * r)] at hmulR
         push_cast at hmulR; linarith
-      · rw [div_lt_iff₀ (by have : (1 : ℝ) ≤ (r : ℝ) := by exact_mod_cast (by omega : 1 ≤ r); positivity)]
+      · rw [div_lt_iff₀ (by linarith)]
         have hlt : n < (2 * r) * p := by
           have : n / p < 2 * r := by omega
           exact (Nat.div_lt_iff_lt_mul hp_prime.pos).mp this
@@ -458,7 +460,7 @@ theorem Podd_upper_partition (n K : ℕ) (hn : 4 ≤ n) (hK : 1 ≤ K) (hKsq : 2
           rw [Nat.cast_sub (by omega : 1 ≤ 2 * r)]; push_cast; linarith
         exact_mod_cast h1
       have hdiv_lt : n / p < 2 * r := by
-        rw [div_lt_iff₀ (by positivity)] at hp_lo
+        rw [div_lt_iff₀ (by linarith)] at hp_lo
         rw [Nat.div_lt_iff_lt_mul hp_prime.pos]
         exact_mod_cast (by push_cast; linarith : (n : ℝ) < ((2 * r : ℕ) : ℝ) * (p : ℝ))
       have hdiv_eq : n / p = 2 * r - 1 := by omega
@@ -480,15 +482,14 @@ theorem Podd_upper_partition (n K : ℕ) (hn : 4 ≤ n) (hK : 1 ≤ K) (hKsq : 2
     simp only [L, Finset.mem_filter, Finset.mem_Icc] at hp1 hp2
     have hr₁_1 : (1 : ℝ) ≤ (r₁ : ℝ) := by exact_mod_cast hr₁.1
     have hr₂_1 : (1 : ℝ) ≤ (r₂ : ℝ) := by exact_mod_cast hr₂.1
-    have hr₁_pos : (0 : ℝ) < (r₁ : ℝ) := by exact_mod_cast hr₁.1
-    have hr₂_pos : (0 : ℝ) < (r₂ : ℝ) := by exact_mod_cast hr₂.1
     have hp1_hi := hp1.1.1.2
     have hp2_hi := hp2.1.1.2
     rw [Nat.le_floor_iff (by positivity), le_div_iff₀ (by linarith [hr₁_1])] at hp1_hi
     rw [Nat.le_floor_iff (by positivity), le_div_iff₀ (by linarith [hr₂_1])] at hp2_hi
     have hp1_lo := hp1.2
     have hp2_lo := hp2.2
-    rw [div_lt_iff₀ (by positivity)] at hp1_lo hp2_lo
+    rw [div_lt_iff₀ (by linarith [hr₁_1])] at hp1_lo
+    rw [div_lt_iff₀ (by linarith [hr₂_1])] at hp2_lo
     have hle1 : (2 * r₁ - 1) * p ≤ n := by
       have h1 : ((2 * r₁ - 1 : ℕ) : ℝ) * (p : ℝ) ≤ (n : ℝ) := by
         rw [Nat.cast_sub (by omega : 1 ≤ 2 * r₁)]; push_cast; linarith
@@ -534,7 +535,6 @@ theorem Podd_upper_partition (n K : ℕ) (hn : 4 ≤ n) (hK : 1 ≤ K) (hKsq : 2
     intro r hr p hp
     have hr1 : 1 ≤ r := (Finset.mem_Icc.mp hr).1
     have hr1R : (1 : ℝ) ≤ (r : ℝ) := by exact_mod_cast hr1
-    have hr_pos : (0 : ℝ) < (r : ℝ) := by exact_mod_cast hr1
     simp only [Finset.mem_filter, Finset.mem_Icc] at hp ⊢
     refine ⟨⟨hp.1.1, le_trans hp.1.2 (Nat.floor_mono ?_)⟩, hp.2⟩
     exact div_le_div_of_nonneg_left (by positivity) (by linarith) (by linarith)
@@ -579,11 +579,10 @@ theorem log_q_n_asymptotic :
       hlog_sqrt_ratio.comp (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop)
     have hev : ∀ᶠ n : ℕ in atTop,
         Real.sqrt (Real.log (n : ℝ)) / Real.log (n : ℝ) ≤ 1 / (2 * c₁ + 1) :=
-      ht.eventually (ge_mem_nhds (by positivity : 0 < 1 / (2 * c₁ + 1)))
+      (ht.eventually (Iio_mem_nhds (by positivity : 0 < 1 / (2 * c₁ + 1)))).mono (fun _ h => h.le)
     have hlog1 : ∀ᶠ n : ℕ in atTop, (1 : ℝ) ≤ Real.log (n : ℝ) :=
       (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1)
     filter_upwards [hev, hlog1] with n hn hln
-    dsimp only [Function.comp_def] at hln
     rw [div_le_iff₀ (by linarith)] at hn
     have hmul : (c₁ / 2) * Real.sqrt (Real.log (n : ℝ)) ≤
         (c₁ / 2) * ((1 / (2 * c₁ + 1)) * Real.log (n : ℝ)) :=
@@ -633,7 +632,8 @@ theorem log_q_n_asymptotic :
     have ht_comp := hlo.comp (Real.tendsto_sqrt_atTop.comp (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop))
     have hlog0 : ∀ᶠ n : ℕ in atTop, (0 : ℝ) ≤ Real.log (n : ℝ) :=
       (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 0)
-    filter_upwards [ht_comp.eventually (ge_mem_nhds (by norm_num : (0 : ℝ) < 1)), hlog0] with n hn hln
+    filter_upwards [(ht_comp.eventually (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1))).mono (fun _ h => h.le),
+      hlog0] with n hn hln
     dsimp only [Function.comp_def] at hn hln
     have hsq : Real.sqrt (Real.log (n : ℝ)) ^ 2 = Real.log (n : ℝ) := Real.sq_sqrt hln
     simpa [hsq] using hn
@@ -969,7 +969,7 @@ private theorem piPrime_div_asymptotic (d : ℕ) (hd : 1 ≤ d) :
   have h2 : (fun n : ℕ => ((n : ℝ) / (d : ℝ)) / Real.log ((n : ℝ) / (d : ℝ)))
       =O[atTop] (fun n : ℕ => (n : ℝ) / Real.log (n : ℝ)) := by
     refine Asymptotics.IsBigO.of_bound (2 / (d : ℝ)) ?_
-    filter_upwards [h_ratio.eventually (ge_mem_nhds (by norm_num : (1 : ℝ) < 2)),
+    filter_upwards [(h_ratio.eventually (Iio_mem_nhds (by norm_num : (1 : ℝ) < 2))).mono (fun _ h => h.le),
       (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1),
       Filter.eventually_ge_atTop (max 2 (2 * d))] with n hr hln hn
     dsimp only [Function.comp_def] at hln
@@ -1008,7 +1008,7 @@ private theorem piPrime_div_asymptotic (d : ℕ) (hd : 1 ≤ d) :
       rw [le_div_iff₀ hd_pos]; exact_mod_cast (by omega : 2 * d ≤ n)
     have hlog_nd_pos : 0 < Real.log ((n : ℝ) / (d : ℝ)) := Real.log_pos (by linarith)
     have hln0 : Real.log (n : ℝ) ≠ 0 := by linarith
-    rw [Real.dist_eq, sub_zero] at hn
+    rw [Metric.mem_ball, dist_zero_right, Real.norm_eq_abs] at hn
     have heq : ((n : ℝ) / (d : ℝ)) / Real.log ((n : ℝ) / (d : ℝ)) - ((1 : ℝ) / (d : ℝ)) * ((n : ℝ) / Real.log (n : ℝ)) =
         ((1 / (d : ℝ)) * (Real.log (n : ℝ) / Real.log ((n : ℝ) / (d : ℝ)) - 1)) * ((n : ℝ) / Real.log (n : ℝ)) := by
       field_simp [hd_pos.ne', hlog_nd_pos.ne', hln0]
@@ -1178,6 +1178,8 @@ theorem card_Podd_asymptotic :
   simp only [Nat.cast_one, div_one, one_div, inv_one, one_mul] at hpnt1
   have hpi_lo : (3 / 4 : ℝ) * ((n : ℝ) / Real.log (n : ℝ)) ≤ piPrime (n : ℝ) := by
     have hη_le : η ≤ 1 / 4 := le_trans (min_le_right _ _) (min_le_right _ _)
+    have hη_mul : η * ((n : ℝ) / Real.log (n : ℝ)) ≤ (1 / 4 : ℝ) * ((n : ℝ) / Real.log (n : ℝ)) :=
+      mul_le_mul_of_nonneg_right hη_le (by positivity)
     linarith [(abs_le.mp hpnt1).1]
   have hpi_err : |Real.log 2 * (piPrime (n : ℝ) - (n : ℝ) / Real.log (n : ℝ))| ≤
       (ε / 8) * ((n : ℝ) / Real.log (n : ℝ)) := by

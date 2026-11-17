@@ -166,13 +166,11 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
   obtain ⟨η', η, hη', hη, C, hC, hVaughan⟩ := vaughan_van_der_corput_prime_sum δ hδ0 hδ1
   let R := Nat.floor (1 / δ)
   let A_R := 6 * R + 30
-  let Mmax : ℝ := (∏ k ∈ Finset.range (5 * R + 2), ((R + k : ℕ) : ℝ))
+  let Mmax : ℝ := ∏ k ∈ Finset.range (5 * R + 2), ((R + k : ℕ) : ℝ)
   let c₁_low : ℝ := (1 / 4 : ℝ) * (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ))
   let c₂_high : ℝ := (3 / 2 : ℝ) * Mmax
   let C₂ : ℝ := C * ((2 : ℝ) ^ ((R : ℝ) / 6) + 1)
-  have hR1 : 1 ≤ R := by
-    rw [Nat.floor_pos]
-    exact (le_div_iff₀ hδ0).mpr (by linarith)
+  have hR1 : 1 ≤ R := Nat.le_floor (by rw [le_div_iff₀ hδ0]; linarith)
   have hM1 : (1 : ℝ) ≤ Mmax := by
     unfold Mmax
     have hN : 1 ≤ ∏ k ∈ Finset.range (5 * R + 2), (R + k) :=
@@ -198,10 +196,10 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
     have hc₁_pos : 0 < c₁_low := by
       unfold c₁_low
       exact mul_pos (by norm_num) (zpow_pos (by norm_num) _)
-    exact h0.eventually (ge_mem_nhds hc₁_pos)
+    exact (h0.eventually (Iio_mem_nhds hc₁_pos)).mono (fun _ h => h.le)
   have hev2 : ∀ᶠ n : ℕ in atTop,
       (Real.log (n : ℝ)) ^ (R + 5) / (n : ℝ) ^ (δ * η') ≤ 1 :=
-    htend2.eventually (ge_mem_nhds (by norm_num : (0 : ℝ) < 1))
+    (htend2.eventually (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1))).mono (fun _ h => h.le)
   have hev_log : ∀ᶠ n : ℕ in atTop, (2 : ℝ) ≤ Real.log (n : ℝ) :=
     (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 2)
   filter_upwards [Filter.eventually_ge_atTop 4, hev1, hev2, hev_log] with n hn hsmall1 hsmall2 hlog2
@@ -217,17 +215,18 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
   have hr₀_mem : r₀ ∈ A := (Finset.mem_filter.mp hr₀_flt).1
   have hr₀_ne : h r₀ ≠ 0 := (Finset.mem_filter.mp hr₀_flt).2
   have hr₀_range : 1 ≤ r₀ ∧ r₀ ≤ R := hA_range r₀ hr₀_mem
+  have hP_ge1 : (1 : ℝ) ≤ P := by
+    calc (1 : ℝ) ≤ (n : ℝ) ^ δ := Real.one_le_rpow (by exact_mod_cast (by omega : 1 ≤ n)) hδ0.le
+      _ ≤ P := hP_lo
+  have hP_pos : 0 < P := by linarith
   have hT₀_ge : (2 : ℝ) ^ (-(R : ℤ)) * (Real.log (n : ℝ)) ^ A_R ≤ T₀ := by
     have hh1 : (1 : ℝ) ≤ |(h r₀ : ℝ)| := by exact_mod_cast Int.one_le_abs hr₀_ne
     calc (2 : ℝ) ^ (-(R : ℤ)) * (Real.log (n : ℝ)) ^ A_R
         ≤ (n : ℝ) / P ^ r₀ := hPhase r₀ hr₀_mem
       _ = 1 * ((n : ℝ) / P ^ r₀) := (one_mul _).symm
-      _ ≤ |(h r₀ : ℝ)| * ((n : ℝ) / P ^ r₀) := mul_le_mul_of_nonneg_right hh1 (by positivity)
+      _ ≤ |(h r₀ : ℝ)| * ((n : ℝ) / P ^ r₀) :=
+          mul_le_mul_of_nonneg_right hh1 (div_nonneg (Nat.cast_nonneg n) (pow_nonneg hP_pos.le _))
       _ = T₀ := by ring
-  have hP_ge1 : (1 : ℝ) ≤ P := by
-    calc (1 : ℝ) ≤ (n : ℝ) ^ δ := Real.one_le_rpow (by exact_mod_cast (by omega : 1 ≤ n)) hδ0.le
-      _ ≤ P := hP_lo
-  have hP_pos : 0 < P := by linarith
   have hDeriv : ∀ (j : ℕ), 1 ≤ j → j ≤ 5 * R + 2 →
       ∃ c₁ c₂ : ℝ, 0 < c₁ ∧ c₁ ≤ c₂ ∧
         ∀ t ∈ Set.Icc P (2 * P),
@@ -255,10 +254,10 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
         have hcd : ∀ r ∈ A, ContDiffAt ℝ j
             (fun x : ℝ => ((h r : ℝ) * (n : ℝ) / 2) * x ^ (-(r : ℤ))) t := by
           intro r _
-          exact (contDiffAt_id.zpow (-(r : ℤ)) (Or.inl ht_pos.ne')).const_mul _
+          exact (ContDiffAt.zpow (m := -(r : ℤ)) contDiffAt_id (Or.inl ht_pos.ne')).const_mul _
         rw [iteratedDeriv_sum hcd]
         refine Finset.sum_congr rfl (fun r _ => ?_)
-        rw [iteratedDeriv_const_mul (contDiffAt_id.zpow (-(r : ℤ)) (Or.inl ht_pos.ne')),
+        rw [iteratedDeriv_const_mul (ContDiffAt.zpow (m := -(r : ℤ)) contDiffAt_id (Or.inl ht_pos.ne')),
           iteratedDeriv_neg_pow r j t ht_pos]
         ring
       rw [hIter]
@@ -314,9 +313,9 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
                 refine Finset.prod_le_prod (fun k _ => by positivity) (fun k _ => ?_)
                 exact_mod_cast (by omega : r₀ + k ≤ R + k)
             _ ≤ ∏ k ∈ Finset.range (5 * R + 2), ((R + k : ℕ) : ℝ) := by
-                have hN : ∏ k ∈ Finset.range j, (R + k) ≤ ∏ k ∈ Finset.range (5 * R + 2), (R + k) :=
-                  Finset.prod_le_prod_of_subset_of_one_le' (Finset.range_mono hj2)
-                    (fun k _ _ => by omega)
+                have hN : ∏ k ∈ Finset.range j, (R + k) ≤ ∏ k ∈ Finset.range (5 * R + 2), (R + k) := by
+                  rw [← Finset.prod_sdiff (Finset.range_mono hj2)]
+                  exact Nat.le_mul_of_pos_left _ (Finset.prod_pos (fun k _ => by omega))
                 exact_mod_cast hN
         have ht_ge : t ^ (-((r₀ + j : ℕ) : ℤ)) ≤ P ^ (-((r₀ + j : ℕ) : ℤ)) := by
           rw [zpow_neg, zpow_neg, zpow_natCast, zpow_natCast]
@@ -371,9 +370,9 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
                     refine Finset.prod_le_prod (fun k _ => by positivity) (fun k _ => ?_)
                     exact_mod_cast (by omega : r + k ≤ R + k)
                 _ ≤ ∏ k ∈ Finset.range (5 * R + 2), ((R + k : ℕ) : ℝ) := by
-                    have hN : ∏ k ∈ Finset.range j, (R + k) ≤ ∏ k ∈ Finset.range (5 * R + 2), (R + k) :=
-                      Finset.prod_le_prod_of_subset_of_one_le' (Finset.range_mono hj2)
-                        (fun k _ _ => by omega)
+                    have hN : ∏ k ∈ Finset.range j, (R + k) ≤ ∏ k ∈ Finset.range (5 * R + 2), (R + k) := by
+                      rw [← Finset.prod_sdiff (Finset.range_mono hj2)]
+                      exact Nat.le_mul_of_pos_left _ (Finset.prod_pos (fun k _ => by omega))
                     exact_mod_cast hN
             have ht_le : t ^ (-((r + j : ℕ) : ℤ)) ≤ (1 / P) * P ^ (-((r₀ + j : ℕ) : ℤ)) := by
               rw [zpow_neg, zpow_neg, zpow_natCast, zpow_natCast]
