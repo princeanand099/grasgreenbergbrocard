@@ -425,7 +425,9 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
             have hp3 : 3 ≤ p := (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).1
             have hw_nn : 0 ≤ Real.log (p : ℝ) / ((p : ℝ) - 1) := by
               have : (1 : ℝ) ≤ (p : ℝ) := by exact_mod_cast (by omega : 1 ≤ p)
-              have : (0 : ℝ) < (p : ℝ) - 1 := by exact_mod_cast (by omega : 1 < p)
+              have : (0 : ℝ) < (p : ℝ) - 1 := by
+                have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast (by omega : 2 ≤ p)
+                linarith
               exact div_nonneg (Real.log_nonneg this) this.le
             rw [norm_mul, Complex.norm_real, Real.norm_of_nonneg hw_nn]
             apply mul_le_mul_of_nonneg_right _ hw_nn
@@ -457,7 +459,9 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
                   have hp3 : 3 ≤ p := (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).1
                   have hw_nn : 0 ≤ Real.log (p : ℝ) / ((p : ℝ) - 1) := by
                     have : (1 : ℝ) ≤ (p : ℝ) := by exact_mod_cast (by omega : 1 ≤ p)
-                    have : (0 : ℝ) < (p : ℝ) - 1 := by exact_mod_cast (by omega : 1 < p)
+                    have : (0 : ℝ) < (p : ℝ) - 1 := by
+                      have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast (by omega : 2 ≤ p)
+                      linarith
                     exact div_nonneg (Real.log_nonneg this) this.le
                   exact mul_nonneg hw_nn (le_trans (norm_nonneg _) (h_vaaler_pw _))
     have h_B_s : ∀ s ∈ I_s,
@@ -511,7 +515,8 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       rw [h_B_eq]
       have h_m0_bd : ∑ p ∈ D_r, (Real.log (p : ℝ) / ((p : ℝ) - 1)) * (b_mod 0).re ≤
           (h_mod : ℝ) * (1 + Cm) / Real.log (n : ℝ) := by
-        have hb0_re : (b_mod 0).re = (h_mod : ℝ) / ((H : ℝ) + 1) := by rw [hb_mod0, Complex.ofReal_re]
+        have hb0_re : (b_mod 0).re = (h_mod : ℝ) / ((H : ℝ) + 1) := by
+          rw [hb_mod0, show ((h_mod : ℂ) / ((H : ℂ) + 1)) = (((h_mod : ℝ) / ((H : ℝ) + 1) : ℝ) : ℂ) from by push_cast; rfl, Complex.ofReal_re]
         rw [← Finset.sum_mul, hb0_re]
         have hsub : D_r ⊆ (Finset.Icc 3 n).filter Nat.Prime := fun p hp =>
           Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨(Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).1,
@@ -523,7 +528,9 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
                 refine Finset.sum_le_sum_of_subset_of_nonneg hsub (fun p hp _ => ?_)
                 have hp3 := (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).1
                 have : (1 : ℝ) ≤ (p : ℝ) := by exact_mod_cast (by omega : 1 ≤ p)
-                have : (0 : ℝ) < (p : ℝ) - 1 := by exact_mod_cast (by omega : 1 < p)
+                have : (0 : ℝ) < (p : ℝ) - 1 := by
+                  have hp2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast (by omega : 2 ≤ p)
+                  linarith
                 exact div_nonneg (Real.log_nonneg this) this.le
             _ ≤ Real.log (n : ℝ) + Cm := by
                 have := hCm (n : ℝ) (by exact_mod_cast (by omega : 3 ≤ n))
@@ -541,12 +548,14 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         calc (∑ p ∈ D_r, Real.log (p : ℝ) / ((p : ℝ) - 1)) * ((h_mod : ℝ) / ((H : ℝ) + 1))
             ≤ (Real.log (n : ℝ) + Cm) * ((h_mod : ℝ) * (2 / (Real.log (n : ℝ)) ^ (R + 2))) := by
               apply mul_le_mul hmert_n _ (by positivity) (by positivity)
-              rw [div_eq_mul_one_div, div_eq_mul_one_div]
+              rw [div_eq_mul_one_div (h_mod : ℝ)]
               exact mul_le_mul_of_nonneg_left hH_inv (by positivity)
           _ = 2 * (h_mod : ℝ) * ((Real.log (n : ℝ) + Cm) / (Real.log (n : ℝ)) ^ (R + 2)) := by ring
           _ ≤ 2 * (h_mod : ℝ) * ((1 + Cm) / (Real.log (n : ℝ)) ^ 2) :=
               mul_le_mul_of_nonneg_left h_log_3 (by positivity)
           _ ≤ (h_mod : ℝ) * (1 + Cm) / Real.log (n : ℝ) := by
+              rw [show 2 * (h_mod : ℝ) * ((1 + Cm) / (Real.log (n : ℝ)) ^ 2) =
+                  (2 * (h_mod : ℝ) * (1 + Cm)) / (Real.log (n : ℝ)) ^ 2 from by ring]
               rw [div_le_div_iff₀ (by positivity) hlogn_pos]; nlinarith [hCm_pos]
       have h_nz_bd : ∑ m ∈ nzH, (b_mod m * ∑ k ∈ Finset.range (K + 1), ∑ p ∈ B_k k,
             ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
