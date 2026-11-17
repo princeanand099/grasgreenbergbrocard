@@ -138,9 +138,8 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         Real.rpow_lt_rpow_of_exponent_lt (by exact_mod_cast (by omega : 1 < n)) (by simpa using hR1)
       rw [Real.rpow_one] at h1
       have h2 : (n : ℝ) ^ ((R + 1 : ℕ) * δ) < (p : ℝ) ^ ((R + 1 : ℕ) : ℝ) := by
-        rw [mul_comm, Real.rpow_mul hn_pos.le, Real.rpow_natCast]
-        have := Real.rpow_lt_rpow (by positivity) hp_lo (by positivity : (0 : ℝ) < (R + 1 : ℕ))
-        simpa [Real.rpow_natCast] using this
+        rw [mul_comm, Real.rpow_mul hn_pos.le]
+        exact Real.rpow_lt_rpow (by positivity) hp_lo (by positivity : (0 : ℝ) < ((R + 1 : ℕ) : ℝ))
       rw [Real.rpow_natCast] at h2
       exact lt_trans h1 h2
     exact_mod_cast h_rpow
@@ -183,7 +182,8 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       · rw [Int.cast_natCast, div_lt_iff₀ hps_pos]
         have h_nat : n < (n / p ^ s + 1) * p ^ s := by
           have := Nat.lt_div_mul_add (a := n) (pow_pos hp_pr.pos s); linarith
-        exact_mod_cast (by push_cast; linarith : (n : ℝ) < ((n / p ^ s + 1 : ℕ) : ℝ) * ((p ^ s : ℕ) : ℝ))
+        have h_natR : (n : ℝ) < ((n / p ^ s + 1 : ℕ) : ℝ) * ((p ^ s : ℕ) : ℝ) := by exact_mod_cast h_nat
+        push_cast at h_natR; exact h_natR
     have h_cong : ∏ s ∈ Finset.Icc 1 r,
           eExp ((z : ℝ) * (Int.floor ((n : ℝ) / (p : ℝ) ^ s) : ℝ) / (h_mod : ℝ)) =
         ∏ s ∈ Finset.Icc 1 r,
@@ -378,9 +378,15 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         linarith
       have h_res := (hexp_n P (B_k k) A h_fn (fun t => 1 / (t - 1)) (2 / P) hA_nz
         hP_lo hP_hi hI_prime hA_range hh_le hPhase hW_bound (by positivity)).1.2
-      calc ‖∑ p ∈ B_k k, ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
+      have h_eq_sum : ∑ p ∈ B_k k, ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
+            eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) =
+          ∑ p ∈ B_k k, (((fun t => 1 / (t - 1)) (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
+            eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) :=
+        Finset.sum_congr rfl (fun p _ => by congr 2; ring)
+      rw [h_eq_sum]
+      calc ‖∑ p ∈ B_k k, (((fun t => 1 / (t - 1)) (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
             eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s))‖
-          ≤ C₂e * (2 / P) * P * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := by simpa [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using h_res
+          ≤ P * (C₂e * (2 / P)) * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := h_res
         _ = 2 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := by field_simp [hP_pos.ne']
   -- Bound ∑_{p ∈ D_r}
   have h_sum_split : ∑ p ∈ D_r, eExp ((z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ)) *

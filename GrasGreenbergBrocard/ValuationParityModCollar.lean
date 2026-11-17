@@ -147,9 +147,8 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         Real.rpow_lt_rpow_of_exponent_lt (by exact_mod_cast (by omega : 1 < n)) (by simpa using hR1)
       rw [Real.rpow_one] at h1
       have h2 : (n : ℝ) ^ ((R + 1 : ℕ) * δ) < (p : ℝ) ^ ((R + 1 : ℕ) : ℝ) := by
-        rw [mul_comm, Real.rpow_mul hn_pos.le, Real.rpow_natCast]
-        have := Real.rpow_lt_rpow (by positivity) hp_lo (by positivity : (0 : ℝ) < (R + 1 : ℕ))
-        simpa [Real.rpow_natCast] using this
+        rw [mul_comm, Real.rpow_mul hn_pos.le]
+        exact Real.rpow_lt_rpow (by positivity) hp_lo (by positivity : (0 : ℝ) < ((R + 1 : ℕ) : ℝ))
       rw [Real.rpow_natCast] at h2
       exact lt_trans h1 h2
     exact_mod_cast h_rpow
@@ -255,11 +254,15 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
           have h2 : (n : ℝ) ^ (1 / ((r : ℝ) + 1)) * (n : ℝ) ^ (1 / ((r : ℝ) * ((r : ℝ) + 1))) = (n : ℝ) ^ (1 / (r : ℝ)) := by
             rw [← Real.rpow_add hn_pos]
             congr 1; field_simp [hr_pos.ne', by positivity : (r : ℝ) + 1 ≠ 0]; ring
-          nlinarith [Real.rpow_pos_of_pos hn_pos (1 / ((r : ℝ) + 1))]
+          have h_lt := lt_of_le_of_lt hpow_gt h1
+          calc (n : ℝ) ^ (1 / ((r : ℝ) + 1)) * (Real.log (n : ℝ)) ^ ((A_R : ℝ) / (r : ℝ))
+              < (n : ℝ) ^ (1 / ((r : ℝ) + 1)) * (n : ℝ) ^ (1 / ((r : ℝ) * ((r : ℝ) + 1))) :=
+                mul_lt_mul_of_pos_left h_lt (by positivity)
+            _ = (n : ℝ) ^ (1 / (r : ℝ)) := h2
         have hlt_p := lt_trans h_gap h_col_lo
         have := Real.rpow_lt_rpow (by positivity) hlt_p (by positivity : (0 : ℝ) < (r : ℝ) + 1)
-        rw [← Real.rpow_mul hn_pos.le, one_div_mul_cancel (by positivity : (r : ℝ) + 1 ≠ 0), Real.rpow_one,
-          ← Real.rpow_natCast (p : ℝ) (r + 1)] at this
+        rw [← Real.rpow_mul hn_pos.le, one_div_mul_cancel (by positivity : (r : ℝ) + 1 ≠ 0), Real.rpow_one] at this
+        rw [show (r : ℝ) + 1 = ((r + 1 : ℕ) : ℝ) from by push_cast; ring, Real.rpow_natCast] at this
         exact this
       have h_le_s : (p : ℝ) ^ (r + 1) ≤ (p : ℝ) ^ s := pow_le_pow_right₀ (by exact_mod_cast hp_pr.one_lt.le) hs1
       exact_mod_cast lt_of_lt_of_le h_lt_n h_le_s
@@ -284,7 +287,8 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       · rw [Int.cast_natCast, div_lt_iff₀ hps_pos]
         have h_nat : n < (n / p ^ s + 1) * p ^ s := by
           have := Nat.lt_div_mul_add (a := n) (pow_pos hp_pr.pos s); linarith
-        exact_mod_cast (by push_cast; linarith : (n : ℝ) < ((n / p ^ s + 1 : ℕ) : ℝ) * ((p ^ s : ℕ) : ℝ))
+        have h_natR : (n : ℝ) < ((n / p ^ s + 1 : ℕ) : ℝ) * ((p ^ s : ℕ) : ℝ) := by exact_mod_cast h_nat
+        push_cast at h_natR; exact h_natR
     have h_prod_e : ∏ s ∈ Finset.Icc 1 (r - 1),
           eExp ((z : ℝ) * (Int.floor ((n : ℝ) / (p : ℝ) ^ s) : ℝ) / (h_mod : ℝ)) =
         eExp ((z : ℝ) * ((∑ s ∈ Finset.Icc 1 (r - 1), n / p ^ s : ℕ) : ℝ) / (h_mod : ℝ)) := by
@@ -490,9 +494,15 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
               mul_le_mul_of_nonneg_right hh1 (div_nonneg hn_pos.le (pow_nonneg hP_pos.le _))
           _ = |(h_fn r₀ : ℝ)| * (n : ℝ) / P ^ r₀ := by ring
       have h_res2 := h_res.2 hT₀_ge
-      calc ‖∑ p ∈ J m_r, ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
+      have h_eq_sum : ∑ p ∈ J m_r, ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
+            eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) =
+          ∑ p ∈ J m_r, (((fun t => 1 / (t - 1)) (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
+            eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) :=
+        Finset.sum_congr rfl (fun p _ => by congr 2; ring)
+      rw [h_eq_sum]
+      calc ‖∑ p ∈ J m_r, (((fun t => 1 / (t - 1)) (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
             eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s))‖
-          ≤ C₃e * (2 / P) * P * (n : ℝ) ^ (-η) := by simpa [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using h_res2
+          ≤ P * (C₃e * (2 / P)) * (n : ℝ) ^ (-η) := h_res2
         _ = 2 * C₃e * (n : ℝ) ^ (-η) := by field_simp [hP_pos.ne']
         _ ≤ 4 * C₃e * (n : ℝ) ^ (-η) := by
             have : 0 ≤ C₃e * (n : ℝ) ^ (-η) := by positivity

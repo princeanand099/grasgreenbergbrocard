@@ -535,10 +535,15 @@ theorem upper_band_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       have h_res := (hexp_n P (B_k k) {1} (fun _ => m) (fun t => 1 / t) (1 / P)
         ⟨1, Finset.mem_singleton_self 1, hm0⟩ hP_lo hP_hi hI_prime hA_range
         (fun _ _ => hmH) hPhase hW_bound (by positivity)).1.2
-      simpa [pow_one] using calc
-        ‖∑ p ∈ B_k k, ((Real.log (p : ℝ) / (p : ℝ) : ℝ) : ℂ) *
+      have h_eq_sum : ∑ p ∈ B_k k, ((Real.log (p : ℝ) / (p : ℝ) : ℝ) : ℂ) *
+            eExp ((m : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ))) =
+          ∑ p ∈ B_k k, (((fun t => 1 / t) (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
+            eExp (∑ s ∈ ({1} : Finset ℕ), ((m : ℤ) : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) :=
+        Finset.sum_congr rfl (fun p _ => by simp [pow_one]; congr 2; ring)
+      rw [h_eq_sum]
+      calc ‖∑ p ∈ B_k k, (((fun t => 1 / t) (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
             eExp (∑ s ∈ ({1} : Finset ℕ), ((m : ℤ) : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s))‖
-          ≤ C₂e * (1 / P) * P * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := by simpa [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using h_res
+          ≤ P * (C₂e * (1 / P)) * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := h_res
         _ = C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := by field_simp [hP_pos.ne']
   -- Split U into Vaaler error + main term
   have h_U_bd : ‖∑ p ∈ U, ((Real.log (p : ℝ) / (p : ℝ) : ℝ) : ℂ) *
