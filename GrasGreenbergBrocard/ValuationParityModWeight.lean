@@ -287,13 +287,14 @@ theorem prefix_weight_isBigO (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α ≤ 1) :
         (∑ p ∈ S_low, ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) * Real.log (p : ℝ)) := by
       rw [hS_sum, hS_hi_sum, add_zero, hS_low_eq]; ring
     rw [h_diff]
+    have h_abs3 : ∀ a b c : ℝ, |a + b - c| ≤ |a| + |b| + |c| := fun a b c =>
+      le_trans (abs_sub _ _) (add_le_add_right (abs_add_le _ _) _)
     calc |(∑ p ∈ S_2, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ)) +
           (n : ℝ) * ((∑ p ∈ S_low, Real.log (p : ℝ) / ((p : ℝ) - 1)) - α * Real.log (n : ℝ)) -
           (∑ p ∈ S_low, ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) * Real.log (p : ℝ))|
         ≤ |∑ p ∈ S_2, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ)| +
           |(n : ℝ) * ((∑ p ∈ S_low, Real.log (p : ℝ) / ((p : ℝ) - 1)) - α * Real.log (n : ℝ))| +
-          |∑ p ∈ S_low, ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) * Real.log (p : ℝ)| :=
-            le_trans (abs_sub _ _) (add_le_add_right (abs_add_le _ _) _)
+          |∑ p ∈ S_low, ((Nat.digits p n).sum : ℝ) / ((p : ℝ) - 1) * Real.log (p : ℝ)| := h_abs3 _ _ _
       _ ≤ Real.log 2 * (n : ℝ) +
           (n : ℝ) * (Real.log 3 + Cm) + (n : ℝ) := by
             refine add_le_add (add_le_add hS2_bound ?_) h_dig_err
