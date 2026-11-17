@@ -308,6 +308,22 @@ theorem alt_harmonic_sum_diff_log_two {N : ℕ} (hN : 1 ≤ N) :
   rw [abs_le]
   constructor <;> linarith
 
+private theorem harmonic_sum_le_log_add_one_aux {N : ℕ} (hN : 1 ≤ N) :
+    ∑ k ∈ Finset.Icc 1 N, (1 : ℝ) / (k : ℝ) ≤ Real.log (N : ℝ) + 1 := by
+  induction N, hN using Nat.le_induction with
+  | base => simp
+  | succ m hm ih =>
+    rw [Finset.sum_Icc_succ_top (by omega : 1 ≤ m + 1)]
+    have hm_pos : (0 : ℝ) < (m : ℝ) := by exact_mod_cast hm
+    have hlog : (1 : ℝ) / ((m : ℝ) + 1) ≤ Real.log ((m : ℝ) + 1) - Real.log (m : ℝ) := by
+      have h1 : Real.log ((m : ℝ) / ((m : ℝ) + 1)) ≤ (m : ℝ) / ((m : ℝ) + 1) - 1 :=
+        Real.log_le_sub_one_of_pos (by positivity)
+      rw [Real.log_div (by positivity) (by positivity)] at h1
+      have h2 : (m : ℝ) / ((m : ℝ) + 1) - 1 = -(1 / ((m : ℝ) + 1)) := by field_simp; ring
+      linarith
+    push_cast
+    linarith
+
 theorem thetaPrime_nonneg (x : ℝ) : 0 ≤ thetaPrime x := by
   unfold thetaPrime
   refine Finset.sum_nonneg (fun p hp => ?_)
@@ -383,7 +399,8 @@ theorem Podd_upper_partition (n K : ℕ) (hn : 4 ≤ n) (hK : 1 ≤ K) (hKsq : 2
       have hn_lt_psq : n < p ^ 2 := by
         have hmul : (n : ℝ) < (p : ℝ) * (2 * (K : ℝ) + 1) := by
           rw [div_lt_iff₀ (by positivity)] at hp_gt; exact hp_gt
-        have hmulN : n < p * (2 * K + 1) := by exact_mod_cast (by push_cast at hmul; linarith : (n : ℝ) < ((p * (2 * K + 1) : ℕ) : ℝ))
+        have hmulN : n < p * (2 * K + 1) := by
+          exact_mod_cast (by push_cast at hmul; linarith : (n : ℝ) < ((p * (2 * K + 1) : ℕ) : ℝ))
         have hp_gt_K : 2 * K + 1 < p := by nlinarith
         calc n < p * (2 * K + 1) := hmulN
           _ < p * p := Nat.mul_lt_mul_of_pos_left hp_gt_K hp_prime.pos
@@ -410,7 +427,8 @@ theorem Podd_upper_partition (n K : ℕ) (hn : 4 ≤ n) (hK : 1 ≤ K) (hKsq : 2
         have hlt : n < (2 * r) * p := by
           have : n / p < 2 * r := by omega
           exact (Nat.div_lt_iff_lt_mul hp_prime.pos).mp this
-        exact_mod_cast (by push_cast; exact_mod_cast (by linarith : n < p * (2 * r)) : (n : ℝ) < (p : ℝ) * (2 * (r : ℝ)))
+        have hltR : (n : ℝ) < ((2 * r : ℕ) : ℝ) * (p : ℝ) := by exact_mod_cast hlt
+        push_cast at hltR; linarith
     · rintro ⟨r, ⟨hr1, hrK⟩, ⟨⟨hp2, hp_hi⟩, hp_prime⟩, hp_lo⟩
       have hr_pos : (0 : ℝ) < (r : ℝ) := by exact_mod_cast hr1
       have hp_gt : (n : ℝ) / (2 * (K : ℝ) + 1) < (p : ℝ) := by
@@ -422,7 +440,8 @@ theorem Podd_upper_partition (n K : ℕ) (hn : 4 ≤ n) (hK : 1 ≤ K) (hKsq : 2
       have hn_lt_psq : n < p ^ 2 := by
         have hmul : (n : ℝ) < (p : ℝ) * (2 * (K : ℝ) + 1) := by
           rw [div_lt_iff₀ (by positivity)] at hp_gt; exact hp_gt
-        have hmulN : n < p * (2 * K + 1) := by exact_mod_cast (by push_cast at hmul; linarith : (n : ℝ) < ((p * (2 * K + 1) : ℕ) : ℝ))
+        have hmulN : n < p * (2 * K + 1) := by
+          exact_mod_cast (by push_cast at hmul; linarith : (n : ℝ) < ((p * (2 * K + 1) : ℕ) : ℝ))
         have hp_gt_K : 2 * K + 1 < p := by nlinarith
         calc n < p * (2 * K + 1) := hmulN
           _ < p * p := Nat.mul_lt_mul_of_pos_left hp_gt_K hp_prime.pos
@@ -432,7 +451,10 @@ theorem Podd_upper_partition (n K : ℕ) (hn : 4 ≤ n) (hK : 1 ≤ K) (hKsq : 2
       have hdiv_ge : 2 * r - 1 ≤ n / p := by
         rw [Nat.le_floor_iff (by positivity), le_div_iff₀ (by linarith)] at hp_hi
         rw [Nat.le_div_iff_mul_le hp_prime.pos]
-        exact_mod_cast (by push_cast [Nat.cast_sub (by omega : 1 ≤ 2 * r)]; linarith : ((2 * r - 1 : ℕ) : ℝ) * (p : ℝ) ≤ (n : ℝ))
+        exact_mod_cast (by
+          have h1 : ((2 * r - 1 : ℕ) : ℝ) * (p : ℝ) ≤ (n : ℝ) := by
+            rw [Nat.cast_sub (by omega : 1 ≤ 2 * r)]; push_cast; linarith
+          exact h1)
       have hdiv_lt : n / p < 2 * r := by
         rw [div_lt_iff₀ (by positivity)] at hp_lo
         rw [Nat.div_lt_iff_lt_mul hp_prime.pos]
@@ -459,14 +481,21 @@ theorem Podd_upper_partition (n K : ℕ) (hn : 4 ≤ n) (hK : 1 ≤ K) (hKsq : 2
     have hp2_lo := hp2.2
     rw [div_lt_iff₀ (by positivity)] at hp1_lo hp2_lo
     have hle1 : (2 * r₁ - 1) * p ≤ n := by
-      exact_mod_cast (by push_cast [Nat.cast_sub (by omega : 1 ≤ 2 * r₁)]; linarith : ((2 * r₁ - 1 : ℕ) : ℝ) * (p : ℝ) ≤ (n : ℝ))
+      exact_mod_cast (by
+        have : ((2 * r₁ - 1 : ℕ) : ℝ) * (p : ℝ) ≤ (n : ℝ) := by
+          rw [Nat.cast_sub (by omega : 1 ≤ 2 * r₁)]; push_cast; linarith
+        exact this)
     have hle2 : (2 * r₂ - 1) * p ≤ n := by
-      exact_mod_cast (by push_cast [Nat.cast_sub (by omega : 1 ≤ 2 * r₂)]; linarith : ((2 * r₂ - 1 : ℕ) : ℝ) * (p : ℝ) ≤ (n : ℝ))
-    have hlt1 : n < (2 * r₁) * p := by exact_mod_cast (by push_cast; linarith : (n : ℝ) < ((2 * r₁ : ℕ) : ℝ) * (p : ℝ))
-    have hlt2 : n < (2 * r₂) * p := by exact_mod_cast (by push_cast; linarith : (n : ℝ) < ((2 * r₂ : ℕ) : ℝ) * (p : ℝ))
+      exact_mod_cast (by
+        have : ((2 * r₂ - 1 : ℕ) : ℝ) * (p : ℝ) ≤ (n : ℝ) := by
+          rw [Nat.cast_sub (by omega : 1 ≤ 2 * r₂)]; push_cast; linarith
+        exact this)
+    have hlt1 : n < (2 * r₁) * p := by
+      exact_mod_cast (by push_cast; linarith : (n : ℝ) < ((2 * r₁ : ℕ) : ℝ) * (p : ℝ))
+    have hlt2 : n < (2 * r₂) * p := by
+      exact_mod_cast (by push_cast; linarith : (n : ℝ) < ((2 * r₂ : ℕ) : ℝ) * (p : ℝ))
     have h12 : (2 * r₁ - 1) * p < (2 * r₂) * p := lt_of_le_of_lt hle1 hlt2
     have h21 : (2 * r₂ - 1) * p < (2 * r₁) * p := lt_of_le_of_lt hle2 hlt1
-    have hp_pos : 0 < p := hp1.1.2.pos
     have hlt_12 : 2 * r₁ - 1 < 2 * r₂ := lt_of_mul_lt_mul_right h12 (Nat.zero_le p)
     have hlt_21 : 2 * r₂ - 1 < 2 * r₁ := lt_of_mul_lt_mul_right h21 (Nat.zero_le p)
     omega
@@ -687,25 +716,504 @@ theorem log_q_n_asymptotic :
     have hJK : (J : ℝ) ≤ 2 * (K : ℝ) + 1 := by exact_mod_cast (by omega : J ≤ 2 * K + 1)
     have hexp_ge4 : (4 : ℝ) ≤ Real.exp ((c₁ / 2) * Real.sqrt (Real.log (n : ℝ))) := hexp4
     linarith
-  have h_n_div_ge : (n : ℝ) ^ (3 / 4 : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1) := by
-    have h2K1_le : 2 * (K : ℝ) + 1 ≤ (n : ℝ) ^ (1 / 4 : ℝ) := by
-      have : (2 * K + 1 : ℕ) ≤ J + 1 := by omega
-      have hJ_le : (J : ℝ) ≤ (n : ℝ) ^ (1 / 4 : ℝ) := hJ_le_rpow
-      have : (2 * K : ℝ) ≤ (J : ℝ) := by exact_mod_cast (by omega : 2 * K ≤ J)
-      -- wait: 2*K + 1 ≤ J + 1, whereas we need 2*K + 1 ≤ n^(1/4) or 2*K ≤ n^(1/4)!
-      -- Note 2*K ≤ J ≤ n^(1/4), so 2*K + 1 ≤ 2 * n^(1/4)? Wait: if we bound n/(2K) ≥ n^{3/4}!
-      -- Let's check: for r ≤ K, 2*r ≤ 2*K ≤ J ≤ n^{1/4}, so n/(2r) ≥ n / n^{1/4} = n^{3/4}!!
-      -- And for p ≤ n/(2K+1), thetaPrime(n/(2K+1)) ≤ thetaPrime(n/(2K)) ≤ Cθ * n / (2K)!
-      linarith [show (1 : ℝ) ≤ (n : ℝ) ^ (1 / 4 : ℝ) by exact Real.one_le_rpow (by exact_mod_cast (by omega : 1 ≤ n)) (by norm_num)]
-    calc (n : ℝ) ^ (3 / 4 : ℝ) = (n : ℝ) / (n : ℝ) ^ (1 / 4 : ℝ) := by
-          rw [div_eq_mul_inv, ← Real.rpow_neg hn_pos.le, ← Real.rpow_add hn_pos]
-          congr 1; norm_num
-      _ ≤ (n : ℝ) / (2 * (K : ℝ) + 1) := by
-          -- wait: we don't even need h2K1_le if we use 2*K ≤ J ≤ n^(1/4), wait: 2*K+1 could be n^(1/4) + 1!
-          -- Wait: if 2*K + 1 ≤ 2 * n^(1/4), then n / (2*K + 1) ≥ (1/2) * n^(3/4), which is still ≥ X₁ for large n!
-          -- Let's check: in `hlo_bound`, we only need `n / (2*K + 1) ≥ 1`, which holds since `2K + 1 ≤ √n`!
-          -- And for `n / (2r)` (`1 ≤ r ≤ K`), `2 * r ≤ 2 * K ≤ J ≤ n^(1/4)`, so `n / (2r) ≥ n^(3/4) ≥ max X₁ 4`!
-          sorry
-  sorry
+  have hc0_le : Real.exp (-(c₁ / 2) * Real.sqrt (Real.log (n : ℝ))) ≤
+      Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := by
+    apply Real.exp_le_exp.mpr
+    unfold c₀
+    nlinarith [Real.sqrt_nonneg (Real.log (n : ℝ))]
+  have hlo_err : thetaPrime ((n : ℝ) / (2 * (K : ℝ) + 1)) ≤
+      Cθ * 4 * (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := by
+    have hge1 : 1 ≤ (n : ℝ) / (2 * (K : ℝ) + 1) := by
+      rw [le_div_iff₀ (by positivity), one_mul]
+      have hsq_le : ((2 * K + 1 : ℕ) : ℝ) ≤ (Nat.sqrt n : ℝ) := by exact_mod_cast h2K1_le_sqrt
+      have hsqrt_le_n : (Nat.sqrt n : ℝ) ≤ (n : ℝ) := by exact_mod_cast Nat.sqrt_le_self n
+      push_cast at hsq_le; linarith
+    calc thetaPrime ((n : ℝ) / (2 * (K : ℝ) + 1))
+        ≤ Cθ * ((n : ℝ) / (2 * (K : ℝ) + 1)) := hCθ _ hge1
+      _ ≤ Cθ * ((n : ℝ) / ((1 / 4 : ℝ) * Real.exp ((c₁ / 2) * Real.sqrt (Real.log (n : ℝ))))) := by
+          apply mul_le_mul_of_nonneg_left _ hCθ_pos.le
+          exact div_le_div_of_nonneg_left hn_pos.le (by positivity) h2K1_ge_exp
+      _ = Cθ * 4 * (n : ℝ) * Real.exp (-(c₁ / 2) * Real.sqrt (Real.log (n : ℝ))) := by
+          rw [Real.exp_neg]; field_simp; ring
+      _ ≤ Cθ * 4 * (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := by
+          apply mul_le_mul_of_nonneg_left hc0_le (by positivity)
+  have hr_err : ∀ r ∈ Finset.Icc 1 K,
+      |(thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - thetaPrime ((n : ℝ) / (2 * (r : ℝ)))) -
+        (n : ℝ) * (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ)))| ≤
+      2 * |C₁| * ((n : ℝ) / (2 * (r : ℝ) - 1)) *
+        Real.exp (-c₁ * Real.sqrt (3 / 4 : ℝ) * Real.sqrt (Real.log (n : ℝ))) := by
+    intro r hr
+    have hr1 : 1 ≤ r := (Finset.mem_Icc.mp hr).1
+    have hrK : r ≤ K := (Finset.mem_Icc.mp hr).2
+    have hr_pos : (0 : ℝ) < (r : ℝ) := by exact_mod_cast hr1
+    have h2r_le : 2 * (r : ℝ) ≤ (n : ℝ) ^ (1 / 4 : ℝ) := by
+      calc 2 * (r : ℝ) ≤ 2 * (K : ℝ) := by exact_mod_cast (by omega : 2 * r ≤ 2 * K)
+        _ ≤ (J : ℝ) := by exact_mod_cast (by omega : 2 * K ≤ J)
+        _ ≤ (n : ℝ) ^ (1 / 4 : ℝ) := hJ_le_rpow
+    have h_div2_ge : max X₁ 4 ≤ (n : ℝ) / (2 * (r : ℝ)) := by
+      calc max X₁ 4 ≤ (n : ℝ) ^ (3 / 4 : ℝ) := hnX1
+        _ = (n : ℝ) / (n : ℝ) ^ (1 / 4 : ℝ) := by
+            rw [div_eq_mul_inv, ← Real.rpow_neg hn_pos.le, ← Real.rpow_add hn_pos]
+            congr 1; norm_num
+        _ ≤ (n : ℝ) / (2 * (r : ℝ)) :=
+            div_le_div_of_nonneg_left hn_pos.le (by positivity) h2r_le
+    have h_div1_ge : (n : ℝ) / (2 * (r : ℝ)) ≤ (n : ℝ) / (2 * (r : ℝ) - 1) :=
+      div_le_div_of_nonneg_left hn_pos.le (by linarith) (by linarith)
+    have h_b1 := hX₁ ((n : ℝ) / (2 * (r : ℝ) - 1)) (le_trans (le_max_left _ _) (le_trans h_div2_ge h_div1_ge))
+    have h_b2 := hX₁ ((n : ℝ) / (2 * (r : ℝ))) (le_trans (le_max_left _ _) h_div2_ge)
+    rw [Real.norm_eq_abs, Real.norm_of_nonneg (by positivity)] at h_b1 h_b2
+    have hlog_ge : (3 / 4 : ℝ) * Real.log (n : ℝ) ≤ Real.log ((n : ℝ) / (2 * (r : ℝ))) := by
+      have h34 : (n : ℝ) ^ (3 / 4 : ℝ) ≤ (n : ℝ) / (2 * (r : ℝ)) := by
+        calc (n : ℝ) ^ (3 / 4 : ℝ) = (n : ℝ) / (n : ℝ) ^ (1 / 4 : ℝ) := by
+              rw [div_eq_mul_inv, ← Real.rpow_neg hn_pos.le, ← Real.rpow_add hn_pos]
+              congr 1; norm_num
+          _ ≤ (n : ℝ) / (2 * (r : ℝ)) := div_le_div_of_nonneg_left hn_pos.le (by positivity) h2r_le
+      calc (3 / 4 : ℝ) * Real.log (n : ℝ) = Real.log ((n : ℝ) ^ (3 / 4 : ℝ)) := by
+            rw [Real.log_rpow hn_pos]
+        _ ≤ Real.log ((n : ℝ) / (2 * (r : ℝ))) := Real.log_le_log (by positivity) h34
+    have hexp_b : ∀ x : ℝ, (n : ℝ) / (2 * (r : ℝ)) ≤ x →
+        Real.exp (-c₁ * Real.sqrt (Real.log x)) ≤
+          Real.exp (-c₁ * Real.sqrt (3 / 4 : ℝ) * Real.sqrt (Real.log (n : ℝ))) := by
+      intro x hx
+      apply Real.exp_le_exp.mpr
+      have hsq_le : Real.sqrt ((3 / 4 : ℝ) * Real.log (n : ℝ)) ≤ Real.sqrt (Real.log x) := by
+        apply Real.sqrt_le_sqrt
+        exact le_trans hlog_ge (Real.log_le_log (by positivity) hx)
+      rw [Real.sqrt_mul (by norm_num)] at hsq_le
+      nlinarith
+    have h_e1 : |thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - (n : ℝ) / (2 * (r : ℝ) - 1)| ≤
+        |C₁| * ((n : ℝ) / (2 * (r : ℝ) - 1)) *
+          Real.exp (-c₁ * Real.sqrt (3 / 4 : ℝ) * Real.sqrt (Real.log (n : ℝ))) := by
+      calc |thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - (n : ℝ) / (2 * (r : ℝ) - 1)|
+          ≤ C₁ * (((n : ℝ) / (2 * (r : ℝ) - 1)) * Real.exp (-c₁ * Real.sqrt (Real.log ((n : ℝ) / (2 * (r : ℝ) - 1))))) := h_b1
+        _ ≤ |C₁| * (((n : ℝ) / (2 * (r : ℝ) - 1)) * Real.exp (-c₁ * Real.sqrt (Real.log ((n : ℝ) / (2 * (r : ℝ) - 1))))) :=
+            mul_le_mul_of_nonneg_right (le_abs_self _) (by positivity)
+        _ ≤ |C₁| * (((n : ℝ) / (2 * (r : ℝ) - 1)) *
+              Real.exp (-c₁ * Real.sqrt (3 / 4 : ℝ) * Real.sqrt (Real.log (n : ℝ)))) :=
+            mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left (hexp_b _ h_div1_ge) (by positivity)) (abs_nonneg _)
+        _ = |C₁| * ((n : ℝ) / (2 * (r : ℝ) - 1)) *
+              Real.exp (-c₁ * Real.sqrt (3 / 4 : ℝ) * Real.sqrt (Real.log (n : ℝ))) := by ring
+    have h_e2 : |thetaPrime ((n : ℝ) / (2 * (r : ℝ))) - (n : ℝ) / (2 * (r : ℝ))| ≤
+        |C₁| * ((n : ℝ) / (2 * (r : ℝ) - 1)) *
+          Real.exp (-c₁ * Real.sqrt (3 / 4 : ℝ) * Real.sqrt (Real.log (n : ℝ))) := by
+      calc |thetaPrime ((n : ℝ) / (2 * (r : ℝ))) - (n : ℝ) / (2 * (r : ℝ))|
+          ≤ C₁ * (((n : ℝ) / (2 * (r : ℝ))) * Real.exp (-c₁ * Real.sqrt (Real.log ((n : ℝ) / (2 * (r : ℝ)))))) := h_b2
+        _ ≤ |C₁| * (((n : ℝ) / (2 * (r : ℝ))) * Real.exp (-c₁ * Real.sqrt (Real.log ((n : ℝ) / (2 * (r : ℝ)))))) :=
+            mul_le_mul_of_nonneg_right (le_abs_self _) (by positivity)
+        _ ≤ |C₁| * (((n : ℝ) / (2 * (r : ℝ) - 1)) *
+              Real.exp (-c₁ * Real.sqrt (3 / 4 : ℝ) * Real.sqrt (Real.log (n : ℝ)))) :=
+            mul_le_mul_of_nonneg_left (mul_le_mul h_div1_ge (hexp_b _ le_rfl) (by positivity) (by positivity)) (abs_nonneg _)
+        _ = |C₁| * ((n : ℝ) / (2 * (r : ℝ) - 1)) *
+              Real.exp (-c₁ * Real.sqrt (3 / 4 : ℝ) * Real.sqrt (Real.log (n : ℝ))) := by ring
+    have h_tri : (thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - thetaPrime ((n : ℝ) / (2 * (r : ℝ)))) -
+        (n : ℝ) * (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) =
+        (thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - (n : ℝ) / (2 * (r : ℝ) - 1)) -
+        (thetaPrime ((n : ℝ) / (2 * (r : ℝ))) - (n : ℝ) / (2 * (r : ℝ))) := by ring
+    rw [h_tri]
+    calc |(thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - (n : ℝ) / (2 * (r : ℝ) - 1)) -
+          (thetaPrime ((n : ℝ) / (2 * (r : ℝ))) - (n : ℝ) / (2 * (r : ℝ)))|
+        ≤ |thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - (n : ℝ) / (2 * (r : ℝ) - 1)| +
+          |thetaPrime ((n : ℝ) / (2 * (r : ℝ))) - (n : ℝ) / (2 * (r : ℝ))| := abs_sub _ _
+      _ ≤ 2 * |C₁| * ((n : ℝ) / (2 * (r : ℝ) - 1)) *
+            Real.exp (-c₁ * Real.sqrt (3 / 4 : ℝ) * Real.sqrt (Real.log (n : ℝ))) := by linarith
+  have hsum_err : |∑ r ∈ Finset.Icc 1 K,
+        (thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - thetaPrime ((n : ℝ) / (2 * (r : ℝ)))) -
+      (n : ℝ) * ∑ r ∈ Finset.Icc 1 K, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ)))| ≤
+      2 * |C₁| * (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := by
+    rw [Finset.mul_sum, ← Finset.sum_sub_distrib]
+    calc |∑ r ∈ Finset.Icc 1 K,
+            ((thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - thetaPrime ((n : ℝ) / (2 * (r : ℝ)))) -
+              (n : ℝ) * (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))))|
+        ≤ ∑ r ∈ Finset.Icc 1 K,
+            |(thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - thetaPrime ((n : ℝ) / (2 * (r : ℝ)))) -
+              (n : ℝ) * (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ)))| := Finset.abs_sum_le_sum_abs _ _
+      _ ≤ ∑ r ∈ Finset.Icc 1 K,
+            2 * |C₁| * ((n : ℝ) / (2 * (r : ℝ) - 1)) *
+              Real.exp (-c₁ * Real.sqrt (3 / 4 : ℝ) * Real.sqrt (Real.log (n : ℝ))) := Finset.sum_le_sum hr_err
+      _ = 2 * |C₁| * (n : ℝ) * Real.exp (-c₁ * Real.sqrt (3 / 4 : ℝ) * Real.sqrt (Real.log (n : ℝ))) *
+            ∑ r ∈ Finset.Icc 1 K, (1 : ℝ) / (2 * (r : ℝ) - 1) := by
+          rw [Finset.mul_sum]
+          refine Finset.sum_congr rfl (fun r _ => by ring)
+      _ ≤ 2 * |C₁| * (n : ℝ) * Real.exp (-c₁ * Real.sqrt (3 / 4 : ℝ) * Real.sqrt (Real.log (n : ℝ))) *
+            (Real.log (n : ℝ) + 1) := by
+          apply mul_le_mul_of_nonneg_left _ (by positivity)
+          calc ∑ r ∈ Finset.Icc 1 K, (1 : ℝ) / (2 * (r : ℝ) - 1)
+              ≤ ∑ r ∈ Finset.Icc 1 K, (1 : ℝ) / (r : ℝ) := by
+                refine Finset.sum_le_sum (fun r hr => ?_)
+                have hr1 : (1 : ℝ) ≤ (r : ℝ) := by exact_mod_cast (Finset.mem_Icc.mp hr).1
+                exact one_div_le_one_div_of_le hr1 (by linarith)
+            _ ≤ Real.log (K : ℝ) + 1 := harmonic_sum_le_log_add_one_aux hK_ge1
+            _ ≤ Real.log (n : ℝ) + 1 := by
+                have hKn : (K : ℝ) ≤ (n : ℝ) := by
+                  have hK_le : (K : ℝ) ≤ (J : ℝ) := by exact_mod_cast (by omega : K ≤ J)
+                  have hn14 : (n : ℝ) ^ (1 / 4 : ℝ) ≤ (n : ℝ) := by
+                    calc (n : ℝ) ^ (1 / 4 : ℝ) ≤ (n : ℝ) ^ (1 : ℝ) :=
+                          Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast (by omega : 1 ≤ n)) (by norm_num)
+                      _ = (n : ℝ) := Real.rpow_one _
+                  linarith [hJ_le_rpow]
+                linarith [Real.log_le_log (by exact_mod_cast hK_ge1) hKn]
+      _ = 2 * |C₁| * (n : ℝ) *
+            ((Real.log (n : ℝ) + 1) * Real.exp (-(c₁ * Real.sqrt (3 / 4 : ℝ) - c₀) * Real.sqrt (Real.log (n : ℝ)))) *
+            Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := by
+          rw [← Real.exp_add]
+          congr 1; ring_nf
+      _ ≤ 2 * |C₁| * (n : ℝ) * 1 * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := by
+          apply mul_le_mul_of_nonneg_right _ (by positivity)
+          exact mul_le_mul_of_nonneg_left hle_sm (by positivity)
+      _ = 2 * |C₁| * (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := by ring
+  have halt_err : |(n : ℝ) * (∑ r ∈ Finset.Icc 1 K, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2)| ≤
+      2 * (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := by
+    rw [abs_mul, abs_of_pos hn_pos]
+    have hK_exp : (1 / 4 : ℝ) * Real.exp ((c₁ / 2) * Real.sqrt (Real.log (n : ℝ))) ≤ 2 * (K : ℝ) := by
+      have hJ1 : Real.exp ((c₁ / 2) * Real.sqrt (Real.log (n : ℝ))) ≤ (J : ℝ) + 1 := by
+        linarith [Nat.lt_floor_add_one (Real.exp ((c₁ / 2) * Real.sqrt (Real.log (n : ℝ))))]
+      have hJK : (J : ℝ) ≤ 2 * (K : ℝ) + 1 := by exact_mod_cast (by omega : J ≤ 2 * K + 1)
+      linarith [hexp4]
+    calc (n : ℝ) * |∑ r ∈ Finset.Icc 1 K, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2|
+        ≤ (n : ℝ) * (1 / (2 * (K : ℝ))) :=
+          mul_le_mul_of_nonneg_left (alt_harmonic_sum_diff_log_two hK_ge1) hn_pos.le
+      _ ≤ (n : ℝ) * (1 / ((1 / 4 : ℝ) * Real.exp ((c₁ / 2) * Real.sqrt (Real.log (n : ℝ))))) := by
+          apply mul_le_mul_of_nonneg_left _ hn_pos.le
+          exact one_div_le_one_div_of_le (by positivity) hK_exp
+      _ = 4 * (n : ℝ) * Real.exp (-(c₁ / 2) * Real.sqrt (Real.log (n : ℝ))) := by
+          rw [Real.exp_neg]; field_simp; ring
+      _ ≤ 4 * (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := by
+          apply mul_le_mul_of_nonneg_left hc0_le (by positivity)
+      _ = 4 * (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := rfl
+  -- Note: 4 instead of 2 in M: M = Cθ * 4 + 2 * |C₁| + 4! Let's adjust via 4 * |C₁| ≥ 2 * |C₁| and check 4 vs 2:
+  -- Wait: M := Cθ * 4 + 4 * |C₁| + 2 had +2, whereas halt_err has 4!
+  -- Wait: hK_exp can be ≥ 1/2 * exp because J ≥ 4 => 2*K ≥ J - 1 ≥ (3/4)*J ≥ (3/4)*(4/5)*exp ≥ 1/2 * exp!
+  -- Let's check: J + 1 > exp ≥ 4 => J ≥ 4, 2*K ≥ J - 1. Since exp - 1 ≤ J ≤ 2*K + 1, 2*K ≥ exp - 2 ≥ (1/2)*exp (for exp ≥ 4)!
+  -- YES! 2*K ≥ exp - 2 ≥ (1/2) * exp for exp ≥ 4! Then 1/(2K) ≤ 2 * exp(-...)!
+  -- Let's prove `hK_exp_half : (1/2) * exp ≤ 2 * K`!
+  have hK_exp_half : (1 / 2 : ℝ) * Real.exp ((c₁ / 2) * Real.sqrt (Real.log (n : ℝ))) ≤ 2 * (K : ℝ) := by
+    have hJ1 : Real.exp ((c₁ / 2) * Real.sqrt (Real.log (n : ℝ))) ≤ (J : ℝ) + 1 := by
+      linarith [Nat.lt_floor_add_one (Real.exp ((c₁ / 2) * Real.sqrt (Real.log (n : ℝ))))]
+    have hJK : (J : ℝ) ≤ 2 * (K : ℝ) + 1 := by exact_mod_cast (by omega : J ≤ 2 * K + 1)
+    linarith [hexp4]
+  have halt_err2 : |(n : ℝ) * (∑ r ∈ Finset.Icc 1 K, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2)| ≤
+      2 * (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := by
+    rw [abs_mul, abs_of_pos hn_pos]
+    calc (n : ℝ) * |∑ r ∈ Finset.Icc 1 K, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2|
+        ≤ (n : ℝ) * (1 / (2 * (K : ℝ))) :=
+          mul_le_mul_of_nonneg_left (alt_harmonic_sum_diff_log_two hK_ge1) hn_pos.le
+      _ ≤ (n : ℝ) * (1 / ((1 / 2 : ℝ) * Real.exp ((c₁ / 2) * Real.sqrt (Real.log (n : ℝ))))) := by
+          apply mul_le_mul_of_nonneg_left _ hn_pos.le
+          exact one_div_le_one_div_of_le (by positivity) hK_exp_half
+      _ = 2 * (n : ℝ) * Real.exp (-(c₁ / 2) * Real.sqrt (Real.log (n : ℝ))) := by
+          rw [Real.exp_neg]; field_simp; ring
+      _ ≤ 2 * (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := by
+          apply mul_le_mul_of_nonneg_left hc0_le (by positivity)
+  rw [Real.norm_eq_abs, Real.norm_of_nonneg (by positivity), hlog_eq]
+  have hlo_abs : |∑ p ∈ (Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ)| ≤
+      Cθ * 4 * (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := by
+    rw [abs_of_nonneg hlo_bound.1]
+    exact le_trans hlo_bound.2 hlo_err
+  have h_id : (∑ p ∈ (Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ) +
+        ∑ r ∈ Finset.Icc 1 K, (thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - thetaPrime ((n : ℝ) / (2 * (r : ℝ))))) -
+      Real.log 2 * (n : ℝ) =
+      (∑ p ∈ (Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ)) +
+      (∑ r ∈ Finset.Icc 1 K, (thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - thetaPrime ((n : ℝ) / (2 * (r : ℝ)))) -
+        (n : ℝ) * ∑ r ∈ Finset.Icc 1 K, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ)))) +
+      (n : ℝ) * (∑ r ∈ Finset.Icc 1 K, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2) := by ring
+  rw [h_id]
+  have htri1 := abs_add_le
+    ((∑ p ∈ (Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ)) +
+      (∑ r ∈ Finset.Icc 1 K, (thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - thetaPrime ((n : ℝ) / (2 * (r : ℝ)))) -
+        (n : ℝ) * ∑ r ∈ Finset.Icc 1 K, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ)))))
+    ((n : ℝ) * (∑ r ∈ Finset.Icc 1 K, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2))
+  have htri2 := abs_add_le
+    (∑ p ∈ (Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ))
+    (∑ r ∈ Finset.Icc 1 K, (thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - thetaPrime ((n : ℝ) / (2 * (r : ℝ)))) -
+      (n : ℝ) * ∑ r ∈ Finset.Icc 1 K, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))))
+  calc |((∑ p ∈ (Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (K : ℝ) + 1)), Real.log (p : ℝ)) +
+          (∑ r ∈ Finset.Icc 1 K, (thetaPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - thetaPrime ((n : ℝ) / (2 * (r : ℝ)))) -
+            (n : ℝ) * ∑ r ∈ Finset.Icc 1 K, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))))) +
+          (n : ℝ) * (∑ r ∈ Finset.Icc 1 K, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2)|
+      ≤ (Cθ * 4 + 2 * |C₁| + 2) * ((n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ)))) := by
+          linarith [htri1, htri2, hlo_abs, hsum_err, halt_err2]
+    _ ≤ M * ((n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ)))) := by
+          apply mul_le_mul_of_nonneg_right _ (by positivity)
+          unfold M; linarith [abs_nonneg C₁]
+
+private theorem piPrime_div_asymptotic (d : ℕ) (hd : 1 ≤ d) :
+    (fun n : ℕ => piPrime ((n : ℝ) / (d : ℝ)) - ((1 : ℝ) / (d : ℝ)) * ((n : ℝ) / Real.log (n : ℝ)))
+      =o[atTop] (fun n : ℕ => (n : ℝ) / Real.log (n : ℝ)) := by
+  have hd_pos : (0 : ℝ) < (d : ℝ) := by exact_mod_cast hd
+  have htend_div : Tendsto (fun n : ℕ => (n : ℝ) / (d : ℝ)) atTop atTop :=
+    tendsto_natCast_atTop_atTop.atTop_div_const hd_pos
+  have h1 : (fun n : ℕ => piPrime ((n : ℝ) / (d : ℝ)) - ((n : ℝ) / (d : ℝ)) / Real.log ((n : ℝ) / (d : ℝ)))
+      =o[atTop] (fun n : ℕ => ((n : ℝ) / (d : ℝ)) / Real.log ((n : ℝ) / (d : ℝ))) :=
+    pnt_pi_asymptotic.comp_tendsto htend_div
+  have h_ratio : Tendsto (fun n : ℕ => Real.log (n : ℝ) / Real.log ((n : ℝ) / (d : ℝ))) atTop (nhds 1) := by
+    have hlog : Tendsto (fun n : ℕ => 1 - Real.log (d : ℝ) / Real.log (n : ℝ)) atTop (nhds 1) := by
+      have h0 : Tendsto (fun n : ℕ => Real.log (d : ℝ) / Real.log (n : ℝ)) atTop (nhds 0) :=
+        tendsto_const_nhds.div_atTop (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop)
+      simpa using tendsto_const_nhds.sub h0
+    have hev : (fun n : ℕ => Real.log ((n : ℝ) / (d : ℝ)) / Real.log (n : ℝ)) =ᶠ[atTop]
+        (fun n : ℕ => 1 - Real.log (d : ℝ) / Real.log (n : ℝ)) := by
+      filter_upwards [(tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1)] with n hn
+      have hn_pos : (0 : ℝ) < (n : ℝ) := by
+        by_contra hle; push Not at hle
+        have : Real.log (n : ℝ) = 0 := Real.log_of_nonpos hle
+        linarith
+      rw [Real.log_div hn_pos.ne' hd_pos.ne']
+      field_simp [by linarith : Real.log (n : ℝ) ≠ 0]
+    have hinv := (hlog.congr' hev.symm).inv₀ (by norm_num)
+    simpa using hinv
+  have h2 : (fun n : ℕ => ((n : ℝ) / (d : ℝ)) / Real.log ((n : ℝ) / (d : ℝ)))
+      =O[atTop] (fun n : ℕ => (n : ℝ) / Real.log (n : ℝ)) := by
+    refine Asymptotics.IsBigO.of_bound (2 / (d : ℝ)) ?_
+    filter_upwards [h_ratio.eventually (ge_mem_nhds (by norm_num : (1 : ℝ) < 2)),
+      (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1),
+      Filter.eventually_ge_atTop (max 2 (2 * d))] with n hr hln hn
+    have hn_pos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast (by omega : 0 < n)
+    have hnd_ge : (2 : ℝ) ≤ (n : ℝ) / (d : ℝ) := by
+      rw [le_div_iff₀ hd_pos]
+      exact_mod_cast (by omega : 2 * d ≤ n)
+    have hlog_nd_pos : 0 < Real.log ((n : ℝ) / (d : ℝ)) := Real.log_pos (by linarith)
+    rw [Real.norm_of_nonneg (by positivity), Real.norm_of_nonneg (by positivity)]
+    calc ((n : ℝ) / (d : ℝ)) / Real.log ((n : ℝ) / (d : ℝ))
+        = (1 / (d : ℝ)) * (Real.log (n : ℝ) / Real.log ((n : ℝ) / (d : ℝ))) * ((n : ℝ) / Real.log (n : ℝ)) := by
+          field_simp [hd_pos.ne', hlog_nd_pos.ne', (by linarith : Real.log (n : ℝ) ≠ 0)]
+      _ ≤ (1 / (d : ℝ)) * 2 * ((n : ℝ) / Real.log (n : ℝ)) := by
+          apply mul_le_mul_of_nonneg_right _ (by positivity)
+          exact mul_le_mul_of_nonneg_left hr (by positivity)
+      _ = (2 / (d : ℝ)) * ((n : ℝ) / Real.log (n : ℝ)) := by ring
+  have h1' : (fun n : ℕ => piPrime ((n : ℝ) / (d : ℝ)) - ((n : ℝ) / (d : ℝ)) / Real.log ((n : ℝ) / (d : ℝ)))
+      =o[atTop] (fun n : ℕ => (n : ℝ) / Real.log (n : ℝ)) := h1.trans_isBigO h2
+  have h3 : (fun n : ℕ => ((n : ℝ) / (d : ℝ)) / Real.log ((n : ℝ) / (d : ℝ)) -
+        ((1 : ℝ) / (d : ℝ)) * ((n : ℝ) / Real.log (n : ℝ)))
+      =o[atTop] (fun n : ℕ => (n : ℝ) / Real.log (n : ℝ)) := by
+    rw [Asymptotics.isLittleO_iff]
+    intro c hc
+    have h_diff0 : Tendsto (fun n : ℕ => (1 / (d : ℝ)) * (Real.log (n : ℝ) / Real.log ((n : ℝ) / (d : ℝ)) - 1))
+        atTop (nhds 0) := by
+      simpa using ((h_ratio.sub tendsto_const_nhds).const_mul (1 / (d : ℝ)))
+    filter_upwards [h_diff0.eventually (Metric.ball_mem_nhds 0 hc),
+      (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1),
+      Filter.eventually_ge_atTop (max 2 (2 * d))] with n hn hln hn_ge
+    have hn_pos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast (by omega : 0 < n)
+    have hnd_ge : (2 : ℝ) ≤ (n : ℝ) / (d : ℝ) := by
+      rw [le_div_iff₀ hd_pos]; exact_mod_cast (by omega : 2 * d ≤ n)
+    have hlog_nd_pos : 0 < Real.log ((n : ℝ) / (d : ℝ)) := Real.log_pos (by linarith)
+    rw [Metric.mem_ball, dist_zero_right, Real.norm_eq_abs] at hn
+    have heq : ((n : ℝ) / (d : ℝ)) / Real.log ((n : ℝ) / (d : ℝ)) - ((1 : ℝ) / (d : ℝ)) * ((n : ℝ) / Real.log (n : ℝ)) =
+        ((1 / (d : ℝ)) * (Real.log (n : ℝ) / Real.log ((n : ℝ) / (d : ℝ)) - 1)) * ((n : ℝ) / Real.log (n : ℝ)) := by
+      field_simp [hd_pos.ne', hlog_nd_pos.ne', (by linarith : Real.log (n : ℝ) ≠ 0)]
+    rw [heq, Real.norm_mul, Real.norm_eq_abs, Real.norm_of_nonneg (by positivity)]
+    exact mul_le_mul_of_nonneg_right hn.le (by positivity)
+  simpa [sub_add_sub_cancel] using h1'.add h3
+
+/-- **Lemma 2.1(ii), part 2**: `|Podd(n)| = (log 2 + o(1)) π(n)` (eq. 2.4). -/
+theorem card_Podd_asymptotic :
+    (fun n : ℕ => ((Podd n).card : ℝ) - Real.log 2 * piPrime (n : ℝ))
+      =o[atTop] (fun n : ℕ => piPrime (n : ℝ)) := by
+  obtain ⟨Cpi, hCpi_pos, hCpi⟩ := chebyshev_pi_upper
+  rw [Asymptotics.isLittleO_iff]
+  intro ε hε
+  obtain ⟨M, hM1, hM_alt, hM_lo⟩ : ∃ M : ℕ, 1 ≤ M ∧
+      1 / (2 * (M : ℝ)) ≤ ε / 8 ∧ Cpi / (2 * (M : ℝ) + 1) ≤ ε / 8 := by
+    obtain ⟨M0, hM0⟩ := exists_nat_gt (max (4 / ε) (8 * Cpi / ε))
+    refine ⟨max M0 1, le_max_right _ _, ?_, ?_⟩
+    · have hM_gt : 4 / ε < (max M0 1 : ℝ) :=
+        lt_of_lt_of_le (lt_of_le_of_lt (le_max_left _ _) hM0) (by exact_mod_cast le_max_left M0 1)
+      rw [div_le_div_iff₀ (by positivity) (by norm_num)]
+      have : 4 < ε * (max M0 1 : ℝ) := (div_lt_iff₀ hε).mp hM_gt
+      linarith
+    · have hM_gt : 8 * Cpi / ε < (max M0 1 : ℝ) :=
+        lt_of_lt_of_le (lt_of_le_of_lt (le_max_right _ _) hM0) (by exact_mod_cast le_max_left M0 1)
+      rw [div_le_div_iff₀ (by positivity) (by norm_num)]
+      have : 8 * Cpi < ε * (max M0 1 : ℝ) := (div_lt_iff₀ hε).mp hM_gt
+      linarith
+  let η : ℝ := min (ε / (8 * (M : ℝ))) (min (ε / (8 * Real.log 2 + 1)) (1 / 4))
+  have hη_pos : 0 < η := by positivity
+  have h_pnt1 := (Asymptotics.isLittleO_iff.mp (piPrime_div_asymptotic 1 (by norm_num))) hη_pos
+  have h_pnt_all : ∀ᶠ n : ℕ in atTop, ∀ r ∈ Finset.Icc 1 M,
+      ‖piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - (1 / (2 * (r : ℝ) - 1)) * ((n : ℝ) / Real.log (n : ℝ))‖ ≤
+        η * ((n : ℝ) / Real.log (n : ℝ)) ∧
+      ‖piPrime ((n : ℝ) / (2 * (r : ℝ))) - (1 / (2 * (r : ℝ))) * ((n : ℝ) / Real.log (n : ℝ))‖ ≤
+        η * ((n : ℝ) / Real.log (n : ℝ)) := by
+    rw [Filter.eventually_all_finset]
+    intro r hr
+    have hr1 : 1 ≤ r := (Finset.mem_Icc.mp hr).1
+    have h2r1 := (Asymptotics.isLittleO_iff.mp (piPrime_div_asymptotic (2 * r - 1) (by omega))) hη_pos
+    have h2r := (Asymptotics.isLittleO_iff.mp (piPrime_div_asymptotic (2 * r) (by omega))) hη_pos
+    filter_upwards [h2r1, h2r, (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1)] with n ha hb hln
+    have hn_pos : 0 ≤ (n : ℝ) / Real.log (n : ℝ) := by positivity
+    rw [Real.norm_of_nonneg hn_pos] at ha hb
+    have hcast1 : ((2 * r - 1 : ℕ) : ℝ) = 2 * (r : ℝ) - 1 := by
+      rw [Nat.cast_sub (by omega : 1 ≤ 2 * r)]; push_cast; ring
+    have hcast2 : ((2 * r : ℕ) : ℝ) = 2 * (r : ℝ) := by push_cast; ring
+    rw [hcast1] at ha; rw [hcast2] at hb
+    exact ⟨ha, hb⟩
+  have hlog_ratio_lo : ∀ᶠ n : ℕ in atTop,
+      Real.log (n : ℝ) ≤ 2 * Real.log ((n : ℝ) / (2 * (M : ℝ) + 1)) := by
+    have ht : Tendsto (fun n : ℕ => Real.log ((n : ℝ) / (2 * (M : ℝ) + 1)) / Real.log (n : ℝ)) atTop (nhds 1) := by
+      have h0 : Tendsto (fun n : ℕ => 1 - Real.log (2 * (M : ℝ) + 1) / Real.log (n : ℝ)) atTop (nhds 1) := by
+        simpa using tendsto_const_nhds.sub (tendsto_const_nhds.div_atTop (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop))
+      have hev : (fun n : ℕ => Real.log ((n : ℝ) / (2 * (M : ℝ) + 1)) / Real.log (n : ℝ)) =ᶠ[atTop]
+          (fun n : ℕ => 1 - Real.log (2 * (M : ℝ) + 1) / Real.log (n : ℝ)) := by
+        filter_upwards [(tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1)] with n hln
+        have hn_pos : (0 : ℝ) < (n : ℝ) := by
+          by_contra hle; push Not at hle; rw [Real.log_of_nonpos hle] at hln; linarith
+        rw [Real.log_div hn_pos.ne' (by positivity)]
+        field_simp [by linarith : Real.log (n : ℝ) ≠ 0]
+      exact h0.congr' hev.symm
+    filter_upwards [ht.eventually (ge_mem_nhds (by norm_num : (1 / 2 : ℝ) < 1)),
+      (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1)] with n hr hln
+    rw [le_div_iff₀ (by linarith)] at hr
+    linarith
+  filter_upwards [Filter.eventually_ge_atTop ((2 * M + 1) ^ 2 + 4), h_pnt1, h_pnt_all, hlog_ratio_lo,
+    (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 1)] with
+    n hn hpnt1 hpnt_all hlog_rat hln
+  have hn_pos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast (by omega : 0 < n)
+  have h2M1_sq : 2 * M + 1 ≤ Nat.sqrt n := by
+    rw [Nat.le_sqrt]; nlinarith
+  have hpart := (Podd_upper_partition n M (by omega) hM1 h2M1_sq).2
+  have hsplit : (Podd n).card =
+      ((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card +
+      ((Podd n).filter (fun p => (n : ℝ) / (2 * (M : ℝ) + 1) < (p : ℝ))).card := by
+    have hU : Podd n =
+        (Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1)) ∪
+        (Podd n).filter (fun p => (n : ℝ) / (2 * (M : ℝ) + 1) < (p : ℝ)) := by
+      ext p; simp only [Finset.mem_union, Finset.mem_filter]
+      constructor
+      · intro hp; rcases le_or_gt (p : ℝ) ((n : ℝ) / (2 * (M : ℝ) + 1)) with h | h
+        · left; exact ⟨hp, h⟩
+        · right; exact ⟨hp, h⟩
+      · rintro (⟨hp, _⟩ | ⟨hp, _⟩) <;> exact hp
+    have hD : Disjoint
+        ((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1)))
+        ((Podd n).filter (fun p => (n : ℝ) / (2 * (M : ℝ) + 1) < (p : ℝ))) := by
+      rw [Finset.disjoint_left]; intro p hp1 hp2
+      simp only [Finset.mem_filter] at hp1 hp2; linarith
+    rw [← Finset.card_union_of_disjoint hD, ← hU]
+  have hcard_eq : ((Podd n).card : ℝ) =
+      (((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) +
+      ∑ r ∈ Finset.Icc 1 M,
+        (piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - piPrime ((n : ℝ) / (2 * (r : ℝ)))) := by
+    rw [hsplit, Nat.cast_add, hpart]
+  have hlo_le : (((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) ≤
+      (ε / 4) * ((n : ℝ) / Real.log (n : ℝ)) := by
+    have hsub : (Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1)) ⊆
+        (Finset.Icc 2 (Nat.floor ((n : ℝ) / (2 * (M : ℝ) + 1)))).filter Nat.Prime := by
+      intro p hp
+      simp only [Finset.mem_filter, Finset.mem_Icc] at hp ⊢
+      unfold Podd at hp
+      simp only [Finset.mem_filter, Finset.mem_Icc] at hp
+      exact ⟨⟨hp.1.1.1, (Nat.le_floor_iff (by positivity)).mpr hp.2⟩, hp.1.2.1⟩
+    have hle_pi : (((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) ≤
+        piPrime ((n : ℝ) / (2 * (M : ℝ) + 1)) := by
+      unfold piPrime; exact_mod_cast Finset.card_le_card hsub
+    have hge2 : (2 : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1) := by
+      rw [le_div_iff₀ (by positivity)]
+      have : 2 * (2 * M + 1) ≤ (2 * M + 1) ^ 2 + 4 := by nlinarith
+      exact_mod_cast (by omega : 2 * (2 * M + 1) ≤ n)
+    have hcpi := hCpi ((n : ℝ) / (2 * (M : ℝ) + 1)) hge2
+    have hlog_pos : 0 < Real.log ((n : ℝ) / (2 * (M : ℝ) + 1)) := Real.log_pos (by linarith)
+    calc (((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ)
+        ≤ Cpi * (((n : ℝ) / (2 * (M : ℝ) + 1)) / Real.log ((n : ℝ) / (2 * (M : ℝ) + 1))) := le_trans hle_pi hcpi
+      _ ≤ Cpi * (((n : ℝ) / (2 * (M : ℝ) + 1)) / ((1 / 2 : ℝ) * Real.log (n : ℝ))) := by
+          apply mul_le_mul_of_nonneg_left _ hCpi_pos.le
+          exact div_le_div_of_nonneg_left (by positivity) (by positivity) (by linarith)
+      _ = 2 * (Cpi / (2 * (M : ℝ) + 1)) * ((n : ℝ) / Real.log (n : ℝ)) := by ring
+      _ ≤ 2 * (ε / 8) * ((n : ℝ) / Real.log (n : ℝ)) := by
+          apply mul_le_mul_of_nonneg_right _ (by positivity)
+          exact mul_le_mul_of_nonneg_left hM_lo (by norm_num)
+      _ = (ε / 4) * ((n : ℝ) / Real.log (n : ℝ)) := by ring
+  have hsum_err : |∑ r ∈ Finset.Icc 1 M,
+        (piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - piPrime ((n : ℝ) / (2 * (r : ℝ)))) -
+      (∑ r ∈ Finset.Icc 1 M, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ)))) * ((n : ℝ) / Real.log (n : ℝ))| ≤
+      (ε / 4) * ((n : ℝ) / Real.log (n : ℝ)) := by
+    rw [Finset.sum_mul, ← Finset.sum_sub_distrib]
+    calc |∑ r ∈ Finset.Icc 1 M,
+            ((piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - piPrime ((n : ℝ) / (2 * (r : ℝ)))) -
+              (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) * ((n : ℝ) / Real.log (n : ℝ)))|
+        ≤ ∑ r ∈ Finset.Icc 1 M,
+            |(piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - piPrime ((n : ℝ) / (2 * (r : ℝ)))) -
+              (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) * ((n : ℝ) / Real.log (n : ℝ))| :=
+          Finset.abs_sum_le_sum_abs _ _
+      _ ≤ ∑ _r ∈ Finset.Icc 1 M, (2 * η) * ((n : ℝ) / Real.log (n : ℝ)) := by
+          refine Finset.sum_le_sum (fun r hr => ?_)
+          have ⟨ha, hb⟩ := hpnt_all r hr
+          rw [Real.norm_eq_abs] at ha hb
+          have h_id : (piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - piPrime ((n : ℝ) / (2 * (r : ℝ)))) -
+              (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) * ((n : ℝ) / Real.log (n : ℝ)) =
+              (piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - (1 / (2 * (r : ℝ) - 1)) * ((n : ℝ) / Real.log (n : ℝ))) -
+              (piPrime ((n : ℝ) / (2 * (r : ℝ))) - (1 / (2 * (r : ℝ))) * ((n : ℝ) / Real.log (n : ℝ))) := by ring
+          rw [h_id]
+          linarith [abs_sub
+            (piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - (1 / (2 * (r : ℝ) - 1)) * ((n : ℝ) / Real.log (n : ℝ)))
+            (piPrime ((n : ℝ) / (2 * (r : ℝ))) - (1 / (2 * (r : ℝ))) * ((n : ℝ) / Real.log (n : ℝ)))]
+      _ = (M : ℝ) * (2 * η) * ((n : ℝ) / Real.log (n : ℝ)) := by
+          simp [Finset.sum_const, nsmul_eq_mul]; ring
+      _ ≤ (ε / 4) * ((n : ℝ) / Real.log (n : ℝ)) := by
+          apply mul_le_mul_of_nonneg_right _ (by positivity)
+          have hη_le : η ≤ ε / (8 * (M : ℝ)) := min_le_left _ _
+          have hM_pos : (0 : ℝ) < (M : ℝ) := by exact_mod_cast hM1
+          calc (M : ℝ) * (2 * η) ≤ (M : ℝ) * (2 * (ε / (8 * (M : ℝ)))) := by
+                apply mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left hη_le (by norm_num)) hM_pos.le
+            _ = ε / 4 := by field_simp [hM_pos.ne']; ring
+  rw [Real.norm_of_nonneg (by positivity), Real.norm_eq_abs] at hpnt1
+  simp only [Nat.cast_one, div_one, one_div, inv_one, one_mul] at hpnt1
+  have hpi_lo : (1 / 2 : ℝ) * ((n : ℝ) / Real.log (n : ℝ)) ≤ piPrime (n : ℝ) := by
+    have hη_le : η ≤ 1 / 4 := le_trans (min_le_right _ _) (min_le_right _ _)
+    linarith [(abs_le.mp hpnt1).1]
+  have hpi_err : |Real.log 2 * (piPrime (n : ℝ) - (n : ℝ) / Real.log (n : ℝ))| ≤
+      (ε / 8) * ((n : ℝ) / Real.log (n : ℝ)) := by
+    rw [abs_mul, abs_of_pos Real.log_two_pos]
+    have hη_le : η ≤ ε / (8 * Real.log 2 + 1) := le_trans (min_le_right _ _) (min_le_left _ _)
+    calc Real.log 2 * |piPrime (n : ℝ) - (n : ℝ) / Real.log (n : ℝ)|
+        ≤ Real.log 2 * (η * ((n : ℝ) / Real.log (n : ℝ))) :=
+          mul_le_mul_of_nonneg_left hpnt1 Real.log_two_pos.le
+      _ ≤ Real.log 2 * ((ε / (8 * Real.log 2 + 1)) * ((n : ℝ) / Real.log (n : ℝ))) := by
+          apply mul_le_mul_of_nonneg_left _ Real.log_two_pos.le
+          exact mul_le_mul_of_nonneg_right hη_le (by positivity)
+      _ ≤ (ε / 8) * ((n : ℝ) / Real.log (n : ℝ)) := by
+          rw [← mul_assoc]
+          apply mul_le_mul_of_nonneg_right _ (by positivity)
+          rw [mul_div_assoc', div_le_div_iff₀ (by positivity) (by norm_num)]
+          nlinarith [Real.log_two_pos]
+  have halt_err : |(∑ r ∈ Finset.Icc 1 M, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2) *
+        ((n : ℝ) / Real.log (n : ℝ))| ≤ (ε / 8) * ((n : ℝ) / Real.log (n : ℝ)) := by
+    rw [abs_mul, abs_of_nonneg (by positivity : 0 ≤ (n : ℝ) / Real.log (n : ℝ))]
+    exact mul_le_mul_of_nonneg_right (le_trans (alt_harmonic_sum_diff_log_two hM1) hM_alt) (by positivity)
+  rw [Real.norm_eq_abs, Real.norm_of_nonneg (by unfold piPrime; positivity), hcard_eq]
+  have h_id : (((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) +
+        ∑ r ∈ Finset.Icc 1 M, (piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - piPrime ((n : ℝ) / (2 * (r : ℝ)))) -
+      Real.log 2 * piPrime (n : ℝ) =
+      (((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) +
+      (∑ r ∈ Finset.Icc 1 M, (piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - piPrime ((n : ℝ) / (2 * (r : ℝ)))) -
+        (∑ r ∈ Finset.Icc 1 M, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ)))) * ((n : ℝ) / Real.log (n : ℝ))) +
+      (∑ r ∈ Finset.Icc 1 M, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2) * ((n : ℝ) / Real.log (n : ℝ)) -
+      Real.log 2 * (piPrime (n : ℝ) - (n : ℝ) / Real.log (n : ℝ)) := by ring
+  rw [h_id]
+  have h1 := abs_sub
+    ((((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) +
+      (∑ r ∈ Finset.Icc 1 M, (piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - piPrime ((n : ℝ) / (2 * (r : ℝ)))) -
+        (∑ r ∈ Finset.Icc 1 M, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ)))) * ((n : ℝ) / Real.log (n : ℝ))) +
+      (∑ r ∈ Finset.Icc 1 M, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2) * ((n : ℝ) / Real.log (n : ℝ)))
+    (Real.log 2 * (piPrime (n : ℝ) - (n : ℝ) / Real.log (n : ℝ)))
+  have h2 := abs_add_le
+    ((((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) +
+      (∑ r ∈ Finset.Icc 1 M, (piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - piPrime ((n : ℝ) / (2 * (r : ℝ)))) -
+        (∑ r ∈ Finset.Icc 1 M, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ)))) * ((n : ℝ) / Real.log (n : ℝ))))
+    ((∑ r ∈ Finset.Icc 1 M, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2) * ((n : ℝ) / Real.log (n : ℝ)))
+  have h3 := abs_add_le
+    (((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ)
+    (∑ r ∈ Finset.Icc 1 M, (piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - piPrime ((n : ℝ) / (2 * (r : ℝ)))) -
+      (∑ r ∈ Finset.Icc 1 M, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ)))) * ((n : ℝ) / Real.log (n : ℝ)))
+  have hlo_abs : |(((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ)| ≤
+      (ε / 4) * ((n : ℝ) / Real.log (n : ℝ)) := by
+    rw [abs_of_nonneg (Nat.cast_nonneg _)]; exact hlo_le
+  calc |(((Podd n).filter (fun p => (p : ℝ) ≤ (n : ℝ) / (2 * (M : ℝ) + 1))).card : ℝ) +
+          (∑ r ∈ Finset.Icc 1 M, (piPrime ((n : ℝ) / (2 * (r : ℝ) - 1)) - piPrime ((n : ℝ) / (2 * (r : ℝ)))) -
+            (∑ r ∈ Finset.Icc 1 M, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ)))) * ((n : ℝ) / Real.log (n : ℝ))) +
+          (∑ r ∈ Finset.Icc 1 M, (1 / (2 * (r : ℝ) - 1) - 1 / (2 * (r : ℝ))) - Real.log 2) * ((n : ℝ) / Real.log (n : ℝ)) -
+          Real.log 2 * (piPrime (n : ℝ) - (n : ℝ) / Real.log (n : ℝ))|
+      ≤ (3 * ε / 4) * ((n : ℝ) / Real.log (n : ℝ)) := by
+          linarith [h1, h2, h3, hlo_abs, hsum_err, halt_err, hpi_err]
+    _ ≤ ε * piPrime (n : ℝ) := by linarith [mul_le_mul_of_nonneg_left hpi_lo hε.le]
 
 end GrasGreenbergBrocard
