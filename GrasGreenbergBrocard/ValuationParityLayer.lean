@@ -209,8 +209,7 @@ theorem alt_harmonic_eq_tail_harmonic (N : ℕ) :
         ext k; simp only [Finset.mem_insert, Finset.mem_Icc]; omega
       have hm1 : m + 1 ∉ Finset.Icc (m + 2) (2 * m + 2) := by simp
       have hm21 : 2 * m + 1 ∉ Finset.Icc (m + 1) (2 * m) := by simp
-      have hm22 : 2 * m + 2 ∉ insert (2 * m + 1) (Finset.Icc (m + 1) (2 * m)) := by
-        simp; omega
+      have hm22 : 2 * m + 2 ∉ insert (2 * m + 1) (Finset.Icc (m + 1) (2 * m)) := by simp
       have hs1 := congrArg (Finset.sum · (fun k : ℕ => (1 : ℝ) / (k : ℝ))) h1
       have hs2 := congrArg (Finset.sum · (fun k : ℕ => (1 : ℝ) / (k : ℝ))) h2
       rw [Finset.sum_insert hm1] at hs1
@@ -220,7 +219,7 @@ theorem alt_harmonic_eq_tail_harmonic (N : ℕ) :
     rw [h_lhs_rhs]
     push_cast
     have hm1 : (m : ℝ) + 1 ≠ 0 := by positivity
-    have hm2 : 2 * ((m : ℝ) + 1) - 1 ≠ 0 := by positivity
+    have hm2 : 2 * ((m : ℝ) + 1) - 1 ≠ 0 := by linarith
     have hm3 : 2 * ((m : ℝ) + 1) ≠ 0 := by positivity
     have hm21 : 2 * (m : ℝ) + 1 ≠ 0 := by positivity
     have hm22 : 2 * (m : ℝ) + 2 ≠ 0 := by positivity
@@ -421,7 +420,7 @@ theorem Podd_upper_partition (n K : ℕ) (hn : 4 ≤ n) (hK : 1 ≤ K) (hKsq : 2
       have hr_eq : n / p = 2 * r - 1 := by omega
       have hr1R : (1 : ℝ) ≤ (r : ℝ) := by exact_mod_cast (by omega : 1 ≤ r)
       refine ⟨r, ⟨by omega, by omega⟩, ⟨⟨hp_icc.1, ?_⟩, hp_prime⟩, ?_⟩
-      · rw [Nat.le_floor_iff (by positivity)]
+      · rw [Nat.le_floor_iff (div_nonneg (Nat.cast_nonneg n) (by linarith))]
         rw [le_div_iff₀ (by linarith)]
         have hmul : (2 * r - 1) * p ≤ n := by rw [← hr_eq]; exact Nat.div_mul_le_self n p
         have hmulR : ((2 * r - 1 : ℕ) : ℝ) * (p : ℝ) ≤ (n : ℝ) := by exact_mod_cast hmul
@@ -454,7 +453,8 @@ theorem Podd_upper_partition (n K : ℕ) (hn : 4 ≤ n) (hK : 1 ≤ K) (hKsq : 2
       have hv : padicValNat p (Nat.factorial n) = n / p :=
         padicValNat_factorial_eq_div_of_lt_sq hp_prime hn_lt_psq
       have hdiv_ge : 2 * r - 1 ≤ n / p := by
-        rw [Nat.le_floor_iff (by positivity), le_div_iff₀ (by linarith [hr1R])] at hp_hi
+        rw [Nat.le_floor_iff (div_nonneg (Nat.cast_nonneg n) (by linarith)),
+          le_div_iff₀ (by linarith [hr1R])] at hp_hi
         rw [Nat.le_div_iff_mul_le hp_prime.pos]
         have h1 : ((2 * r - 1 : ℕ) : ℝ) * (p : ℝ) ≤ (n : ℝ) := by
           rw [Nat.cast_sub (by omega : 1 ≤ 2 * r)]; push_cast; linarith
@@ -484,8 +484,10 @@ theorem Podd_upper_partition (n K : ℕ) (hn : 4 ≤ n) (hK : 1 ≤ K) (hKsq : 2
     have hr₂_1 : (1 : ℝ) ≤ (r₂ : ℝ) := by exact_mod_cast hr₂.1
     have hp1_hi := hp1.1.1.2
     have hp2_hi := hp2.1.1.2
-    rw [Nat.le_floor_iff (by positivity), le_div_iff₀ (by linarith [hr₁_1])] at hp1_hi
-    rw [Nat.le_floor_iff (by positivity), le_div_iff₀ (by linarith [hr₂_1])] at hp2_hi
+    rw [Nat.le_floor_iff (div_nonneg (Nat.cast_nonneg n) (by linarith [hr₁_1])),
+      le_div_iff₀ (by linarith [hr₁_1])] at hp1_hi
+    rw [Nat.le_floor_iff (div_nonneg (Nat.cast_nonneg n) (by linarith [hr₂_1])),
+      le_div_iff₀ (by linarith [hr₂_1])] at hp2_hi
     have hp1_lo := hp1.2
     have hp2_lo := hp2.2
     rw [div_lt_iff₀ (by linarith [hr₁_1])] at hp1_lo
@@ -1008,7 +1010,7 @@ private theorem piPrime_div_asymptotic (d : ℕ) (hd : 1 ≤ d) :
       rw [le_div_iff₀ hd_pos]; exact_mod_cast (by omega : 2 * d ≤ n)
     have hlog_nd_pos : 0 < Real.log ((n : ℝ) / (d : ℝ)) := Real.log_pos (by linarith)
     have hln0 : Real.log (n : ℝ) ≠ 0 := by linarith
-    rw [Metric.mem_ball, dist_zero_right, Real.norm_eq_abs] at hn
+    rw [dist_zero_right, Real.norm_eq_abs] at hn
     have heq : ((n : ℝ) / (d : ℝ)) / Real.log ((n : ℝ) / (d : ℝ)) - ((1 : ℝ) / (d : ℝ)) * ((n : ℝ) / Real.log (n : ℝ)) =
         ((1 / (d : ℝ)) * (Real.log (n : ℝ) / Real.log ((n : ℝ) / (d : ℝ)) - 1)) * ((n : ℝ) / Real.log (n : ℝ)) := by
       field_simp [hd_pos.ne', hlog_nd_pos.ne', hln0]
