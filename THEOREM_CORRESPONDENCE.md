@@ -1,22 +1,23 @@
-# Theorem Correspondence: Manuscript Section 2 to Lean 4
+# Theorem Correspondence: Manuscript ↔ Lean 4
 
-This table records the exact correspondence between **Section 2 ("Valuation-Parity Equidistribution of Factorials", lines 185–382)** of `brocard_arithmetic_structure_and_counting_bounds.tex` and the Lean 4 formalization in `GrasGreenbergBrocard/`.
+## Section 2: Valuation-Parity Distribution
+| Manuscript Reference | Lean 4 Declaration | File |
+|---|---|---|
+| Core definitions $q_n, s_n, \mathcal{P}_{\text{odd}}, \mathcal{P}_{\text{even}}, S_{\text{odd}}$ | `q_n`, `s_n`, `Podd`, `Peven`, `S_odd`, `factorial_eq_q_n_mul_s_n_sq`, `q_n_squarefree` | `Basic.lean` |
+| Unconditional $O(N^{6/7})$ & $O(N^\varepsilon)$ parity distribution | `S_odd_asymptotic`, `n_log_n_sub_n_le_log_factorial`, `ValuationParityThm*` | `ValuationParityThm.lean` |
+| Modular parity distribution | `ValuationParityMod*` | `ValuationParityMod.lean` |
 
-| Manuscript Item | Location | Lean Module | Lean Declaration(s) | Dependencies | Fidelity | Proof Status |
-|---|---|---|---|---|---|---|
-| $q_n$, $P_{\text{odd}}(n)$, $P_{\text{even}}(n)$ (Eq. 2.1) | Sec. 2, lines 189–196 | `Basic.lean` | `q_n`, `P_odd`, `P_even` | Mathlib | Exact | CI verified |
-| $S_{\text{odd}}(n)$, $S_{\text{even}}(n)$ (Eq. 2.2) | Sec. 2, lines 197–200 | `Basic.lean` | `S_odd`, `S_even` | `q_n`, `P_odd`, `P_even` | Exact | CI verified |
-| $\Delta_{\text{parity}}(n)$ (Eq. 2.3) | Sec. 2, lines 201–205 | `Basic.lean` | `Delta_parity` | `S_odd`, `S_even` | Exact | CI verified |
-| Harmonic layer identities | Sec. 2, Lemma 2.1 proof | `ValuationParityLayer.lean` | `padicValNat_factorial_eq_div_of_lt_sq`, `padicValNat_factorial_on_harmonicInterval`, `harmonicLayer_odd_layer`, `harmonicLayer_even_layer` | `Basic.lean` | Exact | CI verified |
-| **Lemma 2.1(i)**: $\log q_n = (\log 2) n + O(n e^{-c\sqrt{\log n}})$ | Sec. 2, Lemma 2.1(i) | `ValuationParityLayer.lean` | `log_q_n_asymptotic` | `de_la_vallee_poussin_theta`, `alt_harmonic_sum_diff_log_two`, `Podd_upper_partition` | Exact | CI verified |
-| **Lemma 2.1(ii)**: $\#P_{\text{odd}}(n) \sim (\log 2) n / \log n$ | Sec. 2, Lemma 2.1(ii) | `ValuationParityLayer.lean` | `card_Podd_asymptotic` | `chebyshev_pi_upper`, `log_q_n_asymptotic` | Exact | CI verified |
-| **Lemma 2.2**: Legendre base-$p$ digit sum identity | Sec. 2, Lemma 2.2 | `ValuationParityDigits.lean` | Base-$p$ digit sum & $v_p(n!)$ parity lemmas | `Basic.lean`, Mathlib | Exact | CI verified |
-| **Lemma 2.3**: Vaaler parity approximation | Sec. 2, Lemma 2.3 | `ValuationParityVaaler.lean` | `sawtoothPsi`, `neg_one_pow_floor_eq_sawtooth`, `vaaler_parity_approx` | `vaaler_extremal_polynomials` | Exact | CI verified |
-| **Lemma 2.4(i)–(ii)**: Prime exponential sum bounds (Eqs. 2.13–2.14) | Sec. 2, Lemma 2.4 | `ExpSumBounds.lean` | `collar`, `collarSubinterval`, `interCollar`, `iteratedDeriv_neg_pow`, `prime_exp_sum_bounds` | `vaughan_van_der_corput_prime_sum` | Exact | CI verified |
-| **Theorem 2.5(i)**: Second-order asymptotic for $\Delta_{\text{parity}}(n)$ (Eq. 2.15) | Sec. 2, Thm 2.5(i) | `ValuationParityThmPart1.lean` | `Delta_parity_second_order` | `vaaler_parity_approx`, `prime_exp_sum_bounds`, `ValuationParityThmHelpers` | Exact | CI verified |
-| Small-prime band bound (Eq. 2.16) | Sec. 2, Thm 2.5(ii) proof | `ValuationParityThm.lean` | `small_prime_parity_band_bound` | `vaaler_parity_approx`, `prime_exp_sum_bounds` | Exact | CI verified |
-| Collar & inter-collar $O(n)$ bounds | Sec. 2, Thm 2.5(ii) proof | `ValuationParityThmCollar.lean`, `ValuationParityThmInterCollar.lean` | `collar_band_isBigO`, `interCollar_band_isBigO` | `vaaler_parity_approx`, `prime_exp_sum_bounds` | Exact | CI verified |
-| **Theorem 2.5(ii)**: $S_{\text{odd}}(n), S_{\text{even}}(n) \sim \frac{1}{2} n \log n$ (Eq. 2.17) | Sec. 2, Thm 2.5(ii) | `ValuationParityThm.lean` | `Sigma_star_parity_isLittleO_log`, `Delta_parity_isLittleO_mul_log`, `S_odd_asymptotic`, `S_even_asymptotic` | `Delta_parity_second_order`, `small_prime_parity_band_bound`, `collar_band_isBigO`, `interCollar_band_isBigO`, `mertens_sum_le` | Exact | CI verified |
-| Multi-modulus exponential & Vaaler bounds | Sec. 2, Thm 2.5(iii) proof | `ExpSumBoundsMod.lean`, `VaalerMod.lean`, `ValuationParityModWeight.lean` | `prime_exp_sum_bounds_mod`, `vaaler_mod_approx`, `prefix_weight_isBigO`, `band_total_weight_isBigO` | `vaughan_van_der_corput_prime_sum`, `vaaler_extremal_polynomials`, `mertens_first_theorem` | Exact | CI verified |
-| Multi-modulus collar & inter-collar bounds | Sec. 2, Thm 2.5(iii) proof | `ValuationParityModCollar.lean`, `ValuationParityModInterCollar.lean` | `collar_mod_isBigO`, `interCollar_mod_isBigO` | `prime_exp_sum_bounds_mod`, `vaaler_mod_approx` | Exact | CI verified |
-| **Theorem 2.5(iii)**: Multi-modulus power-band equidistribution (Eq. 2.18) | Sec. 2, Thm 2.5(iii) | `ValuationParityMod.lean` | `small_prime_mod_band_isBigO`, `upper_band_mod_isBigO`, `multi_modulus_power_band_equidistribution` | `prime_exp_sum_bounds_mod`, `vaaler_mod_approx`, `ValuationParityModWeight`, `ValuationParityModCollar`, `ValuationParityModInterCollar` | Exact | CI verified |
+## Section 3: Chebyshev–Lucas Absorption, Theorems 1.1–1.2, and Proposition 3.3
+| Manuscript Reference | Lean 4 Declaration | File |
+|---|---|---|
+| **Lemma 3.1(i)** (prime $p \equiv 3 \pmod 4$ dividing $q_n$; no negative Pell solution) | `q_n_has_prime_mod4`, `neg_pell_no_int_sol` | `PellFundamental.lean` |
+| **Lemma 3.1(ii)** ($\log q_n > 0.4n$, $\log \varepsilon_n > 0.2n$, $k < 2.5\log n$, $\log(s_n\sqrt{q_n})$ asymptotic) | `log_q_n_gt_point4`, `log_fund_pell_gt_point2`, `pell_index_upper_bound`, `log_s_n_sqrt_q_n_asymptotic` | `PellFundamental.lean` |
+| **Lemma 3.2 (eqs. 3.1–3.3)** (Chebyshev–Lucas identity, prime-power divisibility, $p$-adic valuation absorption) | `chebyshevU_eval`, `pell_lucas_identity`, `chebyshevU_prime_power_divisibility`, `padicValNat_pell_absorption` | `ChebyshevLucas.lean` |
+| **Theorem 1.1** (known solutions $n = 4, 5, 7$) | `known_k4`, `known_k5`, `known_k7` | `Thm1_1Collapse.lean` |
+| **Theorem 1.1 (eq. 1.6, 3.4–3.5)** (unconditional Pell index collapse $k \in \{1, 2\}$ for large $n$) | `pell_index_collapse_large` | `Thm1_1Collapse.lean` |
+| **Theorem 1.1 (eq. 1.7)** (fundamental regulator quantization law) | `fundamental_regulator_quantization` | `Thm1_1Collapse.lean` |
+| **Theorem 1.1** (distinctness of square-free cores $q_{n_1} \neq q_{n_2}$) | `q_n_ne_of_solutions` | `Thm1_1Collapse.lean` |
+| **Theorem 1.2(i) (eqs. 1.8, 3.6–3.7)** (Nagura band primes, $v_p(s_n) \ge 1$, parity-independent non-$p$-rationality & $\lambda_p^*$) | `nagura_prime_in_band`, `prime_in_band_val_and_coprime_k`, `val_s_n_ge_one_on_half`, `thm_1_2_part1_valuation_law` | `Thm1_2Iwasawa.lean` |
+| **Theorem 1.2(ii)** (split-prime unramified Iwasawa module & Taya criterion) | `thm_1_2_part2_split_primes` | `Thm1_2Iwasawa.lean` |
+| **Theorem 1.2(iii)** (conditional finiteness under (a), (b), or (c)) | `thm_1_2_part3_conditional_finiteness` | `Thm1_2Iwasawa.lean` |
+| **Proposition 3.3 (eq. 3.8)** ($\mathfrak{J}_n^2 = (1 + s_n\sqrt{-q_n})$, units $\{\pm 1\}$, $[\mathfrak{J}_n]=1 \iff k=2$, $k=1$ identity, $k=2$ second-stage non-principality) | `J_n_sq_eq`, `zsqrtd_neg_units`, `J_n_principal_iff_k_eq_2`, `k_eq_1_picard_identity`, `second_stage_nonprincipal_k_eq_2` | `Picard2Torsion.lean` |
