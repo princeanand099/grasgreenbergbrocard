@@ -275,9 +275,12 @@ theorem upper_band_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
           C_log * Real.sqrt (Real.log (n : ℝ)) := by
         dsimp [C_log]
         have h_s1 : (1 : ℝ) ≤ Real.sqrt (Real.log (n : ℝ)) := by
-          rw [Real.le_sqrt (by norm_num) hln_pos.le]; exact hln_ge1
+          rw [Real.le_sqrt (by norm_num) hln_pos.le]; norm_num; exact hln_ge1
         nlinarith [show (0 : ℝ) ≤ (h_mod : ℝ) from by positivity, show (0 : ℝ) ≤ (R : ℝ) from by positivity]
       nlinarith
+    have h12 : Real.log (Nat.floor ((Real.log (n : ℝ)) ^ (R + 2)) : ℝ) ≤
+        ((R : ℝ) + 2) * (2 * Real.sqrt (Real.log (n : ℝ))) :=
+      le_trans h1 (mul_le_mul_of_nonneg_left h2 (by positivity))
     have h4 : 2 * (h_mod : ℝ) * (Real.log (Nat.floor ((Real.log (n : ℝ)) ^ (R + 2)) : ℝ) + 1) ≤
         2 * (h_mod : ℝ) * (((R : ℝ) + 2) * (2 * Real.sqrt (Real.log (n : ℝ))) + 1) := by
       gcongr
@@ -376,11 +379,16 @@ theorem upper_band_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       have hp_n : p ≤ n := (Finset.mem_Icc.mp (Finset.mem_filter.mp hp).1).2
       have hp_gt_L : L < (p : ℝ) := by exact_mod_cast (by omega : Nat.sqrt n < p)
       have hp_div_L : 1 < (p : ℝ) / L := (one_lt_div (by linarith)).mpr hp_gt_L
-      let k := Nat.floor (Real.log ((p : ℝ) / L) / Real.log 2)
-      have hk_nn : 0 ≤ Real.log ((p : ℝ) / L) / Real.log 2 :=
-        div_nonneg (Real.log_nonneg hp_div_L.le) (Real.log_pos (by norm_num)).le
+      have hx_pos : 0 < Real.log ((p : ℝ) / L) / Real.log 2 :=
+        div_pos (Real.log_pos hp_div_L) (Real.log_pos (by norm_num))
+      have hceil_pos : 0 < Nat.ceil (Real.log ((p : ℝ) / L) / Real.log 2) := Nat.ceil_pos.mpr hx_pos
+      let k := Nat.ceil (Real.log ((p : ℝ) / L) / Real.log 2) - 1
+      have hk_succ : k + 1 = Nat.ceil (Real.log ((p : ℝ) / L) / Real.log 2) := Nat.sub_add_cancel hceil_pos
+      have hk_lt_x : (k : ℝ) < Real.log ((p : ℝ) / L) / Real.log 2 := by
+        rw [← Nat.lt_ceil]; omega
+      have hx_le_k1 : Real.log ((p : ℝ) / L) / Real.log 2 ≤ ((k + 1 : ℕ) : ℝ) := by
+        norm_cast; rw [hk_succ]; exact Nat.le_ceil _
       have hk_lt : k < K + 1 := by
-        have h1 : (k : ℝ) ≤ Real.log ((p : ℝ) / L) / Real.log 2 := Nat.floor_le hk_nn
         have h2 : Real.log ((p : ℝ) / L) / Real.log 2 ≤ Real.log (n : ℝ) / Real.log 2 := by
           apply div_le_div_of_nonneg_right _ (Real.log_pos (by norm_num)).le
           apply Real.log_le_log (by positivity)
@@ -395,21 +403,18 @@ theorem upper_band_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
           linarith
         exact_mod_cast this
       refine ⟨k, hk_lt, hp, ?_, ?_⟩
-      · have h_le : (2 : ℝ) ^ k ≤ (p : ℝ) / L := by
-          have h1 : (k : ℝ) ≤ Real.log ((p : ℝ) / L) / Real.log 2 := Nat.floor_le hk_nn
-          have h2 : (k : ℝ) * Real.log 2 ≤ Real.log ((p : ℝ) / L) := (le_div_iff₀ (Real.log_pos (by norm_num))).mp h1
-          rw [← Real.log_pow] at h2
-          exact (Real.log_le_log_iff (by positivity) (by positivity)).mp h2
-        calc L * (2 : ℝ) ^ k ≤ L * ((p : ℝ) / L) := mul_le_mul_of_nonneg_left h_le (by linarith)
-          _ = (p : ℝ) := mul_div_cancel₀ _ (by linarith)
-      · have h_lt : (p : ℝ) / L < (2 : ℝ) ^ (k + 1) := by
-          have h1 : Real.log ((p : ℝ) / L) / Real.log 2 < (k : ℝ) + 1 := Nat.lt_floor_add_one _
-          have h2 : Real.log ((p : ℝ) / L) < ((k + 1 : ℕ) : ℝ) * Real.log 2 := by
-            push_cast; exact (div_lt_iff₀ (Real.log_pos (by norm_num))).mp h1
+      · have h_lt : (2 : ℝ) ^ k < (p : ℝ) / L := by
+          have h2 : (k : ℝ) * Real.log 2 < Real.log ((p : ℝ) / L) := (lt_div_iff₀ (Real.log_pos (by norm_num))).mp hk_lt_x
           rw [← Real.log_pow] at h2
           exact (Real.log_lt_log_iff (by positivity) (by positivity)).mp h2
+        calc L * (2 : ℝ) ^ k < L * ((p : ℝ) / L) := mul_lt_mul_of_pos_left h_lt (by linarith)
+          _ = (p : ℝ) := mul_div_cancel₀ _ (by linarith)
+      · have h_le : (p : ℝ) / L ≤ (2 : ℝ) ^ (k + 1) := by
+          have h2 : Real.log ((p : ℝ) / L) ≤ ((k + 1 : ℕ) : ℝ) * Real.log 2 := (div_le_iff₀ (Real.log_pos (by norm_num))).mp hx_le_k1
+          rw [← Real.log_pow] at h2
+          exact (Real.log_le_log_iff (by positivity) (by positivity)).mp h2
         have hle : L * ((p : ℝ) / L) ≤ L * (2 : ℝ) ^ (k + 1) :=
-          mul_le_mul_of_nonneg_left h_lt.le (by linarith)
+          mul_le_mul_of_nonneg_left h_le (by linarith)
         rwa [mul_div_cancel₀ _ (by linarith)] at hle
     · rintro ⟨_, _, hp, _⟩; exact hp
   have hB_disj : Set.PairwiseDisjoint (Finset.range (K + 1) : Set ℕ) B_k := by
@@ -533,8 +538,8 @@ theorem upper_band_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
       simpa [pow_one] using calc
         ‖∑ p ∈ B_k k, ((Real.log (p : ℝ) / (p : ℝ) : ℝ) : ℂ) *
             eExp (∑ s ∈ ({1} : Finset ℕ), ((m : ℤ) : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s))‖
-          ≤ C₂e * (1 / P) * P * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := by simpa [div_eq_mul_inv, mul_comm] using h_res
-        _ = C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := by field_simp [hP_pos.ne']; ring
+          ≤ C₂e * (1 / P) * P * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := by simpa [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using h_res
+        _ = C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := by field_simp [hP_pos.ne']
   -- Split U into Vaaler error + main term
   have h_U_bd : ‖∑ p ∈ U, ((Real.log (p : ℝ) / (p : ℝ) : ℝ) : ℂ) *
         eExp ((z : ℝ) * (Int.floor ((n : ℝ) / (p : ℝ)) : ℝ) / (h_mod : ℝ))‖ ≤
