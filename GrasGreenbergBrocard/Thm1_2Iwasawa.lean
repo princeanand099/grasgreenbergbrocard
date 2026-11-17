@@ -32,7 +32,9 @@ private lemma padicValNat_factorial_ge_div {n p : ℕ} (hp : p.Prime) (hn : 1 �
       | zero => norm_num
       | succ m ihm =>
         calc m + 1 ≤ p ^ m := ihm
-          _ < p ^ m * p := Nat.lt_mul_of_one_lt_right (Nat.pow_pos hp.pos) hp.one_lt
+          _ < p ^ m * p := by
+            have h1 : p ^ m * 1 < p ^ m * p := Nat.mul_lt_mul_of_pos_left hp.one_lt (Nat.pow_pos hp.pos)
+            simpa using h1
           _ = p ^ (m + 1) := (pow_succ p m).symm
     exact Nat.log_lt_of_lt_pow (by omega)
       (lt_trans (hself n) (Nat.pow_lt_pow_right hp.one_lt (Nat.lt_succ_self n)))
