@@ -402,15 +402,15 @@ lemma lem_6_3_osc_bound
         · rw [Int.cast_natCast, le_div_iff₀ (by exact_mod_cast hp_pr.pos)]
           exact_mod_cast Nat.div_mul_le_self n₁ p
         · rw [Int.cast_natCast, div_lt_iff₀ (by exact_mod_cast hp_pr.pos)]
-          have := Nat.lt_div_mul_add (a := n₁) hp_pr.pos; rw [add_mul, one_mul] at this
-          exact_mod_cast this
+          have := Nat.lt_div_mul_add (a := n₁) hp_pr.pos
+          exact_mod_cast (by linarith : n₁ < (n₁ / p + 1) * p)
       have hfl2 : Int.floor ((n₂ : ℝ) / (p : ℝ)) = ((n₂ / p : ℕ) : ℤ) := by
         rw [Int.floor_eq_iff]; constructor
         · rw [Int.cast_natCast, le_div_iff₀ (by exact_mod_cast hp_pr.pos)]
           exact_mod_cast Nat.div_mul_le_self n₂ p
         · rw [Int.cast_natCast, div_lt_iff₀ (by exact_mod_cast hp_pr.pos)]
-          have := Nat.lt_div_mul_add (a := n₂) hp_pr.pos; rw [add_mul, one_mul] at this
-          exact_mod_cast this
+          have := Nat.lt_div_mul_add (a := n₂) hp_pr.pos
+          exact_mod_cast (by linarith : n₂ < (n₂ / p + 1) * p)
       have hexp_eq : padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂) =
           ((padicValNat p (Nat.factorial n₁) - n₁ / p) +
             (padicValNat p (Nat.factorial n₂) - n₂ / p)) + (n₁ / p + n₂ / p) := by omega
@@ -420,7 +420,7 @@ lemma lem_6_3_osc_bound
           (-1 : ℝ) ^ ((padicValNat p (Nat.factorial n₁) - n₁ / p) +
             (padicValNat p (Nat.factorial n₂) - n₂ / p)) *
           (-1 : ℝ) ^ (n₁ / p) * (-1 : ℝ) ^ (n₂ / p) := by
-        rw [hexp_eq, pow_add, pow_add]; ring
+        rw [hexp_eq, pow_add, pow_add]
       rw [h_pow]
       have hn1P_ne : (n₁ : ℝ) / P ≠ 0 := by positivity
       field_simp [hn1P_ne]; ring
@@ -444,7 +444,7 @@ lemma lem_6_3_osc_bound
           ((-1 : ℝ) ^ (Int.floor ((n₂ : ℝ) / (p : ℝ))))) = (mainC + errC).re := by
       rw [Complex.add_re, Complex.re_sum, Complex.re_sum, ← Finset.sum_add_distrib]
       apply Finset.sum_congr rfl; intro p _
-      rw [← Complex.add_re, ← mul_add, add_sub_cancel]
+      rw [← Complex.add_re, mul_assoc ((w_base (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ), ← mul_add, add_sub_cancel]
       simp only [← Complex.ofReal_mul, Complex.ofReal_re]; ring
     have h_mainC_bd : ‖mainC‖ ≤
         ((4 / Real.pi) * (Real.log (2 * (H : ℝ) + 1) + 1)) ^ 2 *
