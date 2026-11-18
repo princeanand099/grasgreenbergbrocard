@@ -34,10 +34,10 @@ Lean 4 formalization of the manuscript *Arithmetic Structure, Iwasawa Invariants
 - `GrasGreenbergBrocard/Thm4_2QuarticCores.lean`: Theorem 4.2(i)–(iii) (`thm_4_2_part1_quartic_law`, `thm_4_2_part1_euclidean_lock`, `thm_4_2_part2_dual_quartic`, `thm_4_2_part2_euclidean_locks`, `thm_4_2_part3_midpoint_core_bounds`, `thm_4_2_part3_mertens_bound`).
 
 ### Section 5 (The Fundamental Regime $k = 1$ and Rédei–Reichardt Cohomology)
-- `GrasGreenbergBrocard/ExternalAxiomsSec5.lean` *(in progress)*
-- `GrasGreenbergBrocard/Prop5_1MidpointBias.lean` *(in progress)*
-- `GrasGreenbergBrocard/Thm5_2EffectiveCores.lean` *(in progress)*
-- `GrasGreenbergBrocard/Thm5_3RedeiCohomology.lean` *(in progress)*
+- `GrasGreenbergBrocard/ExternalAxiomsSec5.lean`: External axioms for Section 5 (Perron §25 / Hardy–Wright Theorem 10.7.5 midpoint symmetry, Davenport Ch. 19 real character sum upper bound `davenport_real_char_half_band_upper`, and Gauss/Rédei–Reichardt narrow class group exact sequence `RedeiNarrowClassData`, `redei_reichardt_exact_sequence`).
+- `GrasGreenbergBrocard/Prop5_1MidpointBias.lean`: Proposition 5.1(i)–(ii) (`eq_5_1_midpoint_decomp`, `psi_eval_upper_half`, `prop_5_1_part1_midpoint_bias`, `prop_5_1_part2_cross_symmetry`).
+- `GrasGreenbergBrocard/Thm5_2EffectiveCores.lean`: Theorem 5.2(i)–(ii) (`A_star5`, `B_star5`, `Delta_parity_odd`, `B_part`, `Z_star`, `thm_5_2_part1_bipartition`, `thm_5_2_part1_cross_symmetry`, `thm_5_2_part1_radical_bounds`, `delta2Mid_ne_two`, `thm_5_2_part2_effective_cores`, `thm_5_2_part2_pell_pm2_insoluble`).
+- `GrasGreenbergBrocard/Thm5_3RedeiCohomology.lean`: Theorem 5.3(i)–(ii) (`thm_5_3_part1_cohomology_4rank`, `PevenPlus`, `PevenMinus`, `W_split`, `B_tilde`, `A_plus_star`, `thm_5_3_part2_inert_absorption`, `thm_5_3_part2_dual_quartic`).
 
 ## Documentation & Audit Records
 

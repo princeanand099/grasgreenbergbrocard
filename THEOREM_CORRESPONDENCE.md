@@ -5,7 +5,7 @@
 | **Section 2** | | | | |
 | Base-$p$ digit reduction | §2.1 | `ValuationParityDigits.lean` | `ValuationParityDigits` lemmas | Faithful; CI verified |
 | Vaaler Fourier & exp sum bounds | §2.2 | `ValuationParityVaaler.lean`, `ExpSumBounds.lean` | Vaaler & van der Corput bounds | Faithful; CI verified |
-| **Theorem 2.5(i)–(ii)** (`\Delta_{\mathrm{parity}}`, `S_{\mathrm{odd}}`, `S_{\mathrm{even}}`) | §2.3 | `ValuationParityThm.lean` | `Delta_parity_isLittleO_mul_log`, `S_odd_asymptotic`, `S_even_asymptotic` | Faithful; CI verified |
+| **Theorem 2.5(i)–(ii)** ($\Delta_{\mathrm{parity}}$, $S_{\mathrm{odd}}$, $S_{\mathrm{even}}$) | §2.3 | `ValuationParityThm.lean` | `Delta_parity_isLittleO_mul_log`, `S_odd_asymptotic`, `S_even_asymptotic` | Faithful; CI verified |
 | **Theorem 2.5(iii)** (multi-modulus power-band equidistribution) | §2.4 | `ValuationParityMod.lean` | `small_prime_mod_band_isBigO`, `upper_band_mod_isBigO`, `multi_modulus_power_band_equidistribution` | Faithful; CI verified |
 | **Section 3** | | | | |
 | **Lemma 3.1(i)–(ii)** (fundamental unit norm & growth of $q_n, s_n$) | §3.1 | `PellFundamental.lean` | `q_n_has_prime_mod4`, `neg_pell_no_int_sol`, `log_q_n_gt_point4`, `pell_index_upper_bound`, `log_s_n_asymptotic` | Faithful; CI verified |
@@ -18,3 +18,9 @@
 | **Theorem 4.2(i)** (first-stage Euclidean quartic law & lock, eqs. 4.8–4.10) | §4.2 | `Thm4_2QuarticCores.lean` | `thm_4_2_part1_quartic_law`, `thm_4_2_part1_euclidean_lock` | Faithful; CI verified |
 | **Theorem 4.2(ii)** (second-stage dual quartic & locks, eqs. 4.11–4.13, 4.15) | §4.2 | `Thm4_2QuarticCores.lean` | `thm_4_2_part2_dual_quartic`, `thm_4_2_part2_euclidean_locks` | Faithful; CI verified |
 | **Theorem 4.2(iii)** (midpoint core bounds & Mertens $n^{1/4}$ bound, eqs. 4.14, 4.16) | §4.2 | `Thm4_2QuarticCores.lean` | `thm_4_2_part3_midpoint_core_bounds`, `thm_4_2_part3_mertens_bound` | Faithful; CI verified |
+| **Section 5** | | | | |
+| **Proposition 5.1(i)–(ii)** (midpoint bias & cross-symmetry, eqs. 5.1–5.3) | §5.1 | `Prop5_1MidpointBias.lean` | `eq_5_1_midpoint_decomp`, `psi_eval_upper_half`, `prop_5_1_part1_midpoint_bias`, `prop_5_1_part2_cross_symmetry` | Faithful; CI verified |
+| **Theorem 5.2(i)** (bipartition, cross-symmetry & radical bounds, eqs. 5.4–5.6) | §5.2 | `Thm5_2EffectiveCores.lean` | `thm_5_2_part1_bipartition`, `thm_5_2_part1_cross_symmetry`, `thm_5_2_part1_radical_bounds` | Faithful; CI verified |
+| **Theorem 5.2(ii)** (effective cores $\delta_1, \delta_2$ & $\pm 2$-Pell insolubility, eq. 5.7) | §5.2 | `Thm5_2EffectiveCores.lean` | `delta2Mid_ne_two`, `thm_5_2_part2_effective_cores`, `thm_5_2_part2_pell_pm2_insoluble` | Faithful; CI verified |
+| **Theorem 5.3(i)** (Rédei–Reichardt cohomology & 4-rank exact sequence, eq. 5.8) | §5.3 | `Thm5_3RedeiCohomology.lean` | `thm_5_3_part1_cohomology_4rank` | Faithful; CI verified |
+| **Theorem 5.3(ii)** (inert prime absorption & dual quartic lock, eqs. 5.9–5.10) | §5.3 | `Thm5_3RedeiCohomology.lean` | `PevenPlus`, `PevenMinus`, `W_split`, `B_tilde`, `A_plus_star`, `thm_5_3_part2_inert_absorption`, `thm_5_3_part2_dual_quartic` | Faithful; CI verified |
