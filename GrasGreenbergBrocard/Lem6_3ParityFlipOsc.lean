@@ -12,12 +12,14 @@ lemma val_factorial_le_two_div {n p : ℕ} (hp : p.Prime) (hp3 : 3 ≤ p) :
     (padicValNat p (Nat.factorial n) : ℝ) ≤ 2 * (n : ℝ) / (p : ℝ) := by
   haveI : Fact p.Prime := ⟨hp⟩
   have h1 : padicValNat p (Nat.factorial n) * (p - 1) ≤ n := by
-    have := sub_one_mul_padicValNat_factorial n; linarith
-  have h1r : (padicValNat p (Nat.factorial n) : ℝ) * ((p : ℝ) - 1) ≤ (n : ℝ) := by exact_mod_cast h1
+    have := sub_one_mul_padicValNat_factorial (p := p) n; linarith
+  have h1r : (padicValNat p (Nat.factorial n) : ℝ) * ((p : ℝ) - 1) ≤ (n : ℝ) := by
+    have h1n : (padicValNat p (Nat.factorial n) : ℝ) * ((p - 1 : ℕ) : ℝ) ≤ (n : ℝ) := by exact_mod_cast h1
+    rwa [Nat.cast_sub (by omega : 1 ≤ p), Nat.cast_one] at h1n
+  have hp3r : (3 : ℝ) ≤ p := by exact_mod_cast hp3
   have hv : (padicValNat p (Nat.factorial n) : ℝ) ≤ (n : ℝ) / ((p : ℝ) - 1) :=
-    (le_div_iff₀ (by exact_mod_cast (by omega : 0 < p - 1))).mpr h1r
-  have hp_half : (p : ℝ) / 2 ≤ (p : ℝ) - 1 := by
-    have : (3 : ℝ) ≤ p := by exact_mod_cast hp3; linarith
+    (le_div_iff₀ (by linarith)).mpr h1r
+  have hp_half : (p : ℝ) / 2 ≤ (p : ℝ) - 1 := by linarith
   calc (padicValNat p (Nat.factorial n) : ℝ) ≤ (n : ℝ) / ((p : ℝ) - 1) := hv
     _ ≤ (n : ℝ) / ((p : ℝ) / 2) := by gcongr
     _ = 2 * (n : ℝ) / (p : ℝ) := by ring
@@ -49,8 +51,8 @@ private lemma vaaler_btilde_dyadic_sum_bound
     exact le_trans (by exact_mod_cast hcard) (Nat.floor_le (by positivity))
   have hsum_main : ∑ p ∈ I, Real.log (p : ℝ) * (b_tilde 0).re ≤
       (4 * P * Real.log (2 * P)) / ((H : ℝ) + 1) := by
-    rw [h_btilde0]
-    simp only [Complex.ofReal_re]
+    rw [h_btilde0, show (2 / ((H : ℝ) + 1) : ℂ) = ((2 / ((H : ℝ) + 1) : ℝ) : ℂ) by push_cast; rfl,
+      Complex.ofReal_re]
     have hterm : ∀ p ∈ I, Real.log (p : ℝ) * (2 / ((H : ℝ) + 1)) ≤
         Real.log (2 * P) * (2 / ((H : ℝ) + 1)) := by
       intro p hp
@@ -79,14 +81,22 @@ private lemma vaaler_btilde_dyadic_sum_bound
         (∑ h ∈ S_h, b_tilde h * eExp ((h : ℝ) * ((n : ℝ) / (p : ℝ)) / 2)).re =
         (∑ h ∈ S_h, b_tilde h *
           ∑ p ∈ I, (Real.log (p : ℝ) : ℂ) * eExp ((h : ℝ) * (n : ℝ) / (2 * (p : ℝ)))).re := by
-      rw [Complex.re_sum, Finset.sum_comm]
-      apply Finset.sum_congr rfl; intro p hp
-      rw [Finset.mul_sum, Complex.re_sum]
-      apply Finset.sum_congr rfl; intro h hh
-      rw [← Complex.ofReal_re (Real.log (p : ℝ)), ← Complex.re_ofReal_mul]
-      congr 1
-      have hdiv : (h : ℝ) * ((n : ℝ) / (p : ℝ)) / 2 = (h : ℝ) * (n : ℝ) / (2 * (p : ℝ)) := by ring
-      rw [hdiv]; ring
+      calc ∑ p ∈ I, Real.log (p : ℝ) *
+            (∑ h ∈ S_h, b_tilde h * eExp ((h : ℝ) * ((n : ℝ) / (p : ℝ)) / 2)).re
+          = ∑ p ∈ I, ∑ h ∈ S_h, Real.log (p : ℝ) * (b_tilde h * eExp ((h : ℝ) * ((n : ℝ) / (p : ℝ)) / 2)).re := by
+            apply Finset.sum_congr rfl; intro p _; rw [Complex.re_sum, Finset.mul_sum]
+        _ = ∑ h ∈ S_h, ∑ p ∈ I, Real.log (p : ℝ) * (b_tilde h * eExp ((h : ℝ) * ((n : ℝ) / (p : ℝ)) / 2)).re :=
+            Finset.sum_comm
+        _ = (∑ h ∈ S_h, b_tilde h *
+              ∑ p ∈ I, (Real.log (p : ℝ) : ℂ) * eExp ((h : ℝ) * (n : ℝ) / (2 * (p : ℝ)))).re := by
+            rw [Complex.re_sum]
+            apply Finset.sum_congr rfl; intro h _
+            rw [Finset.mul_sum, Complex.re_sum]
+            apply Finset.sum_congr rfl; intro p _
+            rw [← Complex.ofReal_re (Real.log (p : ℝ)), ← Complex.re_ofReal_mul]
+            congr 1
+            have hdiv : (h : ℝ) * ((n : ℝ) / (p : ℝ)) / 2 = (h : ℝ) * (n : ℝ) / (2 * (p : ℝ)) := by ring
+            rw [hdiv]; ring
     rw [hre_eq]
     calc (∑ h ∈ S_h, b_tilde h * _).re
         ≤ ‖∑ h ∈ S_h, b_tilde h * _‖ := Complex.abs_re_le_norm _ |>.trans' (le_abs_self _)
@@ -166,6 +176,7 @@ lemma lem_6_3_osc_bound
   let h := n₂ - n₁
   let y₁ : ℝ := (h : ℝ) / (Real.log (n₁ : ℝ)) ^ (A_R + 2)
   let I_osc := ((Finset.Icc 3 n₁).filter Nat.Prime).filter (fun p : ℕ => (n₁ : ℝ) ^ δ < (p : ℝ) ∧ (p : ℝ) ≤ y₁)
+  have hh_pos : (0 : ℝ) < (h : ℝ) := lt_trans (by positivity) hh_gt
   -- Dyadic partition of I_osc on ((n₁ : ℝ)^δ, y₁]
   have hI_mem : ∀ p ∈ I_osc, (n₁ : ℝ) ^ δ < (p : ℝ) ∧ (p : ℝ) ≤ y₁ := by
     intro p hp; exact (Finset.mem_filter.mp hp).2
@@ -178,7 +189,7 @@ lemma lem_6_3_osc_bound
     rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at h5
     have h10 : 10 ≤ (δ / 2) * Real.log (n₁ : ℝ) := by
       have := (div_lt_iff₀ hlog_n₁_pos).mp h5; linarith
-    exact Nat.le_floor (one_le_pow_of_one_le₀ (by linarith) _)
+    exact Nat.le_floor (one_le_pow₀ (by linarith) _)
   obtain ⟨c_tilde, b_tilde, h_supp, h_ctilde_b, h_btilde0, h_btilde_b, h_vaaler_pw, h_L1⟩ :=
     vaaler_parity_approx H hH_ge1
   -- Bound on each dyadic block I_k
@@ -224,6 +235,9 @@ lemma lem_6_3_osc_bound
       exact_mod_cast (lt_of_le_of_lt h1 hh_gt).le
     have hn₂_ge_Nexp : N_exp ≤ n₂ := by omega
     have hP_le_n₂ : P ≤ (n₂ : ℝ) / (Real.log (n₂ : ℝ)) ^ 12 := by
+      -- Since n₁ < n₂ < 2 n₁ and P ≤ y₁ ≤ h / (log n₁)^{A_R + 2} ≤ n₁ / (log n₁)^{A_R + 2}
+      -- Wait: n₂ / (log n₂)^{12} vs n₁ / (log n₁)^{12}: for n₁ ≥ 1000, log n₂ ≤ 2 log n₁, so
+      -- n₁ / (log n₁)^{A_R + 2} ≤ n₁ / (2 log n₁)^{12} ≤ n₂ / (log n₂)^{12} since A_R + 2 ≥ 56!
       have hlog_n2_le : Real.log (n₂ : ℝ) ≤ 2 * Real.log (n₁ : ℝ) := by
         have hn2_lt : (n₂ : ℝ) < 2 * (n₁ : ℝ) := by exact_mod_cast (by omega : n₂ < 2 * n₁)
         have h1 := Real.log_le_log (by positivity) hn2_lt.le
@@ -262,8 +276,8 @@ lemma lem_6_3_osc_bound
         C₂ * W₀ * P * (Real.log (m : ℝ)) ^ (-((R : ℝ) + 2)) := by
       intro m hm_N hm_le hPm hTm hm1 w W₀ hm1_nz hm1_bd hw hW₀
       have hm_pos : (0 : ℝ) < m := by
-        by_contra h0; push_neg at h0
-        have hm0 : m = 0 := by exact_mod_cast (by linarith : (m : ℝ) ≤ 0)
+        by_contra h0; rw [not_lt] at h0
+        have hm0 : m = 0 := Nat.eq_zero_of_le_zero (by exact_mod_cast h0)
         subst hm0; simp at hPm; linarith
       have hP_m_lb : (m : ℝ) ^ δ ≤ P :=
         le_trans (Real.rpow_le_rpow (by positivity) (by exact_mod_cast hm_le) hδ0.le) hP_lb
@@ -299,6 +313,7 @@ lemma lem_6_3_osc_bound
           (pow_le_pow_right₀ (by nlinarith) (by omega))
       calc (2 : ℝ) ^ (-(R : ℤ)) * (Real.log (h : ℝ)) ^ A_R
           ≤ 1 * (Real.log (n₁ : ℝ)) ^ (A_R + 2) := mul_le_mul h2_le hpow_le (by positivity) (by norm_num)
+        _ = (Real.log (n₁ : ℝ)) ^ (A_R + 2) := one_mul _
         _ ≤ (h : ℝ) / P := hP_div
     have hH_le_n1 : 4 * (H : ℤ) + 2 ≤ 2 * (Nat.floor ((Real.log (n₁ : ℝ)) ^ (R + 2)) : ℤ) + 1 := by
       have hH_le_real : (H : ℝ) ≤ ((δ / 2) * Real.log (n₁ : ℝ)) ^ (R + 2) := Nat.floor_le (by positivity)
@@ -385,7 +400,7 @@ lemma lem_6_3_osc_bound
             exact absurd (Nat.log_pos hp_pr.one_lt hge) (by rw [h0]; exact lt_irrefl 0)
           rw [Nat.div_eq_of_lt this]; exact Nat.zero_le _
         · exact Finset.single_le_sum (f := fun i => n₁ / p ^ i) (fun _ _ => Nat.zero_le _)
-            (Finset.mem_Ico.mpr ⟨le_refl 1, by omega⟩)
+            (Finset.mem_Ico.mpr ⟨le_refl 1, Nat.succ_le_succ hpos⟩)
       have hv_le2 : n₂ / p ≤ padicValNat p (Nat.factorial n₂) := by
         haveI : Fact p.Prime := ⟨hp_pr⟩
         have hleg := padicValNat_factorial (p := p) (n := n₂) (b := Nat.log p n₂ + 1) (Nat.lt_succ_self _)
@@ -396,7 +411,7 @@ lemma lem_6_3_osc_bound
             exact absurd (Nat.log_pos hp_pr.one_lt hge) (by rw [h0]; exact lt_irrefl 0)
           rw [Nat.div_eq_of_lt this]; exact Nat.zero_le _
         · exact Finset.single_le_sum (f := fun i => n₂ / p ^ i) (fun _ _ => Nat.zero_le _)
-            (Finset.mem_Ico.mpr ⟨le_refl 1, by omega⟩)
+            (Finset.mem_Ico.mpr ⟨le_refl 1, Nat.succ_le_succ hpos⟩)
       have hfl1 : Int.floor ((n₁ : ℝ) / (p : ℝ)) = ((n₁ / p : ℕ) : ℤ) := by
         rw [Int.floor_eq_iff]; constructor
         · rw [Int.cast_natCast, le_div_iff₀ (by exact_mod_cast hp_pr.pos)]
@@ -420,7 +435,7 @@ lemma lem_6_3_osc_bound
           (-1 : ℝ) ^ ((padicValNat p (Nat.factorial n₁) - n₁ / p) +
             (padicValNat p (Nat.factorial n₂) - n₂ / p)) *
           (-1 : ℝ) ^ (n₁ / p) * (-1 : ℝ) ^ (n₂ / p) := by
-        rw [hexp_eq, pow_add, pow_add, pow_add]; ring
+        rw [hexp_eq, pow_add, pow_add, pow_add]
       rw [h_pow]
       have hn1P_ne : (n₁ : ℝ) / P ≠ 0 := by positivity
       field_simp [hn1P_ne]; ring

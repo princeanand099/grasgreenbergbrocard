@@ -156,30 +156,32 @@ private lemma log_consecutive_equipartition_aux {n m₁ m₂ : ℕ}
   set X := X_gcd m₁ m₂; set Y := Y_gcd m₁ m₂
   set Z := Z_gcd m₁ m₂; set W := W_gcd m₁ m₂
   have hm2_nn : (0 : ℤ) ≤ m₂ := Nat.cast_nonneg _
+  have hX_lb_z : (2 * (n : ℤ) * ((n : ℤ) + 1)) < ((n : ℤ) + 1) * (m₁ : ℤ) - (m₂ : ℤ) - (n : ℤ) := by
+    zify [show m₂ + n ≤ (n + 1) * m₁ by omega] at hX_lb_int; exact hX_lb_int
   have hX1 : 1 < X := by
     have h2ac : (a : ℤ) * c ≤ n * (n + 1) := mul_le_mul (by exact_mod_cast ha_le) (by exact_mod_cast hc_le) (by positivity) (by positivity)
-    have hX2 : (2 * (a : ℤ) * c) * (X : ℤ) ^ 2 > 2 * (a : ℤ) * c := by linarith only [hXsq, hX_lb_int, h2ac]
-    have hX_gt1 : (1 : ℤ) < (X : ℤ) := by
-      nlinarith only [hX2, show (0 : ℤ) < 2 * a * c by positivity, show (0 : ℤ) ≤ (X : ℤ) by positivity]
-    exact_mod_cast hX_gt1
+    have hX2 : (2 * (a : ℤ) * c) * (X : ℤ) ^ 2 > 2 * (a : ℤ) * c := by linarith only [hXsq, hX_lb_z, h2ac]
+    by_contra hle; rw [not_lt] at hle
+    have hsq : (X : ℤ) ^ 2 ≤ 1 := by nlinarith only [show (X : ℤ) ≤ 1 by exact_mod_cast hle, show (0 : ℤ) ≤ X by positivity]
+    nlinarith only [hX2, hsq, show (0 : ℤ) < 2 * a * c by positivity]
   have hY1 : 1 < Y := by
     have h2ad : (a : ℤ) * d ≤ n * (n + 1) := mul_le_mul (by exact_mod_cast ha_le) (by exact_mod_cast hd_le) (by positivity) (by positivity)
-    have hY2 : (2 * (a : ℤ) * d) * (Y : ℤ) ^ 2 > 2 * (a : ℤ) * d := by linarith only [hYsq, hX_lb_int, h2ad]
-    have hY_gt1 : (1 : ℤ) < (Y : ℤ) := by
-      nlinarith only [hY2, show (0 : ℤ) < 2 * a * d by positivity, show (0 : ℤ) ≤ (Y : ℤ) by positivity]
-    exact_mod_cast hY_gt1
+    have hY2 : (2 * (a : ℤ) * d) * (Y : ℤ) ^ 2 > 2 * (a : ℤ) * d := by linarith only [hYsq, hX_lb_z, h2ad]
+    by_contra hle; rw [not_lt] at hle
+    have hsq : (Y : ℤ) ^ 2 ≤ 1 := by nlinarith only [show (Y : ℤ) ≤ 1 by exact_mod_cast hle, show (0 : ℤ) ≤ Y by positivity]
+    nlinarith only [hY2, hsq, show (0 : ℤ) < 2 * a * d by positivity]
   have hZ1 : 1 < Z := by
     have h2bd : (b : ℤ) * d ≤ n * (n + 1) := mul_le_mul (by exact_mod_cast hb_le) (by exact_mod_cast hd_le) (by positivity) (by positivity)
-    have hZ2 : (2 * (b : ℤ) * d) * (Z : ℤ) ^ 2 > 2 * (b : ℤ) * d := by linarith only [hZsq, hX_lb_int, h2bd, hm2_nn]
-    have hZ_gt1 : (1 : ℤ) < (Z : ℤ) := by
-      nlinarith only [hZ2, show (0 : ℤ) < 2 * b * d by positivity, show (0 : ℤ) ≤ (Z : ℤ) by positivity]
-    exact_mod_cast hZ_gt1
+    have hZ2 : (2 * (b : ℤ) * d) * (Z : ℤ) ^ 2 > 2 * (b : ℤ) * d := by linarith only [hZsq, hX_lb_z, h2bd, hm2_nn]
+    by_contra hle; rw [not_lt] at hle
+    have hsq : (Z : ℤ) ^ 2 ≤ 1 := by nlinarith only [show (Z : ℤ) ≤ 1 by exact_mod_cast hle, show (0 : ℤ) ≤ Z by positivity]
+    nlinarith only [hZ2, hsq, show (0 : ℤ) < 2 * b * d by positivity]
   have hW1 : 1 < W := by
     have h2bc : (b : ℤ) * c ≤ n * (n + 1) := mul_le_mul (by exact_mod_cast hb_le) (by exact_mod_cast hc_le) (by positivity) (by positivity)
-    have hW2 : (2 * (b : ℤ) * c) * (W : ℤ) ^ 2 > 2 * (b : ℤ) * c := by linarith only [hWsq, hX_lb_int, h2bc, hm2_nn]
-    have hW_gt1 : (1 : ℤ) < (W : ℤ) := by
-      nlinarith only [hW2, show (0 : ℤ) < 2 * b * c by positivity, show (0 : ℤ) ≤ (W : ℤ) by positivity]
-    exact_mod_cast hW_gt1
+    have hW2 : (2 * (b : ℤ) * c) * (W : ℤ) ^ 2 > 2 * (b : ℤ) * c := by linarith only [hWsq, hX_lb_z, h2bc, hm2_nn]
+    by_contra hle; rw [not_lt] at hle
+    have hsq : (W : ℤ) ^ 2 ≤ 1 := by nlinarith only [show (W : ℤ) ≤ 1 by exact_mod_cast hle, show (0 : ℤ) ≤ W by positivity]
+    nlinarith only [hW2, hsq, show (0 : ℤ) < 2 * b * c by positivity]
   refine ⟨hX1, hY1, hZ1, hW1, ?_⟩
   have hS_lb : (1 / 2 : ℝ) * ((n : ℝ) + 1) * Real.sqrt (Nat.factorial n : ℝ) ≤
       ((n : ℝ) + 1) * m₁ - m₂ - n := by
@@ -196,27 +198,36 @@ private lemma log_consecutive_equipartition_aux {n m₁ m₂ : ℕ}
         have hm2sq : (m₂ : ℝ) ^ 2 = ((n : ℝ) + 1) * (Nat.factorial n : ℝ) + 1 := by
           have : Nat.factorial (n + 1) + 1 = m₂ ^ 2 := hm₂
           rw [Nat.factorial_succ] at this
-          exact_mod_cast this
+          exact_mod_cast this.symm
         rw [hm2sq, mul_pow, mul_pow, Real.sq_sqrt (by positivity)]
-        have : (4 / 25 : ℝ) * ((n : ℝ) + 1) ^ 2 ≥ (4 / 25 : ℝ) * 49 := by nlinarith
-        nlinarith
-      nlinarith [Real.sqrt_nonneg (Nat.factorial n : ℝ)]
+        nlinarith only [hn6r, hfac_ge]
+      nlinarith only [hsq, Real.sqrt_nonneg (Nat.factorial n : ℝ), (Nat.cast_nonneg m₂ : (0 : ℝ) ≤ m₂), hn6r]
     have hn_le_tenth : (n : ℝ) ≤ (1 / 10 : ℝ) * ((n : ℝ) + 1) * Real.sqrt (Nat.factorial n : ℝ) := by
       have hfac_ge : (720 : ℝ) ≤ Nat.factorial n := by
         exact_mod_cast (show 720 ≤ Nat.factorial n by
           calc 720 = Nat.factorial 6 := by norm_num [Nat.factorial]
             _ ≤ Nat.factorial n := Nat.factorial_le hn)
-      have : (26 : ℝ) ≤ Real.sqrt (Nat.factorial n : ℝ) := by
+      have h26 : (26 : ℝ) ≤ Real.sqrt (Nat.factorial n : ℝ) := by
         rw [← Real.sqrt_sq (by norm_num : (0 : ℝ) ≤ 26)]
         exact Real.sqrt_le_sqrt (by linarith)
-      nlinarith
-    nlinarith
+      nlinarith only [h26, (by exact_mod_cast hn : (6 : ℝ) ≤ n)]
+    have hm1_gt_sqrt_le : Real.sqrt (Nat.factorial n : ℝ) ≤ m₁ := hm1_gt_sqrt.le
+    nlinarith only [hm1_gt_sqrt_le, hm2_le2, hn_le_tenth, (by exact_mod_cast hn : (6 : ℝ) ≤ n)]
   have hS_ub : ((n : ℝ) + 1) * m₁ + m₂ + n ≤ 4 * ((n : ℝ) + 1) * Real.sqrt (Nat.factorial n : ℝ) := by
+    have hm1_le2 : (m₁ : ℝ) ≤ 2 * Real.sqrt (Nat.factorial n : ℝ) := by
+      have hfac_ge : (720 : ℝ) ≤ Nat.factorial n := by
+        exact_mod_cast (show 720 ≤ Nat.factorial n by
+          calc 720 = Nat.factorial 6 := by norm_num [Nat.factorial]
+            _ ≤ Nat.factorial n := Nat.factorial_le hn)
+      have hsq1 : (m₁ : ℝ) ^ 2 ≤ (2 * Real.sqrt (Nat.factorial n : ℝ)) ^ 2 := by
+        have hm1sq : (m₁ : ℝ) ^ 2 = (Nat.factorial n : ℝ) + 1 := by exact_mod_cast hm₁.symm
+        rw [mul_pow, Real.sq_sqrt (by positivity), hm1sq]; linarith
+      nlinarith only [hsq1, Real.sqrt_nonneg (Nat.factorial n : ℝ), (Nat.cast_nonneg m₁ : (0 : ℝ) ≤ m₁)]
     have hm2_le : (m₂ : ℝ) ≤ ((n : ℝ) + 1) * Real.sqrt (Nat.factorial n : ℝ) := by
       have hm2sq : (m₂ : ℝ) ^ 2 = ((n : ℝ) + 1) * (Nat.factorial n : ℝ) + 1 := by
         have : Nat.factorial (n + 1) + 1 = m₂ ^ 2 := hm₂
         rw [Nat.factorial_succ] at this
-        exact_mod_cast this
+        exact_mod_cast this.symm
       have hn6r : (6 : ℝ) ≤ n := by exact_mod_cast hn
       have hfac_ge : (720 : ℝ) ≤ Nat.factorial n := by
         exact_mod_cast (show 720 ≤ Nat.factorial n by
@@ -224,13 +235,13 @@ private lemma log_consecutive_equipartition_aux {n m₁ m₂ : ℕ}
             _ ≤ Nat.factorial n := Nat.factorial_le hn)
       have hsq : (m₂ : ℝ) ^ 2 ≤ (((n : ℝ) + 1) * Real.sqrt (Nat.factorial n : ℝ)) ^ 2 := by
         rw [hm2sq, mul_pow, Real.sq_sqrt (by positivity)]
-        nlinarith
-      nlinarith [Real.sqrt_nonneg (Nat.factorial n : ℝ)]
+        nlinarith only [hn6r, hfac_ge]
+      nlinarith only [hsq, Real.sqrt_nonneg (Nat.factorial n : ℝ), (Nat.cast_nonneg m₂ : (0 : ℝ) ≤ m₂), hn6r]
     have hn_le : (n : ℝ) ≤ ((n : ℝ) + 1) * Real.sqrt (Nat.factorial n : ℝ) := by
-      have : (1 : ℝ) ≤ Real.sqrt (Nat.factorial n : ℝ) := by
+      have h1sq : (1 : ℝ) ≤ Real.sqrt (Nat.factorial n : ℝ) := by
         rw [← Real.sqrt_one]; exact Real.sqrt_le_sqrt (by exact_mod_cast Nat.factorial_pos n)
-      nlinarith
-    nlinarith
+      nlinarith only [h1sq, (by exact_mod_cast hn : (6 : ℝ) ≤ n)]
+    nlinarith only [hm1_le2, hm2_le, hn_le, (by exact_mod_cast hn : (6 : ℝ) ≤ n)]
   have hbound_generic : ∀ (T k : ℕ), 1 ≤ k → k ≤ 2 * n * (n + 1) → 1 < T →
       (1 / 2 : ℝ) * ((n : ℝ) + 1) * Real.sqrt (Nat.factorial n : ℝ) ≤ (k : ℝ) * (T : ℝ) ^ 2 →
       (k : ℝ) * (T : ℝ) ^ 2 ≤ 4 * ((n : ℝ) + 1) * Real.sqrt (Nat.factorial n : ℝ) →
@@ -634,7 +645,7 @@ theorem prop_6_2_part2_consecutive_equipartition :
         have hp3 : 3 ≤ p := hp.1.2.1
         haveI : Fact p.Prime := ⟨hp_prime⟩
         have h1 : padicValNat p (Nat.factorial n) * (p - 1) ≤ n := by
-          have := sub_one_mul_padicValNat_factorial n; linarith
+          have := sub_one_mul_padicValNat_factorial (p := p) n; linarith
         have h1r : (padicValNat p (Nat.factorial n) : ℝ) * ((p : ℝ) - 1) ≤ (n : ℝ) := by
           have h1n : (padicValNat p (Nat.factorial n) : ℝ) * ((p - 1 : ℕ) : ℝ) ≤ (n : ℝ) := by exact_mod_cast h1
           rwa [Nat.cast_sub (by omega : 1 ≤ p), Nat.cast_one] at h1n
