@@ -570,7 +570,7 @@ theorem prop_6_2_part2_consecutive_equipartition :
             · rw [Finset.disjoint_singleton_left]; simp
         _ ≤ 1 + (Real.log (Real.log (n : ℝ)) + C_mert) := by
             have : Real.log (Real.log (n : ℝ) / 3) ≤ Real.log (Real.log (n : ℝ)) := by
-              apply Real.log_le_log (by positivity); linarith
+              apply Real.log_le_log (by linarith); linarith
             linarith
         _ = Real.log (Real.log (n : ℝ)) + C_mert + 1 := by ring
     have hgt_sum : ∑ p ∈ S_bad_gt, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) ≤
@@ -594,7 +594,7 @@ theorem prop_6_2_part2_consecutive_equipartition :
             _ ≤ (n : ℝ) / ((p : ℝ) / 2) := by gcongr
             _ = 2 * (n : ℝ) / (p : ℝ) := by ring
         have hv_log : (padicValNat p (Nat.factorial n) : ℝ) ≤ 2 * (n : ℝ) / Real.log (n : ℝ) :=
-          le_trans hv (div_le_div_of_nonneg_left (by positivity) (by positivity) hp.2.le)
+          le_trans hv (div_le_div_of_nonneg_left (by positivity) (by linarith) hp.2.le)
         gcongr
         exact Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ p))
       refine le_trans (Finset.sum_le_sum hterm) ?_
@@ -734,7 +734,9 @@ theorem prop_6_2_part3_square_shift_exclusions :
           have hgt := factorial_gt_four_mul_add_two (t ^ 2 - 1) (by omega)
           omega
         omega
+      -- Wait: call part 1!
       have hno : P_ratio (t ^ 2 - 1) (t ^ 2) ≠ t ^ 2 := by
+        -- Use the exact same proof as part 1:
         have hlt_2m : t < 2 * m₁ := by
           have : t ^ 2 < (2 * m₁) ^ 2 := by rw [← hP_eq]; linarith
           nlinarith
@@ -779,6 +781,7 @@ theorem prop_6_2_part3_square_shift_exclusions :
     rcases h4sq with ⟨hXsq, hYsq, hZsq, hWsq⟩
     set P := P_ratio n₁ n₂
     have hP_ge : 2 ≤ P := P_ratio_ge_two (by omega) hlt
+    -- Bound P ≤ n₂^(2j+1) = (j+1)^(4j+2)
     have hP_ub : P ≤ (j + 1) ^ (4 * j + 2) := by
       have hfac_eq : P * Nat.factorial n₁ = Nat.factorial n₂ := P_ratio_mul_factorial hlt
       have hprod : Nat.factorial n₂ = Nat.factorial n₁ * ∏ i ∈ Finset.Ioc n₁ n₂, i := by
@@ -801,6 +804,7 @@ theorem prop_6_2_part3_square_shift_exclusions :
         _ = ((j + 1) ^ 2) ^ (2 * j + 1) := by
             rw [Nat.card_Ioc]; congr 1; dsimp [n₁, n₂]; ring_nf; omega
         _ = (j + 1) ^ (4 * j + 2) := by rw [← pow_mul]; ring_nf
+    -- From eq. (6.4), bound (P m₁ - m₂ - (P-1)) ≥ (1/2) P √(n₁!) and ≤ 4 P √(n₁!)
     have ha_le : a ≤ P := by nlinarith
     have hb_le : b ≤ P := by nlinarith
     have hc_le : c ≤ P := by nlinarith
@@ -817,7 +821,7 @@ theorem prop_6_2_part3_square_shift_exclusions :
           have hm1r : (Nat.factorial n₁ : ℝ) + 1 = (m₁ : ℝ) ^ 2 := by exact_mod_cast hm₁
           have hm2r : (Nat.factorial n₂ : ℝ) + 1 = (m₂ : ℝ) ^ 2 := by exact_mod_cast hm₂
           have hPr : (P : ℝ) * (Nat.factorial n₁ : ℝ) = Nat.factorial n₂ := by exact_mod_cast this
-          linarith
+          nlinarith
         have hP1 : (1 : ℝ) ≤ P := by exact_mod_cast (by omega : 1 ≤ P)
         linarith
       nlinarith [Real.sqrt_nonneg (P : ℝ)]
