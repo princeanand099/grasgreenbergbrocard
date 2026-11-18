@@ -19,5 +19,8 @@ import GrasGreenbergBrocard.ExternalAxiomsSec3
 import GrasGreenbergBrocard.ChebyshevLucas
 import GrasGreenbergBrocard.PellFundamental
 import GrasGreenbergBrocard.Thm1_1Collapse
-import GrasGreenbergBrocard.Thm1_2Iwasawa
 import GrasGreenbergBrocard.Picard2Torsion
+import GrasGreenbergBrocard.Thm1_2Iwasawa
+import GrasGreenbergBrocard.ExternalAxiomsSec4
+import GrasGreenbergBrocard.Prop4_1SmoothBiquad
+import GrasGreenbergBrocard.Thm4_2QuarticCores
