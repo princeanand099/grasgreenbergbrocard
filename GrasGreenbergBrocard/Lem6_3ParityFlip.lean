@@ -981,7 +981,13 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
                 ≤ (1 + 2 / (Real.log (n₁ : ℝ)) ^ 2) * ((δ + ε / 100) * Real.log (n₁ : ℝ)) := by gcongr; linarith
               _ = (δ + (2 / (Real.log (n₁ : ℝ)) ^ 2) * δ +
                     (1 + 2 / (Real.log (n₁ : ℝ)) ^ 2) * (ε / 100)) * Real.log (n₁ : ℝ) := by ring
-              _ ≤ (δ + (ε / 40) * (1 / 4) + 2 * (ε / 100)) * Real.log (n₁ : ℝ) := by gcongr; nlinarith
+              _ ≤ (δ + (ε / 40) * (1 / 4) + 2 * (ε / 100)) * Real.log (n₁ : ℝ) := by
+                have hterm1 : (2 / (Real.log (n₁ : ℝ)) ^ 2) * δ ≤ (ε / 40) * (1 / 4) :=
+                  mul_le_mul ha_eps hδ1 hδ0.le (by positivity)
+                have hterm2 : (1 + 2 / (Real.log (n₁ : ℝ)) ^ 2) * (ε / 100) ≤ 2 * (ε / 100) := by
+                  nlinarith
+                gcongr
+                linarith
               _ ≤ (δ + ε / 20) * Real.log (n₁ : ℝ) := by gcongr; linarith
           calc (1 + 2 / (Real.log (n₁ : ℝ)) ^ 2) * (n₁ : ℝ) * (δ * Real.log (n₁ : ℝ) + C_mert)
               = (n₁ : ℝ) * ((1 + 2 / (Real.log (n₁ : ℝ)) ^ 2) * (δ * Real.log (n₁ : ℝ) + C_mert)) := by ring
@@ -996,7 +1002,7 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
           (ε / 8) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
         have hsub : S_collar ⊆ ((Finset.Icc 3 (Nat.floor y₂)).filter Nat.Prime).filter (fun p : ℕ => y₁ < (p : ℝ)) := by
           intro p hp; simp only [S_collar, S_all, Finset.mem_filter, Finset.mem_Icc] at hp ⊢
-          exact ⟨⟨⟨hp.1.1.1.1, Nat.le_floor hp.2.2.le⟩, hp.1.2.1⟩, hp.2.1⟩
+          exact ⟨⟨⟨hp.1.1.1, Nat.le_floor hp.2.2.le⟩, hp.1.2.1⟩, hp.2.1⟩
         have h1 := le_trans (Finset.sum_le_sum_of_subset_of_nonneg hsub (fun _ _ _ => by positivity))
           (h_band_exact y₁ y₂ (le_trans hlog2_le_ndelta hy₁_gt.le) hy₁_lt_y₂.le)
         have hy_ratio : y₂ / y₁ ≤ 3 * (Real.log (n₁ : ℝ)) ^ (A_R + 4) := by
@@ -2060,6 +2066,6 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
       rw [abs_le]
       constructor <;> nlinarith [show 0 ≤ (n₁ : ℝ) * Real.log (n₁ : ℝ) by positivity]
   dsimp only
-  exact ⟨h_branch1, h_branch2⟩
+  exact ⟨fun hh => h_branch1 hh, fun hh => h_branch2 hh⟩
 
 end GrasGreenbergBrocard
