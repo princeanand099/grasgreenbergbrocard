@@ -660,22 +660,23 @@ lemma lem_6_3_osc_bound
           _ ≤ C₂ * 1 * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) +
               C₂ * 1 * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := add_le_add h_cs h_sn
           _ = 2 * C₂ * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by ring
-      calc ‖errC‖ ≤ ∑ p ∈ I_k, ‖((w_base (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) * _‖ := norm_sum_le _ _
-        _ ≤ ∑ p ∈ I_k, 3 * Real.log (p : ℝ) *
-              (L₁ * (B_tilde ((n₁ : ℝ) / (p : ℝ))).re + L₁ * (B_tilde ((n₂ : ℝ) / (p : ℝ))).re) := by
-            apply Finset.sum_le_sum; intro p hp
-            rw [norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_mul]
-            have hp_mem := hI_k p hp
-            have hw3 : |w_base (p : ℝ)| ≤ 3 := hw_base_bd (p : ℝ) ⟨hp_mem.2.1.le, hp_mem.2.2⟩
-            have hlog_nn : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by exact_mod_cast hp_mem.1.pos)
-            rw [abs_of_nonneg hlog_nn]
-            calc |w_base (p : ℝ)| * Real.log (p : ℝ) * ‖_‖
-                ≤ 3 * Real.log (p : ℝ) * (L₁ * (B_tilde ((n₁ : ℝ) / (p : ℝ))).re + L₁ * (B_tilde ((n₂ : ℝ) / (p : ℝ))).re) := by
-                  gcongr; exact hpw_bd p hp
-        _ = 3 * L₁ * ((∑ p ∈ I_k, Real.log (p : ℝ) * (B_tilde ((n₁ : ℝ) / (p : ℝ))).re) +
-              (∑ p ∈ I_k, Real.log (p : ℝ) * (B_tilde ((n₂ : ℝ) / (p : ℝ))).re)) := by
-            rw [← Finset.sum_add_distrib, Finset.mul_sum]; apply Finset.sum_congr rfl; intro p _; ring
-        _ ≤ _ := mul_le_mul_of_nonneg_left (add_le_add hB1_sum hB2_sum) (by positivity)
+      have h_err_sum1 : ‖errC‖ ≤ ∑ p ∈ I_k, 3 * Real.log (p : ℝ) *
+            (L₁ * (B_tilde ((n₁ : ℝ) / (p : ℝ))).re + L₁ * (B_tilde ((n₂ : ℝ) / (p : ℝ))).re) := by
+        refine le_trans (norm_sum_le _ _) (Finset.sum_le_sum fun p hp => ?_)
+        rw [norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_mul]
+        have hp_mem := hI_k p hp
+        have hw3 : |w_base (p : ℝ)| ≤ 3 := hw_base_bd (p : ℝ) ⟨hp_mem.2.1.le, hp_mem.2.2⟩
+        have hlog_nn : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by exact_mod_cast hp_mem.1.pos)
+        rw [abs_of_nonneg hlog_nn]
+        exact mul_le_mul (mul_le_mul_of_nonneg_right hw3 hlog_nn) (hpw_bd p hp) (norm_nonneg _) (by positivity)
+      have h_err_sum2 : (∑ p ∈ I_k, 3 * Real.log (p : ℝ) *
+            (L₁ * (B_tilde ((n₁ : ℝ) / (p : ℝ))).re + L₁ * (B_tilde ((n₂ : ℝ) / (p : ℝ))).re)) =
+          3 * L₁ * ((∑ p ∈ I_k, Real.log (p : ℝ) * (B_tilde ((n₁ : ℝ) / (p : ℝ))).re) +
+            (∑ p ∈ I_k, Real.log (p : ℝ) * (B_tilde ((n₂ : ℝ) / (p : ℝ))).re)) := by
+        rw [← Finset.sum_add_distrib, Finset.mul_sum]
+        exact Finset.sum_congr rfl fun p _ => by ring
+      exact le_trans (le_trans h_err_sum1 (le_of_eq h_err_sum2))
+        (mul_le_mul_of_nonneg_left (add_le_add hB1_sum hB2_sum) (by positivity))
     have h_comb : |∑ p ∈ I_k,
         ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
           ((padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ))| ≤
