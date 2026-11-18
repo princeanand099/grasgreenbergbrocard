@@ -33,6 +33,7 @@
 | **Eqs. (4.1)–(4.3)** ($k=2$ algebraic identities) | `k_eq_2_identities` | `Prop4_1SmoothBiquad.lean` |
 | **Proposition 4.1(i) (eq. 4.4)** ($(n/2)$-smoothness of $m+1$, radical bounds) | `prop_4_1_part1` | `Prop4_1SmoothBiquad.lean` |
 | **Proposition 4.1(ii) (eqs. 4.5–4.6)** (biquadratic splitting & Fermat-quotient lock) | `prop_4_1_part2` | `Prop4_1SmoothBiquad.lean` |
-| **Theorem 4.2(i) (eqs. 4.7–4.10)** (first-stage Euclidean division quartic law) | `thm_4_2_part1_quartic_law` | `Thm4_2QuarticCores.lean` |
-| **Theorem 4.2(ii) (eqs. 4.11–4.13, 4.15)** (second-stage consecutive splitting & dual quartic locks) | `thm_4_2_part2_dual_quartic` | `Thm4_2QuarticCores.lean` |
-| **Theorem 4.2(iii) (eqs. 4.14, 4.16)** (stretched-exponential midpoint core bounds) | `thm_4_2_part3_midpoint_core_bounds` | `Thm4_2QuarticCores.lean` |
+| **Eqs. (4.7), (4.10)** (first-stage factorial splitting & $\sqrt{n}$-smooth/rough parts) | `A_star`, `B_star`, `Z_k2`, `A_k2`, `B_k2`, `Z_le_sqrt`, `Z_gt_sqrt` | `Thm4_2QuarticCores.lean` |
+| **Theorem 4.2(i) (eqs. 4.8–4.10)** (first-stage Euclidean division quartic law & $4\log Z = o(n\log n)$) | `thm_4_2_part1_quartic_law`, `thm_4_2_part1_euclidean_lock` | `Thm4_2QuarticCores.lean` |
+| **Theorem 4.2(ii) (eqs. 4.11–4.13, 4.15)** (second-stage consecutive splitting, dual quartic locks, $\log B_\mp$ asymptotics) | `thm_4_2_part2_dual_quartic`, `thm_4_2_part2_euclidean_locks` | `Thm4_2QuarticCores.lean` |
+| **Theorem 4.2(iii) (eqs. 4.14, 4.16)** (power-band equidistribution $n^{1/2 - \varepsilon}$ & explicit Mertens $n^{1/4 - \varepsilon}$ midpoint core bounds) | `thm_4_2_part3_midpoint_core_bounds`, `thm_4_2_part3_mertens_bound` | `Thm4_2QuarticCores.lean` |

@@ -30,13 +30,11 @@ Lean 4 (v4.35.0) + Mathlib formalization of the Brocard–Ramanujan–Greenberg�
 - `GrasGreenbergBrocard/Picard2Torsion.lean`: **Proposition 3.3 (eq. 3.8)** (`J_n_sq_eq`, `zsqrtd_neg_units`, `J_n_principal_iff_k_eq_2`, `k_eq_1_picard_identity`, `second_stage_nonprincipal_k_eq_2`).
 - `GrasGreenbergBrocard/Thm1_2Iwasawa.lean`: **Theorem 1.2(i)–(iii) (eqs. 1.8, 3.6–3.7)** (`nagura_prime_in_band`, `prime_in_band_val_and_coprime_k`, `val_s_n_ge_one_on_half`, `thm_1_2_part1_valuation_law`, `thm_1_2_part2_split_primes`, `thm_1_2_part3_conditional_finiteness`).
 
-### Section 4: Arithmetic Structure of the Critical Regime $k = 2$ (In Progress on `sec4`)
+### Section 4: Arithmetic Structure of the Critical Regime $k = 2$
 - `GrasGreenbergBrocard/ExternalAxiomsSec4.lean`: Mertens' first theorem on odd primes and PNT $n$-th prime asymptotic.
-- `GrasGreenbergBrocard/Prop4_1SmoothBiquad.lean`: **Proposition 4.1(i)–(ii) (eqs. 4.1–4.6)**.
-- `GrasGreenbergBrocard/Thm4_2QuarticCores.lean`: **Theorem 4.2(i)–(iii) (eqs. 4.7–4.16)**.
+- `GrasGreenbergBrocard/Prop4_1SmoothBiquad.lean`: **Proposition 4.1(i)–(ii) (eqs. 4.1–4.6)** (`k_eq_2_identities`, `prop_4_1_part1`, `prop_4_1_part2`).
+- `GrasGreenbergBrocard/Thm4_2QuarticCores.lean`: **Theorem 4.2(i)–(iii) (eqs. 4.7–4.16)** (`thm_4_2_part1_quartic_law`, `thm_4_2_part1_euclidean_lock`, `thm_4_2_part2_dual_quartic`, `thm_4_2_part2_euclidean_locks`, `thm_4_2_part3_midpoint_core_bounds`, `thm_4_2_part3_mertens_bound`).
 
 ## Documentation
 - [`THEOREM_CORRESPONDENCE.md`](THEOREM_CORRESPONDENCE.md): Exact mapping from manuscript theorems, lemmas, propositions, and equations to Lean 4 declarations.
 - [`EXTERNAL_AXIOMS.md`](EXTERNAL_AXIOMS.md): Complete inventory of external axioms with published literature citations.
-- [`MATHEMATICAL_CORRECTIONS.md`](MATHEMATICAL_CORRECTIONS.md): Formalization clarifications and verification notes.
-- [`PROGRESS.md`](PROGRESS.md): Milestone-by-milestone completion log.
