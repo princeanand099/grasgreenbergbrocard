@@ -335,15 +335,29 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       (1 - α) / 2 - ε ≤ theta_weight n₁ m₁ + theta_weight n₂ m₂ ∧
       theta_weight n₁ m₁ + theta_weight n₂ m₂ ≤ (3 + α) / 2 + ε ∧
       |theta_weight n₁ m₁ - theta_weight n₂ m₂| ≤ (1 + α) / 2 + ε := by
+  suffices h_aux : ∀ ε' : ℝ, 0 < ε' → ε' ≤ 1 →
+      ∃ N₀ : ℕ, 25 ≤ N₀ ∧ ∀ n₁ n₂ m₁ m₂ : ℕ, N₀ ≤ n₁ → n₁ < n₂ →
+        (n₂ - n₁ : ℝ) ≤ (n₁ : ℝ) ^ α →
+        Nat.factorial n₁ + 1 = m₁ ^ 2 → Nat.factorial n₂ + 1 = m₂ ^ 2 →
+        (1 - α) / 2 - ε' ≤ theta_weight n₁ m₁ + theta_weight n₂ m₂ ∧
+        theta_weight n₁ m₁ + theta_weight n₂ m₂ ≤ (3 + α) / 2 + ε' ∧
+        |theta_weight n₁ m₁ - theta_weight n₂ m₂| ≤ (1 + α) / 2 + ε' by
+    obtain ⟨N₀, hN₀, hCD⟩ := h_aux (min ε 1) (by positivity) (min_le_right _ _)
+    refine ⟨N₀, hN₀, fun n₁ n₂ m₁ m₂ hn₁ hlt hgap hm₁ hm₂ => ?_⟩
+    have h1 := hCD n₁ n₂ m₁ m₂ hn₁ hlt hgap hm₁ hm₂
+    have hmin : min ε 1 ≤ ε := min_le_left _ _
+    exact ⟨by linarith, by linarith, by linarith⟩
+  clear ε hε
+  intro ε hε hε_le1
   let δ := min (ε / 16) (1 / 8)
   have hδ0 : 0 < δ := by positivity
   have hδ1 : δ ≤ 1 / 4 := by linarith [min_le_right (ε / 16) (1 / 8 : ℝ)]
   obtain ⟨N_flip, hN_flip_ge, h_flip⟩ := lem_6_3_parity_flip_uniform δ hδ0 hδ1 (ε / 16) (by positivity)
   obtain ⟨C_cs, hC_cs, N_cs, hN_cs_ge, h_cs⟩ := thm_5_2_part1_cross_symmetry
   obtain ⟨N_sodd, hN_sodd⟩ := Filter.eventually_atTop.mp
-    (Asymptotics.IsLittleO.bound S_odd_asymptotic (show (0 : ℝ) < min (ε / 128) (1 / 8) by positivity))
+    (Asymptotics.IsLittleO.bound S_odd_asymptotic (show (0 : ℝ) < min (ε / 256) (1 / 8) by positivity))
   obtain ⟨N_dp, hN_dp⟩ := Filter.eventually_atTop.mp
-    (Asymptotics.IsLittleO.bound Delta_parity_isLittleO_mul_log (show (0 : ℝ) < ε / 128 by positivity))
+    (Asymptotics.IsLittleO.bound Delta_parity_isLittleO_mul_log (show (0 : ℝ) < ε / 256 by positivity))
   have h_alpha_div : Filter.Tendsto (fun n : ℕ => (n : ℝ) ^ (α - 1)) Filter.atTop (nhds 0) := by
     have h1 := tendsto_rpow_neg_atTop (show 0 < 1 - α by linarith) |>.comp tendsto_natCast_atTop_atTop
     refine h1.congr (fun n => ?_)
@@ -803,13 +817,13 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
     have hcs := h_cs n_a m_a (by omega) hma
     dsimp only at hcs
     have hSodd_a : |S_odd n_a - (1 / 2 : ℝ) * (n_a : ℝ) * Real.log (n_a : ℝ)| ≤
-        min (ε / 128) (1 / 8) * (n_a : ℝ) * Real.log (n_a : ℝ) := by
+        min (ε / 256) (1 / 8) * (n_a : ℝ) * Real.log (n_a : ℝ) := by
       have h1 := hN_sodd n_a (by omega)
       rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (by positivity)] at h1
       linarith
     have hSodd_pos : 0 < S_odd n_a := by
       have := (abs_le.mp hSodd_a).1
-      have h1 : (1 / 8 : ℝ) ≥ min (ε / 128) (1 / 8) := min_le_right _ _
+      have h1 : (1 / 8 : ℝ) ≥ min (ε / 256) (1 / 8) := min_le_right _ _
       have hlog_a : 0 < Real.log (n_a : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n_a))
       nlinarith [show (0 : ℝ) < n_a by positivity]
     have hθ_eq : Real.log (B_part n_a ((m_a + 1) / 2) : ℝ) = theta_weight n_a m_a * S_odd n_a := by
@@ -932,17 +946,27 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         rw [hdp_eq]
         have h1 := hN_dp n_a (by omega)
         rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (by positivity)] at h1
-        have h2 : |Delta_parity n_a| / 2 ≤ (ε / 256) * (n_a : ℝ) * Real.log (n_a : ℝ) := by linarith
-        nlinarith [show (0 : ℝ) ≤ (n₁ : ℝ) * Real.log (n₁ : ℝ) by positivity]
+        have h2 : |Delta_parity n_a| / 2 ≤ (ε / 512) * ((n_a : ℝ) * Real.log (n_a : ℝ)) := by linarith
+        have h3 : (n_a : ℝ) * Real.log (n_a : ℝ) ≤ 2 * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by
+          nlinarith only [hna_log_ub, hε_le1, show (0 : ℝ) ≤ (n₁ : ℝ) * Real.log (n₁ : ℝ) by positivity]
+        calc |Delta_parity n_a| / 2 ≤ (ε / 512) * ((n_a : ℝ) * Real.log (n_a : ℝ)) := h2
+          _ ≤ (ε / 512) * (2 * ((n₁ : ℝ) * Real.log (n₁ : ℝ))) := by gcongr
+          _ ≤ (ε / 64) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by nlinarith only [hε, show (0 : ℝ) ≤ (n₁ : ℝ) * Real.log (n₁ : ℝ) by positivity]
       linarith
     have hθ_01 : 0 ≤ theta_weight n_a m_a ∧ theta_weight n_a m_a ≤ 1 :=
       ⟨theta_weight_nonneg n_a m_a, theta_weight_le_one (by omega) hma⟩
     have h_diff_S : |2 * S_odd n_a - (n₁ : ℝ) * Real.log (n₁ : ℝ)| ≤ (ε / 32) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
       have h1 : |2 * S_odd n_a - (n_a : ℝ) * Real.log (n_a : ℝ)| ≤ (ε / 64) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
         have h1' := abs_le.mp hSodd_a
-        have hmin : min (ε / 128) (1 / 8) ≤ ε / 128 := min_le_left _ _
-        rw [abs_le]; constructor <;> nlinarith [show 0 ≤ (n_a : ℝ) * Real.log (n_a : ℝ) by positivity,
-          show 0 ≤ (n₁ : ℝ) * Real.log (n₁ : ℝ) by positivity]
+        have hmin : min (ε / 256) (1 / 8) ≤ ε / 256 := min_le_left _ _
+        have h_na2 : (n_a : ℝ) * Real.log (n_a : ℝ) ≤ 2 * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by
+          nlinarith only [hna_log_ub, hε_le1, show (0 : ℝ) ≤ (n₁ : ℝ) * Real.log (n₁ : ℝ) by positivity]
+        have h_b : |2 * S_odd n_a - (n_a : ℝ) * Real.log (n_a : ℝ)| ≤ (ε / 128) * ((n_a : ℝ) * Real.log (n_a : ℝ)) := by
+          rw [abs_le]; constructor <;> nlinarith only [h1'.1, h1'.2, hmin, show 0 ≤ (n_a : ℝ) * Real.log (n_a : ℝ) by positivity]
+        calc |2 * S_odd n_a - (n_a : ℝ) * Real.log (n_a : ℝ)|
+            ≤ (ε / 128) * ((n_a : ℝ) * Real.log (n_a : ℝ)) := h_b
+          _ ≤ (ε / 128) * (2 * ((n₁ : ℝ) * Real.log (n₁ : ℝ))) := by gcongr
+          _ = (ε / 64) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by ring
       have h2 : |(n_a : ℝ) * Real.log (n_a : ℝ) - (n₁ : ℝ) * Real.log (n₁ : ℝ)| ≤ (ε / 64) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
         rw [abs_le]; constructor <;> linarith
       rw [abs_le] at h1 h2 ⊢; constructor <;> linarith
@@ -1104,6 +1128,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
 For every `ε > 0`:
 1. Any two `k = 2` solutions `n₁ < n₂` with `n₁` sufficiently large satisfy `n₂ - n₁ > n₁ ^ (1 - ε)`.
 2. `#{1 ≤ n ≤ N : ∃ m, n! + 1 = m^2 ∧ k = 2} ≤ C_ε * N ^ ε` for all `N ≥ 1`. -/
+open Classical in
 theorem thm_1_3_part1_k2_gap_and_counting (ε : ℝ) (hε : 0 < ε) :
     (∃ N₀ : ℕ, 8 ≤ N₀ ∧ ∀ n₁ n₂ m₁ m₂ X₁ Y₁ X₂ Y₂ : ℕ, N₀ ≤ n₁ → n₁ < n₂ →
       Nat.factorial n₁ + 1 = m₁ ^ 2 → Nat.factorial n₂ + 1 = m₂ ^ 2 →
@@ -1179,7 +1204,7 @@ theorem thm_1_3_part1_k2_gap_and_counting (ε : ℝ) (hε : 0 < ε) :
         have hsum_eq : ∑ i ∈ Finset.range (S.card - 1),
             (if hi : i + 1 < S.card then ((f ⟨i + 1, hi⟩ : ℝ) - (f ⟨i, by omega⟩ : ℝ)) else 0) =
             (f ⟨S.card - 1, by omega⟩ : ℝ) - (f ⟨0, by omega⟩ : ℝ) := by
-          have htel : ∀ k : ℕ, k ≤ S.card - 1 →
+          have htel : ∀ k : ℕ, (hk : k ≤ S.card - 1) →
               ∑ i ∈ Finset.range k,
                 (if hi : i + 1 < S.card then ((f ⟨i + 1, hi⟩ : ℝ) - (f ⟨i, by omega⟩ : ℝ)) else 0) =
               (f ⟨k, by omega⟩ : ℝ) - (f ⟨0, by omega⟩ : ℝ) := by
@@ -1238,7 +1263,7 @@ theorem thm_1_3_part1_k2_gap_and_counting (ε : ℝ) (hε : 0 < ε) :
       have hnN : n ≤ N := (Finset.mem_Icc.mp (Finset.mem_filter.mp hn_mem.1).1).2
       refine ⟨Nat.log 2 n, Nat.lt_succ_of_le (Nat.log_mono_right hnN), hn, ?_, ?_⟩
       · exact Nat.pow_log_le_self 2 (by omega)
-      · have := Nat.lt_pow_succ_log_self (by norm_num : 1 < 2) n; omega
+      · exact Nat.le_sub_one_of_lt (Nat.lt_pow_succ_log_self (by norm_num : 1 < 2) n)
     have hcard_hi : S_hi.card ≤ ∑ k ∈ Finset.range (K + 1),
         (S_hi.filter (fun n => 2 ^ k ≤ n ∧ n ≤ 2 ^ (k + 1) - 1)).card :=
       le_trans (Finset.card_le_card hsub_hi) Finset.card_biUnion_le
@@ -1258,7 +1283,7 @@ theorem thm_1_3_part1_k2_gap_and_counting (ε : ℝ) (hε : 0 < ε) :
           have hpow_le : ((2 : ℝ) ^ k) ^ (1 - ε₂) ≤ (x : ℝ) ^ (1 - ε₂) :=
             Real.rpow_le_rpow (by positivity) (by exact_mod_cast hx.2.1) (by linarith [min_le_right (ε / 2) (1 / 2 : ℝ)])
           have hlt_r : (x : ℝ) < (y : ℝ) := by exact_mod_cast hxy
-          have : ((y - x : ℕ) : ℝ) = (y : ℝ) - (x : ℝ) := by exact_mod_cast (by omega : (y : ℤ) - x = ↑(y - x))
+          have : ((y - x : ℕ) : ℝ) = (y : ℝ) - (x : ℝ) := by rw [Nat.cast_sub hxy.le]
           linarith)
       have h_div_eq : (((2 ^ (k + 1) : ℕ) : ℝ) - ((2 ^ k : ℕ) : ℝ)) / ((2 : ℝ) ^ k) ^ (1 - ε₂) =
           ((2 : ℝ) ^ ε₂) ^ k := by
@@ -1333,7 +1358,6 @@ theorem prop_6_2_part3_consecutive_squares_k2_exclusion :
       rw [← Real.rpow_natCast ((j : ℝ) ^ (3 / 2 : ℝ)) 2, ← Real.rpow_mul (by positivity)]
       norm_num; nlinarith
     nlinarith [Real.rpow_nonneg (by positivity : (0 : ℝ) ≤ j) (3 / 2)]
-  rw [Nat.cast_sub (by nlinarith : j ^ 2 ≤ (j + 1) ^ 2)] at h1
   push_cast at h1; linarith
 
 end GrasGreenbergBrocard
