@@ -270,7 +270,23 @@ theorem thm_5_2_part1_bipartition {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial
           rw [← sq]
           exact dvd_trans (pow_dvd_pow p (by omega : 2 ≤ padicValNat p (q_n n))) pow_padicValNat_dvd
         exact (Nat.squarefree_iff_prime_squarefree.mp (q_n_squarefree n)) p hp hp2_dvd
-      rcases h_not_both with h0 | h0 <;> simp [h0] at hv_eq ⊢ <;> omega
+      rcases h_not_both with h0 | h0
+      · rw [h0, zero_add] at hv_eq
+        simp only [h0, Nat.zero_mod, OfNat.zero_ne_ofNat, ↓reduceIte, zero_add]
+        by_cases hq0 : padicValNat p (q_n n) = 0
+        · have hmod : padicValNat p u₂ % 2 = 0 := by omega
+          simp [hq0, hmod]
+        · have hq1 : padicValNat p (q_n n) = 1 := by omega
+          have hmod : padicValNat p u₂ % 2 = 1 := by omega
+          simp [hq1, hmod]
+      · rw [h0, add_zero] at hv_eq
+        simp only [h0, Nat.zero_mod, OfNat.zero_ne_ofNat, ↓reduceIte, add_zero]
+        by_cases hq0 : padicValNat p (q_n n) = 0
+        · have hmod : padicValNat p u₁ % 2 = 0 := by omega
+          simp [hq0, hmod]
+        · have hq1 : padicValNat p (q_n n) = 1 := by omega
+          have hmod : padicValNat p u₁ % 2 = 1 := by omega
+          simp [hq1, hmod]
     · simp [Nat.factorization_eq_zero_of_not_prime _ hp]
   have hz_prod : z₁ * z₂ = s_n n / 2 := by
     have hsq_eq : (z₁ * z₂) ^ 2 = (s_n n / 2) ^ 2 := by
@@ -671,7 +687,6 @@ theorem thm_5_2_part1_cross_symmetry :
     have hv2 := congrArg (padicValNat 2) h4u
     have h4v : padicValNat 2 4 = 2 := by
       rw [show (4 : ℕ) = 2 ^ 2 by norm_num, padicValNat_pow_eq, padicValNat_self]
-      ring
     rw [padicValNat.mul (by norm_num) (mul_pos hu₁_pos hu₂_pos).ne',
         padicValNat.mul hu₁_pos.ne' hu₂_pos.ne', h4v] at hv2
     dsimp [w₂₁, w₂₂]; linarith
@@ -761,7 +776,7 @@ theorem thm_5_2_part1_cross_symmetry :
         rw [this]; field_simp [show (u₁ : ℝ) ≠ 0 by exact_mod_cast hu₁_pos.ne']
       rw [hdiv]
       linarith [Real.log_le_sub_one_of_pos (by positivity : (0 : ℝ) < 1 + 1 / (u₁ : ℝ))]
-    have hm_pos : 0 < m := by omega
+    have hm_pos : 0 < m := by dsimp [u₁] at hu₁_pos; omega
     have h_u1_lb : (m : ℝ) / 4 ≤ (u₁ : ℝ) := by
       have : 2 * u₁ = m - 1 := by omega
       have : (m : ℝ) ≤ 4 * (u₁ : ℝ) := by
@@ -925,7 +940,7 @@ theorem thm_5_2_part1_radical_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 /
         have hne : 1 - δ * 2 ≠ 0 := by linarith
         have := mul_le_mul_of_nonneg_left hlog2 hpos.le
         have heq : (δ / 8) * (1 / 2 - δ) * (1 / ((δ / 8) * (1 / 2 - δ))) = 1 := by
-          field_simp [hpos.ne', hne]; ring
+          field_simp [hpos.ne', hne]
         linarith
       have h_le_d : (n : ℝ) ^ (1 / 2 - ε) ≤ (n : ℝ) ^ (1 / 2 - δ) :=
         Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast (by omega : 1 ≤ n)) (by dsimp [δ]; linarith)
@@ -969,13 +984,22 @@ theorem thm_5_2_part1_radical_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 /
           intro i hi
           have hi1 : 1 ≤ i := (Finset.mem_Ico.mp hi).1
           have hp_ne : (p : ℝ) ≠ 0 := by exact_mod_cast hp.ne_zero
-          rw [show i = (i - 1) + 1 by omega, pow_succ]
-          field_simp [hp_ne]
-          ring
-        rw [Finset.mul_sum, Finset.sum_congr rfl h_telesc]
-        have h_sum := Finset.sum_Ico_sub (fun i => (1 / (p : ℝ)) ^ i) (by omega : 1 ≤ n + 1)
-        simp only [Nat.sub_self, pow_zero, Nat.add_sub_cancel] at h_sum
-        linarith
+          calc ((p : ℝ) - 1) * (1 / (p : ℝ)) ^ i
+              = ((p : ℝ) - 1) * (1 / (p : ℝ)) ^ ((i - 1) + 1) := by rw [Nat.sub_add_cancel hi1]
+            _ = ((p : ℝ) - 1) * ((1 / (p : ℝ)) ^ (i - 1) * (1 / (p : ℝ))) := by rw [pow_succ]
+            _ = (1 / (p : ℝ)) ^ (i - 1) - (1 / (p : ℝ)) ^ ((i - 1) + 1) := by
+              field_simp [hp_ne]; ring
+            _ = (1 / (p : ℝ)) ^ (i - 1) - (1 / (p : ℝ)) ^ i := by rw [Nat.sub_add_cancel hi1]
+        have h_telesc_sum : ∀ m : ℕ, ∑ i ∈ Finset.Ico 1 (m + 1),
+            ((1 / (p : ℝ)) ^ (i - 1) - (1 / (p : ℝ)) ^ i) = 1 - (1 / (p : ℝ)) ^ m := by
+          intro m
+          induction m with
+          | zero => simp
+          | succ m ihm =>
+            rw [Finset.sum_Ico_succ_top (by omega : 1 ≤ m + 1), ihm]
+            simp [Nat.add_sub_cancel]
+            ring
+        rw [Finset.mul_sum, Finset.sum_congr rfl h_telesc, h_telesc_sum n]
       rw [hp1]
       have h_nonneg : 0 ≤ (1 / (p : ℝ)) ^ n := by positivity
       nlinarith
@@ -1161,7 +1185,7 @@ theorem thm_5_2_part1_radical_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 /
           Finset.prod_dvd_prod_of_subset S_hi u.primeFactors id hsub_u
         have hpos_prod : 0 < ∏ p ∈ u.primeFactors, p :=
           Finset.prod_pos (fun p hp => (Nat.prime_of_mem_primeFactors hp).pos)
-        have h2 : ((∏ p ∈ S_hi, p : ℕ) : ℝ) ≤ ((∏ p ∈ u.primeFactors, p : ℕ) : ℝ) :=
+        have h2 : ((∏ p ∈ S_hi, p : ℕ) : ℝ) ≤ ((∏ p ∈ u.primeFactors, p : ℕ) : ℝ) := by
           exact_mod_cast Nat.le_of_dvd hpos_prod h1
         simpa only [Nat.cast_prod] using h2
       have hlog_prod_lb : (n : ℝ) ^ (1 / 2 - ε) ≤ Real.log (∏ p ∈ S_hi, (p : ℝ)) := by
@@ -1635,8 +1659,8 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
                 rw [hA_eq, hX_eq]; nlinarith
               have : (q_n n : ℤ) * (B : ℤ) * (Y₁ : ℤ) < (A : ℤ) * (X₁ : ℤ) := by
                 by_contra hle; push_neg at hle
-                nlinarith [mul_nonneg (mul_nonneg (Nat.cast_nonneg (q_n n)) (Nat.cast_nonneg B)) (Nat.cast_nonneg Y₁),
-                           mul_nonneg (Nat.cast_nonneg A) (Nat.cast_nonneg X₁)]
+                nlinarith [show (0 : ℤ) ≤ (q_n n : ℤ) * (B : ℤ) * (Y₁ : ℤ) by positivity,
+                           show (0 : ℤ) ≤ (A : ℤ) * (X₁ : ℤ) by positivity]
               dsimp [A']; linarith
             have hB'_lt : B'.natAbs < B := by
               have hX1_gt : 1 < X₁ := X1_gt_one hq_ge hfund
