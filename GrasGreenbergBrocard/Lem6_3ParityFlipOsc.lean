@@ -309,7 +309,7 @@ lemma lem_6_3_osc_bound
           calc (1 / 2 : ℝ) ^ (R + 2) ≤ (1 / 2 : ℝ) ^ 6 := pow_le_pow_of_le_one (by norm_num) (by norm_num) (by omega)
             _ = 1 / 64 := by norm_num
         have : (δ / 2 : ℝ) ^ (R + 2) ≤ 1 / 64 := by
-          rw [div_pow]; calc δ ^ (R + 2) / 2 ^ (R + 2) = δ ^ (R + 2) * (1 / 2 : ℝ) ^ (R + 2) := by ring
+          rw [div_pow]; calc δ ^ (R + 2) / 2 ^ (R + 2) = δ ^ (R + 2) * (1 / 2 : ℝ) ^ (R + 2) := by rw [one_div, inv_pow, div_eq_mul_inv]
             _ ≤ 1 * (1 / 64) := mul_le_mul hd_le h2_le (by positivity) (by norm_num)
             _ = 1 / 64 := one_mul _
         exact mul_le_mul_of_nonneg_right this (by positivity)
@@ -326,13 +326,12 @@ lemma lem_6_3_osc_bound
       have h2R : ((δ / 2) * Real.log (n₁ : ℝ)) ^ (R + 2) ≤ (Real.log (h : ℝ)) ^ (R + 2) := by
         apply pow_le_pow_left₀ (by positivity)
         linarith [show 0 ≤ δ * Real.log (n₁ : ℝ) by positivity]
-      exact_mod_cast (by
-        have : (H : ℝ) ≤ (Nat.floor ((Real.log (h : ℝ)) ^ (R + 2)) : ℝ) :=
-          (Nat.le_floor_iff (by positivity)).mpr (le_trans hH_le_real h2R)
-        linarith)
+      have hH_nat : H ≤ Nat.floor ((Real.log (h : ℝ)) ^ (R + 2)) :=
+        (Nat.le_floor_iff (by positivity)).mpr (le_trans hH_le_real h2R)
+      exact_mod_cast (by omega : 2 * (H : ℤ) + 1 ≤ 2 * (Nat.floor ((Real.log (h : ℝ)) ^ (R + 2)) : ℤ) + 1)
     let w_base : ℝ → ℝ := fun t =>
       let p := Nat.floor t
-      if p = 0 then 0 else
+      if p = 0 ∨ ¬ p.Prime then 0 else
         ((-1 : ℝ) ^ ((padicValNat p (Nat.factorial n₁) - n₁ / p) +
           (padicValNat p (Nat.factorial n₂) - n₂ / p))) *
         ((padicValNat p (Nat.factorial n₁) : ℝ) / ((n₁ : ℝ) / P))
@@ -340,11 +339,11 @@ lemma lem_6_3_osc_bound
       intro t ht
       dsimp [w_base]
       set p := Nat.floor t
-      by_cases hp0 : p = 0
+      by_cases hp0 : p = 0 ∨ ¬ p.Prime
       · simp [hp0]
-      · simp only [hp0, ↓reduceIte, abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul]
-        by_cases hp_pr : p.Prime
-        · have hp_ge3 : 3 ≤ p := by
+      · have hp_pr : p.Prime := not_not.mp (not_or.mp hp0).2
+        simp only [hp0, ↓reduceIte, abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul]
+        have hp_ge3 : 3 ≤ p := by
             have hP3 : 3 ≤ P := le_trans hn₁_delta_ge3 hP_lb
             have hlt_fl : P - 1 < (p : ℝ) := by
               have := Nat.sub_one_lt_floor t; linarith [ht.1]
@@ -361,9 +360,8 @@ lemma lem_6_3_osc_bound
               _ ≤ 2 * (n₁ : ℝ) / ((2 / 3 : ℝ) * P) := by gcongr
               _ = 3 * (n₁ : ℝ) / P := by ring
           rw [abs_of_nonneg (by positivity), div_le_iff₀ (by positivity)]
-          linarith
-        · simp only [padicValNat.eq_zero_of_not_prime hp_pr, Nat.cast_zero, zero_div, abs_zero]
-          norm_num
+          linarith [show 3 * (n₁ : ℝ) / P = 3 * ((n₁ : ℝ) / P) by ring]
+
     have h_sum_rewrite : ∑ p ∈ I_k,
         ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
           ((padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ)) =
@@ -383,7 +381,8 @@ lemma lem_6_3_osc_bound
         rw [hleg]
         rcases Nat.eq_zero_or_pos (Nat.log p n₁) with h0 | hpos
         · have : n₁ < p := by
-            by_contra hge; push_neg at hge; have := Nat.log_pos hp_pr.one_lt hge; omega
+            by_contra hge; rw [not_lt] at hge
+            exact absurd (Nat.log_pos hp_pr.one_lt hge) (by rw [h0]; exact lt_irrefl 0)
           rw [Nat.div_eq_of_lt this]; exact Nat.zero_le _
         · exact Finset.single_le_sum (f := fun i => n₁ / p ^ i) (fun _ _ => Nat.zero_le _)
             (Finset.mem_Ico.mpr ⟨le_refl 1, by omega⟩)
@@ -393,7 +392,8 @@ lemma lem_6_3_osc_bound
         rw [hleg]
         rcases Nat.eq_zero_or_pos (Nat.log p n₂) with h0 | hpos
         · have : n₂ < p := by
-            by_contra hge; push_neg at hge; have := Nat.log_pos hp_pr.one_lt hge; omega
+            by_contra hge; rw [not_lt] at hge
+            exact absurd (Nat.log_pos hp_pr.one_lt hge) (by rw [h0]; exact lt_irrefl 0)
           rw [Nat.div_eq_of_lt this]; exact Nat.zero_le _
         · exact Finset.single_le_sum (f := fun i => n₂ / p ^ i) (fun _ _ => Nat.zero_le _)
             (Finset.mem_Ico.mpr ⟨le_refl 1, by omega⟩)
@@ -415,12 +415,12 @@ lemma lem_6_3_osc_bound
           ((padicValNat p (Nat.factorial n₁) - n₁ / p) +
             (padicValNat p (Nat.factorial n₂) - n₂ / p)) + (n₁ / p + n₂ / p) := by omega
       dsimp [w_base]
-      rw [hfl_p, if_neg hp_ne0, hfl1, hfl2, zpow_natCast, zpow_natCast]
+      rw [hfl_p, if_neg (not_or.mpr ⟨hp_ne0, not_not.mpr hp_pr⟩), hfl1, hfl2, zpow_natCast, zpow_natCast]
       have h_pow : (-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂)) =
           (-1 : ℝ) ^ ((padicValNat p (Nat.factorial n₁) - n₁ / p) +
             (padicValNat p (Nat.factorial n₂) - n₂ / p)) *
           (-1 : ℝ) ^ (n₁ / p) * (-1 : ℝ) ^ (n₂ / p) := by
-        rw [hexp_eq, pow_add, pow_add]
+        rw [hexp_eq, pow_add, pow_add, pow_add]; ring
       rw [h_pow]
       have hn1P_ne : (n₁ : ℝ) / P ≠ 0 := by positivity
       field_simp [hn1P_ne]; ring
