@@ -381,7 +381,7 @@ theorem prop_6_1_part1_sl2_and_four_squares {n₁ n₂ m₁ m₂ : ℕ}
       have hpos : 0 < (P : ℤ) * ((P : ℤ) - 1) * (m₁ : ℤ) ^ 2 + ((P : ℤ) - 1) := by positivity
       linarith
     by_contra hle
-    have hle' : (P : ℤ) * m₁ ≤ m₂ := Int.le_of_not_lt hle
+    have hle' : (P : ℤ) * m₁ ≤ m₂ := not_lt.mp hle
     have hPm1_nn : (0 : ℤ) ≤ (P : ℤ) * m₁ := by positivity
     have hsq_le : ((P : ℤ) * m₁) ^ 2 ≤ (m₂ : ℤ) ^ 2 := sq_le_sq' (by linarith) hle'
     linarith
