@@ -946,7 +946,9 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
             have : 0 ≤ Real.log (Real.log (n₁ : ℝ)) := Real.log_nonneg (by nlinarith); positivity)] at this
           have h2 := (div_lt_iff₀ hlog_n₁_pos).mp this
           have hll_nn : 0 ≤ Real.log (Real.log (n₁ : ℝ)) := Real.log_nonneg (by nlinarith only [hlog_ge3])
-          linarith only [h2, hll_nn]
+          have hle_A : ((A_R : ℝ) + 2) * Real.log (Real.log (n₁ : ℝ)) ≤ ((A_R : ℝ) + 4) * Real.log (Real.log (n₁ : ℝ)) :=
+            mul_le_mul_of_nonneg_right (by linarith) hll_nn
+          linarith only [h2, hle_A]
         linarith
       rw [abs_le]; constructor <;> nlinarith only [hpf_ub, hpf_nn, hlogh_lb, hlogh_ub, hn₁_pos, hlog_n₁_pos, hδ0, hδ1, hε]
     -- Subcase B: h > n₁^δ * (log n₁)^(A_R + 2)
@@ -1083,7 +1085,8 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
                       _ = ε / 100 := by ring
             exact (div_le_iff₀ hlog_n₁_pos).mp h1
           calc 2 * (n₁ : ℝ) * (2 * Real.log (Real.log (n₁ : ℝ)) + C_mert + 1)
-              ≤ 2 * (n₁ : ℝ) * (2 * ((ε / 100) * Real.log (n₁ : ℝ)) + (ε / 100) * Real.log (n₁ : ℝ)) := by gcongr
+              ≤ 2 * (n₁ : ℝ) * (2 * ((ε / 100) * Real.log (n₁ : ℝ)) + (ε / 100) * Real.log (n₁ : ℝ)) :=
+                mul_le_mul_of_nonneg_left (by linarith only [hll, hCm]) (by positivity)
             _ = (3 * ε / 50) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by ring
             _ ≤ (ε / 16) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) :=
               mul_le_mul_of_nonneg_right (by linarith only [hε]) (mul_nonneg hn₁_pos.le hlog_n₁_pos.le)
@@ -1333,7 +1336,9 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
             have : 0 ≤ Real.log (Real.log (n₁ : ℝ)) := Real.log_nonneg (by nlinarith); positivity)] at this
           have h2 := (div_lt_iff₀ hlog_n₁_pos).mp this
           have hll_nn : 0 ≤ Real.log (Real.log (n₁ : ℝ)) := Real.log_nonneg (by nlinarith only [hlog_ge3])
-          linarith only [h2, hll_nn]
+          have hle_A : ((A_R : ℝ) + 2) * Real.log (Real.log (n₁ : ℝ)) ≤ ((A_R : ℝ) + 4) * Real.log (Real.log (n₁ : ℝ)) :=
+            mul_le_mul_of_nonneg_right (by linarith) hll_nn
+          linarith only [h2, hle_A]
         have hCm1 : 2 * C_mert1 ≤ (ε / 50) * Real.log (n₁ : ℝ) := by
           have h7 := hN₇ n₁ (by omega)
           rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at h7
@@ -1375,7 +1380,7 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
           hN₅ hN_exp_d hN_osc_fin n₁ n₂ (by omega) (by omega) (by omega) (by omega) (by omega) hlog_ge3 hlt h_lt_n₁
           hn₁_pos hlog_n₁_pos hh_gt hy₁_gt hy₁_le_n₁ hn₁_delta_ge3
         intro b hb P I hm1 w W₀ hPb hPb2 hIb hm1_nz hm1_bd hTb hw hW₀
-        exact ((hN_exp b hb) P I {1} (fun _ => hm1) w W₀ ⟨1, Finset.mem_singleton_self 1, hm1_nz⟩
+        simpa using ((hN_exp b hb) P I {1} (fun _ => hm1) w W₀ ⟨1, Finset.mem_singleton_self 1, hm1_nz⟩
           hPb hPb2 hIb
           (fun r hr => by rw [Finset.mem_singleton] at hr; subst hr; exact ⟨le_refl 1, by omega⟩)
           (fun r hr => by rw [Finset.mem_singleton] at hr; subst hr; exact hm1_bd)
