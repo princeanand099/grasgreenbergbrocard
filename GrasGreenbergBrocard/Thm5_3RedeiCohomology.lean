@@ -348,7 +348,7 @@ theorem thm_5_3_part2_dual_quartic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factoria
     · intro a ha b hb hab
       have ha_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp ha).1).1).2.1
       have hb_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hb).1).1).2.1
-      exact ((Nat.coprime_primes ha_pr hb_pr).mpr hab).pow _ _
+      exact Nat.coprime_iff_isCoprime.mp (((Nat.coprime_primes ha_pr hb_pr).mpr hab).pow _ _)
     · intro q hq
       have hq_mem := Finset.mem_filter.mp hq
       have hq_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp hq_mem.1).1).2.1
@@ -361,7 +361,7 @@ theorem thm_5_3_part2_dual_quartic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factoria
     · intro a ha b hb hab
       have ha_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp ha).1).1).2.1
       have hb_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hb).1).1).2.1
-      exact ((Nat.coprime_primes ha_pr hb_pr).mpr hab).pow _ _
+      exact Nat.coprime_iff_isCoprime.mp (((Nat.coprime_primes ha_pr hb_pr).mpr hab).pow _ _)
     · intro q hq
       have hq_mem := Finset.mem_filter.mp hq
       have hq_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp hq_mem.1).1).2.1
