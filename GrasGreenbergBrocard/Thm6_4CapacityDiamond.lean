@@ -1153,7 +1153,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       linarith [hZW_lb_e, h_log_ZW_11, hn1_log2_e, hM11_e, hM12_e, hflip_ub_e, hr]
     have hcoeff := le_of_mul_le_mul_right hcomb hnlog_pos
     linarith
-  have h3a : theta_weight n₂ m₂ - theta_weight n₁ m₁ ≤ (1 + α) / 2 + ε := by
+  have h3b : theta_weight n₁ m₁ - theta_weight n₂ m₂ ≤ (1 + α) / 2 + ε := by
     have hcomb : (1 / 2 - ε / 16) * Lnl ≤
         (1 + (theta_weight n₂ m₂ - theta_weight n₁ m₁) + α / 2 + δ + 4 * (ε / 16)) * Lnl := by
       have hr : (1 + (theta_weight n₂ m₂ - theta_weight n₁ m₁) + α / 2 + δ + 4 * (ε / 16)) * Lnl =
@@ -1162,7 +1162,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       linarith [hXY_lb_e, h_log_XY_12, hn1_log2_e, hM11_e, hM22_e, hflip_ub_e, hr]
     have hcoeff := le_of_mul_le_mul_right hcomb hnlog_pos
     linarith
-  have h3b : theta_weight n₁ m₁ - theta_weight n₂ m₂ ≤ (1 + α) / 2 + ε := by
+  have h3a : theta_weight n₂ m₂ - theta_weight n₁ m₁ ≤ (1 + α) / 2 + ε := by
     have hcomb : (1 / 2 - ε / 16) * Lnl ≤
         (1 + (theta_weight n₁ m₁ - theta_weight n₂ m₂) + α / 2 + δ + 4 * (ε / 16)) * Lnl := by
       have hr : (1 + (theta_weight n₁ m₁ - theta_weight n₂ m₂) + α / 2 + δ + 4 * (ε / 16)) * Lnl =
@@ -1173,11 +1173,11 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
     linarith
   exact ⟨h1, h2, abs_le.mpr ⟨by linarith, h3b⟩⟩
 
+open Classical in
 /-- **Theorem 1.3(i) (Extreme Sparsity of the `k = 2` Regime, eq. 1.9)**:
 For every `ε > 0`:
 1. Any two `k = 2` solutions `n₁ < n₂` with `n₁` sufficiently large satisfy `n₂ - n₁ > n₁ ^ (1 - ε)`.
 2. `#{1 ≤ n ≤ N : ∃ m, n! + 1 = m^2 ∧ k = 2} ≤ C_ε * N ^ ε` for all `N ≥ 1`. -/
-open Classical in
 theorem thm_1_3_part1_k2_gap_and_counting (ε : ℝ) (hε : 0 < ε) :
     (∃ N₀ : ℕ, 8 ≤ N₀ ∧ ∀ n₁ n₂ m₁ m₂ X₁ Y₁ X₂ Y₂ : ℕ, N₀ ≤ n₁ → n₁ < n₂ →
       Nat.factorial n₁ + 1 = m₁ ^ 2 → Nat.factorial n₂ + 1 = m₂ ^ 2 →
@@ -1325,7 +1325,7 @@ theorem thm_1_3_part1_k2_gap_and_counting (ε : ℝ) (hε : 0 < ε) :
         (by positivity) (Nat.pow_le_pow_right (by norm_num) (by omega))
         (fun x hx => by
           simp only [B_k, Finset.mem_filter] at hx
-          exact ⟨hx.2.1, by omega⟩)
+          exact ⟨hx.2.1, le_trans hx.2.2 (Nat.sub_le _ _)⟩)
         (fun x hx y hy hxy => by
           simp only [B_k, S_hi, S_all, Finset.mem_filter] at hx hy
           have hgap_xy := hgap₂ x y hx.1.2 hxy hx.1.1.2 hy.1.1.2
