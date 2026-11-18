@@ -959,8 +959,7 @@ theorem thm_5_2_part1_radical_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 /
           (n : ℝ) * ∑ i ∈ Finset.Ico 1 (n + 1), (1 / (p : ℝ)) ^ i := by
         rw [Finset.mul_sum]
         exact Finset.sum_le_sum h_term
-      have hp1 : ((p - 1 : ℕ) : ℝ) = (p : ℝ) - 1 := by
-        exact_mod_cast Nat.cast_sub hp.one_lt.le
+      have hp1 : ((p - 1 : ℕ) : ℝ) = (p : ℝ) - 1 := Nat.cast_sub hp.one_lt.le
       have h_geom : ((p : ℝ) - 1) * ∑ i ∈ Finset.Ico 1 (n + 1), (1 / (p : ℝ)) ^ i =
           1 - (1 / (p : ℝ)) ^ n := by
         have h_telesc : ∀ i ∈ Finset.Ico 1 (n + 1),
@@ -1083,8 +1082,7 @@ theorem thm_5_2_part1_radical_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 /
         exact_mod_cast hleg
       have hp_ge2 : (2 : ℝ) ≤ (p : ℝ) := by exact_mod_cast hp_pr.two_le
       have h_half_p : (p : ℝ) / 2 ≤ (p : ℝ) - 1 := by linarith
-      have hp1_eq : ((p - 1 : ℕ) : ℝ) = (p : ℝ) - 1 := by
-        have := hp_pr.one_lt.le; exact_mod_cast Nat.cast_sub this
+      have hp1_eq : ((p - 1 : ℕ) : ℝ) = (p : ℝ) - 1 := Nat.cast_sub hp_pr.one_lt.le
       rw [hp1_eq] at h_mul_le
       have h_p_vp : (p : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) ≤ 2 * (n : ℝ) := by
         have : ((p : ℝ) / 2) * (padicValNat p (Nat.factorial n) : ℝ) ≤
@@ -1138,7 +1136,7 @@ theorem thm_5_2_part1_radical_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 /
         have heq : (δ / 4) * (n : ℝ) ^ (1 / 2 - δ) * (2 * (n : ℝ) ^ (1 / 2 + δ) * Real.log (n : ℝ)) =
             (δ / 2) * ((n : ℝ) * Real.log (n : ℝ)) := by
           calc _ = (δ / 2) * (((n : ℝ) ^ (1 / 2 - δ) * (n : ℝ) ^ (1 / 2 + δ)) * Real.log (n : ℝ)) := by ring
-            _ = (δ / 2) * ((n : ℝ) * Real.log (n : ℝ)) := by rw [h_pow_mul]; ring
+            _ = (δ / 2) * ((n : ℝ) * Real.log (n : ℝ)) := by rw [h_pow_mul]
         linarith
       exact le_of_mul_le_mul_right h2 (by positivity)
     have hsub_u : S_hi ⊆ u.primeFactors := by
@@ -1156,7 +1154,9 @@ theorem thm_5_2_part1_radical_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 /
           Finset.prod_dvd_prod_of_subset S_hi u.primeFactors id hsub_u
         have hpos_prod : 0 < ∏ p ∈ u.primeFactors, p :=
           Finset.prod_pos (fun p hp => (Nat.prime_of_mem_primeFactors hp).pos)
-        exact_mod_cast Nat.le_of_dvd hpos_prod h1
+        simpa only [Nat.cast_prod] using
+          (by exact_mod_cast Nat.le_of_dvd hpos_prod h1 :
+            ((∏ p ∈ S_hi, p : ℕ) : ℝ) ≤ ((∏ p ∈ u.primeFactors, p : ℕ) : ℝ))
       have hlog_prod_lb : (n : ℝ) ^ (1 / 2 - ε) ≤ Real.log (∏ p ∈ S_hi, (p : ℝ)) := by
         rw [Real.log_prod (fun p hp => by exact_mod_cast (Nat.prime_of_mem_primeFactors (Finset.mem_filter.mp hp).1).ne_zero)]
         have h_each : ∀ p ∈ S_hi, (1 / 2 - δ) * Real.log (n : ℝ) ≤ Real.log (p : ℝ) := by
@@ -1267,8 +1267,7 @@ lemma delta2Mid_ne_two {n X₁ Y₁ : ℕ} (hn : 8 ≤ n) (hfund : IsFundamental
     · intro p hp
       have hp_pr := Nat.prime_of_mem_primeFactors hp
       haveI : Fact p.Prime := ⟨hp_pr⟩
-      have hvp_q1 : (q_n n).factorization p = 1 := by
-        rw [Nat.factorization_def _ hp_pr]
+      have hvp_q1 : padicValNat p (q_n n) = 1 := by
         have h1 : 1 ≤ padicValNat p (q_n n) :=
           one_le_padicValNat_of_dvd hq_pos.ne' (Nat.dvd_of_mem_primeFactors hp)
         have hle1 : padicValNat p (q_n n) ≤ 1 := by
@@ -1277,16 +1276,12 @@ lemma delta2Mid_ne_two {n X₁ Y₁ : ℕ} (hn : 8 ≤ n) (hfund : IsFundamental
             rw [← sq]; exact dvd_trans (pow_dvd_pow p (by omega : 2 ≤ padicValNat p (q_n n))) pow_padicValNat_dvd
           exact (Nat.squarefree_iff_prime_squarefree.mp (q_n_squarefree n)) p hp_pr hpp
         omega
-      rw [hvp_q1, pow_one]
       have hv_eq := congrArg (padicValNat p) h_prod_v
       have hv2_ge1 : 1 ≤ vMid X₁ ^ 2 - 1 := by omega
       have hY'_pos : 0 < Y' := by nlinarith
       rw [padicValNat.mul (pow_ne_zero 2 hv_pos.ne') hv2_ge1.ne',
           padicValNat.mul hq_pos.ne' (pow_ne_zero 2 hY'_pos.ne'),
-          padicValNat_pow_eq, padicValNat_pow_eq] at hv_eq
-      have hvp_q_1 : padicValNat p (q_n n) = 1 := by
-        rw [← Nat.factorization_def _ hp_pr]; exact hvp_q1
-      rw [hvp_q_1] at hv_eq
+          padicValNat_pow_eq, padicValNat_pow_eq, hvp_q1] at hv_eq
       have h_odd_v2m1 : padicValNat p (vMid X₁ ^ 2 - 1) % 2 = 1 := by omega
       simpa using (padicValNat_dvd_iff_le hv2_ge1.ne').mpr (by omega : 1 ≤ padicValNat p (vMid X₁ ^ 2 - 1))
   obtain ⟨w, hw⟩ := hq_dvd
@@ -1445,7 +1440,9 @@ theorem thm_5_2_part2_effective_cores :
         _ ≤ Real.log (δ : ℝ) := by
           have h_nat : ∏ p ∈ (Finset.Ioc (n / 2) n).filter (fun p => p.Prime ∧ p ∣ δ), p ≤ δ :=
             Nat.le_of_dvd hδ_pos hprod_dvd
-          exact Real.log_le_log hprod_pos (by exact_mod_cast h_nat)
+          simpa only [Nat.cast_prod] using
+            Real.log_le_log hprod_pos (by exact_mod_cast h_nat :
+              ((∏ p ∈ (Finset.Ioc (n / 2) n).filter (fun p => p.Prime ∧ p ∣ δ), p : ℕ) : ℝ) ≤ (δ : ℝ))
     have hlog_δ_le : Real.log (δ : ℝ) ≤ c₀ * Real.sqrt (Real.log (n : ℝ)) := by
       rw [← Real.log_exp (c₀ * Real.sqrt (Real.log (n : ℝ)))]
       exact Real.log_le_log (by exact_mod_cast hδ_pos) hle
@@ -1479,7 +1476,7 @@ theorem thm_5_2_part2_effective_cores :
         have hp2_dvd : p * p ∣ 2 * delta2Mid X₁ := by
           rw [hr_eq, sq]; exact mul_dvd_mul hp_dvd_r hp_dvd_r
         have hcop : Nat.Coprime p 2 := (Nat.coprime_primes hp Nat.prime_two).mpr hp_ne2
-        have hp2_dvd_d : p * p ∣ delta2Mid X₁ := (hcop.mul_left hcop).symm.dvd_of_dvd_mul_left hp2_dvd
+        have hp2_dvd_d : p * p ∣ delta2Mid X₁ := (hcop.mul_left hcop).dvd_of_dvd_mul_left hp2_dvd
         exact (Nat.squarefree_iff_prime_squarefree.mp hsf) p hp hp2_dvd_d
       · have h2_dvd_r2 : 2 ∣ r.natAbs ^ 2 := by rw [← hr_eq]; exact dvd_mul_right 2 _
         have h2_dvd_r : 2 ∣ r.natAbs := Nat.prime_two.dvd_of_dvd_pow h2_dvd_r2
@@ -1506,11 +1503,17 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
       have hr_ge : 2 ≤ r := by nlinarith
       obtain ⟨p, hp, hpr⟩ := Nat.exists_prime_and_dvd (by omega : r ≠ 1)
       exact (Nat.squarefree_iff_prime_squarefree.mp (q_n_squarefree n)) p hp (hr ▸ mul_dvd_mul hpr hpr)
-    obtain ⟨u, hu⟩ := Pell.exists_of_not_isSquare hq_pos hnsq
+    have hnsq_z : ¬ IsSquare (q_n n : ℤ) := fun ⟨r, hr⟩ =>
+      hnsq ⟨r.natAbs, by zify; simpa [sq_abs] using hr⟩
+    obtain ⟨u, hu⟩ := Pell.exists_of_not_isSquare (by exact_mod_cast hq_pos : (0 : ℤ) < (q_n n : ℤ)) hnsq_z
+    have hu_prop : u.x ^ 2 - (q_n n : ℤ) * u.y ^ 2 = 1 := u.prop
+    have hu_y_ne : u.y ≠ 0 := by
+      intro hy0
+      have : u.x ^ 2 = 1 := by rw [hy0] at hu_prop; linarith
+      simp_all; nlinarith
     have h_sols : ∃ y : ℕ, 0 < y ∧ ∃ x : ℕ, x ^ 2 = q_n n * y ^ 2 + 1 := by
-      refine ⟨u.y.natAbs, Int.natAbs_pos.mpr hu.2, u.x.natAbs, ?_⟩
+      refine ⟨u.y.natAbs, Int.natAbs_pos.mpr hu_y_ne, u.x.natAbs, ?_⟩
       zify
-      have h1 : u.x ^ 2 - (q_n n : ℤ) * u.y ^ 2 = 1 := hu.1
       simpa [sq_abs] using show u.x ^ 2 = (q_n n : ℤ) * u.y ^ 2 + 1 by linarith
     classical
     let Y₁ := Nat.find h_sols
@@ -1556,25 +1559,25 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
     let Y : ℕ := (x * y).natAbs
     have hX_pos : 0 < X := by
       rcases hsgn with rfl | rfl
-      · dsimp [X]; simp only [↓reduceIte]
+      · dsimp [X]
         have : 1 ≤ x ^ 2 := by nlinarith [sq_pos_iff.mpr hx_ne]
         have : x ^ 2 ≠ 1 := by
           intro h1; rw [h1] at hxy
           have : (q_n n : ℤ) * y ^ 2 = -1 := by linarith
           nlinarith [sq_nonneg y]
         omega
-      · dsimp [X]; simp only [show (-2 : ℤ) ≠ 2 by norm_num, ↓reduceIte]
+      · dsimp [X]
         nlinarith [sq_nonneg x]
     have hY_pos : 0 < Y := Int.natAbs_pos.mpr (mul_ne_zero hx_ne hy_ne)
     have hXY_pell : X ^ 2 - (q_n n : ℤ) * (Y : ℤ) ^ 2 = 1 := by
       rcases hsgn with rfl | rfl
-      · dsimp [X, Y]; simp only [↓reduceIte]; rw [sq_abs]
+      · dsimp [X, Y]; rw [sq_abs]
         have hqy : (q_n n : ℤ) * y ^ 2 = x ^ 2 - 2 := by linarith
         calc (x ^ 2 - 1) ^ 2 - (q_n n : ℤ) * (x * y) ^ 2
             = (x ^ 2 - 1) ^ 2 - x ^ 2 * ((q_n n : ℤ) * y ^ 2) := by ring
           _ = (x ^ 2 - 1) ^ 2 - x ^ 2 * (x ^ 2 - 2) := by rw [hqy]
           _ = 1 := by ring
-      · dsimp [X, Y]; simp only [show (-2 : ℤ) ≠ 2 by norm_num, ↓reduceIte]; rw [sq_abs]
+      · dsimp [X, Y]; rw [sq_abs]
         have hqy : (q_n n : ℤ) * y ^ 2 = x ^ 2 + 2 := by linarith
         calc (x ^ 2 + 1) ^ 2 - (q_n n : ℤ) * (x * y) ^ 2
             = (x ^ 2 + 1) ^ 2 - x ^ 2 * ((q_n n : ℤ) * y ^ 2) := by ring
@@ -1612,7 +1615,9 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
                   exact_mod_cast this
                 linarith
               have : (A : ℤ) * (Y₁ : ℤ) < (B : ℤ) * (X₁ : ℤ) := by
-                by_contra hle; push_neg at hle; nlinarith
+                by_contra hle; push_neg at hle
+                nlinarith [mul_nonneg (Nat.cast_nonneg A) (Nat.cast_nonneg Y₁),
+                           mul_nonneg (Nat.cast_nonneg B) (Nat.cast_nonneg X₁)]
               dsimp [B']; linarith
             have hA'_pos : 0 < A' := by
               have hsq_gt : (q_n n : ℤ) ^ 2 * (B : ℤ) ^ 2 * (Y₁ : ℤ) ^ 2 < (A : ℤ) ^ 2 * (X₁ : ℤ) ^ 2 := by
@@ -1620,7 +1625,9 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
                 have hX_eq : (X₁ : ℤ) ^ 2 = (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 + 1 := by exact_mod_cast hfund.2.2.1
                 rw [hA_eq, hX_eq]; nlinarith
               have : (q_n n : ℤ) * (B : ℤ) * (Y₁ : ℤ) < (A : ℤ) * (X₁ : ℤ) := by
-                by_contra hle; push_neg at hle; nlinarith
+                by_contra hle; push_neg at hle
+                nlinarith [mul_nonneg (mul_nonneg (Nat.cast_nonneg (q_n n)) (Nat.cast_nonneg B)) (Nat.cast_nonneg Y₁),
+                           mul_nonneg (Nat.cast_nonneg A) (Nat.cast_nonneg X₁)]
               dsimp [A']; linarith
             have hB'_lt : B'.natAbs < B := by
               have hX1_gt : 1 < X₁ := X1_gt_one hq_ge hfund
@@ -1637,7 +1644,9 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
                   _ < ((q_n n : ℤ) * (B : ℤ) ^ 2 + 1) * (Y₁ : ℤ) ^ 2 := by nlinarith [sq_pos_iff.mpr (by exact_mod_cast hfund.2.1.ne' : (Y₁ : ℤ) ≠ 0)]
                   _ = (A : ℤ) ^ 2 * (Y₁ : ℤ) ^ 2 := by rw [hA_eq]
               have : (B : ℤ) * ((X₁ : ℤ) - 1) < (A : ℤ) * (Y₁ : ℤ) := by
-                by_contra hle; push_neg at hle; nlinarith
+                by_contra hle; push_neg at hle
+                nlinarith [mul_nonneg (Nat.cast_nonneg B) (by omega : (0 : ℤ) ≤ (X₁ : ℤ) - 1),
+                           mul_nonneg (Nat.cast_nonneg A) (Nat.cast_nonneg Y₁)]
               have hB'_lt_z : B' < (B : ℤ) := by dsimp [B']; linarith
               omega
             have hA'B' : A' ^ 2 - (q_n n : ℤ) * B' ^ 2 = 1 := by
@@ -1741,7 +1750,7 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
           intro h0; have : lucasY (q_n n) X₁ Y₁ r = 0 := Int.natAbs_eq_zero.mp h0
           rw [this] at hx2; simp at hx2; exact hx_ne hx2
         have hn8 : 8 ≤ n := le_trans hN₀8 hn
-        obtain ⟨p, hp, hpq, hpmod⟩ := q_n_has_prime_mod4 (by omega) (by omega)
+        obtain ⟨p, hp, hpq, hpmod⟩ := q_n_has_prime_mod4 (n := n) (by omega) (by omega)
         have hp2 : p ≠ 2 := by intro h2; subst h2; norm_num at hpmod
         haveI : Fact p.Prime := ⟨hp⟩
         have h2q_ne : 2 * q_n n ≠ 0 := (mul_pos (by norm_num) hq_pos).ne'
@@ -1756,7 +1765,7 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
             by_contra hgt
             exact (Nat.squarefree_iff_prime_squarefree.mp (q_n_squarefree n)) p hp
               (by rw [← sq]; exact dvd_trans (pow_dvd_pow p (by omega : 2 ≤ padicValNat p (q_n n))) pow_padicValNat_dvd)
-          omega
+          exact le_antisymm hle1 h1
         rw [hvp_q1] at hv
         have h_eo : 2 * padicValNat p x.natAbs = 1 + 2 * padicValNat p (lucasY (q_n n) X₁ Y₁ r).natAbs := by
           linarith [hv]
@@ -1842,7 +1851,7 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
             by_contra hgt
             exact (Nat.squarefree_iff_prime_squarefree.mp (coreNat_squarefree _)) p hp
               (by rw [← sq]; exact dvd_trans (pow_dvd_pow p (by omega : 2 ≤ padicValNat p (delta2Mid X₁))) pow_padicValNat_dvd)
-          omega
+          exact le_antisymm hle1 h1
         have h_eq_val : 1 + 2 * padicValNat p (vMid X₁ * x.natAbs) =
             2 * padicValNat p ((delta2Mid X₁ : ℤ) * (vMid X₁ : ℤ) ^ 2 * lucasX (q_n n) X₁ Y₁ r +
               (q_n n : ℤ) * (Y₁ : ℤ) * lucasY (q_n n) X₁ Y₁ r).natAbs := by
@@ -1897,7 +1906,7 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
             by_contra hgt
             exact (Nat.squarefree_iff_prime_squarefree.mp (coreNat_squarefree _)) p hp
               (by rw [← sq]; exact dvd_trans (pow_dvd_pow p (by omega : 2 ≤ padicValNat p (delta1Mid X₁))) pow_padicValNat_dvd)
-          omega
+          exact le_antisymm hle1 h1
         have h_eq_val : 1 + 2 * padicValNat p (uMid X₁ * x.natAbs) =
             2 * padicValNat p ((delta1Mid X₁ : ℤ) * (uMid X₁ : ℤ) ^ 2 * lucasX (q_n n) X₁ Y₁ r +
               (q_n n : ℤ) * (Y₁ : ℤ) * lucasY (q_n n) X₁ Y₁ r).natAbs := by
