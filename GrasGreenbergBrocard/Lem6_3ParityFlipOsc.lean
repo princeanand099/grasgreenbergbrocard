@@ -29,10 +29,10 @@ private lemma vaaler_btilde_dyadic_sum_bound
     (h_btilde_b : ∀ h : ℤ, ‖b_tilde h‖ < 3 / ((H : ℝ) + 1))
     (n : ℕ) (hn : 3 ≤ n) (P : ℝ) (hP_pos : 0 < P) (I : Finset ℕ)
     (hI : ∀ p ∈ I, p.Prime ∧ P < (p : ℝ) ∧ (p : ℝ) ≤ 2 * P)
+    (C_exp : ℝ) (hC_exp : 0 ≤ C_exp) (R_exp : ℕ)
     (hExp : ∀ (h : ℤ), h ≠ 0 → |h| ≤ 2 * (H : ℤ) + 1 →
       ‖∑ p ∈ I, (Real.log (p : ℝ) : ℂ) * eExp ((h : ℝ) * (n : ℝ) / (2 * (p : ℝ)))‖ ≤
-        C_exp * P * (Real.log (n : ℝ)) ^ (-((R_exp : ℝ) + 2)))
-    (C_exp : ℝ) (hC_exp : 0 ≤ C_exp) (R_exp : ℕ) :
+        C_exp * P * (Real.log (n : ℝ)) ^ (-((R_exp : ℝ) + 2))) :
     ∑ p ∈ I, (Real.log (p : ℝ)) *
       (b_tilde 0 + ∑ h ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (· ≠ 0),
         b_tilde h * eExp ((h : ℝ) * ((n : ℝ) / (p : ℝ)) / 2)).re ≤
@@ -533,7 +533,7 @@ lemma lem_6_3_osc_bound
             have h_e : eExp (((h₁ : ℝ) * (n₁ : ℝ) + (h₂ : ℝ) * (n₂ : ℝ)) / (2 * (p : ℝ))) =
                 eExp (((h₁ + h₂ : ℤ) : ℝ) * (n₁ : ℝ) / (2 * (p : ℝ))) *
                   eExp ((h₂ : ℝ) * (h : ℝ) / (2 * (p : ℝ))) := by
-              unfold eExp; rw [← Complex.exp_add]; congr 1; push_cast; rw [hn2_eq]; ring
+              unfold eExp; rw [← Complex.exp_add]; congr 1; rw [hn2_eq]; push_cast; ring
             have h_cis : eExp ((h₂ : ℝ) * (h : ℝ) / (2 * (p : ℝ))) =
                 (Real.cos (2 * Real.pi * ((h₂ : ℝ) * (h : ℝ) / (2 * (p : ℝ)))) : ℂ) +
                 Complex.I * (Real.sin (2 * Real.pi * ((h₂ : ℝ) * (h : ℝ) / (2 * (p : ℝ)))) : ℂ) := by
@@ -541,7 +541,7 @@ lemma lem_6_3_osc_bound
               rw [show (2 * Real.pi * ((h₂ : ℝ) * (h : ℝ) / (2 * (p : ℝ))) : ℂ) * Complex.I =
                   ((2 * Real.pi * ((h₂ : ℝ) * (h : ℝ) / (2 * (p : ℝ))) : ℝ) : ℂ) * Complex.I by push_cast; ring,
                 Complex.exp_mul_I]
-              push_cast; rfl
+              push_cast; ring
             rw [h_e, h_cis]; dsimp [w_cos, w_sin]; push_cast; ring
           rw [h_split_cs]
           calc ‖_ + Complex.I * _‖
@@ -649,7 +649,7 @@ lemma lem_6_3_osc_bound
             12 * C₂ * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by
         simp_rw [hB_split]
         refine vaaler_btilde_dyadic_sum_bound H hH_ge1 b_tilde h_btilde0 h_btilde_b n₁ (by omega) P hP_pos I_k hI_k
-          (fun h' hh' hbd => ?_) C₂ hC₂.le R
+          C₂ hC₂.le R (fun h' hh' hbd => ?_)
         have hbd' : |h'| ≤ 2 * (Nat.floor ((Real.log (n₁ : ℝ)) ^ (R + 2)) : ℤ) + 1 :=
           le_trans hbd (by linarith [hH_le_n1])
         simpa using hExp_at n₁ (by omega) (le_refl n₁) hP_le_n₁ hTm_n1 h' (fun _ => 1) 1 hh' hbd'
@@ -670,7 +670,7 @@ lemma lem_6_3_osc_bound
             (4 * P * Real.log (2 * P)) / ((H : ℝ) + 1) +
               12 * C_n2 * P * (Real.log (n₂ : ℝ)) ^ (-((R : ℝ) + 2)) := by
           refine vaaler_btilde_dyadic_sum_bound H hH_ge1 b_tilde h_btilde0 h_btilde_b n₂ (by omega) P hP_pos I_k hI_k
-            (fun h' hh' hbd => ?_) C_n2 (by positivity) R
+            C_n2 (by positivity) R (fun h' hh' hbd => ?_)
           have hbd' : |h'| ≤ 2 * (Nat.floor ((Real.log (n₁ : ℝ)) ^ (R + 2)) : ℤ) + 1 :=
             le_trans hbd (by linarith [hH_le_n1])
           let w_cos : ℝ → ℝ := fun t => Real.cos (2 * Real.pi * ((h' : ℝ) * (h : ℝ) / (2 * t)))
@@ -687,7 +687,7 @@ lemma lem_6_3_osc_bound
             have hn2_eq : (n₂ : ℝ) = (n₁ : ℝ) + (h : ℝ) := by exact_mod_cast (by omega : n₂ = n₁ + h)
             have h_e : eExp ((h' : ℝ) * (n₂ : ℝ) / (2 * (p : ℝ))) =
                 eExp ((h' : ℝ) * (n₁ : ℝ) / (2 * (p : ℝ))) * eExp ((h' : ℝ) * (h : ℝ) / (2 * (p : ℝ))) := by
-              unfold eExp; rw [← Complex.exp_add]; congr 1; push_cast; rw [hn2_eq]; ring
+              unfold eExp; rw [← Complex.exp_add]; congr 1; rw [hn2_eq]; push_cast; ring
             have h_cis : eExp ((h' : ℝ) * (h : ℝ) / (2 * (p : ℝ))) =
                 (Real.cos (2 * Real.pi * ((h' : ℝ) * (h : ℝ) / (2 * (p : ℝ)))) : ℂ) +
                 Complex.I * (Real.sin (2 * Real.pi * ((h' : ℝ) * (h : ℝ) / (2 * (p : ℝ)))) : ℂ) := by
@@ -695,7 +695,7 @@ lemma lem_6_3_osc_bound
               rw [show (2 * Real.pi * Complex.I * ((h' : ℝ) * (h : ℝ) / (2 * (p : ℝ)) : ℝ) : ℂ) =
                   ((2 * Real.pi * ((h' : ℝ) * (h : ℝ) / (2 * (p : ℝ))) : ℝ) : ℂ) * Complex.I by push_cast; ring,
                 Complex.exp_mul_I]
-              push_cast; rfl
+              push_cast; ring
             rw [h_e, h_cis]; dsimp [w_cos, w_sin]; push_cast; ring
           rw [h_sp]
           calc ‖_ + Complex.I * _‖ ≤ ‖_‖ + ‖Complex.I * _‖ := norm_add_le _ _
