@@ -778,18 +778,46 @@ lemma lem_6_3_osc_bound
               ≤ 8 * P * (δ / 2) ^ (-(R : ℤ) - 2) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 1)) := h_inv_H
             _ ≤ 8 * P * (δ / 2) ^ (-(R : ℤ) - 2) * (1 / (Real.log (n₁ : ℝ)) ^ 5) := by gcongr
             _ = 8 * P * (δ / 2) ^ (-(R : ℤ) - 2) / (Real.log (n₁ : ℝ)) ^ 5 := by ring
-        linarith
+        have h12 : 12 * C₂ * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) ≤
+            12 * C₂ * P / (Real.log (n₁ : ℝ)) ^ 5 := by
+          rw [mul_div_assoc', ← one_div]; gcongr
+        have h24 : 24 * C₂ * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) ≤
+            24 * C₂ * P / (Real.log (n₁ : ℝ)) ^ 5 := by
+          rw [mul_div_assoc', ← one_div]; gcongr
+        have hsum_rhs : 2 * (8 * P * (δ / 2) ^ (-(R : ℤ) - 2) / (Real.log (n₁ : ℝ)) ^ 5) +
+            (12 * C₂ * P / (Real.log (n₁ : ℝ)) ^ 5 + 24 * C₂ * P / (Real.log (n₁ : ℝ)) ^ 5) =
+            (16 * (δ / 2) ^ (-(R : ℤ) - 2) + 36 * C₂) * P / (Real.log (n₁ : ℝ)) ^ 5 := by ring
+        linarith only [h_inv_H5, h12, h24, hsum_rhs]
+      have h_inner_nn : 0 ≤ ((4 * P * Real.log (2 * P)) / ((H : ℝ) + 1) +
+          12 * C₂ * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) +
+         ((4 * P * Real.log (2 * P)) / ((H : ℝ) + 1) +
+          24 * C₂ * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) := by
+        have hlog2P_nn : 0 ≤ Real.log (2 * P) := Real.log_nonneg (by linarith only [hn₁_delta_ge3, hP_lb])
+        positivity
+      have h_osc_coef : 6 * ((R : ℝ) + 4) * (16 * (δ / 2) ^ (-(R : ℤ) - 2) + 36 * C₂) ≤ C_osc_const / 2 := by
+        have hR4 : (R : ℝ) + 4 ≤ ((R : ℝ) + 4) ^ 2 + 1 := by nlinarith
+        have h16_36 : 16 * (δ / 2) ^ (-(R : ℤ) - 2) + 36 * C₂ ≤
+            36 * (C₂ + 1) * ((δ / 2) ^ (-(R : ℤ) - 2) + 1) := by
+          nlinarith only [show 0 ≤ C₂ by positivity, show 0 ≤ (δ / 2) ^ (-(R : ℤ) - 2) by positivity]
+        have hR4' : 6 * ((R : ℝ) + 4) ≤ 6 * (((R : ℝ) + 4) ^ 2 + 1) := by linarith only [hR4]
+        calc 6 * ((R : ℝ) + 4) * (16 * (δ / 2) ^ (-(R : ℤ) - 2) + 36 * C₂)
+            ≤ (6 * (((R : ℝ) + 4) ^ 2 + 1)) * (36 * (C₂ + 1) * ((δ / 2) ^ (-(R : ℤ) - 2) + 1)) := by gcongr
+          _ = 216 * (((R : ℝ) + 4) ^ 2 + 1) * (C₂ + 1) * ((δ / 2) ^ (-(R : ℤ) - 2) + 1) := by ring
+          _ ≤ C_osc_const / 2 := by
+              dsimp [C_osc_const]
+              have h_pos : 0 ≤ (((R : ℝ) + 4) ^ 2 + 1) * (C₂ + 1) * ((δ / 2) ^ (-(R : ℤ) - 2) + 1) := by positivity
+              linarith only [h_pos]
       calc ((n₁ : ℝ) / P) * ‖errC‖
           ≤ ((n₁ : ℝ) / P) * (3 * (2 * ((R : ℝ) + 4) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2) *
               ((16 * (δ / 2) ^ (-(R : ℤ) - 2) + 36 * C₂) * P / (Real.log (n₁ : ℝ)) ^ 5)) := by
-              refine le_trans h1 ?_; gcongr
+              refine le_trans h1 ?_
+              exact mul_le_mul_of_nonneg_left (mul_le_mul (mul_le_mul_of_nonneg_left hL1_le_sq (by norm_num))
+                h_inner h_inner_nn (by positivity)) (by positivity)
         _ = 6 * ((R : ℝ) + 4) * (16 * (δ / 2) ^ (-(R : ℤ) - 2) + 36 * C₂) * (n₁ : ℝ) *
               (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by
               field_simp [hP_pos.ne']; ring
         _ ≤ (C_osc_const / 2) * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by
-              gcongr; dsimp [C_osc_const]
-              have hR4 : (R : ℝ) + 4 ≤ ((R : ℝ) + 4) ^ 2 + 1 := by nlinarith
-              nlinarith [show 0 ≤ C₂ by positivity, show 0 ≤ (δ / 2) ^ (-(R : ℤ) - 2) by positivity]
+              gcongr
     have h_osc_ball : C_osc_const * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 2 < ε / 100 := by
       have := hN_osc_fin n₁ (by omega)
       rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at this; exact this
@@ -844,8 +872,8 @@ lemma lem_6_3_osc_bound
   have hcard_blk : ((dyadicBlocks ((n₁ : ℝ) ^ δ) y₁).card : ℝ) ≤ Real.log (n₁ : ℝ) / Real.log 2 + 2 := by
     have h1 := dyadicBlocks_card_le (by linarith : 1 ≤ (n₁ : ℝ) ^ δ) hy₁_gt.le
     have h2 : Real.log (y₁ / (n₁ : ℝ) ^ δ) ≤ Real.log (n₁ : ℝ) := by
-      apply Real.log_le_log (by positivity)
-      exact le_trans (div_le_self (by positivity) (by linarith : 1 ≤ (n₁ : ℝ) ^ δ)) hy₁_le_n₁
+      apply Real.log_le_log (div_pos (lt_trans (by positivity) hy₁_gt) (by positivity))
+      exact le_trans (div_le_self (lt_trans (by positivity) hy₁_gt).le (by linarith : 1 ≤ (n₁ : ℝ) ^ δ)) hy₁_le_n₁
     exact le_trans h1 (by gcongr)
   calc |∑ k ∈ dyadicBlocks ((n₁ : ℝ) ^ δ) y₁, ∑ p ∈ _, _|
       ≤ ∑ k ∈ dyadicBlocks ((n₁ : ℝ) ^ δ) y₁, |∑ p ∈ _, _| := Finset.abs_sum_le_sum_abs _ _
