@@ -21,6 +21,7 @@ any interval `[N', N' + ⌊(N')^{1-ε}⌋]` contains at most `⌊(η^2 * ε)⁻�
 private def PolBad (ε η : ℝ) (n : ℕ) : Prop :=
   ∃ m : ℕ, Nat.factorial n + 1 = m ^ 2 ∧ |theta_eps_weight ε n m - 1 / 2| ≥ η
 
+open Classical in
 theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 / 4)
     (η : ℝ) (hη0 : 0 < η) (hη1 : η ≤ 1 / 2) :
     ∃ N₀ : ℕ, 4 ≤ N₀ ∧
@@ -1205,7 +1206,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
       have hnN : n ≤ N := (Finset.mem_Icc.mp (Finset.mem_filter.mp hn_mem.1).1).2
       refine ⟨Nat.log 2 n, Nat.lt_succ_of_le (Nat.log_mono_right hnN), hn, ?_, ?_⟩
       · exact Nat.pow_log_le_self 2 (by omega)
-      · have := Nat.lt_pow_succ_log_self (by norm_num : 1 < 2) n; omega
+      · exact Nat.le_sub_one_of_lt (Nat.lt_pow_succ_log_self (by norm_num : 1 < 2) n)
     have hcard_hi : S_hi.card ≤ ∑ k ∈ Finset.range (K + 1),
         (S_hi.filter (fun n => 2 ^ k ≤ n ∧ n ≤ 2 ^ (k + 1) - 1)).card :=
       le_trans (Finset.card_le_card hsub_hi) Finset.card_biUnion_le
