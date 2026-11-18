@@ -481,12 +481,14 @@ theorem prop_6_2_part2_consecutive_equipartition :
       Real.log (X_gcd m₁ m₂ : ℝ) := by
     have hpos_prod : 0 < ∏ p ∈ S_good, p ^ padicValNat p (Nat.factorial n) := by
       apply Finset.prod_pos; intro p hp
-      simp only [S_good, Finset.mem_filter] at hp; exact pow_pos hp.1.1.pos _
-    have hle := Real.log_le_log (by exact_mod_cast hpos_prod) (by exact_mod_cast Nat.le_of_dvd hX_pos hdvd_X)
+      simp only [S_good, Finset.mem_filter] at hp; exact pow_pos (by omega : 0 < p) _
+    have hle := Real.log_le_log
+      (show (0 : ℝ) < ↑(∏ p ∈ S_good, p ^ padicValNat p (Nat.factorial n)) by exact_mod_cast hpos_prod)
+      (show (↑(∏ p ∈ S_good, p ^ padicValNat p (Nat.factorial n)) : ℝ) ≤ ↑(X_gcd m₁ m₂) by exact_mod_cast Nat.le_of_dvd hX_pos hdvd_X)
     rw [Nat.cast_prod, Real.log_prod] at hle
     · refine le_trans ?_ hle
       apply le_of_eq; apply Finset.sum_congr rfl; intro p _; rw [Nat.cast_pow, Real.log_pow]
-    · intro p hp; simp only [S_good, Finset.mem_filter] at hp; exact pow_ne_zero _ (by exact_mod_cast hp.1.1.ne_zero)
+    · intro p hp; simp only [S_good, Finset.mem_filter] at hp; exact pow_ne_zero _ (by exact_mod_cast (by omega : p ≠ 0))
   have hS_split : S_odd n =
       (∑ p ∈ S_good, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ)) +
       (∑ p ∈ S_bad, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ)) := by
@@ -500,8 +502,8 @@ theorem prop_6_2_part2_consecutive_equipartition :
     rw [hunion, Finset.sum_union hdisj]
   have hS_bad_ub : ∑ p ∈ S_bad, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) ≤
       0.05 * (n : ℝ) * Real.log (n : ℝ) := by
-    let S_bad_le := S_bad.filter (fun p => (p : ℝ) ≤ Real.log (n : ℝ))
-    let S_bad_gt := S_bad.filter (fun p => Real.log (n : ℝ) < (p : ℝ))
+    let S_bad_le := S_bad.filter (fun (p : ℕ) => (p : ℝ) ≤ Real.log (n : ℝ))
+    let S_bad_gt := S_bad.filter (fun (p : ℕ) => Real.log (n : ℝ) < (p : ℝ))
     have hsplit_bad : S_bad = S_bad_le ∪ S_bad_gt := by
       ext p; simp only [Finset.mem_union, Finset.mem_filter, S_bad_le, S_bad_gt]; constructor
       · intro h; by_cases hle : (p : ℝ) ≤ Real.log (n : ℝ); exact Or.inl ⟨h, hle⟩; exact Or.inr ⟨h, lt_of_not_ge hle⟩
@@ -640,13 +642,17 @@ theorem prop_6_2_part2_consecutive_equipartition :
             gcongr
         _ = 0.025 * (n : ℝ) * Real.log (n : ℝ) := by field_simp [hlog_n_pos.ne']; ring
     linarith
+  have hn_log_pos : (0 : ℝ) < (n : ℝ) * Real.log (n : ℝ) := by
+    have : 0 < Real.log (n : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n))
+    positivity
   have hlog_div_small : 4 * Real.log ((n : ℝ) + 1) ≤ 0.01 * (n : ℝ) * Real.log (n : ℝ) := by
     have := hN₃ n (by omega)
-    rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at this
-    have hn_pos : (0 : ℝ) < (n : ℝ) * Real.log (n : ℝ) := by
-      have : 0 < Real.log (n : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n))
-      positivity
-    have h1 := (div_lt_iff₀ hn_pos).mp this
+    have hlog_n1_nn : 0 ≤ Real.log ((n : ℝ) + 1) := Real.log_nonneg (by linarith)
+    rw [Real.dist_eq, sub_zero, abs_of_nonneg (div_nonneg hlog_n1_nn hn_log_pos.le)] at this
+    have h1 := (div_lt_iff₀ hn_log_pos).mp this
+    linarith
+  have hS_good_le : ∑ p ∈ S_good, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) ≤
+      0.25 * (n : ℝ) * Real.log (n : ℝ) + 0.01 * (n : ℝ) * Real.log (n : ℝ) := by
     linarith
   linarith
 
@@ -693,12 +699,15 @@ theorem prop_6_2_part3_square_shift_exclusions :
     have htsq_gt1 : 1 ≤ t ^ 2 - 1 := by
       have : 4 ≤ t ^ 2 := by nlinarith
       omega
-    have hm_gt : m₂ < t * m₁ := by nlinarith
+    have hm_gt : m₂ < t * m₁ := by
+      have hsq_lt : m₂ ^ 2 < (t * m₁) ^ 2 := by omega
+      nlinarith
     have hdiff_mul : (t * m₁ - m₂) * (t * m₁ + m₂) = t ^ 2 - 1 := by
       have hm2z : ((t * m₁ : ℕ) : ℤ) ^ 2 = (m₂ : ℤ) ^ 2 + ((t ^ 2 : ℤ) - 1) := by
-        zify [show 1 ≤ t ^ 2 by nlinarith]; exact hm2_rel
+        zify [show 1 ≤ t ^ 2 by nlinarith] at hm2_rel; exact hm2_rel
       zify [le_of_lt hm_gt, show 1 ≤ t ^ 2 by nlinarith]
-      linarith
+      rw [show (↑t * ↑m₁ - ↑m₂) * (↑t * ↑m₁ + ↑m₂) = ((t * m₁ : ℕ) : ℤ) ^ 2 - (m₂ : ℤ) ^ 2 by push_cast; ring]
+      linarith [hm2z]
     set u := t * m₁ - m₂
     have hu1 : 1 ≤ u := by omega
     rcases eq_or_lt_of_le hu1 with hu_eq | hu_ge2
@@ -709,7 +718,9 @@ theorem prop_6_2_part3_square_shift_exclusions :
     · have h2tm : 2 * (t * m₁ + m₂) ≤ t ^ 2 - 1 := by
         calc 2 * (t * m₁ + m₂) ≤ u * (t * m₁ + m₂) := Nat.mul_le_mul_right _ hu_ge2
           _ = t ^ 2 - 1 := hdiff_mul
-      have htm_lt : 2 * t * m₁ < t * t := by nlinarith
+      have htm_lt : 2 * t * m₁ < t * t := by
+        have htsq_lt : t ^ 2 - 1 < t * t := by rw [← sq]; omega
+        omega
       have : 2 * m₁ < t := by nlinarith
       omega
   · intro t ht ⟨m₁, m₂, hm₁, hm₂⟩
@@ -734,42 +745,46 @@ theorem prop_6_2_part3_square_shift_exclusions :
           have hgt := factorial_gt_four_mul_add_two (t ^ 2 - 1) (by omega)
           omega
         omega
-      -- Wait: call part 1!
-      have hno : P_ratio (t ^ 2 - 1) (t ^ 2) ≠ t ^ 2 := by
-        -- Use the exact same proof as part 1:
-        have hlt_2m : t < 2 * m₁ := by
-          have : t ^ 2 < (2 * m₁) ^ 2 := by rw [← hP_eq]; linarith
+      have hlt_2m : t < 2 * m₁ := by
+        have : t ^ 2 < (2 * m₁) ^ 2 := by rw [← hP_eq]; linarith
+        nlinarith
+      have hm2_rel : (t * m₁) ^ 2 = m₂ ^ 2 + (t ^ 2 - 1) := by
+        have h1 : m₂ ^ 2 - 1 = P_ratio (t ^ 2 - 1) (t ^ 2) * (m₁ ^ 2 - 1) := by
+          have hfac : P_ratio (t ^ 2 - 1) (t ^ 2) * Nat.factorial (t ^ 2 - 1) = Nat.factorial (t ^ 2) :=
+            P_ratio_mul_factorial hlt
+          zify [show 1 ≤ m₁ ^ 2 by nlinarith, show 1 ≤ m₂ ^ 2 by nlinarith]
+          have hm1z : (Nat.factorial (t ^ 2 - 1) : ℤ) + 1 = (m₁ : ℤ) ^ 2 := by exact_mod_cast hm₁
+          have hm2z : (Nat.factorial (t ^ 2) : ℤ) + 1 = (m₂ : ℤ) ^ 2 := by exact_mod_cast hm₂
+          have hfz : (P_ratio (t ^ 2 - 1) (t ^ 2) : ℤ) * Nat.factorial (t ^ 2 - 1) =
+              Nat.factorial (t ^ 2) := by exact_mod_cast hfac
           nlinarith
-        have hm2_rel : (t * m₁) ^ 2 = m₂ ^ 2 + (t ^ 2 - 1) := by
-          have h1 : m₂ ^ 2 - 1 = P_ratio (t ^ 2 - 1) (t ^ 2) * (m₁ ^ 2 - 1) := by
-            have hfac : P_ratio (t ^ 2 - 1) (t ^ 2) * Nat.factorial (t ^ 2 - 1) = Nat.factorial (t ^ 2) :=
-              P_ratio_mul_factorial hlt
-            zify [show 1 ≤ m₁ ^ 2 by nlinarith, show 1 ≤ m₂ ^ 2 by nlinarith]
-            have hm1z : (Nat.factorial (t ^ 2 - 1) : ℤ) + 1 = (m₁ : ℤ) ^ 2 := by exact_mod_cast hm₁
-            have hm2z : (Nat.factorial (t ^ 2) : ℤ) + 1 = (m₂ : ℤ) ^ 2 := by exact_mod_cast hm₂
-            have hfz : (P_ratio (t ^ 2 - 1) (t ^ 2) : ℤ) * Nat.factorial (t ^ 2 - 1) =
-                Nat.factorial (t ^ 2) := by exact_mod_cast hfac
-            nlinarith
-          zify [show 1 ≤ m₁ ^ 2 by nlinarith, show 1 ≤ m₂ ^ 2 by nlinarith, show 1 ≤ t ^ 2 by nlinarith] at h1 ⊢
-          rw [hP_eq] at h1; push_cast at h1 ⊢; linarith
-        have htsq_gt1 : 1 ≤ t ^ 2 - 1 := by omega
-        have hm_gt : m₂ < t * m₁ := by nlinarith
-        have hdiff_mul : (t * m₁ - m₂) * (t * m₁ + m₂) = t ^ 2 - 1 := by
-          have hm2z : ((t * m₁ : ℕ) : ℤ) ^ 2 = (m₂ : ℤ) ^ 2 + ((t ^ 2 : ℤ) - 1) := by
-            zify [show 1 ≤ t ^ 2 by nlinarith]; exact hm2_rel
-          zify [le_of_lt hm_gt, show 1 ≤ t ^ 2 by nlinarith]; linarith
-        set u := t * m₁ - m₂
-        have hu1 : 1 ≤ u := by omega
-        rcases eq_or_lt_of_le hu1 with hu_eq | hu_ge2
-        · rw [← hu_eq, one_mul] at hdiff_mul
-          have : 2 * m₁ = t := by nlinarith
+        zify [show 1 ≤ m₁ ^ 2 by nlinarith, show 1 ≤ m₂ ^ 2 by nlinarith, show 1 ≤ t ^ 2 by nlinarith] at h1 ⊢
+        rw [hP_eq] at h1; push_cast at h1 ⊢; linarith
+      have htsq_gt1 : 1 ≤ t ^ 2 - 1 := by omega
+      have hm_gt : m₂ < t * m₁ := by
+        have hsq_lt : m₂ ^ 2 < (t * m₁) ^ 2 := by omega
+        nlinarith
+      have hdiff_mul : (t * m₁ - m₂) * (t * m₁ + m₂) = t ^ 2 - 1 := by
+        have hm2z : ((t * m₁ : ℕ) : ℤ) ^ 2 = (m₂ : ℤ) ^ 2 + ((t ^ 2 : ℤ) - 1) := by
+          zify [show 1 ≤ t ^ 2 by nlinarith] at hm2_rel; exact hm2_rel
+        zify [le_of_lt hm_gt, show 1 ≤ t ^ 2 by nlinarith]
+        rw [show (↑t * ↑m₁ - ↑m₂) * (↑t * ↑m₁ + ↑m₂) = ((t * m₁ : ℕ) : ℤ) ^ 2 - (m₂ : ℤ) ^ 2 by push_cast; ring]
+        linarith [hm2z]
+      set u := t * m₁ - m₂
+      have hu1 : 1 ≤ u := by omega
+      rcases eq_or_lt_of_le hu1 with hu_eq | hu_ge2
+      · rw [← hu_eq, one_mul] at hdiff_mul
+        have : 2 * (t * m₁) = t ^ 2 := by omega
+        have : 2 * m₁ = t := by nlinarith
+        omega
+      · have h2tm : 2 * (t * m₁ + m₂) ≤ t ^ 2 - 1 := by
+          calc 2 * (t * m₁ + m₂) ≤ u * (t * m₁ + m₂) := Nat.mul_le_mul_right _ hu_ge2
+            _ = t ^ 2 - 1 := hdiff_mul
+        have htm_lt : 2 * t * m₁ < t * t := by
+          have htsq_lt : t ^ 2 - 1 < t * t := by rw [← sq]; omega
           omega
-        · have : 2 * (t * m₁ + m₂) ≤ t ^ 2 - 1 := by
-            calc 2 * (t * m₁ + m₂) ≤ u * (t * m₁ + m₂) := Nat.mul_le_mul_right _ hu_ge2
-              _ = t ^ 2 - 1 := hdiff_mul
-          have : 2 * m₁ < t := by nlinarith
-          omega
-      exact hno hP_eq
+        have : 2 * m₁ < t := by nlinarith
+        omega
   · intro j m₁ m₂ hj hm₁ hm₂ T hT
     set n₁ := j ^ 2
     set n₂ := (j + 1) ^ 2
