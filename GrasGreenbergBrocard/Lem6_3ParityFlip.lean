@@ -64,6 +64,187 @@ private lemma neg_one_pow_val_sum_eq {n₁ n₂ p : ℕ} (hlt : n₁ < n₂) (hp
     rw [if_pos hdvd, hodd.neg_one_pow]
     ring
 
+
+private lemma lem_6_3_main_lb
+    (δ ε C_mert1 : ℝ) (hδ0 : 0 < δ) (hε : 0 < ε)
+    (hMert1 : ∀ x : ℝ, 3 ≤ x → |∑ p ∈ (Finset.Icc 3 (Nat.floor x)).filter Nat.Prime,
+      Real.log (p : ℝ) / ((p : ℝ) - 1) - Real.log x| ≤ C_mert1)
+    (R A_R : ℕ) (n₁ h : ℕ) (h_lt_n₁ : h < n₁)
+    (hn₁_pos : (0 : ℝ) < n₁) (hlog_n₁_pos : 0 < Real.log (n₁ : ℝ))
+    (hlog_ge3 : 3 ≤ (Real.log (n₁ : ℝ)) ^ 2)
+    (hh_gt : (n₁ : ℝ) ^ δ < (h : ℝ)) (hh_pos : (0 : ℝ) < h)
+    (y₁ : ℝ) (hy₁_def : y₁ = (h : ℝ) / (Real.log (n₁ : ℝ)) ^ (A_R + 2))
+    (hy₁_pos : 0 < y₁) (hy₁_gt : (n₁ : ℝ) ^ δ < y₁) (hy₁_le_n₁ : y₁ ≤ (n₁ : ℝ))
+    (hn₁_delta_ge3 : 3 ≤ (n₁ : ℝ) ^ δ) (hlog2_le_ndelta : (Real.log (n₁ : ℝ)) ^ 2 ≤ (n₁ : ℝ) ^ δ)
+    (herr1_A : ((A_R : ℝ) + 2) * Real.log (Real.log (n₁ : ℝ)) ≤ (ε / 100) * Real.log (n₁ : ℝ))
+    (hCm1 : 2 * C_mert1 ≤ (ε / 50) * Real.log (n₁ : ℝ))
+    (h_one_sub : 1 / (n₁ : ℝ) ^ δ ≤ ε / 20)
+    (h_1n_le : (n₁ : ℝ) ≤ (ε / 100) * (n₁ : ℝ) * Real.log (n₁ : ℝ)) :
+    (n₁ : ℝ) * Real.log (h : ℝ) - δ * (n₁ : ℝ) * Real.log (n₁ : ℝ) - (ε / 4) * (n₁ : ℝ) * Real.log (n₁ : ℝ) ≤
+      ∑ p ∈ ((Finset.Icc 3 n₁).filter Nat.Prime).filter (fun p : ℕ => (n₁ : ℝ) ^ δ < (p : ℝ) ∧ (p : ℝ) ≤ y₁),
+        (padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ) := by
+  let I_osc := ((Finset.Icc 3 n₁).filter Nat.Prime).filter (fun p : ℕ => (n₁ : ℝ) ^ δ < (p : ℝ) ∧ (p : ℝ) ≤ y₁)
+  have hterm : ∀ p ∈ I_osc,
+      (n₁ : ℝ) * (Real.log (p : ℝ) / (p : ℝ)) - Real.log (p : ℝ) ≤
+        (padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ) := by
+    intro p hp
+    have hp_mem := Finset.mem_filter.mp hp
+    have hp_pr := (Finset.mem_filter.mp hp_mem.1).2
+    have hp_pos : (0 : ℝ) < p := by exact_mod_cast hp_pr.pos
+    have hv1 : n₁ / p ≤ padicValNat p (Nat.factorial n₁) := by
+      haveI : Fact p.Prime := ⟨hp_pr⟩
+      have hleg := padicValNat_factorial (p := p) (n := n₁) (b := Nat.log p n₁ + 1) (Nat.lt_succ_self _)
+      rw [hleg]
+      rcases Nat.eq_zero_or_pos (Nat.log p n₁) with hlog0 | hlog_pos
+      · have hn1_lt_p : n₁ < p := by
+          by_contra hge; push Not at hge
+          have : 1 ≤ Nat.log p n₁ := Nat.log_pos hp_pr.one_lt hge
+          omega
+        rw [Nat.div_eq_of_lt hn1_lt_p]; exact Nat.zero_le _
+      · have hmem : 1 ∈ Finset.Ico 1 (Nat.log p n₁ + 1) := Finset.mem_Ico.mpr ⟨le_refl 1, by omega⟩
+        simpa using Finset.single_le_sum (f := fun i => n₁ / p ^ i) (fun _ _ => Nat.zero_le _) hmem
+    have hv_real : (n₁ : ℝ) / (p : ℝ) - 1 ≤ (padicValNat p (Nat.factorial n₁) : ℝ) := by
+      have h1 : (n₁ : ℝ) / (p : ℝ) - 1 < ((n₁ / p : ℕ) : ℝ) := by
+        have hlt_nat : n₁ < (n₁ / p + 1) * p := by
+          rw [add_mul, one_mul]; exact Nat.lt_div_mul_add hp_pr.pos
+        have hlt_r : (n₁ : ℝ) < (((n₁ / p : ℕ) : ℝ) + 1) * (p : ℝ) := by exact_mod_cast hlt_nat
+        rw [sub_lt_iff_lt_add, div_lt_iff₀ hp_pos]; exact hlt_r
+      linarith only [h1, show ((n₁ / p : ℕ) : ℝ) ≤ (padicValNat p (Nat.factorial n₁) : ℝ) from by exact_mod_cast hv1]
+    have hlogp : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by exact_mod_cast hp_pr.pos)
+    calc (n₁ : ℝ) * (Real.log (p : ℝ) / (p : ℝ)) - Real.log (p : ℝ)
+        = ((n₁ : ℝ) / (p : ℝ) - 1) * Real.log (p : ℝ) := by ring
+      _ ≤ (padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ) := by gcongr
+  refine le_trans ?_ (Finset.sum_le_sum hterm)
+  rw [Finset.sum_sub_distrib, ← Finset.mul_sum]
+  have hn₁_d_nn : (0 : ℝ) ≤ (n₁ : ℝ) ^ δ := Real.rpow_nonneg hn₁_pos.le _
+  have hdisj_i : Disjoint I_osc ((Finset.Icc 3 (Nat.floor ((n₁ : ℝ) ^ δ))).filter Nat.Prime) := by
+    rw [Finset.disjoint_left]; intro p h1 h2
+    simp only [I_osc, Finset.mem_filter, Finset.mem_Icc] at h1 h2
+    have : (p : ℝ) ≤ (n₁ : ℝ) ^ δ := (Nat.le_floor_iff hn₁_d_nn).mp h2.1.2
+    linarith only [h1.2.1, this]
+  have hun_i : (Finset.Icc 3 (Nat.floor y₁)).filter Nat.Prime =
+      I_osc ∪ (Finset.Icc 3 (Nat.floor ((n₁ : ℝ) ^ δ))).filter Nat.Prime := by
+    ext p; simp only [Finset.mem_union, I_osc, Finset.mem_filter, Finset.mem_Icc]
+    constructor
+    · intro hp
+      by_cases hle : (p : ℝ) ≤ (n₁ : ℝ) ^ δ
+      · exact Or.inr ⟨⟨hp.1.1, Nat.le_floor hle⟩, hp.2⟩
+      · refine Or.inl ⟨⟨⟨hp.1.1, le_trans hp.1.2 (by simpa [Nat.floor_natCast] using Nat.floor_le_floor hy₁_le_n₁)⟩, hp.2⟩,
+          lt_of_not_ge hle, (Nat.le_floor_iff hy₁_pos.le).mp hp.1.2⟩
+    · rintro (hp | hp)
+      · exact ⟨⟨hp.1.1.1, Nat.le_floor hp.2.2⟩, hp.1.2⟩
+      · exact ⟨⟨hp.1.1, Nat.le_floor (le_trans ((Nat.le_floor_iff hn₁_d_nn).mp hp.1.2) hy₁_gt.le)⟩, hp.2⟩
+  have hI_eq_diff : ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ) =
+      (∑ p ∈ (Finset.Icc 3 (Nat.floor y₁)).filter Nat.Prime, Real.log (p : ℝ) / (p : ℝ)) -
+      (∑ p ∈ (Finset.Icc 3 (Nat.floor ((n₁ : ℝ) ^ δ))).filter Nat.Prime, Real.log (p : ℝ) / (p : ℝ)) := by
+    rw [hun_i, Finset.sum_union hdisj_i, add_sub_cancel_right]
+  have h_p_pm1 : (1 - 1 / (n₁ : ℝ) ^ δ) *
+      ∑ p ∈ I_osc, Real.log (p : ℝ) / ((p : ℝ) - 1) ≤
+      ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ) := by
+    have hn₁_d_pos : (0 : ℝ) < (n₁ : ℝ) ^ δ := by positivity
+    rw [Finset.mul_sum]
+    apply Finset.sum_le_sum; intro p hp
+    have hp_mem := Finset.mem_filter.mp hp
+    have hp_pr := (Finset.mem_filter.mp hp_mem.1).2
+    have hp_gt : (n₁ : ℝ) ^ δ < (p : ℝ) := hp_mem.2.1
+    have hp3 : (3 : ℝ) < (p : ℝ) := lt_of_le_of_lt hn₁_delta_ge3 hp_gt
+    have hlogp : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by linarith only [hp3])
+    have hratio : (1 - 1 / (n₁ : ℝ) ^ δ) / ((p : ℝ) - 1) ≤ 1 / (p : ℝ) := by
+      rw [div_le_div_iff₀ (by linarith only [hp3]) (by linarith only [hp3])]
+      have h1 : 1 / (p : ℝ) ≤ 1 / (n₁ : ℝ) ^ δ := one_div_le_one_div_of_le hn₁_d_pos hp_gt.le
+      calc (1 - 1 / (n₁ : ℝ) ^ δ) * (p : ℝ) ≤ (1 - 1 / (p : ℝ)) * (p : ℝ) := by gcongr
+        _ = (p : ℝ) - 1 := by field_simp [(by linarith only [hp3] : (p : ℝ) ≠ 0)]
+        _ = 1 * ((p : ℝ) - 1) := by ring
+    calc (1 - 1 / (n₁ : ℝ) ^ δ) * (Real.log (p : ℝ) / ((p : ℝ) - 1))
+        = Real.log (p : ℝ) * ((1 - 1 / (n₁ : ℝ) ^ δ) / ((p : ℝ) - 1)) := by ring
+      _ ≤ Real.log (p : ℝ) * (1 / (p : ℝ)) := by gcongr
+      _ = Real.log (p : ℝ) / (p : ℝ) := by ring
+  have hmert_osc_lb : Real.log (y₁ / (n₁ : ℝ) ^ δ) - 2 * C_mert1 ≤
+      ∑ p ∈ I_osc, Real.log (p : ℝ) / ((p : ℝ) - 1) := by
+    have hm1 := abs_le.mp (hMert1 y₁ (le_trans hn₁_delta_ge3 hy₁_gt.le))
+    have hm2 := abs_le.mp (hMert1 ((n₁ : ℝ) ^ δ) hn₁_delta_ge3)
+    have hsum_eq : ∑ p ∈ I_osc, Real.log (p : ℝ) / ((p : ℝ) - 1) =
+        (∑ p ∈ (Finset.Icc 3 (Nat.floor y₁)).filter Nat.Prime, Real.log (p : ℝ) / ((p : ℝ) - 1)) -
+        (∑ p ∈ (Finset.Icc 3 (Nat.floor ((n₁ : ℝ) ^ δ))).filter Nat.Prime, Real.log (p : ℝ) / ((p : ℝ) - 1)) := by
+      rw [hun_i, Finset.sum_union hdisj_i, add_sub_cancel_right]
+    rw [hsum_eq, Real.log_div hy₁_pos.ne' (by positivity)]
+    linarith only [hm1.1, hm2.2]
+  have hsum_log_I : ∑ p ∈ I_osc, Real.log (p : ℝ) ≤ (n₁ : ℝ) := by
+    have hcard : (I_osc.card : ℝ) ≤ y₁ := by
+      have hsub : I_osc ⊆ Finset.Icc 1 (Nat.floor y₁) := by
+        intro p hp; simp only [I_osc, Finset.mem_filter, Finset.mem_Icc] at hp ⊢
+        exact ⟨by omega, Nat.le_floor hp.2.2⟩
+      exact le_trans (by exact_mod_cast le_trans (Finset.card_le_card hsub) (by simp)) (Nat.floor_le (by positivity))
+    have hterm_log : ∀ p ∈ I_osc, Real.log (p : ℝ) ≤ Real.log (n₁ : ℝ) := by
+      intro p hp; simp only [I_osc, Finset.mem_filter, Finset.mem_Icc] at hp
+      exact Real.log_le_log (by exact_mod_cast hp.1.2.pos) (by exact_mod_cast hp.1.1.2)
+    calc ∑ p ∈ I_osc, Real.log (p : ℝ) ≤ (I_osc.card : ℝ) * Real.log (n₁ : ℝ) := by
+          simpa [Finset.sum_const, nsmul_eq_mul] using Finset.sum_le_sum hterm_log
+      _ ≤ y₁ * Real.log (n₁ : ℝ) :=
+          mul_le_mul_of_nonneg_right hcard hlog_n₁_pos.le
+      _ ≤ ((n₁ : ℝ) / (Real.log (n₁ : ℝ)) ^ (A_R + 2)) * Real.log (n₁ : ℝ) := by
+          refine mul_le_mul_of_nonneg_right ?_ hlog_n₁_pos.le
+          rw [hy₁_def]
+          exact div_le_div_of_nonneg_right (by exact_mod_cast le_of_lt h_lt_n₁) (by positivity)
+      _ ≤ (n₁ : ℝ) := by
+          have hlog1 : 1 ≤ Real.log (n₁ : ℝ) := by nlinarith
+          have hpow : Real.log (n₁ : ℝ) ≤ (Real.log (n₁ : ℝ)) ^ (A_R + 2) :=
+            le_self_pow₀ hlog1 (by omega)
+          rw [div_mul_eq_mul_div, div_le_iff₀ (by positivity)]
+          exact mul_le_mul_of_nonneg_left hpow (by positivity)
+  have h_log_y1 : Real.log (y₁ / (n₁ : ℝ) ^ δ) =
+      Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - ((A_R : ℝ) + 2) * Real.log (Real.log (n₁ : ℝ)) := by
+    rw [hy₁_def]
+    rw [Real.log_div (div_ne_zero hh_pos.ne' (by positivity)) (by positivity),
+      Real.log_div hh_pos.ne' (by positivity),
+      Real.log_rpow hn₁_pos, Real.log_pow]
+    push_cast; ring
+  have h_lb1 : Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 20) * Real.log (n₁ : ℝ) ≤
+      ∑ p ∈ I_osc, Real.log (p : ℝ) / ((p : ℝ) - 1) := by
+    rw [h_log_y1] at hmert_osc_lb
+    have h_e : ((A_R : ℝ) + 2) * Real.log (Real.log (n₁ : ℝ)) + 2 * C_mert1 ≤
+        (ε / 20) * Real.log (n₁ : ℝ) := by
+      nlinarith only [herr1_A, hCm1, hε, hlog_n₁_pos]
+    linarith only [hmert_osc_lb, h_e]
+  have h_sub_prod : (1 - 1 / (n₁ : ℝ) ^ δ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 20) * Real.log (n₁ : ℝ)) ≤
+      ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ) := by
+    have h1nonneg : 0 ≤ 1 - 1 / (n₁ : ℝ) ^ δ := by
+      have : (1 : ℝ) ≤ (n₁ : ℝ) ^ δ := by linarith
+      linarith [div_le_one (by positivity : (0 : ℝ) < (n₁ : ℝ) ^ δ) |>.mpr this]
+    exact le_trans (mul_le_mul_of_nonneg_left h_lb1 h1nonneg) h_p_pm1
+  have h_est : Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 10) * Real.log (n₁ : ℝ) ≤
+      (1 - 1 / (n₁ : ℝ) ^ δ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 20) * Real.log (n₁ : ℝ)) := by
+    have hdiff_le : Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 20) * Real.log (n₁ : ℝ) ≤ Real.log (n₁ : ℝ) := by
+      have : Real.log (h : ℝ) ≤ Real.log (n₁ : ℝ) := Real.log_le_log hh_pos (by exact_mod_cast le_of_lt h_lt_n₁)
+      linarith [show 0 ≤ δ * Real.log (n₁ : ℝ) by positivity, show 0 ≤ (ε / 20) * Real.log (n₁ : ℝ) by positivity]
+    have h1n_nn : 0 ≤ 1 / (n₁ : ℝ) ^ δ := by positivity
+    have : (1 / (n₁ : ℝ) ^ δ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 20) * Real.log (n₁ : ℝ)) ≤
+        (ε / 20) * Real.log (n₁ : ℝ) := by
+      by_cases hneg : Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 20) * Real.log (n₁ : ℝ) ≤ 0
+      · exact le_trans (mul_nonpos_of_nonneg_of_nonpos h1n_nn hneg) (by positivity)
+      · push Not at hneg
+        calc (1 / (n₁ : ℝ) ^ δ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 20) * Real.log (n₁ : ℝ))
+            ≤ (ε / 20) * Real.log (n₁ : ℝ) := mul_le_mul h_one_sub hdiff_le hneg.le (by positivity)
+    linarith only [this]
+  have h_prod1 : (n₁ : ℝ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 10) * Real.log (n₁ : ℝ)) ≤
+      (n₁ : ℝ) * ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ) :=
+    mul_le_mul_of_nonneg_left (le_trans h_est h_sub_prod) hn₁_pos.le
+  have h_sum_ub : ∑ p ∈ I_osc, Real.log (p : ℝ) ≤ (ε / 100) * (n₁ : ℝ) * Real.log (n₁ : ℝ) :=
+    le_trans hsum_log_I h_1n_le
+  have h_coeff : (11 * ε / 100) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) ≤
+      (ε / 4) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) :=
+    mul_le_mul_of_nonneg_right (by linarith only [hε]) (mul_nonneg hn₁_pos.le hlog_n₁_pos.le)
+  calc (n₁ : ℝ) * Real.log (h : ℝ) - δ * (n₁ : ℝ) * Real.log (n₁ : ℝ) - (ε / 4) * (n₁ : ℝ) * Real.log (n₁ : ℝ)
+      = (n₁ : ℝ) * Real.log (h : ℝ) - δ * (n₁ : ℝ) * Real.log (n₁ : ℝ) -
+          (ε / 4) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by ring
+    _ ≤ (n₁ : ℝ) * Real.log (h : ℝ) - δ * (n₁ : ℝ) * Real.log (n₁ : ℝ) -
+          (11 * ε / 100) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by linarith only [h_coeff]
+    _ = (n₁ : ℝ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 10) * Real.log (n₁ : ℝ)) +
+          (-(ε / 100) * (n₁ : ℝ) * Real.log (n₁ : ℝ)) := by ring
+    _ ≤ (n₁ : ℝ) * ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ) + (-∑ p ∈ I_osc, Real.log (p : ℝ)) :=
+        add_le_add h_prod1 (neg_le_neg h_sum_ub)
+    _ = (n₁ : ℝ) * ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ) - ∑ p ∈ I_osc, Real.log (p : ℝ) := by ring
+
 /-- **Lemma 6.3 (Uniform Parity-Flip Weight Asymptotic, eq. 6.7)**:
 For any `δ ∈ (0, 1/4]` and any `ε > 0`, there exists `N₀` such that for all `n₁ ≥ N₀` and
 `n₂ > n₁` with `h := n₂ - n₁ < n₁`:
@@ -1108,121 +1289,7 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
               linarith only [h_err]
       have hI_main_lb : (n₁ : ℝ) * Real.log (h : ℝ) - δ * (n₁ : ℝ) * Real.log (n₁ : ℝ) - (ε / 4) * (n₁ : ℝ) * Real.log (n₁ : ℝ) ≤
           ∑ p ∈ I_osc, (padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ) := by
-        have hterm : ∀ p ∈ I_osc,
-            (n₁ : ℝ) * (Real.log (p : ℝ) / (p : ℝ)) - Real.log (p : ℝ) ≤
-              (padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ) := by
-          intro p hp
-          have hp_mem := Finset.mem_filter.mp hp
-          have hp_pr := (Finset.mem_filter.mp hp_mem.1).2
-          have hp_pos : (0 : ℝ) < p := by exact_mod_cast hp_pr.pos
-          have hv1 : n₁ / p ≤ padicValNat p (Nat.factorial n₁) := by
-            haveI : Fact p.Prime := ⟨hp_pr⟩
-            have hleg := padicValNat_factorial (p := p) (n := n₁) (b := Nat.log p n₁ + 1) (Nat.lt_succ_self _)
-            rw [hleg]
-            rcases Nat.eq_zero_or_pos (Nat.log p n₁) with hlog0 | hlog_pos
-            · have hn1_lt_p : n₁ < p := by
-                by_contra hge; push Not at hge
-                have : 1 ≤ Nat.log p n₁ := Nat.log_pos hp_pr.one_lt hge
-                omega
-              rw [Nat.div_eq_of_lt hn1_lt_p]; exact Nat.zero_le _
-            · have hmem : 1 ∈ Finset.Ico 1 (Nat.log p n₁ + 1) := Finset.mem_Ico.mpr ⟨le_refl 1, by omega⟩
-              simpa using Finset.single_le_sum (f := fun i => n₁ / p ^ i) (fun _ _ => Nat.zero_le _) hmem
-          have hv_real : (n₁ : ℝ) / (p : ℝ) - 1 ≤ (padicValNat p (Nat.factorial n₁) : ℝ) := by
-            have h1 : (n₁ : ℝ) / (p : ℝ) - 1 < ((n₁ / p : ℕ) : ℝ) := by
-              have hlt_nat : n₁ < (n₁ / p + 1) * p := by
-                rw [add_mul, one_mul]; exact Nat.lt_div_mul_add hp_pr.pos
-              have hlt_r : (n₁ : ℝ) < (((n₁ / p : ℕ) : ℝ) + 1) * (p : ℝ) := by exact_mod_cast hlt_nat
-              rw [sub_lt_iff_lt_add, div_lt_iff₀ hp_pos]; exact hlt_r
-            linarith only [h1, show ((n₁ / p : ℕ) : ℝ) ≤ (padicValNat p (Nat.factorial n₁) : ℝ) from by exact_mod_cast hv1]
-          have hlogp : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by exact_mod_cast hp_pr.pos)
-          calc (n₁ : ℝ) * (Real.log (p : ℝ) / (p : ℝ)) - Real.log (p : ℝ)
-              = ((n₁ : ℝ) / (p : ℝ) - 1) * Real.log (p : ℝ) := by ring
-            _ ≤ (padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ) := by gcongr
-        refine le_trans ?_ (Finset.sum_le_sum hterm)
-        rw [Finset.sum_sub_distrib, ← Finset.mul_sum]
-        have hn₁_d_nn : (0 : ℝ) ≤ (n₁ : ℝ) ^ δ := Real.rpow_nonneg hn₁_pos.le _
-        have hdisj_i : Disjoint I_osc ((Finset.Icc 3 (Nat.floor ((n₁ : ℝ) ^ δ))).filter Nat.Prime) := by
-          rw [Finset.disjoint_left]; intro p h1 h2
-          simp only [I_osc, Finset.mem_filter, Finset.mem_Icc] at h1 h2
-          have : (p : ℝ) ≤ (n₁ : ℝ) ^ δ := (Nat.le_floor_iff hn₁_d_nn).mp h2.1.2
-          linarith only [h1.2.1, this]
-        have hun_i : (Finset.Icc 3 (Nat.floor y₁)).filter Nat.Prime =
-            I_osc ∪ (Finset.Icc 3 (Nat.floor ((n₁ : ℝ) ^ δ))).filter Nat.Prime := by
-          ext p; simp only [Finset.mem_union, I_osc, Finset.mem_filter, Finset.mem_Icc]
-          constructor
-          · intro hp
-            by_cases hle : (p : ℝ) ≤ (n₁ : ℝ) ^ δ
-            · exact Or.inr ⟨⟨hp.1.1, Nat.le_floor hle⟩, hp.2⟩
-            · refine Or.inl ⟨⟨⟨hp.1.1, le_trans hp.1.2 (by simpa [Nat.floor_natCast] using Nat.floor_le_floor hy₁_le_n₁)⟩, hp.2⟩,
-                lt_of_not_ge hle, (Nat.le_floor_iff hy₁_pos.le).mp hp.1.2⟩
-          · rintro (hp | hp)
-            · exact ⟨⟨hp.1.1.1, Nat.le_floor hp.2.2⟩, hp.1.2⟩
-            · exact ⟨⟨hp.1.1, Nat.le_floor (le_trans ((Nat.le_floor_iff hn₁_d_nn).mp hp.1.2) hy₁_gt.le)⟩, hp.2⟩
-        have hI_eq_diff : ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ) =
-            (∑ p ∈ (Finset.Icc 3 (Nat.floor y₁)).filter Nat.Prime, Real.log (p : ℝ) / (p : ℝ)) -
-            (∑ p ∈ (Finset.Icc 3 (Nat.floor ((n₁ : ℝ) ^ δ))).filter Nat.Prime, Real.log (p : ℝ) / (p : ℝ)) := by
-          rw [hun_i, Finset.sum_union hdisj_i, add_sub_cancel_right]
-        have h_p_pm1 : (1 - 1 / (n₁ : ℝ) ^ δ) *
-            ∑ p ∈ I_osc, Real.log (p : ℝ) / ((p : ℝ) - 1) ≤
-            ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ) := by
-          have hn₁_d_pos : (0 : ℝ) < (n₁ : ℝ) ^ δ := by positivity
-          rw [Finset.mul_sum]
-          apply Finset.sum_le_sum; intro p hp
-          have hp_mem := Finset.mem_filter.mp hp
-          have hp_pr := (Finset.mem_filter.mp hp_mem.1).2
-          have hp_gt : (n₁ : ℝ) ^ δ < (p : ℝ) := hp_mem.2.1
-          have hp3 : (3 : ℝ) < (p : ℝ) := lt_of_le_of_lt hn₁_delta_ge3 hp_gt
-          have hlogp : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by linarith only [hp3])
-          have hratio : (1 - 1 / (n₁ : ℝ) ^ δ) / ((p : ℝ) - 1) ≤ 1 / (p : ℝ) := by
-            rw [div_le_div_iff₀ (by linarith only [hp3]) (by linarith only [hp3])]
-            have h1 : 1 / (p : ℝ) ≤ 1 / (n₁ : ℝ) ^ δ := one_div_le_one_div_of_le hn₁_d_pos hp_gt.le
-            calc (1 - 1 / (n₁ : ℝ) ^ δ) * (p : ℝ) ≤ (1 - 1 / (p : ℝ)) * (p : ℝ) := by gcongr
-              _ = (p : ℝ) - 1 := by field_simp [(by linarith only [hp3] : (p : ℝ) ≠ 0)]
-              _ = 1 * ((p : ℝ) - 1) := by ring
-          calc (1 - 1 / (n₁ : ℝ) ^ δ) * (Real.log (p : ℝ) / ((p : ℝ) - 1))
-              = Real.log (p : ℝ) * ((1 - 1 / (n₁ : ℝ) ^ δ) / ((p : ℝ) - 1)) := by ring
-            _ ≤ Real.log (p : ℝ) * (1 / (p : ℝ)) := by gcongr
-            _ = Real.log (p : ℝ) / (p : ℝ) := by ring
-        have hmert_osc_lb : Real.log (y₁ / (n₁ : ℝ) ^ δ) - 2 * C_mert1 ≤
-            ∑ p ∈ I_osc, Real.log (p : ℝ) / ((p : ℝ) - 1) := by
-          have hm1 := abs_le.mp (hMert1 y₁ (le_trans hn₁_delta_ge3 hy₁_gt.le))
-          have hm2 := abs_le.mp (hMert1 ((n₁ : ℝ) ^ δ) hn₁_delta_ge3)
-          have hsum_eq : ∑ p ∈ I_osc, Real.log (p : ℝ) / ((p : ℝ) - 1) =
-              (∑ p ∈ (Finset.Icc 3 (Nat.floor y₁)).filter Nat.Prime, Real.log (p : ℝ) / ((p : ℝ) - 1)) -
-              (∑ p ∈ (Finset.Icc 3 (Nat.floor ((n₁ : ℝ) ^ δ))).filter Nat.Prime, Real.log (p : ℝ) / ((p : ℝ) - 1)) := by
-            rw [hun_i, Finset.sum_union hdisj_i, add_sub_cancel_right]
-          rw [hsum_eq, Real.log_div hy₁_pos.ne' (by positivity)]
-          linarith only [hm1.1, hm2.2]
-        have hsum_log_I : ∑ p ∈ I_osc, Real.log (p : ℝ) ≤ (n₁ : ℝ) := by
-          have hcard : (I_osc.card : ℝ) ≤ y₁ := by
-            have hsub : I_osc ⊆ Finset.Icc 1 (Nat.floor y₁) := by
-              intro p hp; simp only [I_osc, Finset.mem_filter, Finset.mem_Icc] at hp ⊢
-              exact ⟨by omega, Nat.le_floor hp.2.2⟩
-            exact le_trans (by exact_mod_cast le_trans (Finset.card_le_card hsub) (by simp)) (Nat.floor_le (by positivity))
-          have hterm_log : ∀ p ∈ I_osc, Real.log (p : ℝ) ≤ Real.log (n₁ : ℝ) := by
-            intro p hp; simp only [I_osc, Finset.mem_filter, Finset.mem_Icc] at hp
-            exact Real.log_le_log (by exact_mod_cast hp.1.2.pos) (by exact_mod_cast hp.1.1.2)
-          calc ∑ p ∈ I_osc, Real.log (p : ℝ) ≤ (I_osc.card : ℝ) * Real.log (n₁ : ℝ) := by
-                simpa [Finset.sum_const, nsmul_eq_mul] using Finset.sum_le_sum hterm_log
-            _ ≤ y₁ * Real.log (n₁ : ℝ) :=
-                mul_le_mul_of_nonneg_right hcard hlog_n₁_pos.le
-            _ ≤ ((n₁ : ℝ) / (Real.log (n₁ : ℝ)) ^ (A_R + 2)) * Real.log (n₁ : ℝ) := by
-                refine mul_le_mul_of_nonneg_right ?_ hlog_n₁_pos.le
-                exact div_le_div_of_nonneg_right (by exact_mod_cast le_of_lt h_lt_n₁) (by positivity)
-            _ ≤ (n₁ : ℝ) := by
-                have hlog1 : 1 ≤ Real.log (n₁ : ℝ) := by nlinarith
-                have hpow : Real.log (n₁ : ℝ) ≤ (Real.log (n₁ : ℝ)) ^ (A_R + 2) :=
-                  le_self_pow₀ hlog1 (by omega)
-                rw [div_mul_eq_mul_div, div_le_iff₀ (by positivity)]
-                exact mul_le_mul_of_nonneg_left hpow (by positivity)
-        have h_log_y1 : Real.log (y₁ / (n₁ : ℝ) ^ δ) =
-            Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - ((A_R : ℝ) + 2) * Real.log (Real.log (n₁ : ℝ)) := by
-          dsimp [y₁]
-          rw [Real.log_div (div_ne_zero hh_pos.ne' (by positivity)) (by positivity),
-            Real.log_div hh_pos.ne' (by positivity),
-            Real.log_rpow hn₁_pos, Real.log_pow]
-          push_cast; ring
-        have herr1 : ((A_R : ℝ) + 2) * Real.log (Real.log (n₁ : ℝ)) ≤ (ε / 100) * Real.log (n₁ : ℝ) := by
+        have herr1_A : ((A_R : ℝ) + 2) * Real.log (Real.log (n₁ : ℝ)) ≤ (ε / 100) * Real.log (n₁ : ℝ) := by
           have := hN₁ n₁ (by omega)
           rw [Real.dist_eq, sub_zero, abs_of_nonneg (by
             have : 0 ≤ Real.log (Real.log (n₁ : ℝ)) := Real.log_nonneg (by nlinarith); positivity)] at this
@@ -1259,56 +1326,9 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
             have : 1 / Real.log (n₁ : ℝ) ≤ ε / 100 := le_trans h7.le (by gcongr; linarith)
             exact (div_le_iff₀ hlog_n₁_pos).mp this
           nlinarith only [h1, hn₁_pos]
-        have h_lb1 : Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 20) * Real.log (n₁ : ℝ) ≤
-            ∑ p ∈ I_osc, Real.log (p : ℝ) / ((p : ℝ) - 1) := by
-          rw [h_log_y1] at hmert_osc_lb
-          have h_e : ((A_R : ℝ) + 2) * Real.log (Real.log (n₁ : ℝ)) + 2 * C_mert1 ≤
-              (ε / 20) * Real.log (n₁ : ℝ) := by
-            nlinarith only [herr1, hCm1, hε, hlog_n₁_pos]
-          linarith only [hmert_osc_lb, h_e]
-        have h_lb1_nn : 0 ≤ Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) := by
-          have := Real.log_le_log (by positivity) hh_gt.le
-          rw [Real.log_rpow hn₁_pos] at this; linarith
-        have h_lb1_ub : Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) ≤ Real.log (n₁ : ℝ) := by
-          have : Real.log (h : ℝ) ≤ Real.log (n₁ : ℝ) := Real.log_le_log hh_pos (by exact_mod_cast le_of_lt h_lt_n₁)
-          linarith [show 0 ≤ δ * Real.log (n₁ : ℝ) by positivity]
-        have h_sub_prod : (1 - 1 / (n₁ : ℝ) ^ δ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 20) * Real.log (n₁ : ℝ)) ≤
-            ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ) := by
-          have h1nonneg : 0 ≤ 1 - 1 / (n₁ : ℝ) ^ δ := by
-            have : (1 : ℝ) ≤ (n₁ : ℝ) ^ δ := by linarith
-            linarith [div_le_one (by positivity : (0 : ℝ) < (n₁ : ℝ) ^ δ) |>.mpr this]
-          exact le_trans (mul_le_mul_of_nonneg_left h_lb1 h1nonneg) h_p_pm1
-        have h_est : Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 10) * Real.log (n₁ : ℝ) ≤
-            (1 - 1 / (n₁ : ℝ) ^ δ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 20) * Real.log (n₁ : ℝ)) := by
-          have hdiff_le : Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 20) * Real.log (n₁ : ℝ) ≤ Real.log (n₁ : ℝ) := by
-            linarith [show 0 ≤ (ε / 20) * Real.log (n₁ : ℝ) by positivity]
-          have h1n_nn : 0 ≤ 1 / (n₁ : ℝ) ^ δ := by positivity
-          have : (1 / (n₁ : ℝ) ^ δ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 20) * Real.log (n₁ : ℝ)) ≤
-              (ε / 20) * Real.log (n₁ : ℝ) := by
-            by_cases hneg : Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 20) * Real.log (n₁ : ℝ) ≤ 0
-            · exact le_trans (mul_nonpos_of_nonneg_of_nonpos h1n_nn hneg) (by positivity)
-            · push Not at hneg
-              calc (1 / (n₁ : ℝ) ^ δ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 20) * Real.log (n₁ : ℝ))
-                  ≤ (ε / 20) * Real.log (n₁ : ℝ) := mul_le_mul h_one_sub hdiff_le hneg.le (by positivity)
-          linarith only [this]
-        have h_prod1 : (n₁ : ℝ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 10) * Real.log (n₁ : ℝ)) ≤
-            (n₁ : ℝ) * ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ) := by
-          exact mul_le_mul_of_nonneg_left (le_trans h_est h_sub_prod) hn₁_pos.le
-        have h_sum_ub : ∑ p ∈ I_osc, Real.log (p : ℝ) ≤ (ε / 100) * (n₁ : ℝ) * Real.log (n₁ : ℝ) :=
-          le_trans hsum_log_I h_1n_le
-        have h_coeff : (11 * ε / 100) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) ≤
-            (ε / 4) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) :=
-          mul_le_mul_of_nonneg_right (by linarith only [hε]) (mul_nonneg hn₁_pos.le hlog_n₁_pos.le)
-        calc (n₁ : ℝ) * Real.log (h : ℝ) - δ * (n₁ : ℝ) * Real.log (n₁ : ℝ) - (ε / 4) * (n₁ : ℝ) * Real.log (n₁ : ℝ)
-            = (n₁ : ℝ) * Real.log (h : ℝ) - δ * (n₁ : ℝ) * Real.log (n₁ : ℝ) -
-                (ε / 4) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by ring
-          _ ≤ (n₁ : ℝ) * Real.log (h : ℝ) - δ * (n₁ : ℝ) * Real.log (n₁ : ℝ) -
-                (11 * ε / 100) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by linarith only [h_coeff]
-          _ = (n₁ : ℝ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 10) * Real.log (n₁ : ℝ)) +
-                (-(ε / 100) * (n₁ : ℝ) * Real.log (n₁ : ℝ)) := by ring
-          _ ≤ (n₁ : ℝ) * ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ) + (-∑ p ∈ I_osc, Real.log (p : ℝ)) :=
-              add_le_add h_prod1 (neg_le_neg h_sum_ub)
-          _ = (n₁ : ℝ) * ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ) - ∑ p ∈ I_osc, Real.log (p : ℝ) := by ring
+        exact lem_6_3_main_lb δ ε C_mert1 hδ0 hε hMert1 R A_R n₁ h h_lt_n₁ hn₁_pos hlog_n₁_pos
+          hlog_ge3 hh_gt hh_pos y₁ rfl hy₁_pos hy₁_gt hy₁_le_n₁ hn₁_delta_ge3 hlog2_le_ndelta
+          herr1_A hCm1 h_one_sub h_1n_le
       have hI_osc_bound : |∑ p ∈ I_osc,
           ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
             ((padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ))| ≤
@@ -1346,6 +1366,8 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
         Finset.sum_nonneg (fun _ _ => by positivity)
       have h_upper_nn : 0 ≤ ∑ p ∈ S_upper, (padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ) :=
         Finset.sum_nonneg (fun _ _ => by positivity)
+      have h_dnl_nn : 0 ≤ δ * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by positivity
+      have h_enl_nn : 0 ≤ ε * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by positivity
       have h_ub_tot : ∑ p ∈ S_tiny, (padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ) +
           ∑ p ∈ S_osc, (padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ) +
           ∑ p ∈ S_collar, (padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ) +
