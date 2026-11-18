@@ -224,9 +224,6 @@ lemma lem_6_3_osc_bound
       exact_mod_cast (lt_of_le_of_lt h1 hh_gt).le
     have hn₂_ge_Nexp : N_exp ≤ n₂ := by omega
     have hP_le_n₂ : P ≤ (n₂ : ℝ) / (Real.log (n₂ : ℝ)) ^ 12 := by
-      -- Since n₁ < n₂ < 2 n₁ and P ≤ y₁ ≤ h / (log n₁)^{A_R + 2} ≤ n₁ / (log n₁)^{A_R + 2}
-      -- Wait: n₂ / (log n₂)^{12} vs n₁ / (log n₁)^{12}: for n₁ ≥ 1000, log n₂ ≤ 2 log n₁, so
-      -- n₁ / (log n₁)^{A_R + 2} ≤ n₁ / (2 log n₁)^{12} ≤ n₂ / (log n₂)^{12} since A_R + 2 ≥ 56!
       have hlog_n2_le : Real.log (n₂ : ℝ) ≤ 2 * Real.log (n₁ : ℝ) := by
         have hn2_lt : (n₂ : ℝ) < 2 * (n₁ : ℝ) := by exact_mod_cast (by omega : n₂ < 2 * n₁)
         have h1 := Real.log_le_log (by positivity) hn2_lt.le
@@ -493,14 +490,18 @@ lemma lem_6_3_osc_bound
             have := Real.log_le_log (by positivity) hh_gt.le; rwa [Real.log_rpow hn₁_pos] at this
           have hrpow_le : (Real.log (h : ℝ)) ^ (-((R : ℝ) + 2)) ≤
               δ ^ (-(R : ℤ) - 2) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by
+            have hδlog_pos : 0 < δ * Real.log (n₁ : ℝ) := mul_pos hδ0 hlog_n₁_pos
             have h1 : (Real.log (h : ℝ)) ^ (-((R : ℝ) + 2)) ≤ (δ * Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) :=
-              Real.rpow_le_rpow_of_nonpos (by positivity) hlogh_lb (by linarith)
+              Real.rpow_le_rpow_of_nonpos hδlog_pos hlogh_lb (by linarith)
             rw [Real.mul_rpow hδ0.le hlog_n₁_pos.le] at h1
             have hdz : δ ^ (-((R : ℝ) + 2)) = δ ^ (-(R : ℤ) - 2) := by
               rw [show (-((R : ℝ) + 2)) = ((-(R : ℤ) - 2 : ℤ) : ℝ) by push_cast; ring, Real.rpow_intCast]
-            linarith
-          simp only [← Complex.ofReal_mul] at h_res
-          calc ‖∑ p ∈ I_k, _‖ ≤ C₂ * 3 * P * (Real.log (h : ℝ)) ^ (-((R : ℝ) + 2)) := h_res
+            rw [hdz] at h1; exact h1
+          have h_res' : ‖∑ p ∈ I_k, ((w_base (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
+                eExp ((h₂ : ℝ) * (h : ℝ) / (2 * (p : ℝ)))‖ ≤
+              C₂ * 3 * P * (Real.log (h : ℝ)) ^ (-((R : ℝ) + 2)) := by
+            convert h_res using 3; push_cast; ring
+          calc ‖∑ p ∈ I_k, _‖ ≤ C₂ * 3 * P * (Real.log (h : ℝ)) ^ (-((R : ℝ) + 2)) := h_res'
             _ ≤ C₂ * 3 * P * (δ ^ (-(R : ℤ) - 2) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) := by gcongr
             _ ≤ 6 * C₂ * P * (δ ^ (-(R : ℤ) - 2) + 1) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by
                 have : 0 ≤ C₂ * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by positivity
@@ -568,10 +569,9 @@ lemma lem_6_3_osc_bound
         _ = (∑ h₁ ∈ S_H, ‖c_tilde h₁‖) * (∑ h₂ ∈ S_H, ‖c_tilde h₂‖) *
               (6 * C₂ * P * (δ ^ (-(R : ℤ) - 2) + 1) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) := by
             simp only [Finset.sum_mul, Finset.mul_sum]
-            rw [Finset.sum_comm]
         _ ≤ ((4 / Real.pi) * (Real.log (2 * (H : ℝ) + 1) + 1)) ^ 2 *
               (6 * C₂ * P * (δ ^ (-(R : ℤ) - 2) + 1) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) := by
-            rw [← sq]
+            rw [show (∑ h₁ ∈ S_H, ‖c_tilde h₁‖) * (∑ h₂ ∈ S_H, ‖c_tilde h₂‖) = (∑ h ∈ S_H, ‖c_tilde h‖) ^ 2 by rw [sq]]
             have h_sum_c_nn : 0 ≤ ∑ h ∈ S_H, ‖c_tilde h‖ := Finset.sum_nonneg fun _ _ => norm_nonneg _
             exact mul_le_mul_of_nonneg_right (pow_le_pow_left₀ h_sum_c_nn h_L1 2) (by positivity)
     let L₁ : ℝ := (4 / Real.pi) * (Real.log (2 * (H : ℝ) + 1) + 1)
