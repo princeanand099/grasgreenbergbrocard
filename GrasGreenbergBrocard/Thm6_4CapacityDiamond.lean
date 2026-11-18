@@ -1102,26 +1102,75 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
   have hM12_ub := (abs_le.mp hM2_rel.2).2
   have hδ_le : δ ≤ ε / 16 := min_le_left _ _
   have hnlog_pos : 0 < (n₁ : ℝ) * Real.log (n₁ : ℝ) := by positivity
+  set Lnl := (n₁ : ℝ) * Real.log (n₁ : ℝ)
+  have hM21_e : Real.log (M₂₁ : ℝ) ≤ (theta_weight n₁ m₁ + ε / 16) * Lnl := by
+    have hr : (theta_weight n₁ m₁ + ε / 16) * Lnl =
+        theta_weight n₁ m₁ * (n₁ : ℝ) * Real.log (n₁ : ℝ) + (ε / 16) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
+      dsimp [Lnl]; ring
+    dsimp [M₂₁, u₁₁, u₂₁]; linarith [hM21_ub, hr]
+  have hM22_e : Real.log (M₂₂ : ℝ) ≤ (theta_weight n₂ m₂ + ε / 16) * Lnl := by
+    have hr : (theta_weight n₂ m₂ + ε / 16) * Lnl =
+        theta_weight n₂ m₂ * (n₁ : ℝ) * Real.log (n₁ : ℝ) + (ε / 16) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
+      dsimp [Lnl]; ring
+    dsimp [M₂₂, u₁₂, u₂₂]; linarith [hM22_ub, hr]
+  have hM11_e : Real.log (M₁₁ : ℝ) ≤ (1 - theta_weight n₁ m₁ + ε / 16) * Lnl := by
+    have hr : (1 - theta_weight n₁ m₁ + ε / 16) * Lnl =
+        (1 - theta_weight n₁ m₁) * (n₁ : ℝ) * Real.log (n₁ : ℝ) + (ε / 16) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
+      dsimp [Lnl]; ring
+    dsimp [M₁₁, u₁₁, u₂₁]; linarith [hM11_ub, hr]
+  have hM12_e : Real.log (M₁₂ : ℝ) ≤ (1 - theta_weight n₂ m₂ + ε / 16) * Lnl := by
+    have hr : (1 - theta_weight n₂ m₂ + ε / 16) * Lnl =
+        (1 - theta_weight n₂ m₂) * (n₁ : ℝ) * Real.log (n₁ : ℝ) + (ε / 16) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
+      dsimp [Lnl]; ring
+    dsimp [M₁₂, u₁₂, u₂₂]; linarith [hM12_ub, hr]
+  have hZW_lb_e : (1 / 2 - ε / 16) * Lnl ≤ Real.log ((Z_gcd m₁ m₂ * W_gcd m₁ m₂ : ℕ) : ℝ) := by
+    push_cast; have hr : (1 / 2 - ε / 16) * Lnl = (1 / 2 - ε / 16) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by dsimp [Lnl]; ring
+    linarith [hlogZW_lb, hr]
+  have hXY_lb_e : (1 / 2 - ε / 16) * Lnl ≤ Real.log ((X_gcd m₁ m₂ * Y_gcd m₁ m₂ : ℕ) : ℝ) := by
+    push_cast; have hr : (1 / 2 - ε / 16) * Lnl = (1 / 2 - ε / 16) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by dsimp [Lnl]; ring
+    linarith [hlogXY_lb, hr]
+  have hn1_log2_e : (n₁ : ℝ) * Real.log 2 ≤ (ε / 16) * Lnl := by
+    have hr : (ε / 16) * Lnl = (ε / 16) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by dsimp [Lnl]; ring
+    linarith [hn1_log2, hr]
+  have hflip_ub_e : parityFlipWeight n₁ n₂ ≤ (α / 2 + δ + ε / 16) * Lnl := by
+    have hr : (α / 2 + δ + ε / 16) * Lnl = (α / 2 + δ + ε / 16) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by dsimp [Lnl]; ring
+    linarith [hflip_ub, hr]
   have h1 : (1 - α) / 2 - ε ≤ theta_weight n₁ m₁ + theta_weight n₂ m₂ := by
-    have hsum : ((1 - α) / 2 - ε) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) ≤
-        (theta_weight n₁ m₁ + theta_weight n₂ m₂) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by
-      push_cast at h_log_ZW_22; linarith
-    exact le_of_mul_le_mul_right hsum hnlog_pos
+    have hcomb : (1 / 2 - ε / 16) * Lnl ≤
+        (theta_weight n₁ m₁ + theta_weight n₂ m₂ + α / 2 + δ + 4 * (ε / 16)) * Lnl := by
+      have hr : (theta_weight n₁ m₁ + theta_weight n₂ m₂ + α / 2 + δ + 4 * (ε / 16)) * Lnl =
+          (ε / 16) * Lnl + (theta_weight n₁ m₁ + ε / 16) * Lnl + (theta_weight n₂ m₂ + ε / 16) * Lnl +
+          (α / 2 + δ + ε / 16) * Lnl := by ring
+      linarith [hZW_lb_e, h_log_ZW_22, hn1_log2_e, hM21_e, hM22_e, hflip_ub_e, hr]
+    have hcoeff := le_of_mul_le_mul_right hcomb hnlog_pos
+    linarith
   have h2 : theta_weight n₁ m₁ + theta_weight n₂ m₂ ≤ (3 + α) / 2 + ε := by
-    have hsum : (theta_weight n₁ m₁ + theta_weight n₂ m₂) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) ≤
-        ((3 + α) / 2 + ε) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by
-      push_cast at h_log_ZW_11; linarith
-    exact le_of_mul_le_mul_right hsum hnlog_pos
+    have hcomb : (1 / 2 - ε / 16) * Lnl ≤
+        (2 - (theta_weight n₁ m₁ + theta_weight n₂ m₂) + α / 2 + δ + 4 * (ε / 16)) * Lnl := by
+      have hr : (2 - (theta_weight n₁ m₁ + theta_weight n₂ m₂) + α / 2 + δ + 4 * (ε / 16)) * Lnl =
+          (ε / 16) * Lnl + (1 - theta_weight n₁ m₁ + ε / 16) * Lnl + (1 - theta_weight n₂ m₂ + ε / 16) * Lnl +
+          (α / 2 + δ + ε / 16) * Lnl := by ring
+      linarith [hZW_lb_e, h_log_ZW_11, hn1_log2_e, hM11_e, hM12_e, hflip_ub_e, hr]
+    have hcoeff := le_of_mul_le_mul_right hcomb hnlog_pos
+    linarith
   have h3a : theta_weight n₂ m₂ - theta_weight n₁ m₁ ≤ (1 + α) / 2 + ε := by
-    have hsum : (theta_weight n₂ m₂ - theta_weight n₁ m₁) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) ≤
-        ((1 + α) / 2 + ε) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by
-      push_cast at h_log_XY_12; linarith
-    exact le_of_mul_le_mul_right hsum hnlog_pos
+    have hcomb : (1 / 2 - ε / 16) * Lnl ≤
+        (1 + (theta_weight n₂ m₂ - theta_weight n₁ m₁) + α / 2 + δ + 4 * (ε / 16)) * Lnl := by
+      have hr : (1 + (theta_weight n₂ m₂ - theta_weight n₁ m₁) + α / 2 + δ + 4 * (ε / 16)) * Lnl =
+          (ε / 16) * Lnl + (1 - theta_weight n₁ m₁ + ε / 16) * Lnl + (theta_weight n₂ m₂ + ε / 16) * Lnl +
+          (α / 2 + δ + ε / 16) * Lnl := by ring
+      linarith [hXY_lb_e, h_log_XY_12, hn1_log2_e, hM11_e, hM22_e, hflip_ub_e, hr]
+    have hcoeff := le_of_mul_le_mul_right hcomb hnlog_pos
+    linarith
   have h3b : theta_weight n₁ m₁ - theta_weight n₂ m₂ ≤ (1 + α) / 2 + ε := by
-    have hsum : (theta_weight n₁ m₁ - theta_weight n₂ m₂) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) ≤
-        ((1 + α) / 2 + ε) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by
-      push_cast at h_log_XY_21; linarith
-    exact le_of_mul_le_mul_right hsum hnlog_pos
+    have hcomb : (1 / 2 - ε / 16) * Lnl ≤
+        (1 + (theta_weight n₁ m₁ - theta_weight n₂ m₂) + α / 2 + δ + 4 * (ε / 16)) * Lnl := by
+      have hr : (1 + (theta_weight n₁ m₁ - theta_weight n₂ m₂) + α / 2 + δ + 4 * (ε / 16)) * Lnl =
+          (ε / 16) * Lnl + (theta_weight n₁ m₁ + ε / 16) * Lnl + (1 - theta_weight n₂ m₂ + ε / 16) * Lnl +
+          (α / 2 + δ + ε / 16) * Lnl := by ring
+      linarith [hXY_lb_e, h_log_XY_21, hn1_log2_e, hM21_e, hM12_e, hflip_ub_e, hr]
+    have hcoeff := le_of_mul_le_mul_right hcomb hnlog_pos
+    linarith
   exact ⟨h1, h2, abs_le.mpr ⟨by linarith, h3b⟩⟩
 
 /-- **Theorem 1.3(i) (Extreme Sparsity of the `k = 2` Regime, eq. 1.9)**:
