@@ -52,7 +52,7 @@ theorem prop_6_2_part1_n4_boundary {n m₂ : ℕ} (hn : 4 ≤ n)
       rw [hm_eq] at hm₂
       have hm2z : (Nat.factorial (n + 1) : ℤ) + 1 = ((Nat.factorial n / 2 : ℤ) - 1) ^ 2 := by
         zify [show 1 ≤ Nat.factorial n / 2 by omega] at hm₂ ⊢; exact hm₂
-      rw [Nat.factorial_succ] at hm2z
+      rw [Nat.factorial_succ] at hm2z; push_cast at hm2z
       have hMz : 2 * (Nat.factorial n / 2 : ℤ) = (Nat.factorial n : ℤ) := by exact_mod_cast hM
       have hfac_pos : (0 : ℤ) < Nat.factorial n := by exact_mod_cast Nat.factorial_pos n
       nlinarith
@@ -60,7 +60,7 @@ theorem prop_6_2_part1_n4_boundary {n m₂ : ℕ} (hn : 4 ≤ n)
       have hm2_sq : m₂ ^ 2 = (Nat.factorial n / 2 - 1) ^ 2 := by
         zify [show 1 ≤ Nat.factorial n / 2 by omega]
         have hm2z : (Nat.factorial (n + 1) : ℤ) + 1 = (m₂ : ℤ) ^ 2 := by exact_mod_cast hm₂
-        rw [Nat.factorial_succ] at hm2z
+        rw [Nat.factorial_succ] at hm2z; push_cast at hm2z
         have hMz : 2 * (Nat.factorial n / 2 : ℤ) = (Nat.factorial n : ℤ) := by exact_mod_cast hM
         have hfz : (Nat.factorial n : ℤ) = 4 * ((n : ℤ) + 2) := by exact_mod_cast hfac_eq
         nlinarith
@@ -83,7 +83,7 @@ private lemma log_consecutive_equipartition_aux {n m₁ m₂ : ℕ}
       |Real.log (T : ℝ) - (1 / 4 : ℝ) * Real.log (Nat.factorial n : ℝ)| ≤
         4 * Real.log ((n : ℝ) + 1) := by
   have hlt : n < n + 1 := Nat.lt_succ_self n
-  obtain ⟨a, b, c, d, ⟨ha, hb, hc, hd, hab, hcd, _, _, _, _, _, h4sq⟩, _⟩ :=
+  obtain ⟨⟨a, b, c, d⟩, ⟨ha, hb, hc, hd, hab, hcd, _, _, _, _, _, h4sq⟩, _⟩ :=
     prop_6_1_part1_sl2_and_four_squares (by omega) hlt hm₁ hm₂
   rcases h4sq with ⟨hXsq, hYsq, hZsq, hWsq⟩
   set P := P_ratio n (n + 1)
@@ -296,7 +296,7 @@ private lemma k_eq_2_AB {n m X₁ Y₁ : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
   have h1 : (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) =
       ((X₁ : ℝ) ^ 2 + (q_n n : ℝ) * (Y₁ : ℝ) ^ 2) +
       (2 * (X₁ : ℝ) * (Y₁ : ℝ)) * Real.sqrt (q_n n : ℝ) := by
-    rw [hk2]; unfold pellUnit; push_cast; ring_nf; rw [Real.sq_sqrt (by positivity)]; ring
+    rw [hk2]; unfold pellUnit; push_cast; ring_nf; rw [Real.sq_sqrt (by positivity)]
   have hq_nsq : ¬ IsSquare (q_n n) := by
     intro ⟨r, hr⟩
     have hq2 : 2 ≤ q_n n := q_n_ge_two (by omega)
@@ -309,14 +309,21 @@ private lemma k_eq_2_AB {n m X₁ Y₁ : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
         ((2 * (X₁ : ℤ) * (Y₁ : ℤ) - (s_n n : ℤ)) : ℤ) * Real.sqrt (q_n n : ℝ) := by
       push_cast; linarith
     by_contra hne
-    have hne_z : ((m : ℤ) - ((X₁ : ℤ) ^ 2 + (q_n n : ℤ) * (Y₁ : ℤ) ^ 2)) ≠ 0 := by omega
-    have hco_nz : ((2 * (X₁ : ℤ) * (Y₁ : ℤ) - (s_n n : ℤ)) : ℝ) ≠ 0 := by
-      intro h0; rw [h0, zero_mul] at hdiff
-      exact hne_z (by exact_mod_cast hdiff)
+    have hne_z : ((m : ℤ) - ((X₁ : ℤ) ^ 2 + (q_n n : ℤ) * (Y₁ : ℤ) ^ 2)) ≠ 0 := by
+      intro h0; apply hne; exact_mod_cast sub_eq_zero.mp h0
+    have hco_nz : (2 * (X₁ : ℝ) * (Y₁ : ℝ) - (s_n n : ℝ)) ≠ 0 := by
+      intro h0
+      have hdiff' : ((m : ℤ) - ((X₁ : ℤ) ^ 2 + (q_n n : ℤ) * (Y₁ : ℤ) ^ 2) : ℤ) =
+          (2 * (X₁ : ℝ) * (Y₁ : ℝ) - (s_n n : ℝ)) * Real.sqrt (q_n n : ℝ) := by
+        push_cast at hdiff ⊢; exact hdiff
+      rw [h0, zero_mul] at hdiff'
+      exact hne_z (by exact_mod_cast hdiff')
     let a_z : ℤ := (m : ℤ) - ((X₁ : ℤ) ^ 2 + (q_n n : ℤ) * (Y₁ : ℤ) ^ 2)
     let b_z : ℤ := 2 * (X₁ : ℤ) * (Y₁ : ℤ) - (s_n n : ℤ)
     have hrat : Real.sqrt (q_n n : ℝ) = (a_z : ℝ) / (b_z : ℝ) := by
-      rw [eq_div_iff hco_nz]
+      have hco_z : (b_z : ℝ) ≠ 0 := by push_cast [b_z]; exact hco_nz
+      rw [eq_div_iff hco_z]
+      push_cast [a_z, b_z] at hdiff ⊢
       linarith [hdiff]
     exact hirr ⟨(a_z : ℚ) / (b_z : ℚ), by push_cast; exact hrat.symm⟩
   have hpell := hfund.2.2.1
@@ -442,41 +449,57 @@ theorem prop_6_2_part2_consecutive_equipartition :
     (brocard_u1_u2_rel (by omega) hm₂).2.2.2.1
   let S_good := (Podd n).filter (fun p => 3 ≤ p ∧ ¬ p ∣ n + 1)
   let S_bad := (Podd n).filter (fun p => 3 ≤ p ∧ p ∣ n + 1)
+  have hdvd_each : ∀ p ∈ S_good, p ^ padicValNat p (Nat.factorial n) ∣ X_gcd m₁ m₂ := by
+    intro p hp
+    simp only [S_good, Finset.mem_filter] at hp
+    have hp_prime : p.Prime := hp.1.1
+    have hp2 : p ≠ 2 := by omega
+    have hndvd_n1 : ¬ p ∣ n + 1 := hp.2.2
+    have hp_odd1 : ¬ 2 ∣ padicValNat p (Nat.factorial n) := hp.1.2
+    have hp_odd2 : ¬ 2 ∣ padicValNat p (Nat.factorial (n + 1)) := by
+      haveI : Fact p.Prime := ⟨hp_prime⟩
+      rw [Nat.factorial_succ, padicValNat.mul (by omega) (Nat.factorial_pos n).ne']
+      have hv0 : padicValNat p (n + 1) = 0 := padicValNat.eq_zero_of_not_dvd hndvd_n1
+      rw [hv0, zero_add]; exact hp_odd1
+    have hp_q1 : p ∣ q_n n := (p_dvd_q_n_iff n p hp_prime).mpr hp_odd1
+    have hp_q2 : p ∣ q_n (n + 1) := (p_dvd_q_n_iff (n + 1) p hp_prime).mpr hp_odd2
+    have hp_A1 : p ∣ A_sol m₁ := hA₁_val ▸ dvd_mul_of_dvd_left hp_q1 _
+    have hp_A2 : p ∣ A_sol m₂ := hA₂_val ▸ dvd_mul_of_dvd_left hp_q2 _
+    have hp_nB2 : ¬ p ∣ B_sol m₂ := fun h => hp_prime.not_dvd_one (hcop2 ▸ Nat.dvd_gcd hp_A2 h)
+    have hp_nZ : ¬ p ∣ Z_gcd m₁ m₂ := by
+      intro hZ; apply hp_nB2; rw [hB₂_eq]; exact dvd_mul_of_dvd_right hZ _
+    have hp_pow_fac : p ^ padicValNat p (Nat.factorial n) ∣ Nat.factorial n := pow_padicValNat_dvd
+    have hp_pow_A1B1 : p ^ padicValNat p (Nat.factorial n) ∣ A_sol m₁ * B_sol m₁ := by
+      have hcop4 : Nat.Coprime (p ^ padicValNat p (Nat.factorial n)) 4 := by
+        apply Nat.Coprime.pow_left
+        exact hp_prime.coprime_iff_not_dvd.mpr (fun h => hp2 ((Nat.prime_dvd_prime_iff_eq hp_prime Nat.prime_two).mp (hp_prime.dvd_of_dvd_pow (show p ∣ 2 ^ 2 from h))))
+      rw [← h4mul1] at hp_pow_fac
+      exact hcop4.dvd_of_dvd_mul_left (by simpa [mul_assoc] using hp_pow_fac)
+    have hp_nB1 : ¬ p ∣ B_sol m₁ := fun h => hp_prime.not_dvd_one (hcop1 ▸ Nat.dvd_gcd hp_A1 h)
+    have hp_pow_A1 : p ^ padicValNat p (Nat.factorial n) ∣ A_sol m₁ :=
+      (Nat.Coprime.pow_left _ (hp_prime.coprime_iff_not_dvd.mpr hp_nB1)).dvd_of_dvd_mul_right hp_pow_A1B1
+    rw [hA₁_eq] at hp_pow_A1
+    exact (Nat.Coprime.pow_left _ (hp_prime.coprime_iff_not_dvd.mpr hp_nZ)).dvd_of_dvd_mul_right hp_pow_A1
   have hdvd_X : ∏ p ∈ S_good, p ^ padicValNat p (Nat.factorial n) ∣ X_gcd m₁ m₂ := by
-    apply Finset.prod_primes_dvd
-    · intro p hp
-      simp only [S_good, Finset.mem_filter] at hp
-      have hp_prime : p.Prime := hp.1.1
-      have hp2 : p ≠ 2 := by omega
-      have hndvd_n1 : ¬ p ∣ n + 1 := hp.2.2
-      have hp_odd1 : ¬ 2 ∣ padicValNat p (Nat.factorial n) := hp.1.2
-      have hp_odd2 : ¬ 2 ∣ padicValNat p (Nat.factorial (n + 1)) := by
-        haveI : Fact p.Prime := ⟨hp_prime⟩
-        rw [Nat.factorial_succ, padicValNat.mul (by omega) (Nat.factorial_pos n).ne']
-        have hv0 : padicValNat p (n + 1) = 0 := padicValNat.eq_zero_of_not_dvd hndvd_n1
-        rw [hv0, zero_add]; exact hp_odd1
-      have hp_q1 : p ∣ q_n n := (p_dvd_q_n_iff n p hp_prime).mpr hp_odd1
-      have hp_q2 : p ∣ q_n (n + 1) := (p_dvd_q_n_iff (n + 1) p hp_prime).mpr hp_odd2
-      have hp_A1 : p ∣ A_sol m₁ := hA₁_val ▸ dvd_mul_of_dvd_left hp_q1 _
-      have hp_A2 : p ∣ A_sol m₂ := hA₂_val ▸ dvd_mul_of_dvd_left hp_q2 _
-      have hp_nB2 : ¬ p ∣ B_sol m₂ := fun h => hp_prime.not_dvd_one (hcop2 ▸ Nat.dvd_gcd hp_A2 h)
-      have hp_nZ : ¬ p ∣ Z_gcd m₁ m₂ := by
-        intro hZ; apply hp_nB2; rw [hB₂_eq]; exact dvd_mul_of_dvd_right hZ _
-      have hp_pow_fac : p ^ padicValNat p (Nat.factorial n) ∣ Nat.factorial n := pow_padicValNat_dvd
-      have hp_pow_A1B1 : p ^ padicValNat p (Nat.factorial n) ∣ A_sol m₁ * B_sol m₁ := by
-        have hcop4 : Nat.Coprime (p ^ padicValNat p (Nat.factorial n)) 4 := by
-          apply Nat.Coprime.pow_left
-          exact hp_prime.coprime_iff_not_dvd.mpr (fun h => hp2 ((Nat.prime_dvd_prime_iff_eq hp_prime Nat.prime_two).mp (hp_prime.dvd_of_dvd_pow (show p ∣ 2 ^ 2 from h))))
-        rw [← h4mul1] at hp_pow_fac
-        exact hcop4.dvd_of_dvd_mul_left (by simpa [mul_assoc] using hp_pow_fac)
-      have hp_nB1 : ¬ p ∣ B_sol m₁ := fun h => hp_prime.not_dvd_one (hcop1 ▸ Nat.dvd_gcd hp_A1 h)
-      have hp_pow_A1 : p ^ padicValNat p (Nat.factorial n) ∣ A_sol m₁ :=
-        (Nat.Coprime.pow_left _ (hp_prime.coprime_iff_not_dvd.mpr hp_nB1)).dvd_of_dvd_mul_right hp_pow_A1B1
-      rw [hA₁_eq] at hp_pow_A1
-      exact (Nat.Coprime.pow_left _ (hp_prime.coprime_iff_not_dvd.mpr hp_nZ)).dvd_of_dvd_mul_right hp_pow_A1
-    · intro p hp q hq hpq
+    have hcop_each : ∀ p ∈ S_good, ∀ q ∈ S_good, p ≠ q →
+        Nat.Coprime (p ^ padicValNat p (Nat.factorial n)) (q ^ padicValNat q (Nat.factorial n)) := by
+      intro p hp q hq hpq
       simp only [S_good, Finset.mem_filter] at hp hq
       exact Nat.Coprime.pow _ _ ((Nat.coprime_primes hp.1.1 hq.1.1).mpr hpq)
+    have hprod_dvd : ∀ s : Finset ℕ, (∀ p ∈ s, p ^ padicValNat p (Nat.factorial n) ∣ X_gcd m₁ m₂) →
+        (∀ p ∈ s, ∀ q ∈ s, p ≠ q → Nat.Coprime (p ^ padicValNat p (Nat.factorial n)) (q ^ padicValNat q (Nat.factorial n))) →
+        ∏ p ∈ s, p ^ padicValNat p (Nat.factorial n) ∣ X_gcd m₁ m₂ := by
+      intro s hs hcs
+      induction s using Finset.induction_on with
+      | empty => simp
+      | @insert a s ha ih =>
+        rw [Finset.prod_insert ha]
+        have hcop_a : Nat.Coprime (a ^ padicValNat a (Nat.factorial n)) (∏ p ∈ s, p ^ padicValNat p (Nat.factorial n)) :=
+          Nat.Coprime.prod_right fun q hq => hcs a (Finset.mem_insert_self a s) q (Finset.mem_insert_of_mem hq) (fun h => ha (h ▸ hq))
+        exact hcop_a.mul_dvd_of_dvd_of_dvd (hs a (Finset.mem_insert_self a s))
+          (ih (fun p hp => hs p (Finset.mem_insert_of_mem hp))
+              (fun p hp q hq hpq => hcs p (Finset.mem_insert_of_mem hp) q (Finset.mem_insert_of_mem hq) hpq))
+    exact hprod_dvd S_good hdvd_each hcop_each
   have hlog_prod : ∑ p ∈ S_good, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) ≤
       Real.log (X_gcd m₁ m₂ : ℝ) := by
     have hpos_prod : 0 < ∏ p ∈ S_good, p ^ padicValNat p (Nat.factorial n) := by
@@ -897,7 +920,7 @@ theorem prop_6_2_part3_square_shift_exclusions :
             exact_mod_cast this.symm
           have hfacr : (362880 : ℝ) ≤ Nat.factorial n₁ := by exact_mod_cast hfac_ge
           nlinarith only [h1, hP2r, hfacr]
-        nlinarith only [hm2_sq, Real.sqrt_nonneg (Nat.factorial n₁ : ℝ), (Nat.cast_nonneg m₂ : (0 : ℝ) ≤ m₂), hP2r]
+        nlinarith only [hm2_sq, mul_nonneg (by linarith [hP2r] : (0 : ℝ) ≤ P) (Real.sqrt_nonneg (Nat.factorial n₁ : ℝ)), (Nat.cast_nonneg m₂ : (0 : ℝ) ≤ m₂)]
       have hP_le : (P : ℝ) - 1 ≤ (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ) := by
         have h1sq : (1 : ℝ) ≤ Real.sqrt (Nat.factorial n₁ : ℝ) := by
           rw [← Real.sqrt_one]; exact Real.sqrt_le_sqrt (by exact_mod_cast Nat.factorial_pos n₁)
