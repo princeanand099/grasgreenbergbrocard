@@ -128,7 +128,7 @@ theorem thm_5_3_part2_inert_absorption {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.fact
       have hs_pos : 0 < s_n n := Nat.pos_of_ne_zero (fun h0 => by
         rw [h0] at hfac_qs; simp at hfac_qs; exact (Nat.factorial_pos n).ne' hfac_qs)
       have hv := congrArg (padicValNat q) hfac_qs
-      rw [padicValNat.mul hq_pos.ne' (pow_ne_zero 2 hs_pos.ne'), padicValNat.pow 2 hs_pos.ne'] at hv
+      rw [padicValNat.mul hq_pos.ne' (pow_ne_zero 2 hs_pos.ne'), padicValNat_pow_eq] at hv
       have hvpq1 : padicValNat q (q_n n) = 1 := by
         have h1 := one_le_padicValNat_of_dvd hq_pos.ne' hqd
         have hle1 : padicValNat q (q_n n) ≤ 1 := by
@@ -183,8 +183,7 @@ theorem thm_5_3_part2_inert_absorption {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.fact
       exact zero_ne_one hmod
     have hsq : IsSquare ((δ₂ : ℤ) : ZMod q) := by
       refine ⟨((z₂ : ℤ) : ZMod q)⁻¹, ?_⟩
-      have hinv : ((z₂ : ℤ) : ZMod q) * ((z₂ : ℤ) : ZMod q)⁻¹ = 1 :=
-        ZMod.mul_inv_of_unit _ (isUnit_iff_ne_zero.mpr hz2_ne)
+      have hinv : ((z₂ : ℤ) : ZMod q) * ((z₂ : ℤ) : ZMod q)⁻¹ = 1 := mul_inv_cancel₀ hz2_ne
       calc ((δ₂ : ℤ) : ZMod q) = ((δ₂ : ℤ) : ZMod q) * (((z₂ : ℤ) : ZMod q) * ((z₂ : ℤ) : ZMod q)⁻¹) ^ 2 := by
             rw [hinv, one_pow, mul_one]
         _ = (((δ₂ : ℤ) : ZMod q) * ((z₂ : ℤ) : ZMod q) ^ 2) * (((z₂ : ℤ) : ZMod q)⁻¹) ^ 2 := by ring
@@ -210,8 +209,7 @@ theorem thm_5_3_part2_inert_absorption {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.fact
       exact zero_ne_one hmod
     have hsq : IsSquare ((-(δ₁ : ℤ) : ℤ) : ZMod q) := by
       refine ⟨((z₁ : ℤ) : ZMod q)⁻¹, ?_⟩
-      have hinv : ((z₁ : ℤ) : ZMod q) * ((z₁ : ℤ) : ZMod q)⁻¹ = 1 :=
-        ZMod.mul_inv_of_unit _ (isUnit_iff_ne_zero.mpr hz1_ne)
+      have hinv : ((z₁ : ℤ) : ZMod q) * ((z₁ : ℤ) : ZMod q)⁻¹ = 1 := mul_inv_cancel₀ hz1_ne
       have hmod' : ((-(δ₁ : ℤ) : ℤ) : ZMod q) * ((z₁ : ℤ) : ZMod q) ^ 2 = 1 := by
         push_cast; linarith
       calc ((-(δ₁ : ℤ) : ℤ) : ZMod q) = ((-(δ₁ : ℤ) : ℤ) : ZMod q) * (((z₁ : ℤ) : ZMod q) * ((z₁ : ℤ) : ZMod q)⁻¹) ^ 2 := by
@@ -295,7 +293,7 @@ theorem thm_5_3_part2_dual_quartic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factoria
       have hs_pos : 0 < s_n n := Nat.pos_of_ne_zero (fun h0 => by
         rw [h0] at hfac_qs; simp at hfac_qs; exact (Nat.factorial_pos n).ne' hfac_qs)
       have hv := congrArg (padicValNat q) hfac_qs
-      rw [padicValNat.mul hq_pos.ne' (pow_ne_zero 2 hs_pos.ne'), padicValNat.pow 2 hs_pos.ne'] at hv
+      rw [padicValNat.mul hq_pos.ne' (pow_ne_zero 2 hs_pos.ne'), padicValNat_pow_eq] at hv
       have hvpq1 : padicValNat q (q_n n) = 1 := by
         have h1 := one_le_padicValNat_of_dvd hq_pos.ne' hqd
         have hle1 : padicValNat q (q_n n) ≤ 1 := by
@@ -341,7 +339,7 @@ theorem thm_5_3_part2_dual_quartic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factoria
     unfold W₁ W_split
     apply Finset.prod_primes_dvd
     · intro q hq
-      exact (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).1).2.1
+      exact (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).1).2.1.prime
     · intro q hq
       have hq_mem := Finset.mem_filter.mp hq
       have hq_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp hq_mem.1).1).2.1
@@ -352,7 +350,7 @@ theorem thm_5_3_part2_dual_quartic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factoria
     unfold W₂ W_split
     apply Finset.prod_primes_dvd
     · intro q hq
-      exact (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).1).2.1
+      exact (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).1).2.1.prime
     · intro q hq
       have hq_mem := Finset.mem_filter.mp hq
       have hq_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp hq_mem.1).1).2.1
