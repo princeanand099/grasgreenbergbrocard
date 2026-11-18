@@ -645,7 +645,8 @@ theorem prop_6_2_part2_consecutive_equipartition :
         have hp3 : 3 ≤ p := hp.1.2.1
         haveI : Fact p.Prime := ⟨hp_prime⟩
         have h1 : padicValNat p (Nat.factorial n) * (p - 1) ≤ n := by
-          have := sub_one_mul_padicValNat_factorial (p := p) n; linarith
+          rw [mul_comm]
+          exact le_trans (sub_one_mul_padicValNat_factorial (p := p) n).le (Nat.sub_le n _)
         have h1r : (padicValNat p (Nat.factorial n) : ℝ) * ((p : ℝ) - 1) ≤ (n : ℝ) := by
           have h1n : (padicValNat p (Nat.factorial n) : ℝ) * ((p - 1 : ℕ) : ℝ) ≤ (n : ℝ) := by exact_mod_cast h1
           rwa [Nat.cast_sub (by omega : 1 ≤ p), Nat.cast_one] at h1n

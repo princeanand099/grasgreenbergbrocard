@@ -12,7 +12,8 @@ lemma val_factorial_le_two_div {n p : ℕ} (hp : p.Prime) (hp3 : 3 ≤ p) :
     (padicValNat p (Nat.factorial n) : ℝ) ≤ 2 * (n : ℝ) / (p : ℝ) := by
   haveI : Fact p.Prime := ⟨hp⟩
   have h1 : padicValNat p (Nat.factorial n) * (p - 1) ≤ n := by
-    have := sub_one_mul_padicValNat_factorial (p := p) n; linarith
+    rw [mul_comm]
+    exact le_trans (sub_one_mul_padicValNat_factorial (p := p) n).le (Nat.sub_le n _)
   have h1r : (padicValNat p (Nat.factorial n) : ℝ) * ((p : ℝ) - 1) ≤ (n : ℝ) := by
     have h1n : (padicValNat p (Nat.factorial n) : ℝ) * ((p - 1 : ℕ) : ℝ) ≤ (n : ℝ) := by exact_mod_cast h1
     rwa [Nat.cast_sub (by omega : 1 ≤ p), Nat.cast_one] at h1n
@@ -29,7 +30,7 @@ private lemma vaaler_btilde_dyadic_sum_bound
     (H : ℕ) (hH : 1 ≤ H) (b_tilde : ℤ → ℂ)
     (h_btilde0 : b_tilde 0 = (2 / ((H : ℝ) + 1) : ℂ))
     (h_btilde_b : ∀ h : ℤ, ‖b_tilde h‖ < 3 / ((H : ℝ) + 1))
-    (n : ℕ) (hn : 3 ≤ n) (P : ℝ) (hP_pos : 0 < P) (I : Finset ℕ)
+    (n : ℕ) (hn : 3 ≤ n) (P : ℝ) (hP_pos : 0 < P) (hP_ge1 : 1 ≤ 2 * P) (I : Finset ℕ)
     (hI : ∀ p ∈ I, p.Prime ∧ P < (p : ℝ) ∧ (p : ℝ) ≤ 2 * P)
     (C_exp : ℝ) (hC_exp : 0 ≤ C_exp) (R_exp : ℕ)
     (hExp : ∀ (h : ℤ), h ≠ 0 → |h| ≤ 2 * (H : ℤ) + 1 →
@@ -58,17 +59,11 @@ private lemma vaaler_btilde_dyadic_sum_bound
       intro p hp
       have hp_mem := hI p hp
       gcongr
-      exact_mod_cast hp_mem.1.pos
+      · exact_mod_cast hp_mem.1.pos
+      · exact hp_mem.2.2
     refine le_trans (Finset.sum_le_sum hterm) ?_
     rw [Finset.sum_const, nsmul_eq_mul]
-    have hlog2P : 0 ≤ Real.log (2 * P) := by
-      by_cases h1 : 1 ≤ 2 * P
-      · exact Real.log_nonneg h1
-      · have hI_empty : I = ∅ := by
-          ext p; simp only [Finset.not_mem_empty, iff_false]
-          intro hp; have := (hI p hp).2.2; have : 2 ≤ p := (hI p hp).1.two_le
-          linarith [show (2 : ℝ) ≤ p from by exact_mod_cast this]
-        subst hI_empty; simp at hterm ⊢; linarith
+    have hlog2P : 0 ≤ Real.log (2 * P) := Real.log_nonneg hP_ge1
     calc (I.card : ℝ) * (Real.log (2 * P) * (2 / ((H : ℝ) + 1)))
         ≤ (2 * P) * (Real.log (2 * P) * (2 / ((H : ℝ) + 1))) := by gcongr
       _ = (4 * P * Real.log (2 * P)) / ((H : ℝ) + 1) := by ring
@@ -189,7 +184,7 @@ lemma lem_6_3_osc_bound
     rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at h5
     have h10 : 10 ≤ (δ / 2) * Real.log (n₁ : ℝ) := by
       have := (div_lt_iff₀ hlog_n₁_pos).mp h5; linarith
-    exact Nat.le_floor (one_le_pow₀ (by linarith) _)
+    exact Nat.le_floor (one_le_pow₀ (by linarith))
   obtain ⟨c_tilde, b_tilde, h_supp, h_ctilde_b, h_btilde0, h_btilde_b, h_vaaler_pw, h_L1⟩ :=
     vaaler_parity_approx H hH_ge1
   -- Bound on each dyadic block I_k
@@ -240,7 +235,7 @@ lemma lem_6_3_osc_bound
       -- n₁ / (log n₁)^{A_R + 2} ≤ n₁ / (2 log n₁)^{12} ≤ n₂ / (log n₂)^{12} since A_R + 2 ≥ 56!
       have hlog_n2_le : Real.log (n₂ : ℝ) ≤ 2 * Real.log (n₁ : ℝ) := by
         have hn2_lt : (n₂ : ℝ) < 2 * (n₁ : ℝ) := by exact_mod_cast (by omega : n₂ < 2 * n₁)
-        have h1 := Real.log_le_log (by positivity) hn2_lt.le
+        have h1 := Real.log_le_log (by exact_mod_cast (by omega : 0 < n₂)) hn2_lt.le
         rw [Real.log_mul (by norm_num) hn₁_pos.ne'] at h1
         have : Real.log 2 ≤ Real.log (n₁ : ℝ) := Real.log_le_log (by norm_num) (by linarith)
         linarith
@@ -399,7 +394,7 @@ lemma lem_6_3_osc_bound
             by_contra hge; rw [not_lt] at hge
             exact absurd (Nat.log_pos hp_pr.one_lt hge) (by rw [h0]; exact lt_irrefl 0)
           rw [Nat.div_eq_of_lt this]; exact Nat.zero_le _
-        · exact Finset.single_le_sum (f := fun i => n₁ / p ^ i) (fun _ _ => Nat.zero_le _)
+        · simpa using Finset.single_le_sum (f := fun i => n₁ / p ^ i) (fun _ _ => Nat.zero_le _)
             (Finset.mem_Ico.mpr ⟨le_refl 1, Nat.succ_le_succ hpos⟩)
       have hv_le2 : n₂ / p ≤ padicValNat p (Nat.factorial n₂) := by
         haveI : Fact p.Prime := ⟨hp_pr⟩
@@ -410,7 +405,7 @@ lemma lem_6_3_osc_bound
             by_contra hge; rw [not_lt] at hge
             exact absurd (Nat.log_pos hp_pr.one_lt hge) (by rw [h0]; exact lt_irrefl 0)
           rw [Nat.div_eq_of_lt this]; exact Nat.zero_le _
-        · exact Finset.single_le_sum (f := fun i => n₂ / p ^ i) (fun _ _ => Nat.zero_le _)
+        · simpa using Finset.single_le_sum (f := fun i => n₂ / p ^ i) (fun _ _ => Nat.zero_le _)
             (Finset.mem_Ico.mpr ⟨le_refl 1, Nat.succ_le_succ hpos⟩)
       have hfl1 : Int.floor ((n₁ : ℝ) / (p : ℝ)) = ((n₁ / p : ℕ) : ℤ) := by
         rw [Int.floor_eq_iff]; constructor
@@ -435,10 +430,10 @@ lemma lem_6_3_osc_bound
           (-1 : ℝ) ^ ((padicValNat p (Nat.factorial n₁) - n₁ / p) +
             (padicValNat p (Nat.factorial n₂) - n₂ / p)) *
           (-1 : ℝ) ^ (n₁ / p) * (-1 : ℝ) ^ (n₂ / p) := by
-        rw [hexp_eq, pow_add, pow_add, pow_add]
+        rw [hexp_eq, pow_add, pow_add, pow_add]; ring
       rw [h_pow]
       have hn1P_ne : (n₁ : ℝ) / P ≠ 0 := by positivity
-      field_simp [hn1P_ne]; ring
+      field_simp [hn1P_ne]; try ring
     let S_H := (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (fun h => h ≠ 0 ∧ Odd h)
     let Psi_tilde : ℝ → ℂ := fun x =>
       ∑ h ∈ S_H, c_tilde h * eExp ((h : ℝ) * x / 2)
@@ -685,7 +680,7 @@ lemma lem_6_3_osc_bound
           (4 * P * Real.log (2 * P)) / ((H : ℝ) + 1) +
             12 * C₂ * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by
         simp_rw [hB_split]
-        refine vaaler_btilde_dyadic_sum_bound H hH_ge1 b_tilde h_btilde0 h_btilde_b n₁ (by omega) P hP_pos I_k hI_k
+        refine vaaler_btilde_dyadic_sum_bound H hH_ge1 b_tilde h_btilde0 h_btilde_b n₁ (by omega) P hP_pos (by linarith [hn₁_delta_ge3, hP_lb]) I_k hI_k
           C₂ hC₂.le R (fun h' hh' hbd => ?_)
         have hbd' : |h'| ≤ 2 * (Nat.floor ((Real.log (n₁ : ℝ)) ^ (R + 2)) : ℤ) + 1 :=
           le_trans hbd (by linarith [hH_le_n1])
@@ -706,7 +701,7 @@ lemma lem_6_3_osc_bound
                 b_tilde h * eExp ((h : ℝ) * ((n₂ : ℝ) / (p : ℝ)) / 2)).re ≤
             (4 * P * Real.log (2 * P)) / ((H : ℝ) + 1) +
               12 * C_n2 * P * (Real.log (n₂ : ℝ)) ^ (-((R : ℝ) + 2)) := by
-          refine vaaler_btilde_dyadic_sum_bound H hH_ge1 b_tilde h_btilde0 h_btilde_b n₂ (by omega) P hP_pos I_k hI_k
+          refine vaaler_btilde_dyadic_sum_bound H hH_ge1 b_tilde h_btilde0 h_btilde_b n₂ (by omega) P hP_pos (by linarith [hn₁_delta_ge3, hP_lb]) I_k hI_k
             C_n2 (by positivity) R (fun h' hh' hbd => ?_)
           have hbd' : |h'| ≤ 2 * (Nat.floor ((Real.log (n₁ : ℝ)) ^ (R + 2)) : ℤ) + 1 :=
             le_trans hbd (by linarith [hH_le_n1])
@@ -795,7 +790,7 @@ lemma lem_6_3_osc_bound
     have hH1_lb : ((δ / 2) * Real.log (n₁ : ℝ)) ^ (R + 2) ≤ (H : ℝ) + 1 :=
       (Nat.lt_floor_add_one _).le
     have hlog2P_ub : Real.log (2 * P) ≤ 2 * Real.log (n₁ : ℝ) := by
-      have h1 : 2 * P ≤ 2 * (n₁ : ℝ) := by linarith [le_trans hP_lt_y₁.le hy₁_le_n₁]
+      have h1 : 2 * P ≤ 2 * (n₁ : ℝ) := by linarith [le_trans hP_lt_y₁.le hy1_le_n₁]
       have h2 := Real.log_le_log (by positivity) h1
       rw [Real.log_mul (by norm_num) hn₁_pos.ne'] at h2
       have : Real.log 2 ≤ Real.log (n₁ : ℝ) := Real.log_le_log (by norm_num) (by linarith)
