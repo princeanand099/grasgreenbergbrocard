@@ -103,7 +103,7 @@ theorem thm_5_3_part2_inert_absorption {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.fact
   have hq_peven := Finset.mem_filter.mp hmem.1
   have hq_le_n : q ≤ n := (Finset.mem_Icc.mp hq_peven.1).2
   have hq_pr : q.Prime := hq_peven.2.1
-  have hq_even : padicValNat q (Nat.factorial n) % 2 = 0 := hq_peven.2.2
+  have hq_even : padicValNat q (Nat.factorial n) % 2 = 0 := Nat.dvd_iff_mod_eq_zero.mp hq_peven.2.2
   have hq3 : 3 ≤ q := hmem.2.1
   have hq_inert : chiLegendre (-(q_n n : ℤ)) q = -1 := hmem.2.2
   haveI : Fact q.Prime := ⟨hq_pr⟩
@@ -154,8 +154,10 @@ theorem thm_5_3_part2_inert_absorption {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.fact
   have hq_not_both : ¬ (q ∣ z₁ ∧ q ∣ z₂) := by
     rintro ⟨h1, h2⟩
     have ⟨hu1_pos, hu2_pos, _, hcop_u, _⟩ := brocard_u1_u2_rel hn hm
-    have h_u1 : q ∣ u₁ := (coreNat_mul_sqPartNat_sq hu1_pos) ▸ dvd_mul_of_dvd_right (dvd_pow h1 (by norm_num)) _
-    have h_u2 : q ∣ u₂ := (coreNat_mul_sqPartNat_sq hu2_pos) ▸ dvd_mul_of_dvd_right (dvd_pow h2 (by norm_num)) _
+    have h1_eq : coreNat u₁ * sqPartNat u₁ ^ 2 = u₁ := coreNat_mul_sqPartNat_sq hu1_pos
+    have h2_eq : coreNat u₂ * sqPartNat u₂ ^ 2 = u₂ := coreNat_mul_sqPartNat_sq hu2_pos
+    have h_u1 : q ∣ u₁ := h1_eq ▸ dvd_mul_of_dvd_right (dvd_pow h1 (by norm_num)) _
+    have h_u2 : q ∣ u₂ := h2_eq ▸ dvd_mul_of_dvd_right (dvd_pow h2 (by norm_num)) _
     have := Nat.dvd_gcd h_u1 h_u2
     rw [hcop_u.gcd_eq_one] at this
     exact hq_pr.ne_one (Nat.dvd_one.mp this)
@@ -171,7 +173,7 @@ theorem thm_5_3_part2_inert_absorption {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.fact
     intro hqz1
     have hqz1_z : ((z₁ : ℤ) : ZMod q) = 0 := (ZMod.intCast_zmod_eq_zero_iff_dvd _ q).mpr (by exact_mod_cast hqz1)
     have hmod := congrArg (Int.cast (R := ZMod q)) hdiff
-    push_cast at hmod
+    simp only [Int.cast_sub, Int.cast_mul, Int.cast_pow, Int.cast_one] at hmod
     rw [hqz1_z, zero_pow (by norm_num), mul_zero, sub_zero] at hmod
     have hz2_ne : ((z₂ : ℤ) : ZMod q) ≠ 0 := by
       intro h0
@@ -183,7 +185,8 @@ theorem thm_5_3_part2_inert_absorption {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.fact
       exact zero_ne_one hmod
     have hsq : IsSquare ((δ₂ : ℤ) : ZMod q) := by
       refine ⟨((z₂ : ℤ) : ZMod q)⁻¹, ?_⟩
-      have hinv : ((z₂ : ℤ) : ZMod q) * ((z₂ : ℤ) : ZMod q)⁻¹ = 1 := mul_inv_cancel₀ hz2_ne
+      have hinv : ((z₂ : ℤ) : ZMod q) * ((z₂ : ℤ) : ZMod q)⁻¹ = 1 :=
+        ZMod.mul_inv_of_unit _ (isUnit_iff_ne_zero.mpr hz2_ne)
       calc ((δ₂ : ℤ) : ZMod q) = ((δ₂ : ℤ) : ZMod q) * (((z₂ : ℤ) : ZMod q) * ((z₂ : ℤ) : ZMod q)⁻¹) ^ 2 := by
             rw [hinv, one_pow, mul_one]
         _ = (((δ₂ : ℤ) : ZMod q) * ((z₂ : ℤ) : ZMod q) ^ 2) * (((z₂ : ℤ) : ZMod q)⁻¹) ^ 2 := by ring
@@ -195,7 +198,7 @@ theorem thm_5_3_part2_inert_absorption {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.fact
     intro hqz2
     have hqz2_z : ((z₂ : ℤ) : ZMod q) = 0 := (ZMod.intCast_zmod_eq_zero_iff_dvd _ q).mpr (by exact_mod_cast hqz2)
     have hmod := congrArg (Int.cast (R := ZMod q)) hdiff
-    push_cast at hmod
+    simp only [Int.cast_sub, Int.cast_mul, Int.cast_pow, Int.cast_one] at hmod
     rw [hqz2_z, zero_pow (by norm_num), mul_zero, zero_sub] at hmod
     have hz1_ne : ((z₁ : ℤ) : ZMod q) ≠ 0 := by
       intro h0
@@ -209,7 +212,8 @@ theorem thm_5_3_part2_inert_absorption {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.fact
       exact zero_ne_one hmod
     have hsq : IsSquare ((-(δ₁ : ℤ) : ℤ) : ZMod q) := by
       refine ⟨((z₁ : ℤ) : ZMod q)⁻¹, ?_⟩
-      have hinv : ((z₁ : ℤ) : ZMod q) * ((z₁ : ℤ) : ZMod q)⁻¹ = 1 := mul_inv_cancel₀ hz1_ne
+      have hinv : ((z₁ : ℤ) : ZMod q) * ((z₁ : ℤ) : ZMod q)⁻¹ = 1 :=
+        ZMod.mul_inv_of_unit _ (isUnit_iff_ne_zero.mpr hz1_ne)
       have hmod' : ((-(δ₁ : ℤ) : ℤ) : ZMod q) * ((z₁ : ℤ) : ZMod q) ^ 2 = 1 := by
         push_cast; linarith
       calc ((-(δ₁ : ℤ) : ℤ) : ZMod q) = ((-(δ₁ : ℤ) : ℤ) : ZMod q) * (((z₁ : ℤ) : ZMod q) * ((z₁ : ℤ) : ZMod q)⁻¹) ^ 2 := by
@@ -226,17 +230,17 @@ theorem thm_5_3_part2_inert_absorption {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.fact
     have hleg := hz1_imp h1
     constructor
     · exact ⟨fun _ => hleg, fun _ => h1⟩
-    · exact ⟨fun h => absurd h h2_nd, fun h => by omega⟩
+    · exact ⟨fun h => absurd h h2_nd, fun h => by rw [hleg] at h; omega⟩
   · have h1_nd : ¬ q ∣ z₁ := fun h1 => hq_not_both ⟨h1, h2⟩
     have hleg := hz2_imp h2
     constructor
-    · exact ⟨fun h => absurd h h1_nd, fun h => by omega⟩
+    · exact ⟨fun h => absurd h h1_nd, fun h => by rw [hleg] at h; omega⟩
     · exact ⟨fun _ => hleg, fun _ => h2⟩
 
 /-- **Theorem 5.3(ii), part 2 — Reduced Dual Quartic Laws (eq. 5.10)**:
-Writing `u₁ = B̃₁ W₁^2` and `u₂ = B̃₂ W₂^2` where `W_i = ∏_{q ∈ 𝒫_even^+(n), q ∣ z_i} q^{v_q(n!)/2}`,
+Writing `u₁ = Btilde₁ W₁^2` and `u₂ = Btilde₂ W₂^2` where `W_i = ∏_{q ∈ 𝒫_even^+(n), q ∣ z_i} q^{v_q(n!)/2}`,
 we have `(W₁ W₂)^2 = A_{n,+}^*` and the dual quartic equations:
-`B̃₂ A_{n,+}^* = B̃₁ W₁^4 + W₁^2` and `B̃₁ A_{n,+}^* = B̃₂ W₂^4 - W₂^2`. -/
+`Btilde₂ A_{n,+}^* = Btilde₁ W₁^4 + W₁^2` and `Btilde₁ A_{n,+}^* = Btilde₂ W₂^4 - W₂^2`. -/
 theorem thm_5_3_part2_dual_quartic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2) :
     let u₁ := (m - 1) / 2
     let u₂ := (m + 1) / 2
@@ -244,13 +248,13 @@ theorem thm_5_3_part2_dual_quartic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factoria
     let z₂ := sqPartNat u₂
     let W₁ := W_split n z₁
     let W₂ := W_split n z₂
-    let B̃₁ := B_tilde n u₁ z₁
-    let B̃₂ := B_tilde n u₂ z₂
-    u₁ = B̃₁ * W₁ ^ 2 ∧
-    u₂ = B̃₂ * W₂ ^ 2 ∧
+    let Btilde₁ := B_tilde n u₁ z₁
+    let Btilde₂ := B_tilde n u₂ z₂
+    u₁ = Btilde₁ * W₁ ^ 2 ∧
+    u₂ = Btilde₂ * W₂ ^ 2 ∧
     (W₁ * W₂) ^ 2 = A_plus_star n ∧
-    B̃₂ * A_plus_star n = B̃₁ * W₁ ^ 4 + W₁ ^ 2 ∧
-    B̃₁ * A_plus_star n = B̃₂ * W₂ ^ 4 - W₂ ^ 2 := by
+    Btilde₂ * A_plus_star n = Btilde₁ * W₁ ^ 4 + W₁ ^ 2 ∧
+    Btilde₁ * A_plus_star n = Btilde₂ * W₂ ^ 4 - W₂ ^ 2 := by
   have ⟨hu₁_pos, hu₂_pos, hu_diff, hcop_u, h4mul, hu_qs, h2_dvd_sn⟩ := brocard_u1_u2_rel hn hm
   have ⟨hδ_prod, _, hz_prod, _, _, _⟩ := thm_5_2_part1_bipartition hn hm
   set u₁ := (m - 1) / 2
@@ -261,8 +265,8 @@ theorem thm_5_3_part2_dual_quartic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factoria
   set z₂ := sqPartNat u₂
   set W₁ := W_split n z₁
   set W₂ := W_split n z₂
-  set B̃₁ := B_tilde n u₁ z₁
-  set B̃₂ := B_tilde n u₂ z₂
+  set Btilde₁ := B_tilde n u₁ z₁
+  set Btilde₂ := B_tilde n u₂ z₂
   have hz₁_pos : 0 < z₁ := sqPartNat_pos u₁
   have hz₂_pos : 0 < z₂ := sqPartNat_pos u₂
   have h1_eq : δ₁ * z₁ ^ 2 = u₁ := coreNat_mul_sqPartNat_sq hu₁_pos
@@ -279,7 +283,7 @@ theorem thm_5_3_part2_dual_quartic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factoria
     have hq_pe := Finset.mem_filter.mp hq_mem.1
     have hq_le_n : q ≤ n := (Finset.mem_Icc.mp hq_pe.1).2
     have hq_pr : q.Prime := hq_pe.2.1
-    have hq_even : padicValNat q (Nat.factorial n) % 2 = 0 := hq_pe.2.2
+    have hq_even : padicValNat q (Nat.factorial n) % 2 = 0 := Nat.dvd_iff_mod_eq_zero.mp hq_pe.2.2
     have hq3 : 3 ≤ q := hq_mem.2.1
     haveI : Fact q.Prime := ⟨hq_pr⟩
     have hq_dvd_fac : q ∣ Nat.factorial n := hq_pr.dvd_factorial.mpr hq_le_n
@@ -339,7 +343,7 @@ theorem thm_5_3_part2_dual_quartic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factoria
     unfold W₁ W_split
     apply Finset.prod_primes_dvd
     · intro q hq
-      exact (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).1).2.1.prime
+      exact (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).1).2.1
     · intro q hq
       have hq_mem := Finset.mem_filter.mp hq
       have hq_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp hq_mem.1).1).2.1
@@ -350,7 +354,7 @@ theorem thm_5_3_part2_dual_quartic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factoria
     unfold W₂ W_split
     apply Finset.prod_primes_dvd
     · intro q hq
-      exact (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).1).2.1.prime
+      exact (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).1).2.1
     · intro q hq
       have hq_mem := Finset.mem_filter.mp hq
       have hq_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp hq_mem.1).1).2.1
@@ -359,8 +363,8 @@ theorem thm_5_3_part2_dual_quartic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factoria
       exact pow_padicValNat_dvd
   have hW1_sq_u1 : W₁ ^ 2 ∣ u₁ := h1_eq ▸ dvd_mul_of_dvd_right (pow_dvd_pow_of_dvd hW1_dvd_z1 2) _
   have hW2_sq_u2 : W₂ ^ 2 ∣ u₂ := h2_eq ▸ dvd_mul_of_dvd_right (pow_dvd_pow_of_dvd hW2_dvd_z2 2) _
-  have hu1_eq : u₁ = B̃₁ * W₁ ^ 2 := (Nat.div_mul_cancel hW1_sq_u1).symm
-  have hu2_eq : u₂ = B̃₂ * W₂ ^ 2 := (Nat.div_mul_cancel hW2_sq_u2).symm
+  have hu1_eq : u₁ = Btilde₁ * W₁ ^ 2 := (Nat.div_mul_cancel hW1_sq_u1).symm
+  have hu2_eq : u₂ = Btilde₂ * W₂ ^ 2 := (Nat.div_mul_cancel hW2_sq_u2).symm
   have h_disj : Disjoint ((PevenPlus n).filter (· ∣ z₁)) ((PevenPlus n).filter (· ∣ z₂)) := by
     rw [Finset.disjoint_left]
     intro q hq1 hq2
@@ -383,33 +387,35 @@ theorem thm_5_3_part2_dual_quartic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factoria
     apply Finset.prod_congr rfl
     intro q hq
     have hq_even : padicValNat q (Nat.factorial n) % 2 = 0 :=
-      (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).2.2
+      Nat.dvd_iff_mod_eq_zero.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).2.2
     rw [← pow_mul]
     congr 1
     omega
-  have h_diff_B : (B̃₂ : ℤ) * (W₂ : ℤ) ^ 2 - (B̃₁ : ℤ) * (W₁ : ℤ) ^ 2 = 1 := by
-    have h1z : (B̃₁ : ℤ) * (W₁ : ℤ) ^ 2 = (u₁ : ℤ) := by exact_mod_cast hu1_eq.symm
-    have h2z : (B̃₂ : ℤ) * (W₂ : ℤ) ^ 2 = (u₂ : ℤ) := by exact_mod_cast hu2_eq.symm
+  have h_diff_B : (Btilde₂ : ℤ) * (W₂ : ℤ) ^ 2 - (Btilde₁ : ℤ) * (W₁ : ℤ) ^ 2 = 1 := by
+    have h1z : (Btilde₁ : ℤ) * (W₁ : ℤ) ^ 2 = (u₁ : ℤ) := by exact_mod_cast hu1_eq.symm
+    have h2z : (Btilde₂ : ℤ) * (W₂ : ℤ) ^ 2 = (u₂ : ℤ) := by exact_mod_cast hu2_eq.symm
     have hdz : (u₂ : ℤ) = (u₁ : ℤ) + 1 := by exact_mod_cast hu_diff
     linarith
-  have hq1_z : (B̃₂ : ℤ) * (A_plus_star n : ℤ) = (B̃₁ : ℤ) * (W₁ : ℤ) ^ 4 + (W₁ : ℤ) ^ 2 := by
+  have hq1_z : (Btilde₂ : ℤ) * (A_plus_star n : ℤ) = (Btilde₁ : ℤ) * (W₁ : ℤ) ^ 4 + (W₁ : ℤ) ^ 2 := by
     have hA_z : (A_plus_star n : ℤ) = ((W₁ : ℤ) * (W₂ : ℤ)) ^ 2 := by exact_mod_cast hW_sq_eq.symm
     rw [hA_z]
     have hmul := congrArg (· * (W₁ : ℤ) ^ 2) h_diff_B
     linarith
-  have hq2_z : (B̃₁ : ℤ) * (A_plus_star n : ℤ) = (B̃₂ : ℤ) * (W₂ : ℤ) ^ 4 - (W₂ : ℤ) ^ 2 := by
+  have hq2_z : (Btilde₁ : ℤ) * (A_plus_star n : ℤ) = (Btilde₂ : ℤ) * (W₂ : ℤ) ^ 4 - (W₂ : ℤ) ^ 2 := by
     have hA_z : (A_plus_star n : ℤ) = ((W₁ : ℤ) * (W₂ : ℤ)) ^ 2 := by exact_mod_cast hW_sq_eq.symm
     rw [hA_z]
     have hmul := congrArg (· * (W₂ : ℤ) ^ 2) h_diff_B
     linarith
-  have hq1 : B̃₂ * A_plus_star n = B̃₁ * W₁ ^ 4 + W₁ ^ 2 := by exact_mod_cast hq1_z
-  have hq2 : B̃₁ * A_plus_star n = B̃₂ * W₂ ^ 4 - W₂ ^ 2 := by
-    zify [show W₂ ^ 2 ≤ B̃₂ * W₂ ^ 4 by
-      have : 1 ≤ B̃₂ * W₂ ^ 2 := by rw [← hu2_eq]; exact hu₂_pos
-      have : 1 ≤ B̃₂ := by
+  have hq1 : Btilde₂ * A_plus_star n = Btilde₁ * W₁ ^ 4 + W₁ ^ 2 := by exact_mod_cast hq1_z
+  have hq2 : Btilde₁ * A_plus_star n = Btilde₂ * W₂ ^ 4 - W₂ ^ 2 := by
+    zify [show W₂ ^ 2 ≤ Btilde₂ * W₂ ^ 4 by
+      have : 1 ≤ Btilde₂ * W₂ ^ 2 := by rw [← hu2_eq]; exact hu₂_pos
+      have : 1 ≤ Btilde₂ := by
         by_contra h0
-        have hB0 : B̃₂ = 0 := by omega
+        have hB0 : Btilde₂ = 0 := by omega
         rw [hB0, zero_mul] at hu2_eq; omega
+      have hW2_pos : 1 ≤ W₂ := W_split_pos n z₂
+      have hW2_le : W₂ ^ 2 ≤ W₂ ^ 4 := by nlinarith [sq_nonneg W₂]
       nlinarith [sq_nonneg W₂]]
     exact hq2_z
   exact ⟨hu1_eq, hu2_eq, hW_sq_eq, hq1, hq2⟩
