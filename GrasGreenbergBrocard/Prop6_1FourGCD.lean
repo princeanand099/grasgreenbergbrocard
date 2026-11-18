@@ -89,9 +89,12 @@ lemma m_lt_of_brocard {n₁ n₂ m₁ m₂ : ℕ} (hlt : n₁ < n₂)
         _ ≤ Nat.factorial n₂ := Nat.factorial_le (by omega)
     · exact (Nat.factorial_lt (Nat.pos_of_ne_zero h0)).mpr hlt
   by_contra hle
-  push_neg at hle
-  have hsq : m₂ ^ 2 ≤ m₁ ^ 2 := Nat.pow_le_pow_left hle 2
-  omega
+  have hle' : m₂ ≤ m₁ := Nat.le_of_not_lt hle
+  have hsq : m₂ ^ 2 ≤ m₁ ^ 2 := Nat.pow_le_pow_left hle' 2
+  have hlt_sq : m₁ ^ 2 < m₂ ^ 2 := by
+    rw [← hm₁, ← hm₂]
+    exact Nat.add_lt_add_right hfac_lt 1
+  exact absurd hlt_sq (not_lt.mpr hsq)
 
 /-- **Proposition 6.1 (Setup)**: Pairwise coprimality of `X, Y, Z, W` and the
 factorization `A₁ = X Z`, `B₁ = Y W`, `X Y Z W = n₁! / 4`. -/
@@ -362,22 +365,27 @@ theorem prop_6_1_part1_sl2_and_four_squares {n₁ n₂ m₁ m₂ : ℕ}
   have h2V : 2 * (b : ℤ) * Z * W = (m₂ : ℤ) + m₁ := by
     have h1 : (2 * V : ℕ) = m₂ + m₁ := by change 2 * ((m₂ + m₁) / 2) = m₂ + m₁; omega
     have h2 : (V : ℤ) = b * Z * W := by exact_mod_cast hV_eq
-    omega
+    zify at h1; linarith
   have hm2_sq : (m₂ : ℤ) ^ 2 = (P : ℤ) * (m₁ : ℤ) ^ 2 - ((P : ℤ) - 1) := by
     have h1 : (Nat.factorial n₁ : ℤ) + 1 = (m₁ : ℤ) ^ 2 := by exact_mod_cast hm₁
     have h2 : (Nat.factorial n₂ : ℤ) + 1 = (m₂ : ℤ) ^ 2 := by exact_mod_cast hm₂
     have h3 : (P : ℤ) * (Nat.factorial n₁ : ℤ) = (Nat.factorial n₂ : ℤ) := by
       exact_mod_cast P_ratio_mul_factorial hlt
-    linarith
+    calc (m₂ : ℤ) ^ 2 = (Nat.factorial n₂ : ℤ) + 1 := h2.symm
+      _ = (P : ℤ) * (Nat.factorial n₁ : ℤ) + 1 := by rw [h3]
+      _ = (P : ℤ) * ((m₁ : ℤ) ^ 2 - 1) + 1 := by rw [← h1]; ring
+      _ = (P : ℤ) * (m₁ : ℤ) ^ 2 - ((P : ℤ) - 1) := by ring
   have hPm1_gt : (m₂ : ℤ) < (P : ℤ) * m₁ := by
     have hP2 : (2 : ℤ) ≤ P := by exact_mod_cast hP_ge
     have hm1_pos : (0 : ℤ) < m₁ := by exact_mod_cast (show 0 < m₁ by omega)
+    have hm2_nn : (0 : ℤ) ≤ m₂ := Int.natCast_nonneg m₂
     have hsq_lt : (m₂ : ℤ) ^ 2 < ((P : ℤ) * m₁) ^ 2 := by
-      have : ((P : ℤ) * m₁) ^ 2 - (m₂ : ℤ) ^ 2 =
+      have hdiff_eq : ((P : ℤ) * m₁) ^ 2 - (m₂ : ℤ) ^ 2 =
           (P : ℤ) * ((P : ℤ) - 1) * (m₁ : ℤ) ^ 2 + ((P : ℤ) - 1) := by
         rw [hm2_sq]; ring
-      nlinarith
-    nlinarith
+      have hpos : 0 < (P : ℤ) * ((P : ℤ) - 1) * (m₁ : ℤ) ^ 2 + ((P : ℤ) - 1) := by positivity
+      linarith
+    nlinarith only [hsq_lt, hm1_pos, hm2_nn, hP2]
   have hsum_XY : (a : ℤ) * d * (Y : ℤ) ^ 2 + (a : ℤ) * c * (X : ℤ) ^ 2 = (P : ℤ) * m₁ - m₂ := by
     have hsq : ((a : ℤ) * d * (Y : ℤ) ^ 2 + (a : ℤ) * c * (X : ℤ) ^ 2) ^ 2 =
         ((P : ℤ) * m₁ - m₂) ^ 2 := by
@@ -396,7 +404,7 @@ theorem prop_6_1_part1_sl2_and_four_squares {n₁ n₂ m₁ m₂ : ℕ}
             rw [hm2_sq]; ring
           linear_combination this
     have hnonneg : 0 ≤ (a : ℤ) * d * (Y : ℤ) ^ 2 + (a : ℤ) * c * (X : ℤ) ^ 2 := by positivity
-    nlinarith
+    nlinarith only [hsq, hnonneg, hPm1_gt]
   have hsum_ZW : (b : ℤ) * c * (W : ℤ) ^ 2 + (b : ℤ) * d * (Z : ℤ) ^ 2 = (P : ℤ) * m₁ + m₂ := by
     have hsq : ((b : ℤ) * c * (W : ℤ) ^ 2 + (b : ℤ) * d * (Z : ℤ) ^ 2) ^ 2 =
         ((P : ℤ) * m₁ + m₂) ^ 2 := by
@@ -416,7 +424,8 @@ theorem prop_6_1_part1_sl2_and_four_squares {n₁ n₂ m₁ m₂ : ℕ}
             rw [hm2_sq]; ring
           linear_combination this
     have hnonneg : 0 ≤ (b : ℤ) * c * (W : ℤ) ^ 2 + (b : ℤ) * d * (Z : ℤ) ^ 2 := by positivity
-    nlinarith
+    have hm_nn : (0 : ℤ) ≤ (P : ℤ) * m₁ + m₂ := by positivity
+    nlinarith only [hsq, hnonneg, hm_nn]
   have hdiff_XY : (a : ℤ) * d * (Y : ℤ) ^ 2 - (a : ℤ) * c * (X : ℤ) ^ 2 = (P : ℤ) - 1 := by
     calc (a : ℤ) * d * (Y : ℤ) ^ 2 - (a : ℤ) * c * (X : ℤ) ^ 2
         = (a : ℤ) * (d * Y ^ 2 - c * X ^ 2) := by ring
@@ -548,7 +557,9 @@ theorem prop_6_1_part2_zsqrtd_identities {n₁ n₂ m₁ m₂ a b c d : ℕ}
         _ = -1 := by rw [hB₂_A₂]
   have hdiv : ((a : ℤ) * c : Zsqrtd (P : ℤ)) * α₁ = ⟨(P : ℤ), -1⟩ * α₂ := by
     have hcast : ((a : ℤ) * c : Zsqrtd (P : ℤ)) = ⟨(a : ℤ) * c, 0⟩ := by
-      rw [← Int.cast_mul]; rfl
+      apply Zsqrtd.ext
+      · change (a : ℤ) * (c : ℤ) + (P : ℤ) * 0 * 0 = (a : ℤ) * c; ring
+      · change (a : ℤ) * 0 + 0 * (c : ℤ) = 0; ring
     have hnorm_eq : α₂ * star α₂ = ⟨(a : ℤ) * c, 0⟩ := by
       apply Zsqrtd.ext
       · change (c : ℤ) * W * (c * W) + (P : ℤ) * Z * (-Z) = (a : ℤ) * c
