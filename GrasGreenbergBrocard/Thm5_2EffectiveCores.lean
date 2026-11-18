@@ -776,7 +776,10 @@ theorem thm_5_2_part1_cross_symmetry :
         rw [this]; field_simp [show (u₁ : ℝ) ≠ 0 by exact_mod_cast hu₁_pos.ne']
       rw [hdiv]
       linarith [Real.log_le_sub_one_of_pos (by positivity : (0 : ℝ) < 1 + 1 / (u₁ : ℝ))]
-    have hm_pos : 0 < m := by dsimp [u₁] at hu₁_pos; omega
+    have hm_pos : 0 < m := by
+      by_contra h0
+      have : m = 0 := by omega
+      rw [this] at hm; simp at hm
     have h_u1_lb : (m : ℝ) / 4 ≤ (u₁ : ℝ) := by
       have : 2 * u₁ = m - 1 := by omega
       have : (m : ℝ) ≤ 4 * (u₁ : ℝ) := by
@@ -988,7 +991,7 @@ theorem thm_5_2_part1_radical_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 /
               = ((p : ℝ) - 1) * (1 / (p : ℝ)) ^ ((i - 1) + 1) := by rw [Nat.sub_add_cancel hi1]
             _ = ((p : ℝ) - 1) * ((1 / (p : ℝ)) ^ (i - 1) * (1 / (p : ℝ))) := by rw [pow_succ]
             _ = (1 / (p : ℝ)) ^ (i - 1) - (1 / (p : ℝ)) ^ ((i - 1) + 1) := by
-              field_simp [hp_ne]; ring
+              field_simp [hp_ne]; rw [mul_inv_cancel₀ hp_ne]; ring
             _ = (1 / (p : ℝ)) ^ (i - 1) - (1 / (p : ℝ)) ^ i := by rw [Nat.sub_add_cancel hi1]
         have h_telesc_sum : ∀ m : ℕ, ∑ i ∈ Finset.Ico 1 (m + 1),
             ((1 / (p : ℝ)) ^ (i - 1) - (1 / (p : ℝ)) ^ i) = 1 - (1 / (p : ℝ)) ^ m := by
@@ -998,7 +1001,6 @@ theorem thm_5_2_part1_radical_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 /
           | succ m ihm =>
             rw [Finset.sum_Ico_succ_top (by omega : 1 ≤ m + 1), ihm]
             simp [Nat.add_sub_cancel]
-            ring
         rw [Finset.mul_sum, Finset.sum_congr rfl h_telesc, h_telesc_sum n]
       rw [hp1]
       have h_nonneg : 0 ≤ (1 / (p : ℝ)) ^ n := by positivity
@@ -1659,8 +1661,8 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
                 rw [hA_eq, hX_eq]; nlinarith
               have : (q_n n : ℤ) * (B : ℤ) * (Y₁ : ℤ) < (A : ℤ) * (X₁ : ℤ) := by
                 by_contra hle; push_neg at hle
-                nlinarith [show (0 : ℤ) ≤ (q_n n : ℤ) * (B : ℤ) * (Y₁ : ℤ) by positivity,
-                           show (0 : ℤ) ≤ (A : ℤ) * (X₁ : ℤ) by positivity]
+                nlinarith [mul_nonneg (mul_nonneg (Int.natCast_nonneg (q_n n)) (Int.natCast_nonneg B)) (Int.natCast_nonneg Y₁),
+                           mul_nonneg (Int.natCast_nonneg A) (Int.natCast_nonneg X₁)]
               dsimp [A']; linarith
             have hB'_lt : B'.natAbs < B := by
               have hX1_gt : 1 < X₁ := X1_gt_one hq_ge hfund
