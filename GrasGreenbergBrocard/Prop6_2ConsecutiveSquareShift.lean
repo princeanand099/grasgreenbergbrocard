@@ -94,8 +94,8 @@ private lemma log_consecutive_equipartition_aux {n m₁ m₂ : ℕ}
   have hab' : a * b = n := by omega
   have ha_le : a ≤ n := le_trans (Nat.le_mul_of_pos_right a hb) hab'.le
   have hb_le : b ≤ n := le_trans (Nat.le_mul_of_pos_left b ha) hab'.le
-  have hc_le : c ≤ n + 1 := by nlinarith
-  have hd_le : d ≤ n + 1 := by nlinarith
+  have hc_le : c ≤ n + 1 := by nlinarith only [hcd, hc, hd]
+  have hd_le : d ≤ n + 1 := by nlinarith only [hcd, hc, hd]
   have hm₁_ge : 27 ≤ m₁ := by
     have h720 : 720 ≤ Nat.factorial n := by
       calc 720 = Nat.factorial 6 := by norm_num [Nat.factorial]
@@ -200,8 +200,14 @@ private lemma log_consecutive_equipartition_aux {n m₁ m₂ : ℕ}
           rw [Nat.factorial_succ] at this
           exact_mod_cast this.symm
         rw [hm2sq, mul_pow, mul_pow, Real.sq_sqrt (by positivity)]
-        nlinarith only [hn6r, hfac_ge]
-      nlinarith only [hsq, Real.sqrt_nonneg (Nat.factorial n : ℝ), (Nat.cast_nonneg m₂ : (0 : ℝ) ≤ m₂), hn6r]
+        have h425 : (n : ℝ) + 1 + 1 / 720 ≤ (2 / 5 : ℝ) ^ 2 * ((n : ℝ) + 1) ^ 2 := by nlinarith only [hn6r]
+        have hmul : ((n : ℝ) + 1 + 1 / 720) * (Nat.factorial n : ℝ) ≤
+            (2 / 5 : ℝ) ^ 2 * ((n : ℝ) + 1) ^ 2 * (Nat.factorial n : ℝ) :=
+          mul_le_mul_of_nonneg_right h425 (Nat.cast_nonneg _)
+        linarith only [hmul, hfac_ge]
+      rw [← Real.sqrt_sq (Nat.cast_nonneg m₂),
+        ← Real.sqrt_sq (by positivity : 0 ≤ (2 / 5 : ℝ) * ((n : ℝ) + 1) * Real.sqrt (Nat.factorial n : ℝ))]
+      exact Real.sqrt_le_sqrt hsq
     have hn_le_tenth : (n : ℝ) ≤ (1 / 10 : ℝ) * ((n : ℝ) + 1) * Real.sqrt (Nat.factorial n : ℝ) := by
       have hfac_ge : (720 : ℝ) ≤ Nat.factorial n := by
         exact_mod_cast (show 720 ≤ Nat.factorial n by
@@ -235,8 +241,13 @@ private lemma log_consecutive_equipartition_aux {n m₁ m₂ : ℕ}
             _ ≤ Nat.factorial n := Nat.factorial_le hn)
       have hsq : (m₂ : ℝ) ^ 2 ≤ (((n : ℝ) + 1) * Real.sqrt (Nat.factorial n : ℝ)) ^ 2 := by
         rw [hm2sq, mul_pow, Real.sq_sqrt (by positivity)]
-        nlinarith only [hn6r, hfac_ge]
-      nlinarith only [hsq, Real.sqrt_nonneg (Nat.factorial n : ℝ), (Nat.cast_nonneg m₂ : (0 : ℝ) ≤ m₂), hn6r]
+        have hn1 : (n : ℝ) + 2 ≤ ((n : ℝ) + 1) ^ 2 := by nlinarith only [hn6r]
+        have hmul : ((n : ℝ) + 2) * (Nat.factorial n : ℝ) ≤ ((n : ℝ) + 1) ^ 2 * (Nat.factorial n : ℝ) :=
+          mul_le_mul_of_nonneg_right hn1 (Nat.cast_nonneg _)
+        linarith only [hmul, hfac_ge]
+      rw [← Real.sqrt_sq (Nat.cast_nonneg m₂),
+        ← Real.sqrt_sq (by positivity : 0 ≤ ((n : ℝ) + 1) * Real.sqrt (Nat.factorial n : ℝ))]
+      exact Real.sqrt_le_sqrt hsq
     have hn_le : (n : ℝ) ≤ ((n : ℝ) + 1) * Real.sqrt (Nat.factorial n : ℝ) := by
       have h1sq : (1 : ℝ) ≤ Real.sqrt (Nat.factorial n : ℝ) := by
         rw [← Real.sqrt_one]; exact Real.sqrt_le_sqrt (by exact_mod_cast Nat.factorial_pos n)
@@ -268,7 +279,7 @@ private lemma log_consecutive_equipartition_aux {n m₁ m₂ : ℕ}
         _ ≤ 4 * ((n : ℝ) + 1) * Real.sqrt (Nat.factorial n : ℝ) := hub
     have hlog_sqrt : Real.log (Real.sqrt (Nat.factorial n : ℝ)) =
         (1 / 2 : ℝ) * Real.log (Nat.factorial n : ℝ) := by
-      rw [Real.sqrt_eq_rpow, Real.log_rpow hfac_pos]; ring
+      rw [Real.sqrt_eq_rpow, Real.log_rpow hfac_pos]; try ring
     have hlog_T2_ub : 2 * Real.log (T : ℝ) - (1 / 2 : ℝ) * Real.log (Nat.factorial n : ℝ) ≤
         Real.log (4 * ((n : ℝ) + 1)) := by
       have h1 := Real.log_le_log (by positivity) hT2_ub
@@ -292,27 +303,29 @@ private lemma log_consecutive_equipartition_aux {n m₁ m₂ : ℕ}
     constructor <;> linarith
   intro T hT
   simp only [Finset.mem_insert, Finset.mem_singleton] at hT
+  have hm2r_nn : (0 : ℝ) ≤ m₂ := Nat.cast_nonneg m₂
+  have hnr_nn : (0 : ℝ) ≤ n := Nat.cast_nonneg n
   rcases hT with rfl | rfl | rfl | rfl
-  · refine hbound_generic X (2 * a * c) (by positivity) (by nlinarith) hX1 ?_ ?_
+  · refine hbound_generic X (2 * a * c) (by nlinarith only [ha, hc]) (by nlinarith only [ha_le, hc_le]) hX1 ?_ ?_
     · have : ((2 * a * c : ℕ) : ℝ) * (X : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ - m₂ - n := by exact_mod_cast hXsq
-      linarith
+      linarith only [this, hS_lb]
     · have : ((2 * a * c : ℕ) : ℝ) * (X : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ - m₂ - n := by exact_mod_cast hXsq
-      linarith
-  · refine hbound_generic Y (2 * a * d) (by positivity) (by nlinarith) hY1 ?_ ?_
+      linarith only [this, hS_ub, hm2r_nn, hnr_nn]
+  · refine hbound_generic Y (2 * a * d) (by nlinarith only [ha, hd]) (by nlinarith only [ha_le, hd_le]) hY1 ?_ ?_
     · have : ((2 * a * d : ℕ) : ℝ) * (Y : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ - m₂ + n := by exact_mod_cast hYsq
-      linarith
+      linarith only [this, hS_lb, hnr_nn]
     · have : ((2 * a * d : ℕ) : ℝ) * (Y : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ - m₂ + n := by exact_mod_cast hYsq
-      linarith
-  · refine hbound_generic Z (2 * b * d) (by positivity) (by nlinarith) hZ1 ?_ ?_
+      linarith only [this, hS_ub, hm2r_nn]
+  · refine hbound_generic Z (2 * b * d) (by nlinarith only [hb, hd]) (by nlinarith only [hb_le, hd_le]) hZ1 ?_ ?_
     · have : ((2 * b * d : ℕ) : ℝ) * (Z : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ + m₂ - n := by exact_mod_cast hZsq
-      linarith
+      linarith only [this, hS_lb, hm2r_nn]
     · have : ((2 * b * d : ℕ) : ℝ) * (Z : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ + m₂ - n := by exact_mod_cast hZsq
-      linarith
-  · refine hbound_generic W (2 * b * c) (by positivity) (by nlinarith) hW1 ?_ ?_
+      linarith only [this, hS_ub, hnr_nn]
+  · refine hbound_generic W (2 * b * c) (by nlinarith only [hb, hc]) (by nlinarith only [hb_le, hc_le]) hW1 ?_ ?_
     · have : ((2 * b * c : ℕ) : ℝ) * (W : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ + m₂ + n := by exact_mod_cast hWsq
-      linarith
+      linarith only [this, hS_lb, hm2r_nn, hnr_nn]
     · have : ((2 * b * c : ℕ) : ℝ) * (W : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ + m₂ + n := by exact_mod_cast hWsq
-      linarith
+      linarith only [this, hS_ub]
 
 private lemma k_eq_2_AB {n m X₁ Y₁ : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
     (hm : Nat.factorial n + 1 = m ^ 2) (hfund : IsFundamentalPell (q_n n) X₁ Y₁)
