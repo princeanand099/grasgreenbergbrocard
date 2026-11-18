@@ -538,7 +538,7 @@ lemma lem_6_3_osc_bound
                 (Real.cos (2 * Real.pi * ((h₂ : ℝ) * (h : ℝ) / (2 * (p : ℝ)))) : ℂ) +
                 Complex.I * (Real.sin (2 * Real.pi * ((h₂ : ℝ) * (h : ℝ) / (2 * (p : ℝ)))) : ℂ) := by
               unfold eExp
-              rw [show (2 * Real.pi * ((h₂ : ℝ) * (h : ℝ) / (2 * (p : ℝ))) : ℂ) * Complex.I =
+              rw [show (2 * Real.pi * Complex.I * (((h₂ : ℝ) * (h : ℝ) / (2 * (p : ℝ))) : ℝ) : ℂ) =
                   ((2 * Real.pi * ((h₂ : ℝ) * (h : ℝ) / (2 * (p : ℝ))) : ℝ) : ℂ) * Complex.I by push_cast; ring,
                 Complex.exp_mul_I]
               push_cast; ring
@@ -567,10 +567,13 @@ lemma lem_6_3_osc_bound
             exact mul_le_mul_of_nonneg_left (hterm_bd h₁ hh₁ h₂ hh₂) (by positivity)
         _ = (∑ h₁ ∈ S_H, ‖c_tilde h₁‖) * (∑ h₂ ∈ S_H, ‖c_tilde h₂‖) *
               (6 * C₂ * P * (δ ^ (-(R : ℤ) - 2) + 1) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) := by
-            simp only [Finset.sum_mul, Finset.mul_sum, mul_assoc]
+            simp only [Finset.sum_mul, Finset.mul_sum]
+            rw [Finset.sum_comm]
+            exact Finset.sum_congr rfl fun _ _ => Finset.sum_congr rfl fun _ _ => by ring
         _ ≤ ((4 / Real.pi) * (Real.log (2 * (H : ℝ) + 1) + 1)) ^ 2 *
               (6 * C₂ * P * (δ ^ (-(R : ℤ) - 2) + 1) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) := by
-            rw [sq]; gcongr
+            have h_sum_c_nn : 0 ≤ ∑ h ∈ S_H, ‖c_tilde h‖ := Finset.sum_nonneg fun _ _ => norm_nonneg _
+            exact mul_le_mul_of_nonneg_right (pow_le_pow_left₀ h_sum_c_nn h_L1 2) (by positivity)
     let L₁ : ℝ := (4 / Real.pi) * (Real.log (2 * (H : ℝ) + 1) + 1)
     have hL1_ge1 : 1 ≤ L₁ := by
       dsimp [L₁]
