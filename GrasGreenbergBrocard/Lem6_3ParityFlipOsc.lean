@@ -461,7 +461,11 @@ lemma lem_6_3_osc_bound
                   (c_tilde h₁ * eExp ((h₁ : ℝ) * ((n₁ : ℝ) / (p : ℝ)) / 2)) *
                   (c_tilde h₂ * eExp ((h₂ : ℝ) * ((n₂ : ℝ) / (p : ℝ)) / 2)) := by
               refine Finset.sum_congr rfl fun p _ => ?_
-              rw [Finset.mul_sum, Finset.sum_mul]
+              have h1 : ((w_base (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
+                  (∑ h₁ ∈ S_H, c_tilde h₁ * eExp ((h₁ : ℝ) * ((n₁ : ℝ) / (p : ℝ)) / 2)) =
+                  ∑ h₁ ∈ S_H, ((w_base (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
+                    (c_tilde h₁ * eExp ((h₁ : ℝ) * ((n₁ : ℝ) / (p : ℝ)) / 2)) := Finset.mul_sum _ _ _
+              rw [h1, Finset.sum_mul]
               refine Finset.sum_congr rfl fun h₁ _ => ?_
               rw [Finset.mul_sum]
           _ = ∑ h₁ ∈ S_H, ∑ p ∈ I_k, ∑ h₂ ∈ S_H, _ := Finset.sum_comm
@@ -583,6 +587,7 @@ lemma lem_6_3_osc_bound
         _ = (∑ h₁ ∈ S_H, ‖c_tilde h₁‖) * (∑ h₂ ∈ S_H, ‖c_tilde h₂‖) *
               (6 * C₂ * P * (δ ^ (-(R : ℤ) - 2) + 1) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) := by
             simp only [Finset.sum_mul, Finset.mul_sum]
+            rw [Finset.sum_comm]
         _ ≤ ((4 / Real.pi) * (Real.log (2 * (H : ℝ) + 1) + 1)) ^ 2 *
               (6 * C₂ * P * (δ ^ (-(R : ℤ) - 2) + 1) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) := by
             rw [show (∑ h₁ ∈ S_H, ‖c_tilde h₁‖) * (∑ h₂ ∈ S_H, ‖c_tilde h₂‖) = (∑ h ∈ S_H, ‖c_tilde h‖) ^ 2 by rw [sq]]
