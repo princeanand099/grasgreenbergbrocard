@@ -16,7 +16,7 @@ open Real Finset Filter
 
 namespace GrasGreenbergBrocard
 
-set_option maxHeartbeats 2000000
+set_option maxHeartbeats 4000000
 
 /-- The logarithmic factorial weight of parity-flip primes `3 ≤ p ≤ n₁` with `2 ∤ v_p(n₂!/n₁!)`. -/
 noncomputable def parityFlipWeight (n₁ n₂ : ℕ) : ℝ :=
@@ -862,7 +862,13 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
                       _ ≤ ε * (1 / 100) := by gcongr
                       _ = ε / 100 := by ring
             exact (div_le_iff₀ hlog_n₁_pos).mp h1
-          nlinarith only [hll, hCm, hn₁_pos, hlog_n₁_pos]
+          calc 2 * (n₁ : ℝ) * (2 * Real.log (Real.log (n₁ : ℝ)) + C_mert + 1)
+              ≤ 2 * (n₁ : ℝ) * (2 * ((ε / 100) * Real.log (n₁ : ℝ)) + (ε / 100) * Real.log (n₁ : ℝ)) := by
+                gcongr
+            _ = (3 * ε / 50) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by ring
+            _ ≤ (ε / 16) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) :=
+              mul_le_mul_of_nonneg_right (by linarith only [hε]) (mul_nonneg hn₁_pos.le hlog_n₁_pos.le)
+            _ = (ε / 16) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by ring
         have ht2_sm : (1 + 2 / (Real.log (n₁ : ℝ)) ^ 2) * (n₁ : ℝ) * (δ * Real.log (n₁ : ℝ) + C_mert) ≤
             (δ + ε / 20) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
           have ha1 : 2 / (Real.log (n₁ : ℝ)) ^ 2 ≤ 1 := by rw [div_le_one (by positivity)]; linarith only [hlog_ge3]
@@ -1155,7 +1161,7 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
         have hI_eq_diff : ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ) =
             (∑ p ∈ (Finset.Icc 3 (Nat.floor y₁)).filter Nat.Prime, Real.log (p : ℝ) / (p : ℝ)) -
             (∑ p ∈ (Finset.Icc 3 (Nat.floor ((n₁ : ℝ) ^ δ))).filter Nat.Prime, Real.log (p : ℝ) / (p : ℝ)) := by
-          rw [hun_i, Finset.sum_union hdisj_i]; ring
+          rw [hun_i, Finset.sum_union hdisj_i, add_sub_cancel_right]
         have h_p_pm1 : (1 - 1 / (n₁ : ℝ) ^ δ) *
             ∑ p ∈ I_osc, Real.log (p : ℝ) / ((p : ℝ) - 1) ≤
             ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ) := by
@@ -1184,7 +1190,7 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
           have hsum_eq : ∑ p ∈ I_osc, Real.log (p : ℝ) / ((p : ℝ) - 1) =
               (∑ p ∈ (Finset.Icc 3 (Nat.floor y₁)).filter Nat.Prime, Real.log (p : ℝ) / ((p : ℝ) - 1)) -
               (∑ p ∈ (Finset.Icc 3 (Nat.floor ((n₁ : ℝ) ^ δ))).filter Nat.Prime, Real.log (p : ℝ) / ((p : ℝ) - 1)) := by
-            rw [hun_i, Finset.sum_union hdisj_i]; ring
+            rw [hun_i, Finset.sum_union hdisj_i, add_sub_cancel_right]
           rw [hsum_eq, Real.log_div hy₁_pos.ne' (by positivity)]
           linarith only [hm1.1, hm2.2]
         have hsum_log_I : ∑ p ∈ I_osc, Real.log (p : ℝ) ≤ (n₁ : ℝ) := by
@@ -1198,9 +1204,11 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
             exact Real.log_le_log (by exact_mod_cast hp.1.2.pos) (by exact_mod_cast hp.1.1.2)
           calc ∑ p ∈ I_osc, Real.log (p : ℝ) ≤ (I_osc.card : ℝ) * Real.log (n₁ : ℝ) := by
                 simpa [Finset.sum_const, nsmul_eq_mul] using Finset.sum_le_sum hterm_log
-            _ ≤ y₁ * Real.log (n₁ : ℝ) := by gcongr
+            _ ≤ y₁ * Real.log (n₁ : ℝ) :=
+                mul_le_mul_of_nonneg_right hcard hlog_n₁_pos.le
             _ ≤ ((n₁ : ℝ) / (Real.log (n₁ : ℝ)) ^ (A_R + 2)) * Real.log (n₁ : ℝ) := by
-                gcongr; dsimp [y₁]; exact div_le_div_of_nonneg_right (by exact_mod_cast le_of_lt h_lt_n₁) (by positivity)
+                refine mul_le_mul_of_nonneg_right ?_ hlog_n₁_pos.le
+                exact div_le_div_of_nonneg_right (by exact_mod_cast le_of_lt h_lt_n₁) (by positivity)
             _ ≤ (n₁ : ℝ) := by
                 have hlog1 : 1 ≤ Real.log (n₁ : ℝ) := by nlinarith
                 have hpow : Real.log (n₁ : ℝ) ≤ (Real.log (n₁ : ℝ)) ^ (A_R + 2) :=
