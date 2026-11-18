@@ -531,7 +531,8 @@ theorem prop_6_2_part2_consecutive_equipartition :
         have hp3 : 3 ≤ p := hp.1.2.1
         haveI : Fact p.Prime := ⟨hp_prime⟩
         have hleg : (p - 1) * padicValNat p (Nat.factorial n) ≤ n := by
-          have := sub_one_mul_padicValNat_factorial (p := p) n; linarith
+          have := sub_one_mul_padicValNat_factorial (p := p) n
+          exact le_trans this.le (Nat.sub_le n _)
         have h1r : (padicValNat p (Nat.factorial n) : ℝ) * ((p : ℝ) - 1) ≤ (n : ℝ) := by
           have h1n : (padicValNat p (Nat.factorial n) : ℝ) * ((p - 1 : ℕ) : ℝ) ≤ (n : ℝ) := by
             exact_mod_cast (by linarith : padicValNat p (Nat.factorial n) * (p - 1) ≤ n)
@@ -559,7 +560,10 @@ theorem prop_6_2_part2_consecutive_equipartition :
         · exact Or.inl hp3
         · have hp_pr : p.Prime := by have h := hp.1.1; simp [Podd] at h; exact h.2.1
           exact Or.inr ⟨⟨⟨hp.1.2.1, Nat.le_floor hp.2⟩, hp_pr⟩, by exact_mod_cast (by omega : 3 < p)⟩
-      have hsum_mert := Finset.sum_le_sum_of_subset_of_nonneg hsub (fun (p : ℕ) _ _ => by positivity)
+      have hsum_mert : ∑ p ∈ S_bad_le, Real.log (p : ℝ) / (p : ℝ) ≤
+          ∑ p ∈ ({3} ∪ ((Finset.Icc 3 (Nat.floor (Real.log (n : ℝ)))).filter Nat.Prime).filter
+            (fun p : ℕ => (3 : ℝ) < (p : ℝ))), Real.log (p : ℝ) / (p : ℝ) :=
+        Finset.sum_le_sum_of_subset_of_nonneg hsub (fun p _ _ => by positivity)
       have hmert := hMert 3 (Real.log (n : ℝ)) (le_refl 3) hlog_n_ge
       have h3_val : Real.log (3 : ℝ) / (3 : ℝ) ≤ 1 := by
         have : Real.log (3 : ℝ) ≤ 3 := by
@@ -607,12 +611,11 @@ theorem prop_6_2_part2_consecutive_equipartition :
       rw [← Finset.mul_sum]
       gcongr
       have hdvd_prod : ∏ p ∈ S_bad_gt, p ∣ n + 1 := by
-        apply Finset.prod_dvd_of_coprime
-        · intro p hp q hq hpq
-          simp only [S_bad_gt, S_bad, Finset.mem_filter] at hp hq
+        apply Finset.prod_primes_dvd
+        · intro p hp
+          simp only [S_bad_gt, S_bad, Finset.mem_filter] at hp
           have hp_pr : p.Prime := by have h := hp.1.1; simp [Podd] at h; exact h.2.1
-          have hq_pr : q.Prime := by have h := hq.1.1; simp [Podd] at h; exact h.2.1
-          exact Nat.coprime_iff_isCoprime.mp ((Nat.coprime_primes hp_pr hq_pr).mpr hpq)
+          exact hp_pr.prime
         · intro p hp; simp only [S_bad_gt, S_bad, Finset.mem_filter] at hp; exact hp.1.2.2
       have hpos_prod : 0 < ∏ p ∈ S_bad_gt, p := by
         apply Finset.prod_pos; intro p hp
@@ -883,7 +886,7 @@ theorem prop_6_2_part3_square_shift_exclusions :
           have : (m₁ : ℝ) ^ 2 = (Nat.factorial n₁ : ℝ) + 1 := by exact_mod_cast hm₁.symm
           have : (362880 : ℝ) ≤ Nat.factorial n₁ := by exact_mod_cast hfac_ge
           linarith
-        nlinarith only [hsq, Real.sqrt_nonneg (Nat.factorial n₁ : ℝ), Nat.cast_nonneg m₁]
+        nlinarith only [hsq, Real.sqrt_nonneg (Nat.factorial n₁ : ℝ), (Nat.cast_nonneg m₁ : (0 : ℝ) ≤ m₁)]
       have hP2r : (2 : ℝ) ≤ P := by exact_mod_cast hP_ge
       have hm2_le' : (m₂ : ℝ) ≤ (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ) := by
         have hm2_sq : (m₂ : ℝ) ^ 2 ≤ ((P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ)) ^ 2 := by
@@ -945,7 +948,7 @@ theorem prop_6_2_part3_square_shift_exclusions :
         rw [Real.log_mul (by norm_num) hP_pos.ne']
         have hj3 : (3 : ℝ) ≤ j := by exact_mod_cast hj
         have hlog16 : Real.log 16 ≤ 4 * Real.log ((j : ℝ) + 1) := by
-          have : (16 : ℝ) ≤ ((j : ℝ) + 1) ^ 4 := by nlinarith only [hj3]
+          have : (16 : ℝ) ≤ ((j : ℝ) + 1) ^ 4 := by calc (16 : ℝ) = 2 ^ 4 := by norm_num; _ ≤ ((j : ℝ) + 1) ^ 4 := pow_le_pow_left₀ (by norm_num) (by linarith) 4
           have h1 := Real.log_le_log (by norm_num) this
           rwa [Real.log_pow, Nat.cast_ofNat] at h1
         have h4j : (4 * (j : ℝ) + 2) ≤ 20 * (j : ℝ) / 3 := by linarith
@@ -961,28 +964,28 @@ theorem prop_6_2_part3_square_shift_exclusions :
         (P : ℝ) * m₁ - m₂ - (P - 1) := by linarith
     simp only [Finset.mem_insert, Finset.mem_singleton] at hT
     rcases hT with rfl | rfl | rfl | rfl
-    · refine hbound_sq _ (2 * a * c) (by positivity) (by nlinarith) hX_pos ?_ ?_
+    · refine hbound_sq _ (2 * a * c) (by nlinarith only [ha, hc]) (by nlinarith only [ha_le, hc_le]) hX_pos ?_ ?_
       · have : ((2 * a * c : ℕ) : ℝ) * (X_gcd m₁ m₂ : ℝ) ^ 2 = (P : ℝ) * m₁ - m₂ - ((P : ℝ) - 1) := by
           exact_mod_cast hXsq
         linarith
       · have : ((2 * a * c : ℕ) : ℝ) * (X_gcd m₁ m₂ : ℝ) ^ 2 = (P : ℝ) * m₁ - m₂ - ((P : ℝ) - 1) := by
           exact_mod_cast hXsq
         linarith
-    · refine hbound_sq _ (2 * a * d) (by positivity) (by nlinarith) hY_pos ?_ ?_
+    · refine hbound_sq _ (2 * a * d) (by nlinarith only [ha, hd]) (by nlinarith only [ha_le, hd_le]) hY_pos ?_ ?_
       · have : ((2 * a * d : ℕ) : ℝ) * (Y_gcd m₁ m₂ : ℝ) ^ 2 = (P : ℝ) * m₁ - m₂ + ((P : ℝ) - 1) := by
           exact_mod_cast hYsq
         linarith
       · have : ((2 * a * d : ℕ) : ℝ) * (Y_gcd m₁ m₂ : ℝ) ^ 2 = (P : ℝ) * m₁ - m₂ + ((P : ℝ) - 1) := by
           exact_mod_cast hYsq
         linarith
-    · refine hbound_sq _ (2 * b * d) (by positivity) (by nlinarith) hZ_pos ?_ ?_
+    · refine hbound_sq _ (2 * b * d) (by nlinarith only [hb, hd]) (by nlinarith only [hb_le, hd_le]) hZ_pos ?_ ?_
       · have : ((2 * b * d : ℕ) : ℝ) * (Z_gcd m₁ m₂ : ℝ) ^ 2 = (P : ℝ) * m₁ + m₂ - ((P : ℝ) - 1) := by
           exact_mod_cast hZsq
         linarith
       · have : ((2 * b * d : ℕ) : ℝ) * (Z_gcd m₁ m₂ : ℝ) ^ 2 = (P : ℝ) * m₁ + m₂ - ((P : ℝ) - 1) := by
           exact_mod_cast hZsq
         linarith
-    · refine hbound_sq _ (2 * b * c) (by positivity) (by nlinarith) hW_pos ?_ ?_
+    · refine hbound_sq _ (2 * b * c) (by nlinarith only [hb, hc]) (by nlinarith only [hb_le, hc_le]) hW_pos ?_ ?_
       · have : ((2 * b * c : ℕ) : ℝ) * (W_gcd m₁ m₂ : ℝ) ^ 2 = (P : ℝ) * m₁ + m₂ + ((P : ℝ) - 1) := by
           exact_mod_cast hWsq
         linarith
