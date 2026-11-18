@@ -88,8 +88,7 @@ def L0 (n : ℕ) : Finset ℕ :=
 def legendreIdx (p : ℕ) (a : ℤ) : ZMod 2 :=
   if chiLegendre a p = -1 then 1 else 0
 
-/-- Ramified Rédei symbol matrix `R_n^{ram}` over `𝔽₂` acting on `L₀(n) → 𝔽₂` (Section 5.2),
-including the `p = 2` congruence constraints when `2 ∣ D_n` (i.e., `q_n % 4 ≠ 1`). -/
+/-- Ramified Rédei symbol matrix `R_n^{ram}` over `𝔽₂` acting on `L₀(n) → 𝔽₂` (Section 5.2). -/
 def redeiRow (n : ℕ) (p : ℕ) (y : L0 n → ZMod 2) : ZMod 2 :=
   (∑ p' : L0 n,
     if p'.1 = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) * y p'
@@ -109,7 +108,18 @@ def redeiKernel (n : ℕ) : Submodule (ZMod 2) (L0 n → ZMod 2) where
     refine ⟨fun p hp => ?_, fun hq => ⟨?_, ?_⟩⟩
     · have ha1 := ha.1 p hp
       have hb1 := hb.1 p hp
-      simp only [redeiRow, Pi.add_apply, mul_add, Finset.sum_add_distrib] at ha1 hb1 ⊢
+      have h_eq : ∀ p' : L0 n,
+          (if p'.1 = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) * (a p' + b p')
+           else legendreIdx p (p'.1 : ℤ) * (a p' + b p')) =
+          (if p'.1 = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) * a p'
+           else legendreIdx p (p'.1 : ℤ) * a p') +
+          (if p'.1 = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) * b p'
+           else legendreIdx p (p'.1 : ℤ) * b p') := by
+        intro p'; split_ifs <;> ring
+      change (∑ p' : L0 n, _) = 0
+      simp only [Pi.add_apply]
+      simp_rw [h_eq, Finset.sum_add_distrib]
+      change redeiRow n p a + redeiRow n p b = 0
       rw [ha1, hb1, add_zero]
     · have ha2 := (ha.2 hq).1
       have hb2 := (hb.2 hq).1
@@ -120,14 +130,17 @@ def redeiKernel (n : ℕ) : Submodule (ZMod 2) (L0 n → ZMod 2) where
   smul_mem' c {a} ha := by
     refine ⟨fun p hp => ?_, fun hq => ⟨?_, ?_⟩⟩
     · have ha1 := ha.1 p hp
-      simp only [redeiRow, Pi.smul_apply, smul_eq_mul] at ha1 ⊢
       have h_eq : ∀ p' : L0 n,
           (if p'.1 = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) * (c * a p')
            else legendreIdx p (p'.1 : ℤ) * (c * a p')) =
           c * (if p'.1 = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) * a p'
                else legendreIdx p (p'.1 : ℤ) * a p') := by
         intro p'; split_ifs <;> ring
-      simp_rw [h_eq, ← Finset.mul_sum, ha1, mul_zero]
+      change (∑ p' : L0 n, _) = 0
+      simp only [Pi.smul_apply, smul_eq_mul]
+      simp_rw [h_eq, ← Finset.mul_sum]
+      change c * redeiRow n p a = 0
+      rw [ha1, mul_zero]
     · have ha2 := (ha.2 hq).1
       simp only [Pi.smul_apply, smul_eq_mul]
       have h_eq : ∀ p : L0 n, (((p.1 - 1) / 2 : ℕ) : ZMod 2) * (c * a p) =
