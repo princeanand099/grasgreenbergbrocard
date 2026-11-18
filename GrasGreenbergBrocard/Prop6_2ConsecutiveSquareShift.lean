@@ -19,6 +19,8 @@ open scoped BigOperators
 
 namespace GrasGreenbergBrocard
 
+set_option maxHeartbeats 800000
+
 private lemma factorial_gt_four_mul_add_two (n : ℕ) (hn : 5 ≤ n) :
     4 * (n + 2) < Nat.factorial n := by
   induction n, hn using Nat.le_induction with
