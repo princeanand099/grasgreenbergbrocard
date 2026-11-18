@@ -344,23 +344,23 @@ lemma lem_6_3_osc_bound
       · have hp_pr : p.Prime := not_not.mp (not_or.mp hp0).2
         simp only [hp0, ↓reduceIte, abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul]
         have hp_ge3 : 3 ≤ p := by
-            have hP3 : 3 ≤ P := le_trans hn₁_delta_ge3 hP_lb
-            have hlt_fl : P - 1 < (p : ℝ) := by
-              have := Nat.sub_one_lt_floor t; linarith [ht.1]
-            have : 2 < p := by exact_mod_cast (by linarith : (2 : ℝ) < (p : ℝ))
-            omega
-          have hv := val_factorial_le_two_div (n := n₁) hp_pr hp_ge3
-          have hP_le_t : P ≤ t := ht.1
-          have hp_ge_P2 : (2 / 3 : ℝ) * P ≤ (p : ℝ) := by
-            have hP3 : 3 ≤ P := le_trans hn₁_delta_ge3 hP_lb
-            have hlt_fl : t - 1 < (p : ℝ) := Nat.sub_one_lt_floor t
-            linarith
-          have hv3 : (padicValNat p (Nat.factorial n₁) : ℝ) ≤ 3 * (n₁ : ℝ) / P := by
-            calc (padicValNat p (Nat.factorial n₁) : ℝ) ≤ 2 * (n₁ : ℝ) / (p : ℝ) := hv
-              _ ≤ 2 * (n₁ : ℝ) / ((2 / 3 : ℝ) * P) := by gcongr
-              _ = 3 * (n₁ : ℝ) / P := by ring
-          rw [abs_of_nonneg (by positivity), div_le_iff₀ (by positivity)]
-          linarith [show 3 * (n₁ : ℝ) / P = 3 * ((n₁ : ℝ) / P) by ring]
+          have hP3 : 3 ≤ P := le_trans hn₁_delta_ge3 hP_lb
+          have hlt_fl : P - 1 < (p : ℝ) := by
+            have := Nat.sub_one_lt_floor t; linarith [ht.1]
+          have : 2 < p := by exact_mod_cast (by linarith : (2 : ℝ) < (p : ℝ))
+          omega
+        have hv := val_factorial_le_two_div (n := n₁) hp_pr hp_ge3
+        have hP_le_t : P ≤ t := ht.1
+        have hp_ge_P2 : (2 / 3 : ℝ) * P ≤ (p : ℝ) := by
+          have hP3 : 3 ≤ P := le_trans hn₁_delta_ge3 hP_lb
+          have hlt_fl : t - 1 < (p : ℝ) := Nat.sub_one_lt_floor t
+          linarith
+        have hv3 : (padicValNat p (Nat.factorial n₁) : ℝ) ≤ 3 * (n₁ : ℝ) / P := by
+          calc (padicValNat p (Nat.factorial n₁) : ℝ) ≤ 2 * (n₁ : ℝ) / (p : ℝ) := hv
+            _ ≤ 2 * (n₁ : ℝ) / ((2 / 3 : ℝ) * P) := by gcongr
+            _ = 3 * (n₁ : ℝ) / P := by ring
+        rw [abs_of_nonneg (by positivity), div_le_iff₀ (by positivity)]
+        linarith [show 3 * (n₁ : ℝ) / P = 3 * ((n₁ : ℝ) / P) by ring]
 
     have h_sum_rewrite : ∑ p ∈ I_k,
         ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
