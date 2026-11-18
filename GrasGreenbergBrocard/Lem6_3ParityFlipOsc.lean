@@ -461,7 +461,6 @@ lemma lem_6_3_osc_bound
         apply Finset.sum_congr rfl; intro h₁ _
         rw [Finset.sum_comm]
         apply Finset.sum_congr rfl; intro h₂ _
-        rw [Finset.mul_sum]
         apply Finset.sum_congr rfl; intro p _
         have h_e : eExp ((h₁ : ℝ) * ((n₁ : ℝ) / (p : ℝ)) / 2) *
             eExp ((h₂ : ℝ) * ((n₂ : ℝ) / (p : ℝ)) / 2) =
@@ -494,12 +493,13 @@ lemma lem_6_3_osc_bound
             have := Real.log_le_log (by positivity) hh_gt.le; rwa [Real.log_rpow hn₁_pos] at this
           have hrpow_le : (Real.log (h : ℝ)) ^ (-((R : ℝ) + 2)) ≤
               δ ^ (-(R : ℤ) - 2) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by
-            have h1 : (δ * Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) ≤ (Real.log (h : ℝ)) ^ (-((R : ℝ) + 2)) :=
+            have h1 : (Real.log (h : ℝ)) ^ (-((R : ℝ) + 2)) ≤ (δ * Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) :=
               Real.rpow_le_rpow_of_nonpos (by positivity) hlogh_lb (by linarith)
             rw [Real.mul_rpow hδ0.le hlog_n₁_pos.le] at h1
             have hdz : δ ^ (-((R : ℝ) + 2)) = δ ^ (-(R : ℤ) - 2) := by
               rw [show (-((R : ℝ) + 2)) = ((-(R : ℤ) - 2 : ℤ) : ℝ) by push_cast; ring, Real.rpow_intCast]
             linarith
+          simp only [← Complex.ofReal_mul] at h_res
           calc ‖∑ p ∈ I_k, _‖ ≤ C₂ * 3 * P * (Real.log (h : ℝ)) ^ (-((R : ℝ) + 2)) := h_res
             _ ≤ C₂ * 3 * P * (δ ^ (-(R : ℤ) - 2) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) := by gcongr
             _ ≤ 6 * C₂ * P * (δ ^ (-(R : ℤ) - 2) + 1) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by
@@ -569,9 +569,9 @@ lemma lem_6_3_osc_bound
               (6 * C₂ * P * (δ ^ (-(R : ℤ) - 2) + 1) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) := by
             simp only [Finset.sum_mul, Finset.mul_sum]
             rw [Finset.sum_comm]
-            exact Finset.sum_congr rfl fun _ _ => Finset.sum_congr rfl fun _ _ => by ring
         _ ≤ ((4 / Real.pi) * (Real.log (2 * (H : ℝ) + 1) + 1)) ^ 2 *
               (6 * C₂ * P * (δ ^ (-(R : ℤ) - 2) + 1) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) := by
+            rw [← sq]
             have h_sum_c_nn : 0 ≤ ∑ h ∈ S_H, ‖c_tilde h‖ := Finset.sum_nonneg fun _ _ => norm_nonneg _
             exact mul_le_mul_of_nonneg_right (pow_le_pow_left₀ h_sum_c_nn h_L1 2) (by positivity)
     let L₁ : ℝ := (4 / Real.pi) * (Real.log (2 * (H : ℝ) + 1) + 1)
