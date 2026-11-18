@@ -755,8 +755,16 @@ lemma lem_6_3_osc_bound
               (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by
               field_simp [hP_pos.ne']; ring
         _ ≤ (C_osc_const / 2) * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by
-              gcongr; dsimp [C_osc_const]; nlinarith [show 0 ≤ ((R : ℝ) + 4) ^ 2 by positivity,
-                show 0 ≤ C₂ by positivity, show 0 ≤ (δ / 2) ^ (-(R : ℤ) - 2) by positivity]
+              have h24_le : 24 * ((R : ℝ) + 4) ^ 2 * C₂ ≤ 24 * (((R : ℝ) + 4) ^ 2 + 1) * (C₂ + 1) := by
+                nlinarith only [show 0 ≤ ((R : ℝ) + 4) ^ 2 by positivity, show 0 ≤ C₂ by positivity]
+              have h24_osc : 24 * ((R : ℝ) + 4) ^ 2 * C₂ * ((δ / 2) ^ (-(R : ℤ) - 2) + 1) ≤ C_osc_const / 2 := by
+                calc 24 * ((R : ℝ) + 4) ^ 2 * C₂ * ((δ / 2) ^ (-(R : ℤ) - 2) + 1)
+                    ≤ 24 * (((R : ℝ) + 4) ^ 2 + 1) * (C₂ + 1) * ((δ / 2) ^ (-(R : ℤ) - 2) + 1) := by gcongr
+                  _ ≤ C_osc_const / 2 := by
+                      dsimp [C_osc_const]
+                      have h_pos : 0 ≤ (((R : ℝ) + 4) ^ 2 + 1) * (C₂ + 1) * ((δ / 2) ^ (-(R : ℤ) - 2) + 1) := by positivity
+                      linarith only [h_pos]
+              gcongr
     have h_n1P_err : ((n₁ : ℝ) / P) * ‖errC‖ ≤
         (C_osc_const / 2) * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by
       have h1 := mul_le_mul_of_nonneg_left h_errC_bd (by positivity : 0 ≤ (n₁ : ℝ) / P)
@@ -780,10 +788,14 @@ lemma lem_6_3_osc_bound
             _ = 8 * P * (δ / 2) ^ (-(R : ℤ) - 2) / (Real.log (n₁ : ℝ)) ^ 5 := by ring
         have h12 : 12 * C₂ * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) ≤
             12 * C₂ * P / (Real.log (n₁ : ℝ)) ^ 5 := by
-          rw [mul_div_assoc', ← one_div]; gcongr
+          calc 12 * C₂ * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))
+              ≤ 12 * C₂ * P * (1 / (Real.log (n₁ : ℝ)) ^ 5) := by gcongr
+            _ = 12 * C₂ * P / (Real.log (n₁ : ℝ)) ^ 5 := by ring
         have h24 : 24 * C₂ * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) ≤
             24 * C₂ * P / (Real.log (n₁ : ℝ)) ^ 5 := by
-          rw [mul_div_assoc', ← one_div]; gcongr
+          calc 24 * C₂ * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))
+              ≤ 24 * C₂ * P * (1 / (Real.log (n₁ : ℝ)) ^ 5) := by gcongr
+            _ = 24 * C₂ * P / (Real.log (n₁ : ℝ)) ^ 5 := by ring
         have hsum_rhs : 2 * (8 * P * (δ / 2) ^ (-(R : ℤ) - 2) / (Real.log (n₁ : ℝ)) ^ 5) +
             (12 * C₂ * P / (Real.log (n₁ : ℝ)) ^ 5 + 24 * C₂ * P / (Real.log (n₁ : ℝ)) ^ 5) =
             (16 * (δ / 2) ^ (-(R : ℤ) - 2) + 36 * C₂) * P / (Real.log (n₁ : ℝ)) ^ 5 := by ring
@@ -882,7 +894,7 @@ lemma lem_6_3_osc_bound
         Finset.sum_le_sum hblock_bound
     _ = ((dyadicBlocks ((n₁ : ℝ) ^ δ) y₁).card : ℝ) *
           ((ε / (16 * (Real.log (n₁ : ℝ) / Real.log 2 + 2))) * (n₁ : ℝ) * Real.log (n₁ : ℝ)) := by
-        rw [Finset.sum_const, nsmul_eq_mul]
+        rw [Finset.sum_const]; try rw [nsmul_eq_mul]
     _ ≤ (Real.log (n₁ : ℝ) / Real.log 2 + 2) *
           ((ε / (16 * (Real.log (n₁ : ℝ) / Real.log 2 + 2))) * (n₁ : ℝ) * Real.log (n₁ : ℝ)) := by gcongr
     _ = (ε / 16) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
