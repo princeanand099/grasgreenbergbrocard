@@ -114,10 +114,11 @@ private lemma log_consecutive_equipartition_aux {n m₁ m₂ : ℕ}
     have hfac_nn : (0 : ℝ) ≤ Nat.factorial n := Nat.cast_nonneg _
     have hm2_lt_sq : (m₂ : ℝ) ^ 2 < (((n : ℝ) + 1) * (m₁ : ℝ) / 2) ^ 2 := by
       rw [hm2_sq, div_pow, mul_pow, hm1_sq, lt_div_iff₀ (by norm_num)]
-      nlinarith only [hn6r, hfac_nn]
+      have hquad : (4 : ℝ) * ((n : ℝ) + 1) < ((n : ℝ) + 1) ^ 2 := by nlinarith only [hn6r]
+      nlinarith only [hquad, hfac_nn, hn6r]
     have h2m2 : 2 * (m₂ : ℝ) < ((n : ℝ) + 1) * (m₁ : ℝ) := by
       have hsq2 : (2 * (m₂ : ℝ)) ^ 2 < (((n : ℝ) + 1) * (m₁ : ℝ)) ^ 2 := by linarith
-      nlinarith only [hsq2, (Nat.cast_nonneg m₂ : (0 : ℝ) ≤ m₂), (Nat.cast_nonneg m₁ : (0 : ℝ) ≤ m₁), hn6r]
+      exact lt_of_pow_lt_pow_left₀ 2 (by positivity) hsq2
     linarith
   have hX_lb_int : 2 * n * (n + 1) < (n + 1) * m₁ - m₂ - n := by
     have h1 : (2 * n * (n + 1) + n : ℝ) < ((n : ℝ) + 1) * m₁ - m₂ := by
