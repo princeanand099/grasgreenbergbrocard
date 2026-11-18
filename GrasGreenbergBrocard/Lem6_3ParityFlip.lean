@@ -449,6 +449,17 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
           have : Real.log (B / 3) ≤ Real.log B := Real.log_le_log (by positivity) (by linarith)
           linarith
       _ = Real.log B + C_mert + 1 := by ring
+  -- Part 1: h ≤ n₁^δ
+  -- Part 2: n₁^δ < h
+  -- Actually, in Part 1: parityFlipWeight ≤ (sum over p ≤ y₂) + (sum over p ≥ y₂, 2∤v_p(P))
+  -- Since y₂ ≤ n₁^δ (log n₁)^2 + 2, log y₂ ≤ δ log n₁ + 2 log log n₁ + 1!
+  -- Wait: h_tiny_bound gives 2 * n₁ * log y₂ ≤ 2 δ n₁ log n₁, whereas we want (δ + ε) n₁ log n₁!
+  -- Why did h_tiny_bound have factor 2? Because we used v_p(n₁!) ≤ 2 n₁ / p instead of n₁ / (p - 1)!
+  -- Better: split p ≤ y₂ at (log n₁)^2!
+  -- For p ≤ (log n₁)^2: 2 n₁ (2 log log n₁ + C_mert + 1) = o(n₁ log n₁)!
+  -- For (log n₁)^2 < p ≤ y₂: p - 1 ≥ (1 - 1/(log n₁)^2) p, so v_p(n₁!) ≤ (1 + 2/(log n₁)^2) n₁ / p!
+  -- And Mertens_div_p_band_le on ((log n₁)^2, y₂] gives (1 + o(1)) n₁ (log y₂ - 2 log log n₁) ≤ (δ + o(1)) n₁ log n₁!!
+  -- THAT gives the EXACT factor 1 instead of 2!
   have h_band_exact : ∀ (A B : ℝ), (Real.log (n₁ : ℝ)) ^ 2 ≤ A → A ≤ B →
       ∑ p ∈ ((Finset.Icc 3 (Nat.floor B)).filter Nat.Prime).filter (fun p : ℕ => A < (p : ℝ)),
         (padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ) ≤
@@ -485,6 +496,7 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
         have hp_pos : 0 < (p : ℝ) := by linarith
         have hsq_pos : 0 < (Real.log (n₁ : ℝ)) ^ 2 := by linarith
         rw [one_mul, add_mul, one_mul, div_mul_eq_mul_div, mul_sub, mul_one]
+        -- p ≤ p - 1 + 2(p-1)/log^2  ↔  1 ≤ 2(p-1)/log^2 ↔ log^2 ≤ 2(p-1)
         have h1_le : 1 ≤ (2 * (p : ℝ) - 2) / (Real.log (n₁ : ℝ)) ^ 2 :=
           (le_div_iff₀ hsq_pos).mpr (by linarith)
         linarith
@@ -502,6 +514,10 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
     rw [← Finset.mul_sum]
     gcongr
     exact hMert A B (le_trans hlog2_ge hA_lb) hAB
+  -- Now prove both branches!
+  -- Wait: for the first branch h ≤ n₁^δ, we just split at (log n₁)^2 and y₂!
+  -- For the second branch n₁^δ < h, we split at n₁^δ, y₁, y₂!
+  -- Let's prove the first branch cleanly:
   have hlog_ge3 : 3 ≤ (Real.log (n₁ : ℝ)) ^ 2 := by
     have : (1000 : ℝ) ≤ n₁ := by exact_mod_cast (by omega : 1000 ≤ n₁)
     have he2 : Real.exp 2 < 1000 := by
@@ -528,12 +544,14 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
       simp only [Finset.mem_filter, S_le, S_gt] at hp1 hp2; linarith
     change ∑ p ∈ S_all, (padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ) ≤ _
     rw [hsplit, Finset.sum_union hdisj]
+    -- Bound S_gt using h_upper_bound
     have hS_gt_ub : ∑ p ∈ S_gt, (padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ) ≤
         2 * (n₁ : ℝ) * Real.log (2 * (n₁ : ℝ)) / (Real.log (n₁ : ℝ)) ^ 2 := by
       apply h_upper_bound S_gt
       intro p hp
       simp only [S_gt, S_all, Finset.mem_filter, Finset.mem_Icc] at hp
       exact ⟨hp.1.2.1, hp.1.1.1, hp.1.1.2, hp.2.le, hp.1.2.2⟩
+    -- Split S_le at (log n₁)^2
     let S_le1 := S_le.filter (fun p : ℕ => (p : ℝ) ≤ (Real.log (n₁ : ℝ)) ^ 2)
     let S_le2 := S_le.filter (fun p : ℕ => (Real.log (n₁ : ℝ)) ^ 2 < (p : ℝ))
     have hsplit2 : S_le = S_le1 ∪ S_le2 := by
@@ -676,6 +694,14 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
                   _ = ε / 10 := by ring
         have h2 := (div_le_iff₀ hlog_n₁_pos').mp h1
         linarith
+
+      -- If ε is large, (ε/20)*(ε/10) could exceed ε/2; cap? No, if ε ≥ 1, δ + ε/2 doesn't need ε/20*ε/10!
+      -- Wait: better to bound 2/(log n₁)^2 ≤ min(1, ε/20) and (log 3 + C_mert) ≤ min(δ, ε/10) * log n₁?
+      -- Even simpler: (1 + a)*(δ + b) = δ + a*δ + b*(1+a). Since a ≤ min(1, ε/20) and b ≤ ε/10:
+      -- wait: we didn't bound a ≤ 1! If ε/20 > 1, then (ε/20)*(ε/10) > ε/2!
+      -- Wait: if 2/(log n₁)^2 ≤ 2/3 < 1 (always true since log_ge3 : 3 ≤ (log n₁)^2!),
+      -- then (1 + 2/(log n₁)^2) ≤ 2 ALWAYS!
+      -- So (1 + a) * (δ + b) ≤ δ + a * δ + 2 * b ≤ δ + (ε/20)*1 + 2*(ε/10) = δ + 0.25 ε ≤ δ + 0.5 ε!!
       have ha_le1 : 2 / (Real.log (n₁ : ℝ)) ^ 2 ≤ 1 := by
         rw [div_le_one (by positivity)]; linarith
       have h_lin : (1 + 2 / (Real.log (n₁ : ℝ)) ^ 2) *
@@ -717,7 +743,11 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
             (Real.log (n₁ : ℝ)) ^ (A_R + 4) := by ring
         have h1pow : 1 ≤ (Real.log (n₁ : ℝ)) ^ (A_R + 4) := one_le_pow₀ hlog1
         nlinarith
+      -- Bound parityFlipWeight by (p ≤ y₂) + (p > y₂, 2∤v_p(P))
+      -- Just like h_branch1, parityFlipWeight ≤ (δ + ε/2) n₁ log n₁, while
+      -- (1/2) n₁ log h ≥ (δ/2) n₁ log n₁ and ≤ (δ/2 + ε/2) n₁ log n₁!
       have hpf_ub : parityFlipWeight n₁ n₂ ≤ (δ + ε / 2) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
+        -- Same 3-piece split: p ≤ (log n₁)^2, (log n₁)^2 < p ≤ y₂, p > y₂
         unfold parityFlipWeight
         let S_all := (Finset.Icc 3 n₁).filter (fun p => p.Prime ∧ ¬ 2 ∣ padicValNat p (P_ratio n₁ n₂))
         let S_le := S_all.filter (fun p : ℕ => (p : ℝ) ≤ y₂)
@@ -790,6 +820,7 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
             (∑ p ∈ S_le2, (padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ)) := by
           rw [hsplit2, Finset.sum_union hdisj2]
         rw [hS_le_eq]
+        -- Combine error terms just as in h_branch1:
         have herr_ball1 : ((A_R : ℝ) + 4) * Real.log (Real.log (n₁ : ℝ)) / Real.log (n₁ : ℝ) < ε / 100 := by
           have := hN₁ n₁ (by omega)
           rw [Real.dist_eq, sub_zero, abs_of_nonneg (by
@@ -839,7 +870,13 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
                       _ ≤ ε * (1 / 100) := by gcongr
                       _ = ε / 100 := by ring
             exact (div_le_iff₀ hlog_n₁_pos).mp h1
-          nlinarith only [hloglog_le, hCm_le, hn₁_pos, hlog_n₁_pos]
+          calc 2 * (n₁ : ℝ) * (2 * Real.log (Real.log (n₁ : ℝ)) + C_mert + 1)
+              ≤ 2 * (n₁ : ℝ) * (2 * ((ε / 100) * Real.log (n₁ : ℝ)) + (ε / 100) * Real.log (n₁ : ℝ)) := by
+                gcongr
+            _ = (3 * ε / 50) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by ring
+            _ ≤ (ε / 16) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) :=
+              mul_le_mul_of_nonneg_right (by linarith only [hε]) (mul_nonneg hn₁_pos.le hlog_n₁_pos.le)
+            _ = (ε / 16) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by ring
         have h_le2_small : (1 + 2 / (Real.log (n₁ : ℝ)) ^ 2) * (n₁ : ℝ) *
             (δ * Real.log (n₁ : ℝ) + ((A_R : ℝ) + 4) * Real.log (Real.log (n₁ : ℝ)) + Real.log 3 + C_mert) ≤
             (δ + ε / 4) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
@@ -925,6 +962,7 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
         have h2 : (h : ℝ) ≤ (h : ℝ) * (Real.log (n₁ : ℝ)) ^ 2 := le_mul_of_one_le_right (by positivity) (by nlinarith)
         linarith
       have hn₁_delta_ge3 : 3 ≤ (n₁ : ℝ) ^ δ := by
+        -- From N₄, n₁^{((R+1)δ - 1)} > 4; actually from N₅, 1/log n₁ < δ/20 → δ log n₁ > 20 → n₁^δ > e^20 > 3!
         have h5 := hN₅ n₁ (by omega)
         rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at h5
         have h20 : 20 ≤ δ * Real.log (n₁ : ℝ) := by
@@ -935,6 +973,7 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
           have h3 : Real.exp 2 = Real.exp 1 * Real.exp 1 := by rw [← Real.exp_add]; norm_num
           nlinarith
         rwa [Real.rpow_def_of_pos hn₁_pos, mul_comm]
+      -- Partition S_all into S_tiny (≤ n₁^δ), S_osc (n₁^δ < p ≤ y₁), S_collar (y₁ < p < y₂), S_upper (y₂ ≤ p)
       unfold parityFlipWeight
       let S_all := (Finset.Icc 3 n₁).filter (fun p => p.Prime ∧ ¬ 2 ∣ padicValNat p (P_ratio n₁ n₂))
       let S_tiny := S_all.filter (fun p : ℕ => (p : ℝ) ≤ (n₁ : ℝ) ^ δ)
@@ -1044,8 +1083,7 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
                       _ = ε / 100 := by ring
             exact (div_le_iff₀ hlog_n₁_pos).mp h1
           calc 2 * (n₁ : ℝ) * (2 * Real.log (Real.log (n₁ : ℝ)) + C_mert + 1)
-              ≤ 2 * (n₁ : ℝ) * (2 * ((ε / 100) * Real.log (n₁ : ℝ)) + (ε / 100) * Real.log (n₁ : ℝ)) := by
-                gcongr
+              ≤ 2 * (n₁ : ℝ) * (2 * ((ε / 100) * Real.log (n₁ : ℝ)) + (ε / 100) * Real.log (n₁ : ℝ)) := by gcongr
             _ = (3 * ε / 50) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by ring
             _ ≤ (ε / 16) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) :=
               mul_le_mul_of_nonneg_right (by linarith only [hε]) (mul_nonneg hn₁_pos.le hlog_n₁_pos.le)
@@ -1384,6 +1422,7 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
             _ ≤ (δ + ε) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) :=
               mul_le_mul_of_nonneg_right hcoeff (mul_nonneg hn₁_pos.le hlog_n₁_pos.le)
             _ = (δ + ε) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by ring
+        rw [hS_osc_eq]
         linarith only [hS_tiny_ub, h_osc_hi, hS_collar_ub, hS_upper_ub, hmul]
       have h_lb_tot : -((δ + ε) * (n₁ : ℝ) * Real.log (n₁ : ℝ)) ≤
           ∑ p ∈ S_tiny, (padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ) +
@@ -1398,7 +1437,9 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
             _ ≤ (-(δ / 2) - ε / 4) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) :=
               mul_le_mul_of_nonneg_right hcoeff (mul_nonneg hn₁_pos.le hlog_n₁_pos.le)
             _ = -(δ / 2) * (n₁ : ℝ) * Real.log (n₁ : ℝ) - (ε / 4) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by ring
+        rw [hS_osc_eq]
         linarith only [h_tiny_nn, h_osc_lo, h_collar_nn, h_upper_nn, hmul]
+      rw [← hS_osc_eq]
       exact abs_le.mpr ⟨h_lb_tot, h_ub_tot⟩
   exact ⟨h_branch1, h_branch2⟩
 
