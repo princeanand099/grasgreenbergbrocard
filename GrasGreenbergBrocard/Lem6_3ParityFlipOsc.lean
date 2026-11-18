@@ -453,17 +453,31 @@ lemma lem_6_3_osc_bound
           ∑ p ∈ I_k, ((w_base (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
             eExp (((h₁ : ℝ) * (n₁ : ℝ) + (h₂ : ℝ) * (n₂ : ℝ)) / (2 * (p : ℝ))) := by
         dsimp [mainC, Psi_tilde]
-        simp_rw [Finset.mul_sum, Finset.sum_mul]
-        rw [Finset.sum_comm]
-        apply Finset.sum_congr rfl; intro h₁ _
-        rw [Finset.sum_comm]
-        apply Finset.sum_congr rfl; intro h₂ _
-        apply Finset.sum_congr rfl; intro p _
-        have h_e : eExp ((h₁ : ℝ) * ((n₁ : ℝ) / (p : ℝ)) / 2) *
-            eExp ((h₂ : ℝ) * ((n₂ : ℝ) / (p : ℝ)) / 2) =
-            eExp (((h₁ : ℝ) * (n₁ : ℝ) + (h₂ : ℝ) * (n₂ : ℝ)) / (2 * (p : ℝ))) := by
-          unfold eExp; rw [← Complex.exp_add]; congr 1; push_cast; ring
-        rw [← h_e]; ring
+        calc ∑ p ∈ I_k, ((w_base (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
+              (∑ h₁ ∈ S_H, c_tilde h₁ * eExp ((h₁ : ℝ) * ((n₁ : ℝ) / (p : ℝ)) / 2)) *
+              (∑ h₂ ∈ S_H, c_tilde h₂ * eExp ((h₂ : ℝ) * ((n₂ : ℝ) / (p : ℝ)) / 2))
+            = ∑ p ∈ I_k, ∑ h₁ ∈ S_H, ∑ h₂ ∈ S_H,
+                ((w_base (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
+                  (c_tilde h₁ * eExp ((h₁ : ℝ) * ((n₁ : ℝ) / (p : ℝ)) / 2)) *
+                  (c_tilde h₂ * eExp ((h₂ : ℝ) * ((n₂ : ℝ) / (p : ℝ)) / 2)) := by
+              refine Finset.sum_congr rfl fun p _ => ?_
+              rw [Finset.mul_sum, Finset.sum_mul]
+              refine Finset.sum_congr rfl fun h₁ _ => ?_
+              rw [Finset.mul_sum]
+          _ = ∑ h₁ ∈ S_H, ∑ p ∈ I_k, ∑ h₂ ∈ S_H, _ := Finset.sum_comm
+          _ = ∑ h₁ ∈ S_H, ∑ h₂ ∈ S_H, ∑ p ∈ I_k, _ := by
+              refine Finset.sum_congr rfl fun h₁ _ => Finset.sum_comm
+          _ = ∑ h₁ ∈ S_H, ∑ h₂ ∈ S_H, (c_tilde h₁ * c_tilde h₂) *
+                ∑ p ∈ I_k, ((w_base (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
+                  eExp (((h₁ : ℝ) * (n₁ : ℝ) + (h₂ : ℝ) * (n₂ : ℝ)) / (2 * (p : ℝ))) := by
+              refine Finset.sum_congr rfl fun h₁ _ => Finset.sum_congr rfl fun h₂ _ => ?_
+              rw [Finset.mul_sum]
+              refine Finset.sum_congr rfl fun p _ => ?_
+              have h_e : eExp ((h₁ : ℝ) * ((n₁ : ℝ) / (p : ℝ)) / 2) *
+                  eExp ((h₂ : ℝ) * ((n₂ : ℝ) / (p : ℝ)) / 2) =
+                  eExp (((h₁ : ℝ) * (n₁ : ℝ) + (h₂ : ℝ) * (n₂ : ℝ)) / (2 * (p : ℝ))) := by
+                unfold eExp; rw [← Complex.exp_add]; congr 1; push_cast; ring
+              rw [← h_e]; ring
       rw [hmain_eq]
       have hterm_bd : ∀ h₁ ∈ S_H, ∀ h₂ ∈ S_H,
           ‖∑ p ∈ I_k, ((w_base (p : ℝ) * Real.log (p : ℝ) : ℝ) : ℂ) *
