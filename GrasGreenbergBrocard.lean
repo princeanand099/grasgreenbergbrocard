@@ -1,3 +1,4 @@
+import Mathlib
 import GrasGreenbergBrocard.Basic
 import GrasGreenbergBrocard.ExternalAxiomsAnalytic
 import GrasGreenbergBrocard.ValuationParityLayer
@@ -24,3 +25,7 @@ import GrasGreenbergBrocard.Thm1_2Iwasawa
 import GrasGreenbergBrocard.ExternalAxiomsSec4
 import GrasGreenbergBrocard.Prop4_1SmoothBiquad
 import GrasGreenbergBrocard.Thm4_2QuarticCores
+import GrasGreenbergBrocard.ExternalAxiomsSec5
+import GrasGreenbergBrocard.Prop5_1MidpointBias
+import GrasGreenbergBrocard.Thm5_2EffectiveCores
+import GrasGreenbergBrocard.Thm5_3RedeiCohomology
