@@ -1291,7 +1291,9 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
               calc (1 / (n₁ : ℝ) ^ δ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 20) * Real.log (n₁ : ℝ))
                   ≤ (ε / 20) * Real.log (n₁ : ℝ) := mul_le_mul h_one_sub hdiff_le hneg.le (by positivity)
           linarith only [this]
-        have h_prod1 := mul_le_mul_of_nonneg_left (le_trans h_est h_sub_prod) hn₁_pos.le
+        have h_prod1 : (n₁ : ℝ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 10) * Real.log (n₁ : ℝ)) ≤
+            (n₁ : ℝ) * ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ) := by
+          exact mul_le_mul_of_nonneg_left (le_trans h_est h_sub_prod) hn₁_pos.le
         have h_sum_ub : ∑ p ∈ I_osc, Real.log (p : ℝ) ≤ (ε / 100) * (n₁ : ℝ) * Real.log (n₁ : ℝ) :=
           le_trans hsum_log_I h_1n_le
         have h_coeff : (11 * ε / 100) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) ≤
