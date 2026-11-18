@@ -43,6 +43,7 @@ lemma padicValNat_prod_eq {ι : Type*} {p : ℕ} [Fact p.Prime] {s : Finset ι} 
   intro i _
   exact Nat.factorization_def (f i) Fact.out
 
+
 lemma coreNat_pos (m : ℕ) : 0 < coreNat m := by
   unfold coreNat
   exact Finset.prod_pos (fun p hp => (Nat.prime_of_mem_primeFactors (Finset.mem_filter.mp hp).1).pos)
@@ -62,8 +63,7 @@ lemma coreNat_squarefree (m : ℕ) : Squarefree (coreNat m) := by
     (f := fun q => q)
     (fun q hq => (Nat.prime_of_mem_primeFactors (Finset.mem_filter.mp hq).1).ne_zero)
   have h2_le : 2 ≤ padicValNat p (coreNat m) := by
-    rw [sq] at hpp
-    exact (padicValNat_dvd_iff_le hne).mp hpp
+    exact (padicValNat_dvd_iff_le hne).mp (by simpa [sq] using hpp)
   have hle1 : padicValNat p (coreNat m) ≤ 1 := by
     unfold coreNat at hval ⊢
     rw [hval]
@@ -93,9 +93,9 @@ lemma padicValNat_coreNat {m p : ℕ} (hp : p.Prime) (hm : 0 < m) :
   split_ifs with hodd
   · have hmem : p ∈ m.primeFactors.filter (fun q => padicValNat q m % 2 = 1) := by
       refine Finset.mem_filter.mpr ⟨Nat.mem_primeFactors.mpr ⟨hp, ?_, hm.ne'⟩, hodd⟩
-      exact (padicValNat_dvd_iff_le hm.ne').mpr (by omega)
+      simpa using (padicValNat_dvd_iff_le hm.ne').mpr (by omega : 1 ≤ padicValNat p m)
     rw [Finset.sum_eq_single p]
-    · exact padicValNat_self hp.one_lt
+    · exact padicValNat_self
     · intro q hq hqp
       have hq_pr : q.Prime := Nat.prime_of_mem_primeFactors (Finset.mem_filter.mp hq).1
       exact padicValNat.eq_zero_of_not_dvd (fun hd => hqp ((Nat.prime_dvd_prime_iff_eq hp hq_pr).mp hd).symm)
@@ -114,7 +114,7 @@ lemma padicValNat_sqPartNat {m p : ℕ} (hp : p.Prime) :
   rw [padicValNat_prod_eq (fun q hq => pow_ne_zero _ (Nat.prime_of_mem_primeFactors hq).ne_zero)]
   by_cases hmem : p ∈ m.primeFactors
   · rw [Finset.sum_eq_single p]
-    · rw [padicValNat_pow_eq, padicValNat_self hp.one_lt, mul_one]
+    · rw [padicValNat_pow_eq, padicValNat_self, mul_one]
     · intro q hq hqp
       have hq_pr : q.Prime := Nat.prime_of_mem_primeFactors hq
       rw [padicValNat_pow_eq,
@@ -146,7 +146,7 @@ theorem coreNat_mul_sqPartNat_sq {m : ℕ} (hm : 0 < m) :
     rw [padicValNat.mul (coreNat_pos m).ne' (pow_ne_zero 2 (sqPartNat_pos m).ne'),
         padicValNat_pow_eq,
         padicValNat_coreNat hp hm, padicValNat_sqPartNat hp]
-    omega
+    split_ifs <;> omega
   · simp [Nat.factorization_eq_zero_of_not_prime _ hp]
 
 lemma oddPartNat_pos {m : ℕ} (hm : 0 < m) : 0 < oddPartNat m := by
@@ -309,8 +309,8 @@ theorem delta1MidStar_mul_delta2MidStar_eq {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
         have h_not_both : padicValNat p (X₁ - 1) = 0 ∨ padicValNat p (X₁ + 1) = 0 := by
           by_contra hboth
           push_neg at hboth
-          have hd1 : p ∣ X₁ - 1 := (padicValNat_dvd_iff_le (by omega)).mpr (Nat.pos_of_ne_zero hboth.1)
-          have hd2 : p ∣ X₁ + 1 := (padicValNat_dvd_iff_le (by omega)).mpr (Nat.pos_of_ne_zero hboth.2)
+          have hd1 : p ∣ X₁ - 1 := by simpa using (padicValNat_dvd_iff_le (by omega)).mpr (Nat.pos_of_ne_zero hboth.1)
+          have hd2 : p ∣ X₁ + 1 := by simpa using (padicValNat_dvd_iff_le (by omega)).mpr (Nat.pos_of_ne_zero hboth.2)
           have hd_sub : p ∣ (X₁ + 1) - (X₁ - 1) := Nat.dvd_sub hd2 hd1
           have h2eq : (X₁ + 1) - (X₁ - 1) = 2 := by omega
           rw [h2eq] at hd_sub
@@ -321,7 +321,7 @@ theorem delta1MidStar_mul_delta2MidStar_eq {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
             rw [← sq]
             exact dvd_trans (pow_dvd_pow p (by omega : 2 ≤ padicValNat p (q_n n))) pow_padicValNat_dvd
           exact (Nat.squarefree_iff_prime_squarefree.mp (q_n_squarefree n)) p hp (by simpa [sq] using hp2_dvd)
-        rcases h_not_both with h0 | h0 <;> rw [h0] at hv_eq ⊢ <;> omega
+        rcases h_not_both with h0 | h0 <;> rw [h0] at hv_eq ⊢ <;> split_ifs at * <;> omega
     · simp [Nat.factorization_eq_zero_of_not_prime _ hp]
   have hsf : Squarefree (delta1MidStar X₁ * delta2MidStar X₁) := by
     rw [h_prod]; exact oddPartNat_squarefree (q_n_squarefree n)
@@ -649,8 +649,7 @@ theorem prop_5_1_part2_bias (ε : ℝ) (hε : 0 < ε) :
       _ ≤ (ε / 6) * x := mul_le_mul_of_nonneg_right h_Cθ_le hx_pos.le
   have hθ_n := hθ_bound (n : ℝ) (by exact_mod_cast hn_K1)
   have hθ_n2 := hθ_bound ((n : ℝ) / 2) (by
-    have h2K : 2 * K1 ≤ n := by omega
-    have h2Kr : 2 * (K1 : ℝ) ≤ (n : ℝ) := by exact_mod_cast h2K
+    have h2K : (2 : ℝ) * (K1 : ℝ) ≤ (n : ℝ) := by exact_mod_cast (by omega : 2 * K1 ≤ n)
     linarith)
   have h_theta_diff_eq :
       (∑ p ∈ (Finset.Ioc (n / 2) n).filter Nat.Prime, Real.log (p : ℝ)) =
@@ -685,8 +684,7 @@ theorem prop_5_1_part2_bias (ε : ℝ) (hε : 0 < ε) :
         · have : (n : ℝ) < ((n / 2 : ℕ) + 1) * 2 := by exact_mod_cast h2
           linarith
       rw [hfl]
-    rw [h_eq1, h_eq2, ← hsdiff, Finset.sum_sdiff hsub]
-    ring
+    rw [h_eq1, h_eq2, ← hsdiff, eq_sub_of_add_eq (Finset.sum_sdiff hsub)]
   have h_theta_diff_lb : (1 / 2 - ε / 4) * (n : ℝ) ≤
       ∑ p ∈ (Finset.Ioc (n / 2) n).filter Nat.Prime, Real.log (p : ℝ) := by
     rw [h_theta_diff_eq]
@@ -708,7 +706,7 @@ theorem prop_5_1_part2_bias (ε : ℝ) (hε : 0 < ε) :
         deltaMin X₁ := Nat.le_of_dvd hdmin_pos hprod_dvd
     have hprod_le : (∏ p ∈ (Finset.Ioc (n / 2) n).filter (fun p => p.Prime ∧ p ∣ deltaMin X₁), (p : ℝ)) ≤
         (deltaMin X₁ : ℝ) := by
-      exact_mod_cast hprod_le_nat
+      simpa only [Nat.cast_prod] using (Nat.cast_le (α := ℝ)).mpr hprod_le_nat
     have hprod_pos : 0 < ∏ p ∈ (Finset.Ioc (n / 2) n).filter (fun p => p.Prime ∧ p ∣ deltaMin X₁), (p : ℝ) :=
       Finset.prod_pos (fun p hp => by exact_mod_cast (Finset.mem_filter.mp hp).2.1.pos)
     calc (∑ p ∈ (Finset.Ioc (n / 2) n).filter (fun p => p.Prime ∧ p ∣ deltaMin X₁), Real.log (p : ℝ))

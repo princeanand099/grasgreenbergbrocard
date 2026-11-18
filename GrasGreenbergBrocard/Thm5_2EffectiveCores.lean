@@ -93,7 +93,7 @@ lemma A_star5_mul_B_star5 (n : ℕ) :
       rw [padicValNat_prod_eq (fun q hq => pow_ne_zero _ (by have := (Finset.mem_filter.mp hq).2; omega))]
       split_ifs with hmem
       · rw [Finset.sum_eq_single p]
-        · rw [padicValNat_pow_eq, padicValNat_self hp.one_lt, mul_one]
+        · rw [padicValNat_pow_eq, padicValNat_self, mul_one]
         · intro q hq hqp
           have hq_pr : q.Prime := (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).2.1
           rw [padicValNat_pow_eq,
@@ -113,7 +113,7 @@ lemma A_star5_mul_B_star5 (n : ℕ) :
       rw [padicValNat_prod_eq (fun q hq => pow_ne_zero _ (by have := (Finset.mem_filter.mp hq).2; omega))]
       split_ifs with hmem
       · rw [Finset.sum_eq_single p]
-        · rw [padicValNat_pow_eq, padicValNat_self hp.one_lt, mul_one]
+        · rw [padicValNat_pow_eq, padicValNat_self, mul_one]
         · intro q hq hqp
           have hq_pr : q.Prime := (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).2.1
           rw [padicValNat_pow_eq,
@@ -256,8 +256,8 @@ theorem thm_5_2_part1_bipartition {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial
       have h_not_both : padicValNat p u₁ = 0 ∨ padicValNat p u₂ = 0 := by
         by_contra hboth
         push_neg at hboth
-        have hd1 : p ∣ u₁ := (padicValNat_dvd_iff_le hu₁_pos.ne').mpr (Nat.pos_of_ne_zero hboth.1)
-        have hd2 : p ∣ u₂ := (padicValNat_dvd_iff_le hu₂_pos.ne').mpr (Nat.pos_of_ne_zero hboth.2)
+        have hd1 : p ∣ u₁ := by simpa using (padicValNat_dvd_iff_le hu₁_pos.ne').mpr (Nat.pos_of_ne_zero hboth.1)
+        have hd2 : p ∣ u₂ := by simpa using (padicValNat_dvd_iff_le hu₂_pos.ne').mpr (Nat.pos_of_ne_zero hboth.2)
         have := Nat.dvd_gcd hd1 hd2
         rw [hcop_u.gcd_eq_one] at this
         exact hp.ne_one (Nat.dvd_one.mp this)
@@ -538,7 +538,7 @@ lemma oddPartNat_u_eq_B_mul_Z_sq {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial 
         rw [padicValNat_prod_eq (fun q hq => pow_ne_zero _ (by have := (Finset.mem_filter.mp hq).2.1; omega))]
         split_ifs with hmem
         · rw [Finset.sum_eq_single p]
-          · rw [padicValNat_pow_eq, padicValNat_self hp.one_lt, mul_one]
+          · rw [padicValNat_pow_eq, padicValNat_self, mul_one]
           · intro q hq hqp
             have hq_pr : q.Prime := (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).2.1
             rw [padicValNat_pow_eq,
@@ -558,7 +558,7 @@ lemma oddPartNat_u_eq_B_mul_Z_sq {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial 
         rw [padicValNat_prod_eq (fun q hq => pow_ne_zero _ (by have := (Finset.mem_filter.mp hq).2.1; omega))]
         split_ifs with hmem
         · rw [Finset.sum_eq_single p]
-          · rw [padicValNat_pow_eq, padicValNat_self hp.one_lt, mul_one]
+          · rw [padicValNat_pow_eq, padicValNat_self, mul_one]
           · intro q hq hqp
             have hq_pr : q.Prime := (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).2.1
             rw [padicValNat_pow_eq,
@@ -666,7 +666,7 @@ theorem thm_5_2_part1_cross_symmetry :
     rw [padicValNat.mul (by norm_num) (mul_pos hu₁_pos hu₂_pos).ne',
         padicValNat.mul hu₁_pos.ne' hu₂_pos.ne',
         show padicValNat 2 4 = 2 from by
-          rw [show (4 : ℕ) = 2 ^ 2 by norm_num, padicValNat_pow_eq, padicValNat_self (by norm_num)]; norm_num] at hv2
+          rw [show (4 : ℕ) = 2 ^ 2 by norm_num, padicValNat_pow_eq, padicValNat_self]; norm_num] at hv2
     exact hv2.symm
   have hlog_Bstar : Real.log (B_star5 n : ℝ) =
       (1 / 2 : ℝ) * (Real.log (Nat.factorial n : ℝ) - Delta_parity_odd n -
@@ -1231,7 +1231,7 @@ lemma delta2Mid_ne_two {n X₁ Y₁ : ℕ} (hn : 8 ≤ n) (hfund : IsFundamental
         rw [← Nat.factorization_def _ hp_pr]; exact hvp_q1
       rw [hvp_q_1] at hv_eq
       have h_odd_v2m1 : padicValNat p (vMid X₁ ^ 2 - 1) % 2 = 1 := by omega
-      exact (padicValNat_dvd_iff_le hv2_ge1.ne').mpr (by omega)
+      simpa using (padicValNat_dvd_iff_le hv2_ge1.ne').mpr (by omega : 1 ≤ padicValNat p (vMid X₁ ^ 2 - 1))
   obtain ⟨w, hw⟩ := hq_dvd
   have hvw_eq : vMid X₁ ^ 2 * w = Y' ^ 2 := by
     rw [hw] at h_prod_v
@@ -1647,7 +1647,7 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
         have hv := congrArg (padicValNat 2) h2_sq
         rw [padicValNat_pow_eq,
             padicValNat.mul (by norm_num) (pow_ne_zero 2 hXr_ne),
-            padicValNat_pow_eq, padicValNat_self (by norm_num)] at hv
+            padicValNat_pow_eq, padicValNat_self] at hv
         omega
       · have hX_eq : x ^ 2 + 1 = X := rfl
         have hx2 : x ^ 2 = 2 * (q_n n : ℤ) * lucasY (q_n n) X₁ Y₁ r ^ 2 := by linarith
