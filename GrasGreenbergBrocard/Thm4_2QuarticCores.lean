@@ -1159,12 +1159,10 @@ theorem thm_4_2_part2_euclidean_locks (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 
   have hlock_minus : (Bp * (Z_k2 n Y₁) ^ 2) / Bm = Zm ^ 4 := by
     rw [hq_minus, Nat.mul_add_div hBm_pos, Nat.div_eq_of_lt h2c₀_minus, add_zero]
   have hlock_plus : (Bm * (Z_k2 n Y₁) ^ 2 + Bp - 1) / Bp = Zp ^ 4 := by
-    have hZp2_ge1 : 1 ≤ Zp ^ 2 := Nat.one_le_pow 2 Zp hZp_pos
     have hle1 : (2 / c₀) * Zp ^ 2 ≤ Bp * Zp ^ 4 := by
-      calc (2 / c₀) * Zp ^ 2 ≤ Bp * Zp ^ 2 := Nat.mul_le_mul_right _ h2c₀_plus.le
-        _ = Bp * Zp ^ 2 * 1 := by ring
-        _ ≤ Bp * Zp ^ 2 * Zp ^ 2 := Nat.mul_le_mul_left _ hZp2_ge1
-        _ = Bp * Zp ^ 4 := by ring
+      calc (2 / c₀) * Zp ^ 2 ≤ Bp := h2c₀_plus.le
+        _ = Bp * 1 := by ring
+        _ ≤ Bp * Zp ^ 4 := Nat.mul_le_mul_left _ (Nat.one_le_pow 4 Zp hZp_pos)
     have hle2 : (2 / c₀) * Zp ^ 2 + 1 ≤ Bp := h2c₀_plus
     have h_eq : Bm * (Z_k2 n Y₁) ^ 2 + Bp - 1 = Bp * Zp ^ 4 + (Bp - (2 / c₀) * Zp ^ 2 - 1) := by
       rw [hq_plus]
@@ -1583,11 +1581,12 @@ private lemma core_from_B_helper {n m X₁ Y₁ δ u_i B_i B_other Z_i : ℕ} {�
     have h_prod_dvd : ∏ p ∈ U, p ∣ δ := by
       apply Finset.prod_primes_dvd
       · intro p hp
-        exact Nat.prime_of_mem_primeFactors (hU_sub_δ hp)
+        exact (Nat.prime_of_mem_primeFactors (hU_sub_δ hp)).prime
       · intro p hp
         exact Nat.dvd_of_mem_primeFactors (hU_sub_δ hp)
     have h_prod_le : (∏ p ∈ U, (p : ℝ)) ≤ (δ : ℝ) := by
       have h1 : ∏ p ∈ U, p ≤ δ := Nat.le_of_dvd hδ_pos h_prod_dvd
+      rw [← Nat.cast_prod]
       exact_mod_cast h1
     have h_log_prod : ∑ p ∈ U, Real.log (p : ℝ) ≤ Real.log (δ : ℝ) := by
       have hprod_pos : 0 < ∏ p ∈ U, (p : ℝ) :=
