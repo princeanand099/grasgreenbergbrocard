@@ -77,17 +77,11 @@ lemma P_ratio_ge_two {n₁ n₂ : ℕ} (hn₁ : 4 ≤ n₁) (hlt : n₁ < n₂) 
       _ ≤ Nat.factorial n₂ := Nat.factorial_le (by omega)
   nlinarith
 
-lemma m_lt_of_brocard {n₁ n₂ m₁ m₂ : ℕ} (hlt : n₁ < n₂)
+lemma m_lt_of_brocard {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 1 ≤ n₁) (hlt : n₁ < n₂)
     (hm₁ : Nat.factorial n₁ + 1 = m₁ ^ 2) (hm₂ : Nat.factorial n₂ + 1 = m₂ ^ 2) :
     m₁ < m₂ := by
-  have hfac_lt : Nat.factorial n₁ < Nat.factorial n₂ := by
-    by_cases h0 : n₁ = 0
-    · subst h0; have : 2 ≤ n₂ := by omega
-      calc Nat.factorial 0 = 1 := rfl
-        _ < 2 := by norm_num
-        _ = Nat.factorial 2 := by norm_num
-        _ ≤ Nat.factorial n₂ := Nat.factorial_le (by omega)
-    · exact (Nat.factorial_lt (Nat.pos_of_ne_zero h0)).mpr hlt
+  have hfac_lt : Nat.factorial n₁ < Nat.factorial n₂ :=
+    (Nat.factorial_lt hn₁).mpr hlt
   by_contra hle
   have hle' : m₂ ≤ m₁ := Nat.le_of_not_lt hle
   have hsq : m₂ ^ 2 ≤ m₁ ^ 2 := Nat.pow_le_pow_left hle' 2
@@ -191,7 +185,7 @@ theorem prop_6_1_part1_sl2_and_four_squares {n₁ n₂ m₁ m₂ : ℕ}
     prop_6_1_coprime_and_factorization hn₁ hlt hm₁ hm₂
   have ⟨hA₁, hB₁, hB₁_succ, _, h4mul1, _, _⟩ := brocard_u1_u2_rel hn₁ hm₁
   have ⟨hA₂, hB₂, hB₂_succ, _, h4mul2, _, _⟩ := brocard_u1_u2_rel (by omega) hm₂
-  have hm_lt : m₁ < m₂ := m_lt_of_brocard hlt hm₁ hm₂
+  have hm_lt : m₁ < m₂ := m_lt_of_brocard (by omega) hlt hm₁ hm₂
   have ⟨hm₁_odd, hm₁_ge⟩ := brocard_m_odd (by omega) hm₁
   have ⟨hm₂_odd, hm₂_ge⟩ := brocard_m_odd (by omega) hm₂
   set A₁ := A_sol m₁; set B₁ := B_sol m₁
@@ -377,6 +371,7 @@ theorem prop_6_1_part1_sl2_and_four_squares {n₁ n₂ m₁ m₂ : ℕ}
       _ = (P : ℤ) * (m₁ : ℤ) ^ 2 - ((P : ℤ) - 1) := by ring
   have hPm1_gt : (m₂ : ℤ) < (P : ℤ) * m₁ := by
     have hP2 : (2 : ℤ) ≤ P := by exact_mod_cast hP_ge
+    have hPm1_pos : (0 : ℤ) < (P : ℤ) - 1 := by omega
     have hm1_pos : (0 : ℤ) < m₁ := by exact_mod_cast (show 0 < m₁ by omega)
     have hm2_nn : (0 : ℤ) ≤ m₂ := Int.natCast_nonneg m₂
     have hsq_lt : (m₂ : ℤ) ^ 2 < ((P : ℤ) * m₁) ^ 2 := by
@@ -385,7 +380,11 @@ theorem prop_6_1_part1_sl2_and_four_squares {n₁ n₂ m₁ m₂ : ℕ}
         rw [hm2_sq]; ring
       have hpos : 0 < (P : ℤ) * ((P : ℤ) - 1) * (m₁ : ℤ) ^ 2 + ((P : ℤ) - 1) := by positivity
       linarith
-    nlinarith only [hsq_lt, hm1_pos, hm2_nn, hP2]
+    by_contra hle
+    have hle' : (P : ℤ) * m₁ ≤ m₂ := Int.le_of_not_lt hle
+    have hPm1_nn : (0 : ℤ) ≤ (P : ℤ) * m₁ := by positivity
+    have hsq_le : ((P : ℤ) * m₁) ^ 2 ≤ (m₂ : ℤ) ^ 2 := sq_le_sq' (by linarith) hle'
+    linarith
   have hsum_XY : (a : ℤ) * d * (Y : ℤ) ^ 2 + (a : ℤ) * c * (X : ℤ) ^ 2 = (P : ℤ) * m₁ - m₂ := by
     have hsq : ((a : ℤ) * d * (Y : ℤ) ^ 2 + (a : ℤ) * c * (X : ℤ) ^ 2) ^ 2 =
         ((P : ℤ) * m₁ - m₂) ^ 2 := by
@@ -402,7 +401,7 @@ theorem prop_6_1_part1_sl2_and_four_squares {n₁ n₂ m₁ m₂ : ℕ}
         _ = ((P : ℤ) * m₁ - m₂) ^ 2 := by
           have : (P : ℤ) * (m₂ : ℤ) ^ 2 = (P : ℤ) ^ 2 * (m₁ : ℤ) ^ 2 - (P : ℤ) * ((P : ℤ) - 1) := by
             rw [hm2_sq]; ring
-          linear_combination this
+          linear_combination this - hm2_sq
     have hnonneg : 0 ≤ (a : ℤ) * d * (Y : ℤ) ^ 2 + (a : ℤ) * c * (X : ℤ) ^ 2 := by positivity
     nlinarith only [hsq, hnonneg, hPm1_gt]
   have hsum_ZW : (b : ℤ) * c * (W : ℤ) ^ 2 + (b : ℤ) * d * (Z : ℤ) ^ 2 = (P : ℤ) * m₁ + m₂ := by
@@ -422,7 +421,7 @@ theorem prop_6_1_part1_sl2_and_four_squares {n₁ n₂ m₁ m₂ : ℕ}
         _ = ((P : ℤ) * m₁ + m₂) ^ 2 := by
           have : (P : ℤ) * (m₂ : ℤ) ^ 2 = (P : ℤ) ^ 2 * (m₁ : ℤ) ^ 2 - (P : ℤ) * ((P : ℤ) - 1) := by
             rw [hm2_sq]; ring
-          linear_combination this
+          linear_combination this - hm2_sq
     have hnonneg : 0 ≤ (b : ℤ) * c * (W : ℤ) ^ 2 + (b : ℤ) * d * (Z : ℤ) ^ 2 := by positivity
     have hm_nn : (0 : ℤ) ≤ (P : ℤ) * m₁ + m₂ := by positivity
     nlinarith only [hsq, hnonneg, hm_nn]
