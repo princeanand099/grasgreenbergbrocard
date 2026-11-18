@@ -127,7 +127,9 @@ private lemma log_consecutive_equipartition_aux {n m₁ m₂ : ℕ}
         by_cases hn6 : n = 6
         · subst hn6; norm_num at hm₁_ge ⊢
           have h721 : 721 = m₁ ^ 2 := by simpa [Nat.factorial] using hm₁
-          rcases lt_or_ge m₁ 27 with h26 | h27 <;> nlinarith only [h721, h26, h27]
+          rcases lt_or_ge m₁ 27 with h26 | h27
+          · nlinarith only [h721, h26]
+          · nlinarith only [h721, h27]
         · have hn7 : 7 ≤ n := by omega
           have hfac_sq_all : ∀ k : ℕ, 7 ≤ k → (4 * k + 6) ^ 2 < Nat.factorial k := by
             intro k hk
@@ -157,7 +159,8 @@ private lemma log_consecutive_equipartition_aux {n m₁ m₂ : ℕ}
   set Z := Z_gcd m₁ m₂; set W := W_gcd m₁ m₂
   have hm2_nn : (0 : ℤ) ≤ m₂ := Nat.cast_nonneg _
   have hX_lb_z : (2 * (n : ℤ) * ((n : ℤ) + 1)) < ((n : ℤ) + 1) * (m₁ : ℤ) - (m₂ : ℤ) - (n : ℤ) := by
-    zify [show m₂ + n ≤ (n + 1) * m₁ by omega] at hX_lb_int; exact hX_lb_int
+    zify [show m₂ ≤ (n + 1) * m₁ by omega, show n ≤ (n + 1) * m₁ - m₂ by omega] at hX_lb_int; exact hX_lb_int
+  push_cast at hXsq hYsq hZsq hWsq
   have hX1 : 1 < X := by
     have h2ac : (a : ℤ) * c ≤ n * (n + 1) := mul_le_mul (by exact_mod_cast ha_le) (by exact_mod_cast hc_le) (by positivity) (by positivity)
     have hX2 : (2 * (a : ℤ) * c) * (X : ℤ) ^ 2 > 2 * (a : ℤ) * c := by linarith only [hXsq, hX_lb_z, h2ac]

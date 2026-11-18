@@ -397,7 +397,7 @@ lemma lem_6_3_osc_bound
             exact absurd (Nat.log_pos hp_pr.one_lt hge) (by rw [h0]; exact lt_irrefl 0)
           rw [Nat.div_eq_of_lt this]; exact Nat.zero_le _
         · have hs := Finset.single_le_sum (f := fun i => n₁ / p ^ i) (fun _ _ => Nat.zero_le _)
-            (Finset.mem_Ico.mpr ⟨le_refl 1, by omega⟩)
+            (Finset.mem_Ico.mpr ⟨le_refl 1, (Nat.add_lt_add_right hpos 1 : 1 < Nat.log p n₁ + 1)⟩)
           rwa [pow_one] at hs
       have hv_le2 : n₂ / p ≤ padicValNat p (Nat.factorial n₂) := by
         haveI : Fact p.Prime := ⟨hp_pr⟩
@@ -409,7 +409,7 @@ lemma lem_6_3_osc_bound
             exact absurd (Nat.log_pos hp_pr.one_lt hge) (by rw [h0]; exact lt_irrefl 0)
           rw [Nat.div_eq_of_lt this]; exact Nat.zero_le _
         · have hs := Finset.single_le_sum (f := fun i => n₂ / p ^ i) (fun _ _ => Nat.zero_le _)
-            (Finset.mem_Ico.mpr ⟨le_refl 1, by omega⟩)
+            (Finset.mem_Ico.mpr ⟨le_refl 1, (Nat.add_lt_add_right hpos 1 : 1 < Nat.log p n₂ + 1)⟩)
           rwa [pow_one] at hs
       have hfl1 : Int.floor ((n₁ : ℝ) / (p : ℝ)) = ((n₁ / p : ℕ) : ℤ) := by
         rw [Int.floor_eq_iff]; constructor
