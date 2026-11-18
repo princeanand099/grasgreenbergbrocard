@@ -247,22 +247,18 @@ theorem prop_6_1_part1_sl2_and_four_squares {n₁ n₂ m₁ m₂ : ℕ}
     have h := (Nat.div_mul_cancel hZW_dvd).symm
     change V = b * (Z * W) at h
     rw [h, mul_assoc]
-  have ha_pos : 0 < a := by
-    by_contra ha0; have ha' : a = 0 := by omega
-    rw [ha', zero_mul, zero_mul] at hU_eq; exact absurd hU_eq (Nat.ne_of_gt hU_pos)
-  have hb_pos : 0 < b := by
-    by_contra hb0; have hb' : b = 0 := by omega
-    rw [hb', zero_mul, zero_mul] at hV_eq; exact absurd hV_eq (Nat.ne_of_gt hV_pos)
-  have hc_pos : 0 < c := by
-    by_contra hc0; have hc' : c = 0 := by omega
-    rw [hc', zero_mul, zero_mul] at hA₂_eq; exact absurd hA₂_eq (Nat.ne_of_gt hA₂)
-  have hd_pos : 0 < d := by
-    by_contra hd0; have hd' : d = 0 := by omega
-    rw [hd', zero_mul, zero_mul] at hB₂_eq; exact absurd hB₂_eq (Nat.ne_of_gt hB₂)
+  have ha_pos : 0 < a := Nat.pos_of_ne_zero fun ha0 => by
+    rw [ha0, zero_mul, zero_mul] at hU_eq; exact Nat.ne_of_gt hU_pos hU_eq
+  have hb_pos : 0 < b := Nat.pos_of_ne_zero fun hb0 => by
+    rw [hb0, zero_mul, zero_mul] at hV_eq; exact Nat.ne_of_gt hV_pos hV_eq
+  have hc_pos : 0 < c := Nat.pos_of_ne_zero fun hc0 => by
+    rw [hc0, zero_mul, zero_mul] at hA₂_eq; exact Nat.ne_of_gt hA₂ hA₂_eq
+  have hd_pos : 0 < d := Nat.pos_of_ne_zero fun hd0 => by
+    rw [hd0, zero_mul, zero_mul] at hB₂_eq; exact Nat.ne_of_gt hB₂ hB₂_eq
   have hP_ge : 2 ≤ P := P_ratio_ge_two hn₁ hlt
   have hcd_eq : c * d = P := by
-    have h1 : 4 * (c * d) * (X * Y * Z * W) = P * (4 * (X * Y * Z * W)) := by
-      calc 4 * (c * d) * (X * Y * Z * W) = 4 * (c * X * W) * (d * Y * Z) := by ring
+    have h1 : (c * d) * (4 * (X * Y * Z * W)) = P * (4 * (X * Y * Z * W)) := by
+      calc (c * d) * (4 * (X * Y * Z * W)) = 4 * (c * X * W) * (d * Y * Z) := by ring
         _ = 4 * A₂ * B₂ := by rw [← hA₂_eq, ← hB₂_eq]
         _ = Nat.factorial n₂ := h4mul2
         _ = P * Nat.factorial n₁ := (P_ratio_mul_factorial hlt).symm
@@ -276,9 +272,13 @@ theorem prop_6_1_part1_sl2_and_four_squares {n₁ n₂ m₁ m₂ : ℕ}
       zify [le_of_lt hm_lt, Nat.factorial_le (le_of_lt hlt)] at h1 h2 ⊢
       have hm1z : (Nat.factorial n₁ : ℤ) + 1 = (m₁ : ℤ) ^ 2 := by exact_mod_cast hm₁
       have hm2z : (Nat.factorial n₂ : ℤ) + 1 = (m₂ : ℤ) ^ 2 := by exact_mod_cast hm₂
-      nlinarith
-    have h1 : 4 * (a * b) * (X * Y * Z * W) = (P - 1) * (4 * (X * Y * Z * W)) := by
-      calc 4 * (a * b) * (X * Y * Z * W) = 4 * (a * X * Y) * (b * Z * W) := by ring
+      calc (4 : ℤ) * U * V = (2 * U) * (2 * V) := by ring
+        _ = ((m₂ : ℤ) - m₁) * (m₂ + m₁) := by rw [h1, h2]
+        _ = (m₂ : ℤ) ^ 2 - (m₁ : ℤ) ^ 2 := by ring
+        _ = ((Nat.factorial n₂ : ℤ) + 1) - ((Nat.factorial n₁ : ℤ) + 1) := by rw [← hm2z, ← hm1z]
+        _ = (Nat.factorial n₂ : ℤ) - (Nat.factorial n₁ : ℤ) := by ring
+    have h1 : (a * b) * (4 * (X * Y * Z * W)) = (P - 1) * (4 * (X * Y * Z * W)) := by
+      calc (a * b) * (4 * (X * Y * Z * W)) = 4 * (a * X * Y) * (b * Z * W) := by ring
         _ = 4 * U * V := by rw [← hU_eq, ← hV_eq]
         _ = Nat.factorial n₂ - Nat.factorial n₁ := hUV
         _ = P * Nat.factorial n₁ - 1 * Nat.factorial n₁ := by rw [P_ratio_mul_factorial hlt, one_mul]
@@ -528,33 +528,38 @@ theorem prop_6_1_part2_zsqrtd_identities {n₁ n₂ m₁ m₂ a b c d : ℕ}
       _ = (a : ℤ) * c := by ring
   have hmul12 : α₁ * α₂ = ⟨(P : ℤ) * m₁, (m₂ : ℤ)⟩ := by
     apply Zsqrtd.ext
-    · simp only [α₁, α₂]
+    · change (d : ℤ) * Y * (c * W) + (P : ℤ) * X * Z = (P : ℤ) * m₁
       calc (d : ℤ) * Y * (c * W) + (P : ℤ) * X * Z
           = (c * d) * (Y * W) + P * (X * Z) := by ring
         _ = (P : ℤ) * (X * Z + Y * W) := by rw [hcdz]; ring
         _ = (P : ℤ) * m₁ := by rw [hm1z]
-    · simp only [α₁, α₂]
+    · change (d : ℤ) * Y * Z + X * (c * W) = (m₂ : ℤ)
       rw [hm2z]; ring
   have hmul_conj : α₁ * star α₂ = ⟨(P : ℤ), -1⟩ := by
     apply Zsqrtd.ext
-    · simp only [α₁, α₂]
+    · change (d : ℤ) * Y * (c * W) + (P : ℤ) * X * (-Z) = (P : ℤ)
       calc (d : ℤ) * Y * (c * W) + (P : ℤ) * X * (-Z)
           = (c * d) * (Y * W) - P * (X * Z) := by ring
         _ = (P : ℤ) * (Y * W - X * Z) := by rw [hcdz]; ring
         _ = P := by rw [hYW_XZ, mul_one]
-    · simp only [α₁, α₂]
-      linarith
+    · change (d : ℤ) * Y * (-Z) + X * (c * W) = -1
+      calc (d : ℤ) * Y * (-Z) + X * (c * W)
+          = -((d : ℤ) * Y * Z - c * X * W) := by ring
+        _ = -1 := by rw [hB₂_A₂]
   have hdiv : ((a : ℤ) * c : Zsqrtd (P : ℤ)) * α₁ = ⟨(P : ℤ), -1⟩ * α₂ := by
-    have hnorm_eq : α₂ * star α₂ = ((a : ℤ) * c : Zsqrtd (P : ℤ)) := by
+    have hcast : ((a : ℤ) * c : Zsqrtd (P : ℤ)) = ⟨(a : ℤ) * c, 0⟩ := by
+      rw [← Int.cast_mul]; rfl
+    have hnorm_eq : α₂ * star α₂ = ⟨(a : ℤ) * c, 0⟩ := by
       apply Zsqrtd.ext
-      · simp only [α₂]
+      · change (c : ℤ) * W * (c * W) + (P : ℤ) * Z * (-Z) = (a : ℤ) * c
         have := hn2
         simp only [α₂, Zsqrtd.norm_def] at this
         linarith
-      · simp only [α₂]
+      · change (c : ℤ) * W * (-Z) + Z * (c * W) = 0
         ring
     calc ((a : ℤ) * c : Zsqrtd (P : ℤ)) * α₁
-        = (α₂ * star α₂) * α₁ := by rw [hnorm_eq]
+        = ⟨(a : ℤ) * c, 0⟩ * α₁ := by rw [hcast]
+      _ = (α₂ * star α₂) * α₁ := by rw [hnorm_eq]
       _ = (α₁ * star α₂) * α₂ := by ring
       _ = ⟨(P : ℤ), -1⟩ * α₂ := by rw [hmul_conj]
   exact ⟨hn1, hn2, hmul12, hmul_conj, hdiv⟩
@@ -679,7 +684,7 @@ theorem prop_6_1_part3_characters_and_quadrant_iv {n₁ n₂ m₁ m₂ a b c d p
       have hsq : (-(b : ℤ) * c) * d ^ 2 = (-(P : ℤ)) * ((b : ℤ) * d) := by
         rw [← hcdz]; ring
       have hd2 : legendreSym p ((d : ℤ) ^ 2) = 1 :=
-        (legendreSym.eq_one_iff p (pow_ne_zero 2 (by push_cast; exact hmod_nz d hp_nd))).mpr ⟨(d : ZMod p), by push_cast; ring⟩
+        (legendreSym.eq_one_iff p (by push_cast; exact pow_ne_zero 2 (hmod_nz d hp_nd))).mpr ⟨(d : ZMod p), by push_cast; ring⟩
       calc legendreSym p (-(b : ℤ) * c)
           = legendreSym p (-(b : ℤ) * c) * legendreSym p ((d : ℤ) ^ 2) := by rw [hd2, mul_one]
         _ = legendreSym p ((-(b : ℤ) * c) * (d : ℤ) ^ 2) := (legendreSym.mul p _ _).symm
@@ -690,7 +695,7 @@ theorem prop_6_1_part3_characters_and_quadrant_iv {n₁ n₂ m₁ m₂ a b c d p
       have hsq : (-(a : ℤ) * d) * b ^ 2 = (-((P : ℤ) - 1)) * ((b : ℤ) * d) := by
         rw [← habz]; ring
       have hb2 : legendreSym p ((b : ℤ) ^ 2) = 1 :=
-        (legendreSym.eq_one_iff p (pow_ne_zero 2 (by push_cast; exact hmod_nz b hp_nb))).mpr ⟨(b : ZMod p), by push_cast; ring⟩
+        (legendreSym.eq_one_iff p (by push_cast; exact pow_ne_zero 2 (hmod_nz b hp_nb))).mpr ⟨(b : ZMod p), by push_cast; ring⟩
       calc legendreSym p (-(a : ℤ) * d)
           = legendreSym p (-(a : ℤ) * d) * legendreSym p ((b : ℤ) ^ 2) := by rw [hb2, mul_one]
         _ = legendreSym p ((-(a : ℤ) * d) * (b : ℤ) ^ 2) := (legendreSym.mul p _ _).symm
@@ -701,7 +706,7 @@ theorem prop_6_1_part3_characters_and_quadrant_iv {n₁ n₂ m₁ m₂ a b c d p
       have hsq : ((a : ℤ) * c) * (b * d) ^ 2 = (-(P : ℤ)) * (-((P : ℤ) - 1)) * ((b : ℤ) * d) := by
         rw [← habz, ← hcdz]; ring
       have hbd2 : legendreSym p (((b : ℤ) * d) ^ 2) = 1 :=
-        (legendreSym.eq_one_iff p (pow_ne_zero 2 hbd_nz)).mpr ⟨(b : ZMod p) * (d : ZMod p), by push_cast; ring⟩
+        (legendreSym.eq_one_iff p (by push_cast; exact pow_ne_zero 2 (by push_cast at hbd_nz; exact hbd_nz))).mpr ⟨(b : ZMod p) * (d : ZMod p), by push_cast; ring⟩
       calc legendreSym p ((a : ℤ) * c)
           = legendreSym p ((a : ℤ) * c) * legendreSym p (((b : ℤ) * d) ^ 2) := by rw [hbd2, mul_one]
         _ = legendreSym p (((a : ℤ) * c) * ((b : ℤ) * d) ^ 2) := (legendreSym.mul p _ _).symm
