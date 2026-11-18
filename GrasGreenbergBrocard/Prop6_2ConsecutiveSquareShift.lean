@@ -897,7 +897,7 @@ theorem prop_6_2_part3_square_shift_exclusions :
             exact_mod_cast this.symm
           have hfacr : (362880 : ℝ) ≤ Nat.factorial n₁ := by exact_mod_cast hfac_ge
           nlinarith only [h1, hP2r, hfacr]
-        nlinarith only [hm2_sq, Real.sqrt_nonneg (Nat.factorial n₁ : ℝ), Nat.cast_nonneg m₂, hP2r]
+        nlinarith only [hm2_sq, Real.sqrt_nonneg (Nat.factorial n₁ : ℝ), (Nat.cast_nonneg m₂ : (0 : ℝ) ≤ m₂), hP2r]
       have hP_le : (P : ℝ) - 1 ≤ (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ) := by
         have h1sq : (1 : ℝ) ≤ Real.sqrt (Nat.factorial n₁ : ℝ) := by
           rw [← Real.sqrt_one]; exact Real.sqrt_le_sqrt (by exact_mod_cast Nat.factorial_pos n₁)
@@ -948,7 +948,7 @@ theorem prop_6_2_part3_square_shift_exclusions :
         rw [Real.log_mul (by norm_num) hP_pos.ne']
         have hj3 : (3 : ℝ) ≤ j := by exact_mod_cast hj
         have hlog16 : Real.log 16 ≤ 4 * Real.log ((j : ℝ) + 1) := by
-          have : (16 : ℝ) ≤ ((j : ℝ) + 1) ^ 4 := le_trans (by norm_num) (pow_le_pow_left₀ (by norm_num) (by linarith) 4)
+          have : (16 : ℝ) ≤ ((j : ℝ) + 1) ^ 4 := le_trans (by norm_num : (16 : ℝ) ≤ (2 : ℝ) ^ 4) (pow_le_pow_left₀ (by norm_num) (by linarith) 4)
           have h1 := Real.log_le_log (by norm_num) this
           rwa [Real.log_pow, Nat.cast_ofNat] at h1
         have h4j : (4 * (j : ℝ) + 2) ≤ 20 * (j : ℝ) / 3 := by linarith
