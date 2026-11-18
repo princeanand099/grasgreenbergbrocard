@@ -224,9 +224,6 @@ lemma lem_6_3_osc_bound
       exact_mod_cast (lt_of_le_of_lt h1 hh_gt).le
     have hn₂_ge_Nexp : N_exp ≤ n₂ := by omega
     have hP_le_n₂ : P ≤ (n₂ : ℝ) / (Real.log (n₂ : ℝ)) ^ 12 := by
-      -- Since n₁ < n₂ < 2 n₁ and P ≤ y₁ ≤ h / (log n₁)^{A_R + 2} ≤ n₁ / (log n₁)^{A_R + 2}
-      -- Wait: n₂ / (log n₂)^{12} vs n₁ / (log n₁)^{12}: for n₁ ≥ 1000, log n₂ ≤ 2 log n₁, so
-      -- n₁ / (log n₁)^{A_R + 2} ≤ n₁ / (2 log n₁)^{12} ≤ n₂ / (log n₂)^{12} since A_R + 2 ≥ 56!
       have hlog_n2_le : Real.log (n₂ : ℝ) ≤ 2 * Real.log (n₁ : ℝ) := by
         have hn2_lt : (n₂ : ℝ) < 2 * (n₁ : ℝ) := by exact_mod_cast (by omega : n₂ < 2 * n₁)
         have h1 := Real.log_le_log (by positivity) hn2_lt.le
@@ -235,19 +232,25 @@ lemma lem_6_3_osc_bound
         linarith
       have hpow_le : (Real.log (n₂ : ℝ)) ^ 12 ≤ (2 * Real.log (n₁ : ℝ)) ^ 12 :=
         pow_le_pow_left₀ (Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ n₂))) hlog_n2_le 12
-      have h2_12 : (2 : ℝ) ^ 12 ≤ (Real.log (n₁ : ℝ)) ^ 12 := by
-        have hlog2 : 2 ≤ Real.log (n₁ : ℝ) := by nlinarith
-        exact pow_le_pow_left₀ (by norm_num) hlog2 12
+      have hlog2 : 2 ≤ Real.log (n₁ : ℝ) := by
+        have h5 := hN₅ n₁ (by omega)
+        rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at h5
+        have := (div_lt_iff₀ hlog_n₁_pos).mp h5
+        nlinarith only [this, hδ1, hδ0, hlog_n₁_pos]
+      have h2_12 : (2 : ℝ) ^ 12 ≤ (Real.log (n₁ : ℝ)) ^ 12 :=
+        pow_le_pow_left₀ (by norm_num) hlog2 12
       have hpow_ar : (2 * Real.log (n₁ : ℝ)) ^ 12 ≤ (Real.log (n₁ : ℝ)) ^ (A_R + 2) := by
         rw [mul_pow]
         calc (2 : ℝ) ^ 12 * (Real.log (n₁ : ℝ)) ^ 12
             ≤ (Real.log (n₁ : ℝ)) ^ 12 * (Real.log (n₁ : ℝ)) ^ 12 := by gcongr
           _ = (Real.log (n₁ : ℝ)) ^ 24 := by ring
-          _ ≤ (Real.log (n₁ : ℝ)) ^ (A_R + 2) := pow_le_pow_right₀ (by nlinarith) (by omega)
+          _ ≤ (Real.log (n₁ : ℝ)) ^ (A_R + 2) := pow_le_pow_right₀ (by linarith) (by omega)
       have hy1_le : y₁ ≤ (n₁ : ℝ) / (Real.log (n₁ : ℝ)) ^ (A_R + 2) := by
         dsimp [y₁]; exact div_le_div_of_nonneg_right (by exact_mod_cast le_of_lt h_lt_n₁) (by positivity)
       have hn1_le_n2 : (n₁ : ℝ) ≤ (n₂ : ℝ) := by exact_mod_cast le_of_lt hlt
-      exact le_trans hP_lt_y₁.le (le_trans hy1_le (div_le_div₀ (by positivity) hn1_le_n2 (by positivity)
+      have hlog_n2_pow_pos : 0 < (Real.log (n₂ : ℝ)) ^ 12 :=
+        pow_pos (Real.log_pos (by exact_mod_cast (by omega : 1 < n₂))) 12
+      exact le_trans hP_lt_y₁.le (le_trans hy1_le (div_le_div₀ (by positivity) hn1_le_n2 hlog_n2_pow_pos
         (le_trans hpow_le hpow_ar)))
     have hExp_at : ∀ (m : ℕ), N_exp ≤ m → m ≤ n₁ → P ≤ (m : ℝ) / (Real.log (m : ℝ)) ^ 12 →
       (2 : ℝ) ^ (-(R : ℤ)) * (Real.log (m : ℝ)) ^ A_R ≤ (m : ℝ) / P →
@@ -257,14 +260,14 @@ lemma lem_6_3_osc_bound
       ‖∑ p ∈ I_k, (w (p : ℝ) * Real.log (p : ℝ) : ℂ) *
         eExp ((hm1 : ℝ) * (m : ℝ) / (2 * (p : ℝ)))‖ ≤
         C₂ * W₀ * P * (Real.log (m : ℝ)) ^ (-((R : ℝ) + 2)) := by
-    intro m hm_N hm_le hPm hTm hm1 w W₀ hm1_nz hm1_bd hw hW₀
-    have hm_pos : (0 : ℝ) < m := by
-      by_contra h0; push_neg at h0
-      have hm0 : m = 0 := by exact_mod_cast (by linarith : (m : ℝ) ≤ 0)
-      subst hm0; simp at hPm; linarith
-    have hP_m_lb : (m : ℝ) ^ δ ≤ P :=
-      le_trans (Real.rpow_le_rpow (by positivity) (by exact_mod_cast hm_le) hδ0.le) hP_lb
-    exact hExp1 m hm_N P I_k hm1 w W₀ hP_m_lb hPm hI_k hm1_nz hm1_bd hTm hw hW₀
+      intro m hm_N hm_le hPm hTm hm1 w W₀ hm1_nz hm1_bd hw hW₀
+      have hm_pos : (0 : ℝ) < m := by
+        by_contra h0; push_neg at h0
+        have hm0 : m = 0 := by exact_mod_cast (by linarith : (m : ℝ) ≤ 0)
+        subst hm0; simp at hPm; linarith
+      have hP_m_lb : (m : ℝ) ^ δ ≤ P :=
+        le_trans (Real.rpow_le_rpow (by positivity) (by exact_mod_cast hm_le) hδ0.le) hP_lb
+      exact hExp1 m hm_N P I_k hm1 w W₀ hP_m_lb hPm hI_k hm1_nz hm1_bd hTm hw hW₀
     have hTm_n1 : (2 : ℝ) ^ (-(R : ℤ)) * (Real.log (n₁ : ℝ)) ^ A_R ≤ (n₁ : ℝ) / P := by
       have hy1_le : y₁ ≤ (n₁ : ℝ) / (Real.log (n₁ : ℝ)) ^ (A_R + 2) := by
         dsimp [y₁]; exact div_le_div_of_nonneg_right (by exact_mod_cast le_of_lt h_lt_n₁) (by positivity)

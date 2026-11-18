@@ -91,8 +91,9 @@ private lemma log_consecutive_equipartition_aux {n m₁ m₂ : ℕ}
     dsimp [P, P_ratio]
     rw [Nat.factorial_succ, Nat.mul_div_cancel _ (Nat.factorial_pos n)]
   rw [hP_eq] at hab hcd hXsq hYsq hZsq hWsq
-  have ha_le : a ≤ n := by nlinarith
-  have hb_le : b ≤ n := by nlinarith
+  have hab' : a * b = n := by omega
+  have ha_le : a ≤ n := le_trans (Nat.le_mul_of_pos_right a hb) hab'.le
+  have hb_le : b ≤ n := le_trans (Nat.le_mul_of_pos_left b ha) hab'.le
   have hc_le : c ≤ n + 1 := by nlinarith
   have hd_le : d ≤ n + 1 := by nlinarith
   have hm₁_ge : 27 ≤ m₁ := by
@@ -107,13 +108,14 @@ private lemma log_consecutive_equipartition_aux {n m₁ m₂ : ℕ}
     have hm2_sq : (m₂ : ℝ) ^ 2 = ((n : ℝ) + 1) * (Nat.factorial n : ℝ) + 1 := by
       have : Nat.factorial (n + 1) + 1 = m₂ ^ 2 := hm₂
       rw [Nat.factorial_succ] at this
-      exact_mod_cast this
-    have hm1_sq : (m₁ : ℝ) ^ 2 = (Nat.factorial n : ℝ) + 1 := by exact_mod_cast hm₁
+      exact_mod_cast this.symm
+    have hm1_sq : (m₁ : ℝ) ^ 2 = (Nat.factorial n : ℝ) + 1 := by exact_mod_cast hm₁.symm
     have hn6r : (6 : ℝ) ≤ n := by exact_mod_cast hn
-    have : (m₂ : ℝ) ^ 2 < (((n : ℝ) + 1) * (m₁ : ℝ) / 2) ^ 2 := by
+    have hfac_nn : (0 : ℝ) ≤ Nat.factorial n := Nat.cast_nonneg _
+    have hm2_lt_sq : (m₂ : ℝ) ^ 2 < (((n : ℝ) + 1) * (m₁ : ℝ) / 2) ^ 2 := by
       rw [hm2_sq, div_pow, mul_pow, hm1_sq]
-      nlinarith
-    nlinarith
+      nlinarith only [hn6r, hfac_nn]
+    nlinarith only [hm2_lt_sq, (Nat.cast_nonneg m₂ : (0 : ℝ) ≤ m₂), (Nat.cast_nonneg m₁ : (0 : ℝ) ≤ m₁), hn6r]
   have hX_lb_int : 2 * n * (n + 1) < (n + 1) * m₁ - m₂ - n := by
     have h1 : (2 * n * (n + 1) + n : ℝ) < ((n : ℝ) + 1) * m₁ - m₂ := by
       have hn6r : (6 : ℝ) ≤ n := by exact_mod_cast hn
@@ -452,17 +454,20 @@ theorem prop_6_2_part2_consecutive_equipartition :
   have hdvd_each : ∀ p ∈ S_good, p ^ padicValNat p (Nat.factorial n) ∣ X_gcd m₁ m₂ := by
     intro p hp
     simp only [S_good, Finset.mem_filter] at hp
-    have hp_prime : p.Prime := hp.1.1
+    have hp_prime : p.Prime := by have h := hp.1; simp [Podd] at h; exact h.2.1
     have hp2 : p ≠ 2 := by omega
     have hndvd_n1 : ¬ p ∣ n + 1 := hp.2.2
-    have hp_odd1 : ¬ 2 ∣ padicValNat p (Nat.factorial n) := hp.1.2
+    have hp_odd1 : ¬ 2 ∣ padicValNat p (Nat.factorial n) := by have h := hp.1; simp [Podd] at h; exact h.2.2
     have hp_odd2 : ¬ 2 ∣ padicValNat p (Nat.factorial (n + 1)) := by
       haveI : Fact p.Prime := ⟨hp_prime⟩
       rw [Nat.factorial_succ, padicValNat.mul (by omega) (Nat.factorial_pos n).ne']
       have hv0 : padicValNat p (n + 1) = 0 := padicValNat.eq_zero_of_not_dvd hndvd_n1
       rw [hv0, zero_add]; exact hp_odd1
-    have hp_q1 : p ∣ q_n n := (p_dvd_q_n_iff n p hp_prime).mpr hp_odd1
-    have hp_q2 : p ∣ q_n (n + 1) := (p_dvd_q_n_iff (n + 1) p hp_prime).mpr hp_odd2
+    have hp_q1 : p ∣ q_n n := Finset.dvd_prod_of_mem _ hp.1
+    have hp_mem2 : p ∈ Podd (n + 1) := by
+      have h := hp.1; simp only [Podd, Finset.mem_filter, Finset.mem_Icc] at h ⊢
+      exact ⟨⟨h.1.1, by omega⟩, hp_prime, hp_odd2⟩
+    have hp_q2 : p ∣ q_n (n + 1) := Finset.dvd_prod_of_mem _ hp_mem2
     have hp_A1 : p ∣ A_sol m₁ := hA₁_val ▸ dvd_mul_of_dvd_left hp_q1 _
     have hp_A2 : p ∣ A_sol m₂ := hA₂_val ▸ dvd_mul_of_dvd_left hp_q2 _
     have hp_nB2 : ¬ p ∣ B_sol m₂ := fun h => hp_prime.not_dvd_one (hcop2 ▸ Nat.dvd_gcd hp_A2 h)
@@ -473,8 +478,9 @@ theorem prop_6_2_part2_consecutive_equipartition :
       have hcop4 : Nat.Coprime (p ^ padicValNat p (Nat.factorial n)) 4 := by
         apply Nat.Coprime.pow_left
         exact hp_prime.coprime_iff_not_dvd.mpr (fun h => hp2 ((Nat.prime_dvd_prime_iff_eq hp_prime Nat.prime_two).mp (hp_prime.dvd_of_dvd_pow (show p ∣ 2 ^ 2 from h))))
-      rw [← h4mul1] at hp_pow_fac
-      exact hcop4.dvd_of_dvd_mul_left (by simpa [mul_assoc] using hp_pow_fac)
+      have hp_pow_4AB : p ^ padicValNat p (Nat.factorial n) ∣ 4 * (A_sol m₁ * B_sol m₁) := by
+        rw [← mul_assoc, h4mul1]; exact hp_pow_fac
+      exact hcop4.dvd_of_dvd_mul_left hp_pow_4AB
     have hp_nB1 : ¬ p ∣ B_sol m₁ := fun h => hp_prime.not_dvd_one (hcop1 ▸ Nat.dvd_gcd hp_A1 h)
     have hp_pow_A1 : p ^ padicValNat p (Nat.factorial n) ∣ A_sol m₁ :=
       (Nat.Coprime.pow_left _ (hp_prime.coprime_iff_not_dvd.mpr hp_nB1)).dvd_of_dvd_mul_right hp_pow_A1B1
@@ -485,7 +491,9 @@ theorem prop_6_2_part2_consecutive_equipartition :
         Nat.Coprime (p ^ padicValNat p (Nat.factorial n)) (q ^ padicValNat q (Nat.factorial n)) := by
       intro p hp q hq hpq
       simp only [S_good, Finset.mem_filter] at hp hq
-      exact Nat.Coprime.pow _ _ ((Nat.coprime_primes hp.1.1 hq.1.1).mpr hpq)
+      have hp_pr : p.Prime := by have h := hp.1; simp [Podd] at h; exact h.2.1
+      have hq_pr : q.Prime := by have h := hq.1; simp [Podd] at h; exact h.2.1
+      exact Nat.Coprime.pow _ _ ((Nat.coprime_primes hp_pr hq_pr).mpr hpq)
     have hprod_dvd : ∀ s : Finset ℕ, (∀ p ∈ s, p ^ padicValNat p (Nat.factorial n) ∣ X_gcd m₁ m₂) →
         (∀ p ∈ s, ∀ q ∈ s, p ≠ q → Nat.Coprime (p ^ padicValNat p (Nat.factorial n)) (q ^ padicValNat q (Nat.factorial n))) →
         ∏ p ∈ s, p ^ padicValNat p (Nat.factorial n) ∣ X_gcd m₁ m₂ := by
