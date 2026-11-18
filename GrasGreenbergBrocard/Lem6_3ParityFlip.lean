@@ -1302,7 +1302,19 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
             (ε / 4) * (n₁ : ℝ) * Real.log (n₁ : ℝ) ≤
             (n₁ : ℝ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 10) * Real.log (n₁ : ℝ)) -
               (ε / 100) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
-          nlinarith only [hε, hn₁_pos, hlog_n₁_pos]
+          have h1 : (11 * ε / 100) ≤ ε / 4 := by linarith only [hε]
+          have hmul : (11 * ε / 100) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) ≤
+              (ε / 4) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) :=
+            mul_le_mul_of_nonneg_right h1 (mul_nonneg hn₁_pos.le hlog_n₁_pos.le)
+          have heq1 : (n₁ : ℝ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 10) * Real.log (n₁ : ℝ)) -
+              (ε / 100) * (n₁ : ℝ) * Real.log (n₁ : ℝ) =
+              (n₁ : ℝ) * Real.log (h : ℝ) - δ * (n₁ : ℝ) * Real.log (n₁ : ℝ) -
+                (11 * ε / 100) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by ring
+          have heq2 : (n₁ : ℝ) * Real.log (h : ℝ) - δ * (n₁ : ℝ) * Real.log (n₁ : ℝ) -
+              (ε / 4) * (n₁ : ℝ) * Real.log (n₁ : ℝ) =
+              (n₁ : ℝ) * Real.log (h : ℝ) - δ * (n₁ : ℝ) * Real.log (n₁ : ℝ) -
+                (ε / 4) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by ring
+          rw [heq1, heq2]; linarith only [hmul]
         exact le_trans h_final_lb h_sub1
       have hI_osc_bound : |∑ p ∈ I_osc,
           ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
