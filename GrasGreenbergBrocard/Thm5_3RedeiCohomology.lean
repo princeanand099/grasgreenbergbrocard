@@ -321,8 +321,11 @@ theorem thm_5_3_part2_dual_quartic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factoria
     have h_or := hq_pr.dvd_mul.mp hq_dvd_z1z2
     have h4u : 4 * (u₁ * u₂) = Nat.factorial n := by linarith
     have hv_fac_4u := congrArg (padicValNat q) h4u
+    have hq_nd4 : ¬ q ∣ 4 := fun hd =>
+      (by omega : q ≠ 2) ((Nat.prime_dvd_prime_iff_eq hq_pr Nat.prime_two).mp
+        (hq_pr.dvd_of_dvd_pow (show q ∣ 2 ^ 2 by rw [show (2 : ℕ) ^ 2 = 4 by norm_num]; exact hd)))
     rw [padicValNat.mul (by norm_num) (mul_pos hu₁_pos hu₂_pos).ne',
-        padicValNat.eq_zero_of_not_dvd (fun hd => (by omega : q ≠ 2) ((Nat.prime_dvd_prime_iff_eq hq_pr Nat.prime_two).mp (hq_pr.dvd_of_dvd_pow (by simpa [show (4 : ℕ) = 2^2 by norm_num] using hd)))),
+        padicValNat.eq_zero_of_not_dvd hq_nd4,
         zero_add, padicValNat.mul hu₁_pos.ne' hu₂_pos.ne'] at hv_fac_4u
     refine ⟨fun hqz1 => ?_, fun hqz2 => ?_, h_or⟩
     · have hqz2_nd : ¬ q ∣ z₂ := fun h2 =>
@@ -341,9 +344,11 @@ theorem thm_5_3_part2_dual_quartic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factoria
       rw [padicValNat_sqPartNat hq_pr, ← hv_fac_4u, hv0, zero_add]
   have hW1_dvd_z1 : W₁ ∣ z₁ := by
     unfold W₁ W_split
-    apply Finset.prod_primes_dvd
-    · intro q hq
-      exact (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).1).2.1
+    apply Finset.prod_dvd_of_coprime
+    · intro a ha b hb hab
+      have ha_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp ha).1).1).2.1
+      have hb_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hb).1).1).2.1
+      exact ((Nat.coprime_primes ha_pr hb_pr).mpr hab).pow _ _
     · intro q hq
       have hq_mem := Finset.mem_filter.mp hq
       have hq_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp hq_mem.1).1).2.1
@@ -352,9 +357,11 @@ theorem thm_5_3_part2_dual_quartic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factoria
       exact pow_padicValNat_dvd
   have hW2_dvd_z2 : W₂ ∣ z₂ := by
     unfold W₂ W_split
-    apply Finset.prod_primes_dvd
-    · intro q hq
-      exact (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).1).2.1
+    apply Finset.prod_dvd_of_coprime
+    · intro a ha b hb hab
+      have ha_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp ha).1).1).2.1
+      have hb_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hb).1).1).2.1
+      exact ((Nat.coprime_primes ha_pr hb_pr).mpr hab).pow _ _
     · intro q hq
       have hq_mem := Finset.mem_filter.mp hq
       have hq_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp hq_mem.1).1).2.1
@@ -408,16 +415,11 @@ theorem thm_5_3_part2_dual_quartic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factoria
     linarith
   have hq1 : Btilde₂ * A_plus_star n = Btilde₁ * W₁ ^ 4 + W₁ ^ 2 := by exact_mod_cast hq1_z
   have hq2 : Btilde₁ * A_plus_star n = Btilde₂ * W₂ ^ 4 - W₂ ^ 2 := by
-    zify [show W₂ ^ 2 ≤ Btilde₂ * W₂ ^ 4 by
-      have : 1 ≤ Btilde₂ * W₂ ^ 2 := by rw [← hu2_eq]; exact hu₂_pos
-      have : 1 ≤ Btilde₂ := by
-        by_contra h0
-        have hB0 : Btilde₂ = 0 := by omega
-        rw [hB0, zero_mul] at hu2_eq; omega
-      have hW2_pos : 1 ≤ W₂ := W_split_pos n z₂
-      have hW2_le : W₂ ^ 2 ≤ W₂ ^ 4 := by nlinarith [sq_nonneg W₂]
-      nlinarith [sq_nonneg W₂]]
-    exact hq2_z
+    have hq2_nat : Btilde₁ * A_plus_star n + W₂ ^ 2 = Btilde₂ * W₂ ^ 4 := by
+      have : ((Btilde₁ * A_plus_star n + W₂ ^ 2 : ℕ) : ℤ) = ((Btilde₂ * W₂ ^ 4 : ℕ) : ℤ) := by
+        push_cast; linarith [hq2_z]
+      exact_mod_cast this
+    omega
   exact ⟨hu1_eq, hu2_eq, hW_sq_eq, hq1, hq2⟩
 
 end GrasGreenbergBrocard
