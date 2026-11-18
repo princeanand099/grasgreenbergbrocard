@@ -312,10 +312,10 @@ theorem thm_4_2_part1_quartic_law {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
           unfold A_k2
           split_ifs
           · rfl
-          · rw [Nat.factorization_mul (pow_ne_zero _ (by norm_num)) (A_star_pos n).ne',
+          · have hp2_not_dvd : ¬ p ∣ 2 := fun h => hp2 ((Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).mp h)
+            rw [Nat.factorization_mul (pow_ne_zero _ (by norm_num)) (A_star_pos n).ne',
                 Nat.factorization_pow, Finsupp.coe_add, Finsupp.coe_smul, Pi.add_apply, Pi.smul_apply,
-                smul_eq_mul, Nat.factorization_def _ hp, padicValNat.eq_zero_of_not_dvd (fun h => by
-                  have := (Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).mp h; omega),
+                smul_eq_mul, Nat.factorization_def 2 hp, padicValNat.eq_zero_of_not_dvd hp2_not_dvd,
                 mul_zero, zero_add]
         have hA_star_val : (A_star n).factorization p =
             if p ∈ (Peven n).filter (3 ≤ ·) then padicValNat p (Nat.factorial n) else 0 := by
@@ -1079,10 +1079,11 @@ theorem thm_4_2_part2_euclidean_locks (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 
   have hZ_log := hN₁ n m X₁ Y₁ hn1 hm hfund hk2
   have hpart2 := thm_4_2_part2_dual_quartic hn8 hm hfund hk2
   obtain ⟨hc₀_12, Bm, Bp, Zm, Zp, hBm_pos, hBp_pos, hZm_pos, hZp_pos,
-    hcop_B, hcop_Z, hB_prod, hZ_prod, hu₁_eq, hu₂_eq, _, hq_minus, _⟩ := hpart2
+    hcop_B, hcop_Z, hB_prod, hZ_prod, hu₁_eq, hu₂_eq, _, hq_minus, hq_plus⟩ := hpart2
   have hn6 : n ≠ 6 := by omega
   obtain ⟨_, _, _, _, _, _, hfac_eq⟩ := k_eq_2_identities (by omega) hn6 hm hfund hk2
   have hX1_pos : 1 ≤ X₁ := hfund.1
+  have hX1_r_pos : (0 : ℝ) < (X₁ : ℝ) := by exact_mod_cast hX1_pos
   have hX1_gt1 : 1 < X₁ := by
     by_contra hle
     have h1 : X₁ = 1 := by omega
@@ -1099,10 +1100,11 @@ theorem thm_4_2_part2_euclidean_locks (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 
         nlinarith
       exact_mod_cast h_nat
     have h2 := Real.log_le_log (by exact_mod_cast Nat.factorial_pos n) h1
-    rw [Real.log_mul (by norm_num) (pow_ne_zero 4 (by exact_mod_cast (by omega : 0 < X₁))),
+    rw [Real.log_mul (by norm_num) (pow_ne_zero 4 hX1_r_pos.ne'),
         Real.log_pow, show (4 : ℝ) = 2 ^ 2 by norm_num, Real.log_pow] at h2
     push_cast at h2
-    linarith [hfac_lo, h2]
+    have hlog2_nn : 0 ≤ Real.log 2 := Real.log_nonneg (by norm_num)
+    linarith [hfac_lo, h2, hlog2_nn]
   have hlog_X1_hi : Real.log (X₁ : ℝ) ≤ (1 / 4 : ℝ) * ((n : ℝ) * Real.log (n : ℝ)) := by
     have h1 : (X₁ : ℝ) ^ 4 ≤ ((Nat.factorial n : ℕ) : ℝ) := by
       have h_nat : X₁ ^ 4 ≤ Nat.factorial n := by
@@ -1141,23 +1143,33 @@ theorem thm_4_2_part2_euclidean_locks (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 
     hX1_pos hZ_log hlog_X1_lo hlog_X1_hi hn_err h10
   have hb_plus := euclidean_lock_bounds_helper hε0 hε1 hn8 hBp_pos hZp_pos
     ⟨Zm, by rw [← hZ_prod, mul_comm]⟩ hu₂_eq
-    (by have := Nat.div_le_div_left hc₀_le2 (by omega : 0 < c₀); have : (X₁ - 1) / 2 ≤ (X₁ + 1) / 2 := Nat.div_le_div_right (by omega); omega)
+    (by have h_a := Nat.div_le_div_left hc₀_le2 (by omega : 0 < c₀); have h_b : (X₁ - 1) / 2 ≤ (X₁ + 1) / 2 := Nat.div_le_div_right (by omega); exact le_trans h_b h_a)
     (Nat.div_le_self _ _) hX1_pos hZ_log hlog_X1_lo hlog_X1_hi hn_err h10
   have h2c₀_minus : (2 / c₀) * Zm ^ 2 < Bm := by
-    have : 2 / c₀ ≤ 2 := Nat.div_le_self 2 c₀
-    nlinarith [hb_minus.2.2]
+    have h2le : 2 / c₀ ≤ 2 := Nat.div_le_self 2 c₀
+    exact lt_of_le_of_lt (Nat.mul_le_mul_right _ h2le) hb_minus.2.2
   have h2c₀_plus : (2 / c₀) * Zp ^ 2 < Bp := by
-    have : 2 / c₀ ≤ 2 := Nat.div_le_self 2 c₀
-    nlinarith [hb_plus.2.2]
+    have h2le : 2 / c₀ ≤ 2 := Nat.div_le_self 2 c₀
+    exact lt_of_le_of_lt (Nat.mul_le_mul_right _ h2le) hb_plus.2.2
   have hlock_minus : (Bp * (Z_k2 n Y₁) ^ 2) / Bm = Zm ^ 4 := by
     rw [hq_minus, Nat.mul_add_div hBm_pos, Nat.div_eq_of_lt h2c₀_minus, add_zero]
   have hlock_plus : (Bm * (Z_k2 n Y₁) ^ 2 + Bp - 1) / Bp = Zp ^ 4 := by
+    have hle1 : (2 / c₀) * Zp ^ 2 ≤ Bp * Zp ^ 4 := by
+      have h1 : 1 ≤ Zp ^ 2 := Nat.one_le_pow 2 Zp hZp_pos
+      calc (2 / c₀) * Zp ^ 2 ≤ Bp := h2c₀_plus.le
+        _ = Bp * 1 := (mul_one Bp).symm
+        _ ≤ Bp * (Zp ^ 2 * Zp ^ 2) := Nat.mul_le_mul_left Bp (Nat.mul_le_mul h1 h1)
+        _ = Bp * Zp ^ 4 := by ring
     have h_eq : Bm * (Z_k2 n Y₁) ^ 2 + Bp - 1 = Bp * Zp ^ 4 + (Bp - (2 / c₀) * Zp ^ 2 - 1) := by
-      have hle1 : (2 / c₀) * Zp ^ 2 ≤ Bp * Zp ^ 4 := by
-        have : 1 ≤ Zp ^ 2 := Nat.one_le_pow 2 Zp hZp_pos
-        nlinarith [h2c₀_plus]
-      omega
-    have h_rem_lt : Bp - (2 / c₀) * Zp ^ 2 - 1 < Bp := by omega
+      rw [hq_plus]
+      have h_le_lhs : 1 ≤ Bp * Zp ^ 4 - (2 / c₀) * Zp ^ 2 + Bp :=
+        le_add_of_nonneg_of_le (Nat.zero_le _) hBp_pos
+      zify [hle1, h_le_lhs, h2c₀_plus.le]
+      ring
+    have h_rem_lt : Bp - (2 / c₀) * Zp ^ 2 - 1 < Bp := by
+      have h_sub_le : Bp - (2 / c₀) * Zp ^ 2 ≤ Bp := Nat.sub_le _ _
+      have h_pos_sub : 0 < Bp - (2 / c₀) * Zp ^ 2 := Nat.sub_pos_of_lt h2c₀_plus
+      exact Nat.lt_of_lt_of_le (Nat.sub_lt h_pos_sub Nat.one_pos) h_sub_le
     rw [h_eq, Nat.mul_add_div hBp_pos, Nat.div_eq_of_lt h_rem_lt, add_zero]
   exact ⟨Bm, Bp, Zm, Zp, hBm_pos, hBp_pos, hZm_pos, hZp_pos, hcop_B, hcop_Z, hB_prod, hZ_prod,
     hu₁_eq, hu₂_eq, hb_minus.1, hb_minus.2.1, hb_plus.1, hb_plus.2.1,
@@ -1555,8 +1567,9 @@ theorem thm_4_2_part3_midpoint_core_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
               ≤ ∑ p ∈ ({2} : Finset ℕ), (padicValNat p B_i : ℝ) * Real.log (p : ℝ) := by
                 apply Finset.sum_le_sum_of_subset_of_nonneg hsub
                 intro p hp _
-                have hp_pr := Nat.prime_of_mem_primeFactors (Finset.mem_filter.mp (hsub hp)).1
-                exact mul_nonneg (Nat.cast_nonneg _) (Real.log_nonneg (by exact_mod_cast hp_pr.one_lt.le))
+                rw [Finset.mem_singleton] at hp
+                subst hp
+                exact mul_nonneg (Nat.cast_nonneg _) (Real.log_nonneg (by norm_num))
             _ = (padicValNat 2 B_i : ℝ) * Real.log 2 := by simp
         have hv2_n : (padicValNat 2 B_i : ℝ) ≤ (n : ℝ) := by
           haveI : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
@@ -1629,15 +1642,21 @@ theorem thm_4_2_part3_midpoint_core_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
         (44 * ε / 100) * ((n : ℝ) * Real.log (n : ℝ)) ≤
         ∑ p ∈ U, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) := by
       rw [hLU, Finset.sum_union hdisj_LU] at h_odd_sum_ge
-      linarith [h_odd_sum_ge, hL_bound]
+      have h_sub := sub_le_sub h_odd_sum_ge hL_bound
+      have h_lhs : (44 * ε / 100) * ((n : ℝ) * Real.log (n : ℝ)) =
+          (1 / 4 - 5 * ε / 100) * ((n : ℝ) * Real.log (n : ℝ)) -
+          (1 / 4 - ε / 2 + ε / 100) * ((n : ℝ) * Real.log (n : ℝ)) := by ring
+      linarith only [h_sub, h_lhs]
     have hn_log_pos : 0 < (n : ℝ) * Real.log (n : ℝ) := by
-      have : (8 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn8
-      nlinarith
+      have h8n : (8 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn8
+      exact mul_pos (by linarith only [h8n]) (by linarith only [hlog1])
     have hU_nonempty : U.Nonempty := by
       by_contra h_empty
       rw [Finset.not_nonempty_iff_eq_empty] at h_empty
       rw [h_empty, Finset.sum_empty] at hU_sum_ge
-      nlinarith
+      have h_pos_lhs : 0 < (44 * ε / 100) * ((n : ℝ) * Real.log (n : ℝ)) :=
+        mul_pos (by linarith only [hε0]) hn_log_pos
+      linarith only [hU_sum_ge, h_pos_lhs]
     have hδ_ne : δ ≠ 0 := by
       rw [hδ_eq]
       intro h0
@@ -1989,8 +2008,9 @@ theorem thm_4_2_part3_mertens_bound :
             ≤ ∑ p ∈ ({2} : Finset ℕ), (padicValNat p B_i : ℝ) * Real.log (p : ℝ) := by
               apply Finset.sum_le_sum_of_subset_of_nonneg hsub
               intro p hp _
-              have hp_pr := Nat.prime_of_mem_primeFactors (Finset.mem_filter.mp (hsub hp)).1
-              exact mul_nonneg (Nat.cast_nonneg _) (Real.log_nonneg (by exact_mod_cast hp_pr.one_lt.le))
+              rw [Finset.mem_singleton] at hp
+              subst hp
+              exact mul_nonneg (Nat.cast_nonneg _) (Real.log_nonneg (by norm_num))
           _ = (padicValNat 2 B_i : ℝ) * Real.log 2 := by simp
       have hv2_n : (padicValNat 2 B_i : ℝ) ≤ (n : ℝ) := by
         haveI : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
