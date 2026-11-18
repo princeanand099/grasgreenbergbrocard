@@ -686,7 +686,7 @@ theorem thm_5_2_part1_cross_symmetry :
     have h4u : 4 * (u₁ * u₂) = Nat.factorial n := by linarith
     have hv2 := congrArg (padicValNat 2) h4u
     have h4v : padicValNat 2 4 = 2 := by
-      rw [show (4 : ℕ) = 2 ^ 2 by norm_num, padicValNat_pow_eq, padicValNat_self]; norm_num
+      rw [show (4 : ℕ) = 2 ^ 2 by norm_num, padicValNat_pow_eq, padicValNat_self]
     rw [padicValNat.mul (by norm_num) (mul_pos hu₁_pos hu₂_pos).ne',
         padicValNat.mul hu₁_pos.ne' hu₂_pos.ne', h4v] at hv2
     dsimp [w₂₁, w₂₂]; linarith
@@ -999,7 +999,7 @@ theorem thm_5_2_part1_radical_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 /
               = ((p : ℝ) - 1) * (1 / (p : ℝ)) ^ ((i - 1) + 1) := by rw [Nat.sub_add_cancel hi1]
             _ = ((p : ℝ) - 1) * ((1 / (p : ℝ)) ^ (i - 1) * (1 / (p : ℝ))) := by rw [pow_succ]
             _ = (1 / (p : ℝ)) ^ (i - 1) * (((p : ℝ) - 1) * (1 / (p : ℝ))) := by ring
-            _ = (1 / (p : ℝ)) ^ (i - 1) * (1 - 1 / (p : ℝ)) := by congr 1; field_simp [hp_ne]; ring
+            _ = (1 / (p : ℝ)) ^ (i - 1) * (1 - 1 / (p : ℝ)) := by congr 1; field_simp [hp_ne]
             _ = (1 / (p : ℝ)) ^ (i - 1) - (1 / (p : ℝ)) ^ ((i - 1) + 1) := by rw [pow_succ]; ring
             _ = (1 / (p : ℝ)) ^ (i - 1) - (1 / (p : ℝ)) ^ i := by rw [Nat.sub_add_cancel hi1]
         have h_telesc_sum : ∀ m : ℕ, ∑ i ∈ Finset.Ico 1 (m + 1),
@@ -1661,8 +1661,8 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
                 linarith
               have : (A : ℤ) * (Y₁ : ℤ) < (B : ℤ) * (X₁ : ℤ) := by
                 by_contra hle; push_neg at hle
-                nlinarith [mul_nonneg (Nat.cast_nonneg A) (Nat.cast_nonneg Y₁),
-                           mul_nonneg (Nat.cast_nonneg B) (Nat.cast_nonneg X₁)]
+                nlinarith [mul_nonneg (Int.natCast_nonneg A) (Int.natCast_nonneg Y₁),
+                           mul_nonneg (Int.natCast_nonneg B) (Int.natCast_nonneg X₁)]
               dsimp [B']; linarith
             have hA'_pos : 0 < A' := by
               have hsq_gt : (q_n n : ℤ) ^ 2 * (B : ℤ) ^ 2 * (Y₁ : ℤ) ^ 2 < (A : ℤ) ^ 2 * (X₁ : ℤ) ^ 2 := by
@@ -1671,8 +1671,8 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
                 rw [hA_eq, hX_eq]; nlinarith
               have : (q_n n : ℤ) * (B : ℤ) * (Y₁ : ℤ) < (A : ℤ) * (X₁ : ℤ) := by
                 by_contra hle; push_neg at hle
-                nlinarith [mul_nonneg (mul_nonneg (Int.natCast_nonneg (R := ℤ) (q_n n)) (Int.natCast_nonneg (R := ℤ) B)) (Int.natCast_nonneg (R := ℤ) Y₁),
-                           mul_nonneg (Int.natCast_nonneg (R := ℤ) A) (Int.natCast_nonneg (R := ℤ) X₁)]
+                nlinarith [mul_nonneg (mul_nonneg (Int.natCast_nonneg (q_n n)) (Int.natCast_nonneg B)) (Int.natCast_nonneg Y₁),
+                           mul_nonneg (Int.natCast_nonneg A) (Int.natCast_nonneg X₁)]
               dsimp [A']; linarith
             have hB'_lt : B'.natAbs < B := by
               have hX1_gt : 1 < X₁ := X1_gt_one hq_ge hfund
@@ -1690,8 +1690,8 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
                   _ = (A : ℤ) ^ 2 * (Y₁ : ℤ) ^ 2 := by rw [hA_eq]
               have : (B : ℤ) * ((X₁ : ℤ) - 1) < (A : ℤ) * (Y₁ : ℤ) := by
                 by_contra hle; push_neg at hle
-                nlinarith [mul_nonneg (Nat.cast_nonneg B) (by omega : (0 : ℤ) ≤ (X₁ : ℤ) - 1),
-                           mul_nonneg (Nat.cast_nonneg A) (Nat.cast_nonneg Y₁)]
+                nlinarith [mul_nonneg (Int.natCast_nonneg B) (by omega : (0 : ℤ) ≤ (X₁ : ℤ) - 1),
+                           mul_nonneg (Int.natCast_nonneg A) (Int.natCast_nonneg Y₁)]
               have hB'_lt_z : B' < (B : ℤ) := by dsimp [B']; linarith
               omega
             have hA'B' : A' ^ 2 - (q_n n : ℤ) * B' ^ 2 = 1 := by
