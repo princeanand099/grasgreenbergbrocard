@@ -581,32 +581,37 @@ theorem prop_6_2_part2_consecutive_equipartition :
           (2 * (n : ℝ) / Real.log (n : ℝ)) * Real.log (p : ℝ) := by
         intro p hp
         simp only [S_bad_gt, S_bad, Finset.mem_filter] at hp
-        have hp_prime : p.Prime := hp.1.1.1
+        have hp_prime : p.Prime := (by simpa [Podd] using hp.1.1).2.1
         have hp3 : 3 ≤ p := hp.1.2.1
         haveI : Fact p.Prime := ⟨hp_prime⟩
         have h1 : padicValNat p (Nat.factorial n) * (p - 1) ≤ n := by
           have := sub_one_mul_padicValNat_factorial n; linarith
-        have h1r : (padicValNat p (Nat.factorial n) : ℝ) * ((p : ℝ) - 1) ≤ (n : ℝ) := by exact_mod_cast h1
+        have h1r : (padicValNat p (Nat.factorial n) : ℝ) * ((p : ℝ) - 1) ≤ (n : ℝ) := by
+          have h1n : (padicValNat p (Nat.factorial n) : ℝ) * ((p - 1 : ℕ) : ℝ) ≤ (n : ℝ) := by exact_mod_cast h1
+          rwa [Nat.cast_sub (by omega : 1 ≤ p), Nat.cast_one] at h1n
+        have hp3r : (3 : ℝ) ≤ p := by exact_mod_cast hp3
         have h2 : (padicValNat p (Nat.factorial n) : ℝ) ≤ (n : ℝ) / ((p : ℝ) - 1) :=
-          (le_div_iff₀ (by exact_mod_cast (by omega : 0 < p - 1))).mpr h1r
-        have hp_half : (p : ℝ) / 2 ≤ (p : ℝ) - 1 := by
-          have : (3 : ℝ) ≤ p := by exact_mod_cast hp3; linarith
+          (le_div_iff₀ (by linarith)).mpr h1r
+        have hp_half : (p : ℝ) / 2 ≤ (p : ℝ) - 1 := by linarith
         have hv : (padicValNat p (Nat.factorial n) : ℝ) ≤ 2 * (n : ℝ) / (p : ℝ) := by
           calc (padicValNat p (Nat.factorial n) : ℝ) ≤ (n : ℝ) / ((p : ℝ) - 1) := h2
             _ ≤ (n : ℝ) / ((p : ℝ) / 2) := by gcongr
             _ = 2 * (n : ℝ) / (p : ℝ) := by ring
         have hv_log : (padicValNat p (Nat.factorial n) : ℝ) ≤ 2 * (n : ℝ) / Real.log (n : ℝ) :=
           le_trans hv (div_le_div_of_nonneg_left (by positivity) (by linarith) hp.2.le)
-        gcongr
-        exact Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ p))
+        have hlogp_nn : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ p))
+        exact mul_le_mul_of_nonneg_right hv_log hlogp_nn
       refine le_trans (Finset.sum_le_sum hterm) ?_
       rw [← Finset.mul_sum]
       gcongr
       have hdvd_prod : ∏ p ∈ S_bad_gt, p ∣ n + 1 := by
-        apply Finset.prod_primes_dvd
+        apply Finset.prod_dvd_of_coprime
+        · intro p hp q hq hpq
+          simp only [S_bad_gt, S_bad, Finset.mem_filter] at hp hq
+          have hp_pr : p.Prime := (by simpa [Podd] using hp.1.1).2.1
+          have hq_pr : q.Prime := (by simpa [Podd] using hq.1.1).2.1
+          exact (Nat.coprime_primes hp_pr hq_pr).mpr hpq
         · intro p hp; simp only [S_bad_gt, S_bad, Finset.mem_filter] at hp; exact hp.1.2.2
-        · intro p hp q hq hpq; simp only [S_bad_gt, S_bad, Finset.mem_filter] at hp hq
-          exact (Nat.coprime_primes hp.1.1.1 hq.1.1.1).mpr hpq
       have hpos_prod : 0 < ∏ p ∈ S_bad_gt, p := by
         apply Finset.prod_pos; intro p hp
         simp only [S_bad_gt, S_bad, Finset.mem_filter] at hp; have := hp.1.2.1; omega
@@ -703,7 +708,7 @@ theorem prop_6_2_part3_square_shift_exclusions :
       omega
     have hm_gt : m₂ < t * m₁ := by
       have hsq_lt : m₂ ^ 2 < (t * m₁) ^ 2 := by omega
-      by_contra hle; push_neg at hle
+      by_contra hle; push Not at hle
       exact absurd (Nat.mul_le_mul hle hle) (by simpa [sq] using hsq_lt.not_ge)
     have hdiff_mul : (t * m₁ - m₂) * (t * m₁ + m₂) = t ^ 2 - 1 := by
       have hm2z : ((t * m₁ : ℕ) : ℤ) ^ 2 = (m₂ : ℤ) ^ 2 + ((t ^ 2 : ℤ) - 1) := by
@@ -766,7 +771,7 @@ theorem prop_6_2_part3_square_shift_exclusions :
       have htsq_gt1 : 1 ≤ t ^ 2 - 1 := by omega
       have hm_gt : m₂ < t * m₁ := by
         have hsq_lt : m₂ ^ 2 < (t * m₁) ^ 2 := by omega
-        by_contra hle; push_neg at hle
+        by_contra hle; push Not at hle
         exact absurd (Nat.mul_le_mul hle hle) (by simpa [sq] using hsq_lt.not_ge)
       have hdiff_mul : (t * m₁ - m₂) * (t * m₁ + m₂) = t ^ 2 - 1 := by
         have hm2z : ((t * m₁ : ℕ) : ℤ) ^ 2 = (m₂ : ℤ) ^ 2 + ((t ^ 2 : ℤ) - 1) := by
@@ -844,25 +849,31 @@ theorem prop_6_2_part3_square_shift_exclusions :
           nlinarith
         have hP1 : (1 : ℝ) ≤ P := by exact_mod_cast (by omega : 1 ≤ P)
         linarith
-      nlinarith [Real.sqrt_nonneg (P : ℝ)]
+      nlinarith only [hm2_sq, mul_nonneg (Real.sqrt_nonneg (P : ℝ)) (Nat.cast_nonneg m₁), Nat.cast_nonneg m₂]
     have hPm1_lb : (1 / 4 : ℝ) * (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ) ≤
         (P : ℝ) * m₁ - m₂ - (P - 1) := by
       have hP2r : (2 : ℝ) ≤ P := by exact_mod_cast hP_ge
       have hsqrtP : Real.sqrt (P : ℝ) ≤ (P : ℝ) * (3 / 4 : ℝ) := by
         have hsq : Real.sqrt (P : ℝ) ^ 2 ≤ ((P : ℝ) * (3 / 4 : ℝ)) ^ 2 := by
-          rw [Real.sq_sqrt (by positivity)]; nlinarith
-        nlinarith [Real.sqrt_nonneg (P : ℝ)]
+          rw [Real.sq_sqrt (by positivity)]; nlinarith only [hP2r]
+        nlinarith only [hsq, Real.sqrt_nonneg (P : ℝ), hP2r]
       have hm1_gt : Real.sqrt (Nat.factorial n₁ : ℝ) < m₁ := by
         rw [← Real.sqrt_sq (Nat.cast_nonneg m₁)]
         exact Real.sqrt_lt_sqrt (by positivity) (by
           have : (Nat.factorial n₁ : ℝ) + 1 = (m₁ : ℝ) ^ 2 := by exact_mod_cast hm₁
           linarith)
       have hPm1_big : (P : ℝ) ≤ (1 / 16 : ℝ) * (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ) := by
-        have : (600 : ℝ) ≤ Real.sqrt (Nat.factorial n₁ : ℝ) := by
+        have h600 : (600 : ℝ) ≤ Real.sqrt (Nat.factorial n₁ : ℝ) := by
           rw [← Real.sqrt_sq (by norm_num : (0 : ℝ) ≤ 600)]
           exact Real.sqrt_le_sqrt (by exact_mod_cast (by omega : 360000 ≤ Nat.factorial n₁))
-        nlinarith
-      nlinarith
+        nlinarith only [h600, hP2r]
+      have hm2_le_P34 : (m₂ : ℝ) ≤ (3 / 4 : ℝ) * (P : ℝ) * (m₁ : ℝ) := by
+        have h1 : Real.sqrt (P : ℝ) * (m₁ : ℝ) ≤ ((P : ℝ) * (3 / 4 : ℝ)) * (m₁ : ℝ) :=
+          mul_le_mul_of_nonneg_right hsqrtP (Nat.cast_nonneg m₁)
+        linarith only [hm₂_le, h1]
+      have hP_m1 : (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ) ≤ (P : ℝ) * (m₁ : ℝ) :=
+        mul_le_mul_of_nonneg_left hm1_gt.le (by positivity)
+      nlinarith only [hm2_le_P34, hP_m1, hPm1_big, hP2r]
     have hPm1_ub : (P : ℝ) * m₁ + m₂ + (P - 1) ≤ 4 * (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ) := by
       have hm1_le : (m₁ : ℝ) ≤ 2 * Real.sqrt (Nat.factorial n₁ : ℝ) := by
         have hsq : (m₁ : ℝ) ^ 2 ≤ (2 * Real.sqrt (Nat.factorial n₁ : ℝ)) ^ 2 := by
@@ -870,13 +881,8 @@ theorem prop_6_2_part3_square_shift_exclusions :
           have : (m₁ : ℝ) ^ 2 = (Nat.factorial n₁ : ℝ) + 1 := by exact_mod_cast hm₁
           have : (362880 : ℝ) ≤ Nat.factorial n₁ := by exact_mod_cast hfac_ge
           linarith
-        nlinarith [Real.sqrt_nonneg (Nat.factorial n₁ : ℝ)]
-      have hsqrtP_le : Real.sqrt (P : ℝ) ≤ (P : ℝ) := by
-        have hsq : Real.sqrt (P : ℝ) ^ 2 ≤ (P : ℝ) ^ 2 := by
-          rw [Real.sq_sqrt (by positivity)]
-          have hP2r : (2 : ℝ) ≤ P := by exact_mod_cast hP_ge
-          nlinarith
-        nlinarith [Real.sqrt_nonneg (P : ℝ)]
+        nlinarith only [hsq, Real.sqrt_nonneg (Nat.factorial n₁ : ℝ), Nat.cast_nonneg m₁]
+      have hP2r : (2 : ℝ) ≤ P := by exact_mod_cast hP_ge
       have hm2_le' : (m₂ : ℝ) ≤ (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ) := by
         have hm2_sq : (m₂ : ℝ) ^ 2 ≤ ((P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ)) ^ 2 := by
           rw [mul_pow, Real.sq_sqrt (by positivity)]
@@ -884,15 +890,16 @@ theorem prop_6_2_part3_square_shift_exclusions :
             have : P * Nat.factorial n₁ + 1 = m₂ ^ 2 := by
               rw [P_ratio_mul_factorial hlt]; exact hm₂
             exact_mod_cast this
-          have hP2r : (2 : ℝ) ≤ P := by exact_mod_cast hP_ge
           have hfacr : (362880 : ℝ) ≤ Nat.factorial n₁ := by exact_mod_cast hfac_ge
-          nlinarith
-        nlinarith [Real.sqrt_nonneg (Nat.factorial n₁ : ℝ)]
+          nlinarith only [h1, hP2r, hfacr]
+        nlinarith only [hm2_sq, Real.sqrt_nonneg (Nat.factorial n₁ : ℝ), Nat.cast_nonneg m₂, hP2r]
       have hP_le : (P : ℝ) - 1 ≤ (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ) := by
-        have : (1 : ℝ) ≤ Real.sqrt (Nat.factorial n₁ : ℝ) := by
+        have h1sq : (1 : ℝ) ≤ Real.sqrt (Nat.factorial n₁ : ℝ) := by
           rw [← Real.sqrt_one]; exact Real.sqrt_le_sqrt (by exact_mod_cast Nat.factorial_pos n₁)
-        nlinarith
-      nlinarith
+        nlinarith only [h1sq, hP2r]
+      have hP_m1_ub : (P : ℝ) * (m₁ : ℝ) ≤ 2 * (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ) := by
+        nlinarith only [hm1_le, hP2r]
+      linarith only [hP_m1_ub, hm2_le', hP_le]
     have hlogP_ub : Real.log (P : ℝ) ≤ (4 * (j : ℝ) + 2) * Real.log ((j : ℝ) + 1) := by
       have h1 : Real.log (P : ℝ) ≤ Real.log (((j + 1 : ℕ) : ℝ) ^ (4 * j + 2)) :=
         Real.log_le_log (by positivity) (by exact_mod_cast hP_ub)
