@@ -63,7 +63,7 @@ lemma coreNat_squarefree (m : ℕ) : Squarefree (coreNat m) := by
     (f := fun q => q)
     (fun q hq => (Nat.prime_of_mem_primeFactors (Finset.mem_filter.mp hq).1).ne_zero)
   have h2_le : 2 ≤ padicValNat p (coreNat m) := by
-    exact (padicValNat_dvd_iff_le hne).mp (by simpa [sq] using hpp)
+    exact (padicValNat_dvd_iff_le hne).mp (by unfold coreNat; simpa [sq] using hpp)
   have hle1 : padicValNat p (coreNat m) ≤ 1 := by
     unfold coreNat at hval ⊢
     rw [hval]
@@ -684,7 +684,9 @@ theorem prop_5_1_part2_bias (ε : ℝ) (hε : 0 < ε) :
         · have : (n : ℝ) < ((n / 2 : ℕ) + 1) * 2 := by exact_mod_cast h2
           linarith
       rw [hfl]
-    rw [h_eq1, h_eq2, ← hsdiff, eq_sub_of_add_eq (Finset.sum_sdiff hsub)]
+    rw [h_eq1, h_eq2, ← hsdiff]
+    have hsum := Finset.sum_sdiff (f := fun p : ℕ => Real.log (p : ℝ)) hsub
+    linarith
   have h_theta_diff_lb : (1 / 2 - ε / 4) * (n : ℝ) ≤
       ∑ p ∈ (Finset.Ioc (n / 2) n).filter Nat.Prime, Real.log (p : ℝ) := by
     rw [h_theta_diff_eq]
