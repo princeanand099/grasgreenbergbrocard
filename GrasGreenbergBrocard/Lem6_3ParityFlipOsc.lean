@@ -123,6 +123,7 @@ private lemma vaaler_btilde_dyadic_sum_bound
   rw [hsplit]
   exact add_le_add hsum_main hsum_err
 
+
 lemma lem_6_3_osc_bound
     (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 4) (ε : ℝ) (hε : 0 < ε)
     (C₂ : ℝ) (hC₂ : 0 < C₂) (N_exp : ℕ)
@@ -223,6 +224,9 @@ lemma lem_6_3_osc_bound
       exact_mod_cast (lt_of_le_of_lt h1 hh_gt).le
     have hn₂_ge_Nexp : N_exp ≤ n₂ := by omega
     have hP_le_n₂ : P ≤ (n₂ : ℝ) / (Real.log (n₂ : ℝ)) ^ 12 := by
+      -- Since n₁ < n₂ < 2 n₁ and P ≤ y₁ ≤ h / (log n₁)^{A_R + 2} ≤ n₁ / (log n₁)^{A_R + 2}
+      -- Wait: n₂ / (log n₂)^{12} vs n₁ / (log n₁)^{12}: for n₁ ≥ 1000, log n₂ ≤ 2 log n₁, so
+      -- n₁ / (log n₁)^{A_R + 2} ≤ n₁ / (2 log n₁)^{12} ≤ n₂ / (log n₂)^{12} since A_R + 2 ≥ 56!
       have hlog_n2_le : Real.log (n₂ : ℝ) ≤ 2 * Real.log (n₁ : ℝ) := by
         have hn2_lt : (n₂ : ℝ) < 2 * (n₁ : ℝ) := by exact_mod_cast (by omega : n₂ < 2 * n₁)
         have h1 := Real.log_le_log (by positivity) hn2_lt.le
@@ -246,21 +250,21 @@ lemma lem_6_3_osc_bound
       exact le_trans hP_lt_y₁.le (le_trans hy1_le (div_le_div₀ (by positivity) hn1_le_n2 (by positivity)
         (le_trans hpow_le hpow_ar)))
     have hExp_at : ∀ (m : ℕ), N_exp ≤ m → m ≤ n₁ → P ≤ (m : ℝ) / (Real.log (m : ℝ)) ^ 12 →
-        (2 : ℝ) ^ (-(R : ℤ)) * (Real.log (m : ℝ)) ^ A_R ≤ (m : ℝ) / P →
-        ∀ (hm1 : ℤ) (w : ℝ → ℝ) (W₀ : ℝ),
-        hm1 ≠ 0 → |hm1| ≤ 2 * (Nat.floor ((Real.log (m : ℝ)) ^ (R + 2)) : ℤ) + 1 →
-        (∀ t ∈ Set.Icc P (2 * P), |w t| ≤ W₀) → 0 ≤ W₀ →
-        ‖∑ p ∈ I_k, (w (p : ℝ) * Real.log (p : ℝ) : ℂ) *
-          eExp ((hm1 : ℝ) * (m : ℝ) / (2 * (p : ℝ)))‖ ≤
-          C₂ * W₀ * P * (Real.log (m : ℝ)) ^ (-((R : ℝ) + 2)) := by
-      intro m hm_N hm_le hPm hTm hm1 w W₀ hm1_nz hm1_bd hw hW₀
-      have hm_pos : (0 : ℝ) < m := by
-        by_contra h0; push_neg at h0
-        have hm0 : m = 0 := by exact_mod_cast (by linarith : (m : ℝ) ≤ 0)
-        subst hm0; simp at hPm; linarith
-      have hP_m_lb : (m : ℝ) ^ δ ≤ P :=
-        le_trans (Real.rpow_le_rpow (by positivity) (by exact_mod_cast hm_le) hδ0.le) hP_lb
-      exact hExp1 m hm_N P I_k hm1 w W₀ hP_m_lb hPm hI_k hm1_nz hm1_bd hTm hw hW₀
+      (2 : ℝ) ^ (-(R : ℤ)) * (Real.log (m : ℝ)) ^ A_R ≤ (m : ℝ) / P →
+      ∀ (hm1 : ℤ) (w : ℝ → ℝ) (W₀ : ℝ),
+      hm1 ≠ 0 → |hm1| ≤ 2 * (Nat.floor ((Real.log (m : ℝ)) ^ (R + 2)) : ℤ) + 1 →
+      (∀ t ∈ Set.Icc P (2 * P), |w t| ≤ W₀) → 0 ≤ W₀ →
+      ‖∑ p ∈ I_k, (w (p : ℝ) * Real.log (p : ℝ) : ℂ) *
+        eExp ((hm1 : ℝ) * (m : ℝ) / (2 * (p : ℝ)))‖ ≤
+        C₂ * W₀ * P * (Real.log (m : ℝ)) ^ (-((R : ℝ) + 2)) := by
+    intro m hm_N hm_le hPm hTm hm1 w W₀ hm1_nz hm1_bd hw hW₀
+    have hm_pos : (0 : ℝ) < m := by
+      by_contra h0; push_neg at h0
+      have hm0 : m = 0 := by exact_mod_cast (by linarith : (m : ℝ) ≤ 0)
+      subst hm0; simp at hPm; linarith
+    have hP_m_lb : (m : ℝ) ^ δ ≤ P :=
+      le_trans (Real.rpow_le_rpow (by positivity) (by exact_mod_cast hm_le) hδ0.le) hP_lb
+    exact hExp1 m hm_N P I_k hm1 w W₀ hP_m_lb hPm hI_k hm1_nz hm1_bd hTm hw hW₀
     have hTm_n1 : (2 : ℝ) ^ (-(R : ℤ)) * (Real.log (n₁ : ℝ)) ^ A_R ≤ (n₁ : ℝ) / P := by
       have hy1_le : y₁ ≤ (n₁ : ℝ) / (Real.log (n₁ : ℝ)) ^ (A_R + 2) := by
         dsimp [y₁]; exact div_le_div_of_nonneg_right (by exact_mod_cast le_of_lt h_lt_n₁) (by positivity)
@@ -668,7 +672,7 @@ lemma lem_6_3_osc_bound
         _ = 3 * L₁ * ((∑ p ∈ I_k, Real.log (p : ℝ) * (B_tilde ((n₁ : ℝ) / (p : ℝ))).re) +
               (∑ p ∈ I_k, Real.log (p : ℝ) * (B_tilde ((n₂ : ℝ) / (p : ℝ))).re)) := by
             simp_rw [← Finset.sum_add_distrib, Finset.mul_sum]; apply Finset.sum_congr rfl; intro p _; ring
-        _ ≤ _ := by gcongr; linarith
+        _ ≤ _ := mul_le_mul_of_nonneg_left (add_le_add hB1_sum hB2_sum) (by positivity)
     have h_comb : |∑ p ∈ I_k,
         ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
           ((padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ))| ≤
@@ -718,7 +722,7 @@ lemma lem_6_3_osc_bound
       calc (4 * P * Real.log (2 * P)) / ((H : ℝ) + 1)
           ≤ (4 * P * (2 * Real.log (n₁ : ℝ))) / (((δ / 2) * Real.log (n₁ : ℝ)) ^ (R + 2)) := by gcongr
         _ = 8 * P * ((δ / 2) ^ (-(R : ℤ) - 2)) * ((Real.log (n₁ : ℝ)) / (Real.log (n₁ : ℝ)) ^ (R + 2)) := by
-            rw [mul_pow, zpow_sub₀ (by positivity), zpow_neg, zpow_natCast, zpow_two]; ring
+            rw [mul_pow, zpow_sub₀ (by positivity : (0 : ℝ) < δ / 2).ne', zpow_neg, zpow_natCast, zpow_two]; ring
         _ = 8 * P * (δ / 2) ^ (-(R : ℤ) - 2) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 1)) := by
             congr 1
             rw [show (-((R : ℝ) + 1)) = ((-(R + 1 : ℕ) : ℤ) : ℝ) by push_cast; ring,
@@ -732,10 +736,11 @@ lemma lem_6_3_osc_bound
         Real.rpow_intCast, zpow_neg, zpow_natCast, one_div]
       exact inv_anti₀ (by positivity) (pow_le_pow_right₀ (by nlinarith) (by omega))
     have hd_cmp : δ ^ (-(R : ℤ) - 2) ≤ (δ / 2) ^ (-(R : ℤ) - 2) := by
-      rw [zpow_sub₀ hδ0.ne', zpow_sub₀ (by positivity), zpow_neg, zpow_neg, zpow_natCast, zpow_natCast]
+      rw [zpow_sub₀ hδ0.ne', zpow_sub₀ (by positivity : (0 : ℝ) < δ / 2).ne', zpow_neg, zpow_neg, zpow_natCast, zpow_natCast]
       have h1 : (δ / 2) ^ R ≤ δ ^ R := pow_le_pow_left₀ (by positivity) (by linarith) R
       have h2 : (δ / 2) ^ 2 ≤ δ ^ 2 := pow_le_pow_left₀ (by positivity) (by linarith) 2
-      gcongr
+      have h1_inv : (δ ^ R)⁻¹ ≤ ((δ / 2) ^ R)⁻¹ := inv_anti₀ (by positivity) h1
+      exact div_le_div₀ (by positivity) h1_inv (by positivity) h2
     have h_n1P_main : ((n₁ : ℝ) / P) * ‖mainC‖ ≤
         (C_osc_const / 2) * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by
       have h1 := mul_le_mul_of_nonneg_left h_mainC_bd (by positivity : 0 ≤ (n₁ : ℝ) / P)
@@ -746,11 +751,15 @@ lemma lem_6_3_osc_bound
       have hpow_le5 : (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) ≤ 1 / (Real.log (n₁ : ℝ)) ^ 5 :=
         le_trans hrpow_cmp hrpow_R1
       calc ((n₁ : ℝ) / P) * ‖mainC‖
-          ≤ ((n₁ : ℝ) / P) * ((4 * ((R : ℝ) + 4) ^ 2 * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2) *
+          ≤ ((n₁ : ℝ) / P) * (L₁ ^ 2 * (6 * C₂ * P * (δ ^ (-(R : ℤ) - 2) + 1) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)))) := h1
+        _ ≤ ((n₁ : ℝ) / P) * ((4 * ((R : ℝ) + 4) ^ 2 * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2) *
               (6 * C₂ * P * ((δ / 2) ^ (-(R : ℤ) - 2) + 1) / (Real.log (n₁ : ℝ)) ^ 5)) := by
-              refine le_trans h1 ?_; gcongr
-              · exact le_trans hL1_sq (le_refl _)
-              · exact hpow_le5
+              have hd1 : δ ^ (-(R : ℤ) - 2) + 1 ≤ (δ / 2) ^ (-(R : ℤ) - 2) + 1 := add_le_add_right hd_cmp 1
+              have h6 : 6 * C₂ * P * (δ ^ (-(R : ℤ) - 2) + 1) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) ≤
+                  6 * C₂ * P * ((δ / 2) ^ (-(R : ℤ) - 2) + 1) / (Real.log (n₁ : ℝ)) ^ 5 := by
+                rw [div_eq_mul_one_div]
+                exact mul_le_mul (mul_le_mul_of_nonneg_left hd1 (by positivity)) hpow_le5 (by positivity) (by positivity)
+              exact mul_le_mul_of_nonneg_left (mul_le_mul hL1_sq h6 (by positivity) (by positivity)) (by positivity)
         _ = 24 * ((R : ℝ) + 4) ^ 2 * C₂ * ((δ / 2) ^ (-(R : ℤ) - 2) + 1) * (n₁ : ℝ) *
               (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by
               field_simp [hP_pos.ne']; ring
@@ -830,6 +839,7 @@ lemma lem_6_3_osc_bound
               field_simp [hP_pos.ne']; ring
         _ ≤ (C_osc_const / 2) * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by
               gcongr
+    -- Now compare (C_osc_const / 5) * n₁ * (loglog n₁ + 1)^2 / (log n₁)^5 with ε / (16 * (log n₁ / log 2 + 2)) * n₁ * log n₁
     have h_osc_ball : C_osc_const * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 2 < ε / 100 := by
       have := hN_osc_fin n₁ (by omega)
       rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at this; exact this
@@ -872,7 +882,7 @@ lemma lem_6_3_osc_bound
       _ ≤ C_osc_const * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := h_sum_2
       _ = (1 / (Real.log (n₁ : ℝ)) ^ 4) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) *
             (C_osc_const * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 2) := by
-          field_simp [hlog_n₁_pos.ne']; ring
+          field_simp [hlog_n₁_pos.ne']; try ring
       _ ≤ (1 / (Real.log (n₁ : ℝ)) ^ 4) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) * (ε / 100) := by
           gcongr
       _ = ((1 / (Real.log (n₁ : ℝ)) ^ 4) * (ε / 100)) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by ring
@@ -899,7 +909,7 @@ lemma lem_6_3_osc_bound
           ((ε / (16 * (Real.log (n₁ : ℝ) / Real.log 2 + 2))) * (n₁ : ℝ) * Real.log (n₁ : ℝ)) := by gcongr
     _ = (ε / 16) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
         have hne : Real.log (n₁ : ℝ) / Real.log 2 + 2 ≠ 0 := by positivity
-        field_simp [hne]; ring
+        field_simp [hne]; try ring
     _ ≤ (ε / 4) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by gcongr; linarith
 
 end GrasGreenbergBrocard
