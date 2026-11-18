@@ -960,37 +960,37 @@ theorem prop_6_2_part3_square_shift_exclusions :
       rw [abs_le]; constructor <;> linarith
     have ⟨hX_pos, hY_pos, hZ_pos, hW_pos, _⟩ :=
       prop_6_1_coprime_and_factorization (by omega) hlt hm₁ hm₂
-    have hP_half : (1 / 8 : ℝ) * (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ) ≤
-        (P : ℝ) * m₁ - m₂ - (P - 1) := by linarith
+    have hm2_nn : (0 : ℝ) ≤ m₂ := Nat.cast_nonneg m₂
+    have hP1_nn : (1 : ℝ) ≤ P := by exact_mod_cast (by omega : 1 ≤ P)
     simp only [Finset.mem_insert, Finset.mem_singleton] at hT
     rcases hT with rfl | rfl | rfl | rfl
     · refine hbound_sq _ (2 * a * c) (by nlinarith only [ha, hc]) (by nlinarith only [ha_le, hc_le]) hX_pos ?_ ?_
       · have : ((2 * a * c : ℕ) : ℝ) * (X_gcd m₁ m₂ : ℝ) ^ 2 = (P : ℝ) * m₁ - m₂ - ((P : ℝ) - 1) := by
           exact_mod_cast hXsq
-        linarith
+        linarith [hPm1_lb]
       · have : ((2 * a * c : ℕ) : ℝ) * (X_gcd m₁ m₂ : ℝ) ^ 2 = (P : ℝ) * m₁ - m₂ - ((P : ℝ) - 1) := by
           exact_mod_cast hXsq
-        linarith
+        linarith [hPm1_ub, hm2_nn, hP1_nn]
     · refine hbound_sq _ (2 * a * d) (by nlinarith only [ha, hd]) (by nlinarith only [ha_le, hd_le]) hY_pos ?_ ?_
       · have : ((2 * a * d : ℕ) : ℝ) * (Y_gcd m₁ m₂ : ℝ) ^ 2 = (P : ℝ) * m₁ - m₂ + ((P : ℝ) - 1) := by
           exact_mod_cast hYsq
-        linarith
+        linarith [hPm1_lb, hP1_nn]
       · have : ((2 * a * d : ℕ) : ℝ) * (Y_gcd m₁ m₂ : ℝ) ^ 2 = (P : ℝ) * m₁ - m₂ + ((P : ℝ) - 1) := by
           exact_mod_cast hYsq
-        linarith
+        linarith [hPm1_ub, hm2_nn]
     · refine hbound_sq _ (2 * b * d) (by nlinarith only [hb, hd]) (by nlinarith only [hb_le, hd_le]) hZ_pos ?_ ?_
       · have : ((2 * b * d : ℕ) : ℝ) * (Z_gcd m₁ m₂ : ℝ) ^ 2 = (P : ℝ) * m₁ + m₂ - ((P : ℝ) - 1) := by
           exact_mod_cast hZsq
-        linarith
+        linarith [hPm1_lb, hm2_nn]
       · have : ((2 * b * d : ℕ) : ℝ) * (Z_gcd m₁ m₂ : ℝ) ^ 2 = (P : ℝ) * m₁ + m₂ - ((P : ℝ) - 1) := by
           exact_mod_cast hZsq
-        linarith
+        linarith [hPm1_ub, hP1_nn]
     · refine hbound_sq _ (2 * b * c) (by nlinarith only [hb, hc]) (by nlinarith only [hb_le, hc_le]) hW_pos ?_ ?_
       · have : ((2 * b * c : ℕ) : ℝ) * (W_gcd m₁ m₂ : ℝ) ^ 2 = (P : ℝ) * m₁ + m₂ + ((P : ℝ) - 1) := by
           exact_mod_cast hWsq
-        linarith
+        linarith [hPm1_lb, hm2_nn, hP1_nn]
       · have : ((2 * b * c : ℕ) : ℝ) * (W_gcd m₁ m₂ : ℝ) ^ 2 = (P : ℝ) * m₁ + m₂ + ((P : ℝ) - 1) := by
           exact_mod_cast hWsq
-        linarith
+        linarith [hPm1_ub]
 
 end GrasGreenbergBrocard
