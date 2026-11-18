@@ -14,14 +14,14 @@ set_option maxHeartbeats 2000000
 
 namespace GrasGreenbergBrocard
 
-/-- **Theorem 6.4(b) (Polarization Concentration via Rankin Spherical Cap Cauchy–Schwarz)**:
-For any `ε ∈ (0, 1/4)` and `η ∈ (0, 1/2]`, there exists `N₀` such that for all `N' ≥ N₀`,
-any interval `[N', N' + ⌊(N')^{1-ε}⌋]` contains at most `⌊(η^2 * ε)⁻¹⌋ + 1` solutions `n` with
-`|θ_ε(n) - 1/2| ≥ η`, and `#{4 ≤ n ≤ N : ∃ m, n! + 1 = m^2 ∧ |θ_ε(n) - 1/2| ≥ η} ≤ C_ε * η^{-2} * N^ε`. -/
 private def PolBad (ε η : ℝ) (n : ℕ) : Prop :=
   ∃ m : ℕ, Nat.factorial n + 1 = m ^ 2 ∧ |theta_eps_weight ε n m - 1 / 2| ≥ η
 
 open Classical in
+/-- **Theorem 6.4(b) (Polarization Concentration via Rankin Spherical Cap Cauchy–Schwarz)**:
+For any `ε ∈ (0, 1/4)` and `η ∈ (0, 1/2]`, there exists `N₀` such that for all `N' ≥ N₀`,
+any interval `[N', N' + ⌊(N')^{1-ε}⌋]` contains at most `⌊(η^2 * ε)⁻¹⌋ + 1` solutions `n` with
+`|θ_ε(n) - 1/2| ≥ η`, and `#{4 ≤ n ≤ N : ∃ m, n! + 1 = m^2 ∧ |θ_ε(n) - 1/2| ≥ η} ≤ C_ε * η^{-2} * N^ε`. -/
 theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 / 4)
     (η : ℝ) (hη0 : 0 < η) (hη1 : η ≤ 1 / 2) :
     ∃ N₀ : ℕ, 4 ≤ N₀ ∧
