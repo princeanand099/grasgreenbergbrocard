@@ -1633,7 +1633,7 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
         have h_sq : (⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q_n n)) ^ (2 * r) =
             ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q_n n)) ^ r) ^ 2 := by rw [← pow_mul, mul_comm]
         have hre : lucasX (q_n n) X₁ Y₁ (2 * r) = lucasX (q_n n) X₁ Y₁ r ^ 2 + (q_n n : ℤ) * lucasY (q_n n) X₁ Y₁ r ^ 2 := by
-          unfold lucasX lucasY; rw [h_sq, sq]; rfl
+          unfold lucasX lucasY; rw [h_sq, sq]; simp only [Zsqrtd.mul_re]; ring
         linarith
       rcases hsgn with rfl | rfl
       · have hX_eq : x ^ 2 - 1 = X := rfl
@@ -1656,6 +1656,7 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
         have hYr_ne : (lucasY (q_n n) X₁ Y₁ r).natAbs ≠ 0 := by
           intro h0; have : lucasY (q_n n) X₁ Y₁ r = 0 := Int.natAbs_eq_zero.mp h0
           rw [this] at hx2; simp at hx2; exact hx_ne hx2
+        have hn8 : 8 ≤ n := le_trans hN₀8 hn
         obtain ⟨p, hp, hpq, hpmod⟩ := q_n_has_prime_mod4 (by omega) (by omega)
         have hp2 : p ≠ 2 := by intro h2; subst h2; norm_num at hpmod
         haveI : Fact p.Prime := ⟨hp⟩
@@ -1686,7 +1687,7 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
             have him : lucasY (q_n n) X₁ Y₁ (t + 1) = lucasX (q_n n) X₁ Y₁ t * (Y₁ : ℤ) + lucasY (q_n n) X₁ Y₁ t * (X₁ : ℤ) := by
               unfold lucasX lucasY; rw [pow_succ]; rfl
             rw [hre, him]
-            have hX_eq : (X₁ : ℤ) ^ 2 - (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 = 1 := by exact_mod_cast (by omega : (X₁ : ℤ) ^ 2 = (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 + 1)
+            have hX_eq : (X₁ : ℤ) ^ 2 - (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 = 1 := by have h : (X₁ : ℤ) ^ 2 = (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 + 1 := by exact_mod_cast hfund.2.2.1; linarith
             calc _ = (lucasX (q_n n) X₁ Y₁ t ^ 2 - (q_n n : ℤ) * lucasY (q_n n) X₁ Y₁ t ^ 2) *
                 ((X₁ : ℤ) ^ 2 - (q_n n : ℤ) * (Y₁ : ℤ) ^ 2) := by ring
               _ = 1 * 1 := by rw [iht, hX_eq]
@@ -1700,7 +1701,7 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
           rw [pow_succ', ← pow_mul, mul_comm 2 r]
         unfold lucasX lucasY
         rw [h_pow_eq, sq]
-        simp only [zsqrtd_mul_re', zsqrtd_mul_im']
+        simp only [Zsqrtd.mul_re, Zsqrtd.mul_im]
         ring
       rcases hsgn with rfl | rfl
       · have hx2 : X + 1 = x ^ 2 := by dsimp [X]; ring
@@ -1710,7 +1711,7 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
           have h2 : (delta2Mid X₁ : ℤ) * (vMid X₁ : ℤ) ^ 2 = (X₁ : ℤ) + 1 := by exact_mod_cast h_eq2.symm
           rw [← hx2, hmX, hX_2r1]
           have hX1_sq : (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 = ((X₁ : ℤ) - 1) * ((X₁ : ℤ) + 1) := by
-            have : (X₁ : ℤ) ^ 2 - (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 = 1 := by exact_mod_cast (by omega : (X₁ : ℤ) ^ 2 = (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 + 1)
+            have : (X₁ : ℤ) ^ 2 = (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 + 1 := by exact_mod_cast hfund.2.2.1
             linarith
           rw [h2]
           calc ((X₁ : ℤ) + 1) * ((X₁ : ℤ) * (lucasX (q_n n) X₁ Y₁ r ^ 2 + (q_n n : ℤ) * lucasY (q_n n) X₁ Y₁ r ^ 2) +
@@ -1730,17 +1731,19 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
         have h_nat : delta2Mid X₁ * (vMid X₁ * x.natAbs) ^ 2 =
             ((delta2Mid X₁ : ℤ) * (vMid X₁ : ℤ) ^ 2 * lucasX (q_n n) X₁ Y₁ r +
               (q_n n : ℤ) * (Y₁ : ℤ) * lucasY (q_n n) X₁ Y₁ r).natAbs ^ 2 := by
-          zify; simpa [sq_abs] using h_id
+          zify; simpa [mul_pow, sq_abs] using h_id
         have hv_pos : 0 < vMid X₁ := sqPartNat_pos _
-        have hLHS_ne : vMid X₁ * x.natAbs ≠ 0 := mul_ne_zero hv_pos.ne' (Int.natAbs_pos.mpr hx_ne)
+        have hLHS_ne : vMid X₁ * x.natAbs ≠ 0 := mul_ne_zero hv_pos.ne' (Int.natAbs_pos.mpr hx_ne).ne'
         have hRHS_ne : ((delta2Mid X₁ : ℤ) * (vMid X₁ : ℤ) ^ 2 * lucasX (q_n n) X₁ Y₁ r +
             (q_n n : ℤ) * (Y₁ : ℤ) * lucasY (q_n n) X₁ Y₁ r).natAbs ≠ 0 := by
           intro h0; rw [h0] at h_nat; simp at h_nat
-          rcases h_nat with h_d | h_vx
+          rcases h_nat with h_d | h_v | h_x
           · exact (coreNat_pos _).ne' h_d
-          · exact hLHS_ne h_vx
+          · exact hv_pos.ne' h_v
+          · exact hx_ne h_x
         have hv := congrArg (padicValNat p) h_nat
-        rw [padicValNat.mul (coreNat_pos _).ne' (pow_ne_zero 2 hLHS_ne),
+        have hd_ne : delta2Mid X₁ ≠ 0 := (coreNat_pos _).ne'
+        rw [padicValNat.mul hd_ne (pow_ne_zero 2 hLHS_ne),
             padicValNat_pow_eq, padicValNat_pow_eq] at hv
         have hvp1 : padicValNat p (delta2Mid X₁) = 1 := by
           have h1 := one_le_padicValNat_of_dvd (coreNat_pos _).ne' hpd
@@ -1750,14 +1753,16 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
               (by rw [← sq]; exact dvd_trans (pow_dvd_pow p (by omega : 2 ≤ padicValNat p (delta2Mid X₁))) pow_padicValNat_dvd)
           omega
         omega
-      · have hx2 : X - 1 = x ^ 2 := by dsimp [X]; simp; ring
+      · have hx2 : X - 1 = x ^ 2 := by dsimp [X]; simp
         have h_id : (delta1Mid X₁ : ℤ) * (uMid X₁ : ℤ) ^ 2 * x ^ 2 =
             ((delta1Mid X₁ : ℤ) * (uMid X₁ : ℤ) ^ 2 * lucasX (q_n n) X₁ Y₁ r +
               (q_n n : ℤ) * (Y₁ : ℤ) * lucasY (q_n n) X₁ Y₁ r) ^ 2 := by
-          have h1 : (delta1Mid X₁ : ℤ) * (uMid X₁ : ℤ) ^ 2 = (X₁ : ℤ) - 1 := by exact_mod_cast h_eq1.symm
+          have h1 : (delta1Mid X₁ : ℤ) * (uMid X₁ : ℤ) ^ 2 = (X₁ : ℤ) - 1 := by
+            have h1n : (delta1Mid X₁ : ℤ) * (uMid X₁ : ℤ) ^ 2 = ((X₁ - 1 : ℕ) : ℤ) := by exact_mod_cast h_eq1.symm
+            rw [Nat.cast_sub (X1_gt_one hq_ge hfund).le] at h1n; push_cast at h1n; exact h1n
           rw [← hx2, hmX, hX_2r1]
           have hX1_sq : (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 = ((X₁ : ℤ) - 1) * ((X₁ : ℤ) + 1) := by
-            have : (X₁ : ℤ) ^ 2 - (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 = 1 := by exact_mod_cast (by omega : (X₁ : ℤ) ^ 2 = (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 + 1)
+            have : (X₁ : ℤ) ^ 2 = (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 + 1 := by exact_mod_cast hfund.2.2.1
             linarith
           rw [h1]
           calc ((X₁ : ℤ) - 1) * ((X₁ : ℤ) * (lucasX (q_n n) X₁ Y₁ r ^ 2 + (q_n n : ℤ) * lucasY (q_n n) X₁ Y₁ r ^ 2) +
@@ -1777,17 +1782,19 @@ theorem thm_5_2_part2_pell_pm2_insoluble :
         have h_nat : delta1Mid X₁ * (uMid X₁ * x.natAbs) ^ 2 =
             ((delta1Mid X₁ : ℤ) * (uMid X₁ : ℤ) ^ 2 * lucasX (q_n n) X₁ Y₁ r +
               (q_n n : ℤ) * (Y₁ : ℤ) * lucasY (q_n n) X₁ Y₁ r).natAbs ^ 2 := by
-          zify; simpa [sq_abs] using h_id
+          zify; simpa [mul_pow, sq_abs] using h_id
         have hu_pos : 0 < uMid X₁ := sqPartNat_pos _
-        have hLHS_ne : uMid X₁ * x.natAbs ≠ 0 := mul_ne_zero hu_pos.ne' (Int.natAbs_pos.mpr hx_ne)
+        have hLHS_ne : uMid X₁ * x.natAbs ≠ 0 := mul_ne_zero hu_pos.ne' (Int.natAbs_pos.mpr hx_ne).ne'
         have hRHS_ne : ((delta1Mid X₁ : ℤ) * (uMid X₁ : ℤ) ^ 2 * lucasX (q_n n) X₁ Y₁ r +
             (q_n n : ℤ) * (Y₁ : ℤ) * lucasY (q_n n) X₁ Y₁ r).natAbs ≠ 0 := by
           intro h0; rw [h0] at h_nat; simp at h_nat
-          rcases h_nat with h_d | h_ux
+          rcases h_nat with h_d | h_u | h_x
           · exact (coreNat_pos _).ne' h_d
-          · exact hLHS_ne h_ux
+          · exact hu_pos.ne' h_u
+          · exact hx_ne h_x
         have hv := congrArg (padicValNat p) h_nat
-        rw [padicValNat.mul (coreNat_pos _).ne' (pow_ne_zero 2 hLHS_ne),
+        have hd_ne : delta1Mid X₁ ≠ 0 := (coreNat_pos _).ne'
+        rw [padicValNat.mul hd_ne (pow_ne_zero 2 hLHS_ne),
             padicValNat_pow_eq, padicValNat_pow_eq] at hv
         have hvp1 : padicValNat p (delta1Mid X₁) = 1 := by
           have h1 := one_le_padicValNat_of_dvd (coreNat_pos _).ne' hpd
