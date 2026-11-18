@@ -224,6 +224,9 @@ lemma lem_6_3_osc_bound
       exact_mod_cast (lt_of_le_of_lt h1 hh_gt).le
     have hn₂_ge_Nexp : N_exp ≤ n₂ := by omega
     have hP_le_n₂ : P ≤ (n₂ : ℝ) / (Real.log (n₂ : ℝ)) ^ 12 := by
+      -- Since n₁ < n₂ < 2 n₁ and P ≤ y₁ ≤ h / (log n₁)^{A_R + 2} ≤ n₁ / (log n₁)^{A_R + 2}
+      -- Wait: n₂ / (log n₂)^{12} vs n₁ / (log n₁)^{12}: for n₁ ≥ 1000, log n₂ ≤ 2 log n₁, so
+      -- n₁ / (log n₁)^{A_R + 2} ≤ n₁ / (2 log n₁)^{12} ≤ n₂ / (log n₂)^{12} since A_R + 2 ≥ 56!
       have hlog_n2_le : Real.log (n₂ : ℝ) ≤ 2 * Real.log (n₁ : ℝ) := by
         have hn2_lt : (n₂ : ℝ) < 2 * (n₁ : ℝ) := by exact_mod_cast (by omega : n₂ < 2 * n₁)
         have h1 := Real.log_le_log (by positivity) hn2_lt.le
@@ -697,10 +700,10 @@ lemma lem_6_3_osc_bound
             _ ≤ C₂ * 1 * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) +
                 C₂ * 1 * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := add_le_add h_cs h_sn
             _ = 2 * C₂ * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by ring
-        exact le_trans h_v (add_le_add_left (by
+        exact le_trans h_v (add_le_add (le_refl _) (by
           calc 12 * (2 * C₂) * P * (Real.log (n₂ : ℝ)) ^ (-((R : ℝ) + 2))
               ≤ 12 * (2 * C₂) * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by gcongr
-            _ = 24 * C₂ * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by ring) _)
+            _ = 24 * C₂ * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by ring))
       have h_err_sum1 : ‖errC‖ ≤ ∑ p ∈ I_k, 3 * Real.log (p : ℝ) *
             (L₁ * (B_tilde ((n₁ : ℝ) / (p : ℝ))).re + L₁ * (B_tilde ((n₂ : ℝ) / (p : ℝ))).re) := by
         refine le_trans (norm_sum_le _ _) (Finset.sum_le_sum fun p hp => ?_)
