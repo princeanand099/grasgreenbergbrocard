@@ -223,9 +223,8 @@ private lemma lem_6_3_main_lb
       by_cases hneg : Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 20) * Real.log (n₁ : ℝ) ≤ 0
       · exact le_trans (mul_nonpos_of_nonneg_of_nonpos h1n_nn hneg) (by positivity)
       · push Not at hneg
-        calc (1 / (n₁ : ℝ) ^ δ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 20) * Real.log (n₁ : ℝ))
-            ≤ (ε / 20) * Real.log (n₁ : ℝ) := mul_le_mul h_one_sub hdiff_le hneg.le (by positivity)
-      linarith only [this]
+        exact mul_le_mul h_one_sub hdiff_le hneg.le (by positivity)
+    linarith only [this]
   have h_prod1 : (n₁ : ℝ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 10) * Real.log (n₁ : ℝ)) ≤
       (n₁ : ℝ) * ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ) :=
     mul_le_mul_of_nonneg_left (le_trans h_est h_sub_prod) hn₁_pos.le
@@ -486,7 +485,7 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
       have hp_log2 : (Real.log (n₁ : ℝ)) ^ 2 < (p : ℝ) := lt_of_le_of_lt hA_lb hp_A
       haveI : Fact p.Prime := ⟨hp_pr⟩
       have h1 : (padicValNat p (Nat.factorial n₁) : ℝ) * ((p : ℝ) - 1) ≤ (n₁ : ℝ) := by
-        have := sub_one_mul_padicValNat_factorial n₁
+        have := sub_one_mul_padicValNat_factorial (p := p) n₁
         exact_mod_cast (show padicValNat p (Nat.factorial n₁) * (p - 1) ≤ n₁ by linarith)
       have hp1_pos : 0 < (p : ℝ) - 1 := by linarith
       have hv : (padicValNat p (Nat.factorial n₁) : ℝ) ≤ (n₁ : ℝ) / ((p : ℝ) - 1) :=
