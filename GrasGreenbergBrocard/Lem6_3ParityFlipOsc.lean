@@ -737,7 +737,7 @@ lemma lem_6_3_osc_bound
       have h2 : (δ / 2) ^ 2 ≤ δ ^ 2 := pow_le_pow_left₀ (by positivity) (by linarith) 2
       gcongr
     have h_n1P_main : ((n₁ : ℝ) / P) * ‖mainC‖ ≤
-        (C_osc_const / 10) * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by
+        (C_osc_const / 2) * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by
       have h1 := mul_le_mul_of_nonneg_left h_mainC_bd (by positivity : 0 ≤ (n₁ : ℝ) / P)
       have hL1_sq : L₁ ^ 2 ≤ 4 * ((R : ℝ) + 4) ^ 2 * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 := by
         calc L₁ ^ 2 ≤ (2 * ((R : ℝ) + 4) * (Real.log (Real.log (n₁ : ℝ)) + 1)) ^ 2 :=
@@ -754,11 +754,11 @@ lemma lem_6_3_osc_bound
         _ = 24 * ((R : ℝ) + 4) ^ 2 * C₂ * ((δ / 2) ^ (-(R : ℤ) - 2) + 1) * (n₁ : ℝ) *
               (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by
               field_simp [hP_pos.ne']; ring
-        _ ≤ (C_osc_const / 10) * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by
+        _ ≤ (C_osc_const / 2) * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by
               gcongr; dsimp [C_osc_const]; nlinarith [show 0 ≤ ((R : ℝ) + 4) ^ 2 by positivity,
                 show 0 ≤ C₂ by positivity, show 0 ≤ (δ / 2) ^ (-(R : ℤ) - 2) by positivity]
     have h_n1P_err : ((n₁ : ℝ) / P) * ‖errC‖ ≤
-        (C_osc_const / 10) * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by
+        (C_osc_const / 2) * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by
       have h1 := mul_le_mul_of_nonneg_left h_errC_bd (by positivity : 0 ≤ (n₁ : ℝ) / P)
       have hL1_le_sq : L₁ ≤ 2 * ((R : ℝ) + 4) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 := by
         have hll1 : 1 ≤ Real.log (Real.log (n₁ : ℝ)) + 1 := by
@@ -786,7 +786,7 @@ lemma lem_6_3_osc_bound
         _ = 6 * ((R : ℝ) + 4) * (16 * (δ / 2) ^ (-(R : ℤ) - 2) + 36 * C₂) * (n₁ : ℝ) *
               (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by
               field_simp [hP_pos.ne']; ring
-        _ ≤ (C_osc_const / 10) * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by
+        _ ≤ (C_osc_const / 2) * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by
               gcongr; dsimp [C_osc_const]
               have hR4 : (R : ℝ) + 4 ≤ ((R : ℝ) + 4) ^ 2 + 1 := by nlinarith
               nlinarith [show 0 ≤ C₂ by positivity, show 0 ≤ (δ / 2) ^ (-(R : ℤ) - 2) by positivity]
@@ -800,29 +800,26 @@ lemma lem_6_3_osc_bound
         rw [div_le_iff₀ (Real.log_pos (by norm_num))]; nlinarith only [hlog2_gt, hlog_n₁_pos]
       linarith only [h1, hlog1]
     have h_sum_2 : ((n₁ : ℝ) / P) * ‖mainC‖ + ((n₁ : ℝ) / P) * ‖errC‖ ≤
-        (C_osc_const / 5) * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by
+        C_osc_const * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by
       have h_add := add_le_add h_n1P_main h_n1P_err
-      have h_eq : (C_osc_const / 10) * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 +
-          (C_osc_const / 10) * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 =
-          (C_osc_const / 5) * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by ring
+      have h_eq : (C_osc_const / 2) * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 +
+          (C_osc_const / 2) * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 =
+          C_osc_const * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := by ring
       rwa [h_eq] at h_add
-    have h_coef : (1 / (5 * (Real.log (n₁ : ℝ)) ^ 4)) * (ε / 100) ≤
+    have h_coef : (1 / (Real.log (n₁ : ℝ)) ^ 4) * (ε / 100) ≤
         ε / (16 * (Real.log (n₁ : ℝ) / Real.log 2 + 2)) := by
       have hlog2 : 2 ≤ Real.log (n₁ : ℝ) := by
         have h5 := hN₅ n₁ (by omega)
         rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at h5
         have h20 : 20 ≤ δ * Real.log (n₁ : ℝ) := by
           have := (div_lt_iff₀ hlog_n₁_pos).mp h5; linarith only [this]
-        nlinarith only [h20, hδ1]
-      have hlog4 : 16 ≤ (Real.log (n₁ : ℝ)) ^ 4 := by
-        calc (16 : ℝ) = 2 ^ 4 := by norm_num
-          _ ≤ (Real.log (n₁ : ℝ)) ^ 4 := pow_le_pow_left₀ (by norm_num) hlog2 4
+        nlinarith only [h20, hδ1, hδ0, hlog_n₁_pos]
       rw [div_mul_div_comm, one_mul, div_le_div_iff₀ (by positivity) (by positivity)]
-      have h_mul : 16 * (Real.log (n₁ : ℝ) / Real.log 2 + 2) ≤ 500 * (Real.log (n₁ : ℝ)) ^ 4 := by
+      have h_mul : 16 * (Real.log (n₁ : ℝ) / Real.log 2 + 2) ≤ (Real.log (n₁ : ℝ)) ^ 4 * 100 := by
         have h_4log : 16 * (Real.log (n₁ : ℝ) / Real.log 2 + 2) ≤ 64 * Real.log (n₁ : ℝ) := by
           linarith only [hlog_div2]
-        have h_pow : 64 * Real.log (n₁ : ℝ) ≤ 500 * (Real.log (n₁ : ℝ)) ^ 4 := by
-          have : 64 ≤ 500 * (Real.log (n₁ : ℝ)) ^ 3 := by
+        have h_pow : 64 * Real.log (n₁ : ℝ) ≤ (Real.log (n₁ : ℝ)) ^ 4 * 100 := by
+          have : 64 ≤ (Real.log (n₁ : ℝ)) ^ 3 * 100 := by
             have h3 : 8 ≤ (Real.log (n₁ : ℝ)) ^ 3 := by
               calc (8 : ℝ) = 2 ^ 3 := by norm_num
                 _ ≤ (Real.log (n₁ : ℝ)) ^ 3 := pow_le_pow_left₀ (by norm_num) hlog2 3
@@ -832,16 +829,17 @@ lemma lem_6_3_osc_bound
       exact mul_le_mul_of_nonneg_left h_mul hε.le
     calc |∑ p ∈ I_k, _| ≤ ((n₁ : ℝ) / P) * (‖mainC‖ + ‖errC‖) := h_comb
       _ = ((n₁ : ℝ) / P) * ‖mainC‖ + ((n₁ : ℝ) / P) * ‖errC‖ := mul_add _ _ _
-      _ ≤ (C_osc_const / 5) * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := h_sum_2
-      _ = (1 / (5 * (Real.log (n₁ : ℝ)) ^ 4)) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) *
+      _ ≤ C_osc_const * (n₁ : ℝ) * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 5 := h_sum_2
+      _ = (1 / (Real.log (n₁ : ℝ)) ^ 4) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) *
             (C_osc_const * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2 / (Real.log (n₁ : ℝ)) ^ 2) := by
           field_simp [hlog_n₁_pos.ne']; ring
-      _ ≤ (1 / (5 * (Real.log (n₁ : ℝ)) ^ 4)) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) * (ε / 100) := by
+      _ ≤ (1 / (Real.log (n₁ : ℝ)) ^ 4) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) * (ε / 100) := by
           gcongr
-      _ = ((1 / (5 * (Real.log (n₁ : ℝ)) ^ 4)) * (ε / 100)) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by ring
+      _ = ((1 / (Real.log (n₁ : ℝ)) ^ 4) * (ε / 100)) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by ring
       _ ≤ (ε / (16 * (Real.log (n₁ : ℝ) / Real.log 2 + 2))) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by
           gcongr
       _ = (ε / (16 * (Real.log (n₁ : ℝ) / Real.log 2 + 2))) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by ring
+  change |∑ p ∈ I_osc, _| ≤ (ε / 4) * (n₁ : ℝ) * Real.log (n₁ : ℝ)
   rw [hpart_osc, Finset.sum_biUnion hdisj_osc]
   have hcard_blk : ((dyadicBlocks ((n₁ : ℝ) ^ δ) y₁).card : ℝ) ≤ Real.log (n₁ : ℝ) / Real.log 2 + 2 := by
     have h1 := dyadicBlocks_card_le (by linarith : 1 ≤ (n₁ : ℝ) ^ δ) hy₁_gt.le
