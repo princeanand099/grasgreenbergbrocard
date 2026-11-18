@@ -1361,7 +1361,11 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
             exact_mod_cast (by omega : 0 ≤ (p : ℤ) - 1)))
         have h_lb1 : Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 20) * Real.log (n₁ : ℝ) ≤
             ∑ p ∈ I_osc, Real.log (p : ℝ) / ((p : ℝ) - 1) := by
-          linarith only [hmert_osc_lb, h_log_y1, herr1, hCm1]
+          rw [h_log_y1] at hmert_osc_lb
+          have h_e : ((A_R : ℝ) + 2) * Real.log (Real.log (n₁ : ℝ)) + 2 * C_mert1 ≤
+              (ε / 20) * Real.log (n₁ : ℝ) := by
+            nlinarith only [herr1, hCm1, hε, hlog_n₁_pos]
+          linarith only [hmert_osc_lb, h_e]
         have h_lb1_nn : 0 ≤ Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) := by
           have := Real.log_le_log (by positivity) hh_gt.le
           rw [Real.log_rpow hn₁_pos] at this; linarith
@@ -1387,7 +1391,19 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
               calc (1 / (n₁ : ℝ) ^ δ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 20) * Real.log (n₁ : ℝ))
                   ≤ (ε / 20) * Real.log (n₁ : ℝ) := mul_le_mul h_one_sub hdiff_le hneg.le (by positivity)
           linarith
-        nlinarith only [hn₁_pos, hlog_n₁_pos, h_est, h_sub_prod, hsum_log_I, h_1n_le]
+        have h_prod1 : (n₁ : ℝ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 10) * Real.log (n₁ : ℝ)) ≤
+            (n₁ : ℝ) * ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ) :=
+          mul_le_mul_of_nonneg_left (le_trans h_est h_sub_prod) hn₁_pos.le
+        have h_sub1 : (n₁ : ℝ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 10) * Real.log (n₁ : ℝ)) -
+            (ε / 100) * (n₁ : ℝ) * Real.log (n₁ : ℝ) ≤
+            (n₁ : ℝ) * ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ) - ∑ p ∈ I_osc, Real.log (p : ℝ) := by
+          linarith only [h_prod1, hsum_log_I, h_1n_le]
+        have h_final_lb : (n₁ : ℝ) * Real.log (h : ℝ) - δ * (n₁ : ℝ) * Real.log (n₁ : ℝ) -
+            (ε / 4) * (n₁ : ℝ) * Real.log (n₁ : ℝ) ≤
+            (n₁ : ℝ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 10) * Real.log (n₁ : ℝ)) -
+              (ε / 100) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
+          nlinarith only [hε, hn₁_pos, hlog_n₁_pos]
+        exact le_trans h_final_lb h_sub1
       -- Oscillatory correlation bound |∑_{p ∈ I_osc} (-1)^{v_p(n₁!)+v_p(n₂!)} v_p(n₁!) log p| ≤ (ε/4) n₁ log n₁
       have hI_osc_bound : |∑ p ∈ I_osc,
           ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
