@@ -610,13 +610,38 @@ lemma lem_6_3_osc_bound
             (Psi_tilde ((n₁ : ℝ) / (p : ℝ)) *
               (((((-1 : ℝ) ^ Int.floor ((n₂ : ℝ) / (p : ℝ)) : ℝ) : ℂ) - Psi_tilde ((n₂ : ℝ) / (p : ℝ))))) := by ring
         rw [hid]
-        calc ‖_ + _‖ ≤ ‖_‖ + ‖_‖ := norm_add_le _ _
-          _ = ‖_ - _‖ * ‖_‖ + ‖Psi_tilde _‖ * ‖_ - _‖ := by rw [norm_mul, norm_mul]
-          _ ≤ (B_tilde ((n₁ : ℝ) / (p : ℝ))).re * 1 + L₁ * (B_tilde ((n₂ : ℝ) / (p : ℝ))).re := by gcongr
-          _ ≤ L₁ * (B_tilde ((n₁ : ℝ) / (p : ℝ))).re + L₁ * (B_tilde ((n₂ : ℝ) / (p : ℝ))).re := by nlinarith
+        refine le_trans (norm_add_le _ _) ?_
+        rw [norm_mul, norm_mul]
+        have h1' : ‖(((-1 : ℝ) ^ Int.floor ((n₁ : ℝ) / (p : ℝ)) : ℝ) : ℂ) - Psi_tilde ((n₁ : ℝ) / (p : ℝ))‖ ≤
+            (B_tilde ((n₁ : ℝ) / (p : ℝ))).re := h1
+        have h2' : ‖(((-1 : ℝ) ^ Int.floor ((n₂ : ℝ) / (p : ℝ)) : ℝ) : ℂ) - Psi_tilde ((n₂ : ℝ) / (p : ℝ))‖ ≤
+            (B_tilde ((n₂ : ℝ) / (p : ℝ))).re := h2
+        have hmul1 : ‖(((-1 : ℝ) ^ Int.floor ((n₁ : ℝ) / (p : ℝ)) : ℝ) : ℂ) - Psi_tilde ((n₁ : ℝ) / (p : ℝ))‖ *
+            ‖(((-1 : ℝ) ^ Int.floor ((n₂ : ℝ) / (p : ℝ)) : ℝ) : ℂ)‖ ≤ (B_tilde ((n₁ : ℝ) / (p : ℝ))).re * 1 :=
+          mul_le_mul h1' ha2_bd (norm_nonneg _) hB1_nn
+        have hmul2 : ‖Psi_tilde ((n₁ : ℝ) / (p : ℝ))‖ *
+            ‖(((-1 : ℝ) ^ Int.floor ((n₂ : ℝ) / (p : ℝ)) : ℝ) : ℂ) - Psi_tilde ((n₂ : ℝ) / (p : ℝ))‖ ≤
+            L₁ * (B_tilde ((n₂ : ℝ) / (p : ℝ))).re :=
+          mul_le_mul hb1_bd h2' (norm_nonneg _) (by positivity)
+        nlinarith [hB1_nn, hL1_ge1]
+      have hB_split : ∀ x : ℝ, (B_tilde x).re =
+          (b_tilde 0 + ∑ h ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (· ≠ 0),
+            b_tilde h * eExp ((h : ℝ) * x / 2)).re := by
+        intro x
+        dsimp [B_tilde]
+        have h0mem : (0 : ℤ) ∈ Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1) := by
+          simp; omega
+        rw [← Finset.add_sum_erase _ _ h0mem]
+        have he0 : b_tilde 0 * eExp ((0 : ℝ) * x / 2) = b_tilde 0 := by
+          unfold eExp; simp
+        have herase : (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).erase 0 =
+            (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (· ≠ 0) := by
+          ext a; simp [Finset.mem_erase, Finset.mem_filter, and_comm]
+        rw [Int.cast_zero, he0, herase]
       have hB1_sum : ∑ p ∈ I_k, Real.log (p : ℝ) * (B_tilde ((n₁ : ℝ) / (p : ℝ))).re ≤
           (4 * P * Real.log (2 * P)) / ((H : ℝ) + 1) +
             12 * C₂ * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by
+        simp_rw [hB_split]
         refine vaaler_btilde_dyadic_sum_bound H hH_ge1 b_tilde h_btilde0 h_btilde_b n₁ (by omega) P hP_pos I_k hI_k
           (fun h' hh' hbd => ?_) C₂ hC₂.le R
         have hbd' : |h'| ≤ 2 * (Nat.floor ((Real.log (n₁ : ℝ)) ^ (R + 2)) : ℤ) + 1 :=
@@ -626,6 +651,14 @@ lemma lem_6_3_osc_bound
       have hB2_sum : ∑ p ∈ I_k, Real.log (p : ℝ) * (B_tilde ((n₂ : ℝ) / (p : ℝ))).re ≤
           (4 * P * Real.log (2 * P)) / ((H : ℝ) + 1) +
             24 * C₂ * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by
+        simp_rw [hB_split]
+        have hrpow_n2 : (Real.log (n₂ : ℝ)) ^ (-((R : ℝ) + 2)) ≤ (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) :=
+          Real.rpow_le_rpow_of_nonpos hlog_n₁_pos
+            (Real.log_le_log hn₁_pos (by exact_mod_cast le_of_lt hlt)) (by linarith)
+        refine le_trans ?_ (add_le_add_left (by
+          calc 12 * (2 * C₂) * P * (Real.log (n₂ : ℝ)) ^ (-((R : ℝ) + 2))
+              ≤ 12 * (2 * C₂) * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by gcongr
+            _ = 24 * C₂ * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by ring) _)
         refine vaaler_btilde_dyadic_sum_bound H hH_ge1 b_tilde h_btilde0 h_btilde_b n₂ (by omega) P hP_pos I_k hI_k
           (fun h' hh' hbd => ?_) (2 * C₂) (by linarith) R
         have hbd' : |h'| ≤ 2 * (Nat.floor ((Real.log (n₁ : ℝ)) ^ (R + 2)) : ℤ) + 1 :=
