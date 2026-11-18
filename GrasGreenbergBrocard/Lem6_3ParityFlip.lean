@@ -225,7 +225,7 @@ private lemma lem_6_3_main_lb
       · push Not at hneg
         calc (1 / (n₁ : ℝ) ^ δ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 20) * Real.log (n₁ : ℝ))
             ≤ (ε / 20) * Real.log (n₁ : ℝ) := mul_le_mul h_one_sub hdiff_le hneg.le (by positivity)
-    linarith only [this]
+      linarith only [this]
   have h_prod1 : (n₁ : ℝ) * (Real.log (h : ℝ) - δ * Real.log (n₁ : ℝ) - (ε / 10) * Real.log (n₁ : ℝ)) ≤
       (n₁ : ℝ) * ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ) :=
     mul_le_mul_of_nonneg_left (le_trans h_est h_sub_prod) hn₁_pos.le
@@ -358,6 +358,8 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
     have hdvd_P : ∏ p ∈ S, p ∣ P_ratio n₁ n₂ := by
       apply Finset.prod_primes_dvd
       · intro p hp
+        exact Nat.prime_iff.mp (hS p hp).1
+      · intro p hp
         have hpS := hS p hp
         have hv_pos : 0 < padicValNat p (P_ratio n₁ n₂) := by
           by_contra h0; have : padicValNat p (P_ratio n₁ n₂) = 0 := by omega
@@ -368,8 +370,6 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
           by_contra h0; have : P_ratio n₁ n₂ = 0 := by omega
           rw [this, zero_mul] at hmul; exact (Nat.factorial_pos n₂).ne' hmul.symm
         simpa using (padicValNat_dvd_iff_le hP_pos.ne').mpr (Nat.succ_le_of_lt hv_pos)
-      · intro p hp
-        exact Nat.prime_iff.mp (hS p hp).1
     have hP_le : (P_ratio n₁ n₂ : ℝ) ≤ (2 * (n₁ : ℝ)) ^ h := by
       have hprod_eq : P_ratio n₁ n₂ = ∏ j ∈ Finset.Ioc n₁ n₂, j := by
         have hfac := P_ratio_mul_factorial hlt
@@ -871,8 +871,8 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
                       _ = ε / 100 := by ring
             exact (div_le_iff₀ hlog_n₁_pos).mp h1
           calc 2 * (n₁ : ℝ) * (2 * Real.log (Real.log (n₁ : ℝ)) + C_mert + 1)
-              ≤ 2 * (n₁ : ℝ) * (2 * ((ε / 100) * Real.log (n₁ : ℝ)) + (ε / 100) * Real.log (n₁ : ℝ)) := by
-                gcongr
+              ≤ 2 * (n₁ : ℝ) * (2 * ((ε / 100) * Real.log (n₁ : ℝ)) + (ε / 100) * Real.log (n₁ : ℝ)) :=
+                mul_le_mul_of_nonneg_left (by linarith only [hloglog_le, hCm_le]) (by positivity)
             _ = (3 * ε / 50) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by ring
             _ ≤ (ε / 10) * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) :=
               mul_le_mul_of_nonneg_right (by linarith only [hε]) (mul_nonneg hn₁_pos.le hlog_n₁_pos.le)
