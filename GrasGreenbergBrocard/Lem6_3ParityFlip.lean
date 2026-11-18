@@ -17,6 +17,8 @@ open Real Finset Filter
 
 namespace GrasGreenbergBrocard
 
+set_option maxHeartbeats 800000
+
 /-- The logarithmic factorial weight of parity-flip primes `3 ≤ p ≤ n₁` with `2 ∤ v_p(n₂!/n₁!)`. -/
 noncomputable def parityFlipWeight (n₁ n₂ : ℕ) : ℝ :=
   ∑ p ∈ (Finset.Icc 3 n₁).filter (fun p => p.Prime ∧ ¬ 2 ∣ padicValNat p (P_ratio n₁ n₂)),
@@ -124,6 +126,7 @@ private lemma vaaler_btilde_dyadic_sum_bound
     calc (I.card : ℝ) * (Real.log (2 * P) * (2 / ((H : ℝ) + 1)))
         ≤ (2 * P) * (Real.log (2 * P) * (2 / ((H : ℝ) + 1))) := by gcongr
       _ = (4 * P * Real.log (2 * P)) / ((H : ℝ) + 1) := by ring
+  -- Now swap the sum over p and h for the h ≠ 0 part
   let S_h := (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (· ≠ 0)
   have hsum_err : ∑ p ∈ I, Real.log (p : ℝ) *
       (∑ h ∈ S_h, b_tilde h * eExp ((h : ℝ) * ((n : ℝ) / (p : ℝ)) / 2)).re ≤
@@ -193,6 +196,7 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
   obtain ⟨_, _, _, _, C₁, C₂, _, _, hC₂, _, hExpBound⟩ := prime_exp_sum_bounds δ hδ0 (by linarith)
   obtain ⟨N_exp, hN_exp⟩ := Filter.eventually_atTop.mp hExpBound
   obtain ⟨C_mert, hC_mert_pos, hMert⟩ := Mertens_div_p_band_le
+  -- Choose N₀ large enough for all asymptotic error terms
   let R := Nat.floor (1 / δ)
   let A_R := 6 * R + 30
   have hR_ge4 : 4 ≤ R := Nat.le_floor (by rw [Nat.cast_ofNat, le_div_iff₀ hδ0]; linarith)
@@ -200,6 +204,7 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
     have hlt := Nat.lt_floor_add_one (1 / δ)
     change 1 / δ < (R : ℝ) + 1 at hlt
     exact (div_lt_iff₀ hδ0).mp hlt
+  -- Tendsto helpers for error terms -> 0
   have hloglog_div : Filter.Tendsto (fun x : ℝ => Real.log (Real.log x) / Real.log x)
       Filter.atTop (nhds 0) := by
     have h1 : Filter.Tendsto (fun t : ℝ => Real.log t / t) Filter.atTop (nhds 0) := by
@@ -226,6 +231,7 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
     (h_err2.eventually (Metric.ball_mem_nhds 0 (show (0 : ℝ) < ε / (100 * (C_mert + C₂ + 10)) by positivity)))
   obtain ⟨N₃, hN₃⟩ := Filter.eventually_atTop.mp
     (h_err3.eventually (Metric.ball_mem_nhds 0 (show (0 : ℝ) < ε / (1000 * (C₂ + 1) * (δ ^ (-(R : ℤ) - 2) + 1)) by positivity)))
+  -- Also need (n₁)^{δ(R+1)} > 2 n₁ and (δ/2 * log n₁)^{R+2} ≥ 100 and ≤ (δ log n₁)^{R+2} / 4
   have hpow_gt : Filter.Tendsto (fun n : ℕ => (n : ℝ) ^ (((R : ℝ) + 1) * δ - 1)) Filter.atTop Filter.atTop :=
     tendsto_rpow_atTop (by linarith) |>.comp tendsto_natCast_atTop_atTop
   obtain ⟨N₄, hN₄⟩ := Filter.eventually_atTop.mp (hpow_gt.eventually (Filter.eventually_gt_atTop 4))
@@ -261,8 +267,10 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
   set h := n₂ - n₁
   have hn₁_pos : (0 : ℝ) < n₁ := by positivity
   have hlog_n₁_pos : 0 < Real.log (n₁ : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n₁))
+  -- Upper range p ≥ y₂ = h * (log n₁)^2 + 2
   let y₂ : ℝ := (h : ℝ) * (Real.log (n₁ : ℝ)) ^ 2 + 2
   have hy₂_ge2 : 2 ≤ y₂ := by dsimp [y₂]; positivity
+  -- Weight on p ≥ y₂ is ≤ 2 n₁ log(2 n₁) / (log n₁)^2
   have h_upper_bound : ∀ (S : Finset ℕ),
       (∀ p ∈ S, p.Prime ∧ 3 ≤ p ∧ p ≤ n₁ ∧ y₂ ≤ (p : ℝ) ∧ ¬ 2 ∣ padicValNat p (P_ratio n₁ n₂)) →
       ∑ p ∈ S, (padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ) ≤
@@ -334,6 +342,7 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
       _ = 2 * (n₁ : ℝ) * Real.log (2 * (n₁ : ℝ)) / (Real.log (n₁ : ℝ)) ^ 2 := by
           have hh0 : (h : ℝ) ≠ 0 := by exact_mod_cast (show h ≠ 0 by omega)
           field_simp [hh0]
+  -- Tiny range p ≤ B bound via Mertens_div_p_band_le
   have h_tiny_bound : ∀ (B : ℝ), 3 ≤ B →
       ∑ p ∈ (Finset.Icc 3 (Nat.floor B)).filter Nat.Prime,
         (padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ) ≤
@@ -410,7 +419,9 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
         have hp_pos : 0 < (p : ℝ) := by linarith
         have hsq_pos : 0 < (Real.log (n₁ : ℝ)) ^ 2 := by linarith
         rw [one_mul, add_mul, one_mul, div_mul_eq_mul_div, mul_sub, mul_one]
-        linarith [(le_div_iff₀ hsq_pos).mpr (by linarith : (1 : ℝ) * (Real.log (n₁ : ℝ)) ^ 2 ≤ 2 * ((p : ℝ) - 1))]
+        have h1_le : 1 ≤ (2 * (p : ℝ) - 2) / (Real.log (n₁ : ℝ)) ^ 2 :=
+          (le_div_iff₀ hsq_pos).mpr (by linarith)
+        linarith
       have hv2 : (padicValNat p (Nat.factorial n₁) : ℝ) ≤
           (1 + 2 / (Real.log (n₁ : ℝ)) ^ 2) * (n₁ : ℝ) / (p : ℝ) := by
         calc (padicValNat p (Nat.factorial n₁) : ℝ)
@@ -554,6 +565,7 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
         linarith
       have hCm_le : C_mert + 1 ≤ (ε / 100) * Real.log (n₁ : ℝ) := by
         have h1 : (C_mert + 1) / Real.log (n₁ : ℝ) ≤ ε / 100 := by
+          have := (mul_lt_mul_of_pos_left herr_ball2 (by positivity : 0 < C_mert + 1))
           calc (C_mert + 1) / Real.log (n₁ : ℝ)
               = (C_mert + 1) * (1 / Real.log (n₁ : ℝ)) := by ring
             _ ≤ (C_mert + 1) * (ε / (100 * (C_mert + C₂ + 10))) := by gcongr
@@ -1157,7 +1169,7 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
             haveI : Fact p.Prime := ⟨hp_pr⟩
             have hleg := padicValNat_factorial (p := p) (n := n₁) (b := Nat.log p n₁ + 1) (Nat.lt_succ_self _)
             rw [hleg]
-            rcases Nat.eq_zero_or_pos (Nat.log p n₁) with hlog0 | hlog_pos
+            rcases Nat.eq_zero_or_pos (Nat.log p n₁) with h0 | hlog_pos
             · have hn1_lt_p : n₁ < p := by
                 by_contra hge; push_neg at hge
                 have : 1 ≤ Nat.log p n₁ := Nat.log_pos hp_pr.one_lt hge
@@ -1181,6 +1193,10 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
         have hI_eq_diff : ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ) =
             (∑ p ∈ (Finset.Icc 3 (Nat.floor y₁)).filter Nat.Prime, Real.log (p : ℝ) / (p : ℝ)) -
             (∑ p ∈ (Finset.Icc 3 (Nat.floor ((n₁ : ℝ) ^ δ))).filter Nat.Prime, Real.log (p : ℝ) / (p : ℝ)) := by
+          have hsub1 : (Finset.Icc 3 (Nat.floor ((n₁ : ℝ) ^ δ))).filter Nat.Prime ⊆
+              (Finset.Icc 3 (Nat.floor y₁)).filter Nat.Prime := by
+            intro p hp; simp only [Finset.mem_filter, Finset.mem_Icc] at hp ⊢
+            exact ⟨⟨hp.1.1, Nat.le_floor (le_trans (Nat.le_of_le_floor hp.1.2) hy₁_gt.le)⟩, hp.2⟩
           have hdisj_i : Disjoint I_osc ((Finset.Icc 3 (Nat.floor ((n₁ : ℝ) ^ δ))).filter Nat.Prime) := by
             rw [Finset.disjoint_left]; intro p h1 h2
             simp only [I_osc, Finset.mem_filter, Finset.mem_Icc] at h1 h2
@@ -1401,6 +1417,29 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
             have h1 : (N_exp : ℝ) ≤ (n₁ : ℝ) ^ δ := le_trans (le_max_left _ _) (hN_exp_d n₁ (by omega))
             exact_mod_cast (lt_of_le_of_lt h1 hh_gt).le
           have hn₂_ge_Nexp : N_exp ≤ n₂ := by omega
+          have hP_le_n₂ : P ≤ (n₂ : ℝ) / (Real.log (n₂ : ℝ)) ^ 12 := by
+            have hlog_n2_le : Real.log (n₂ : ℝ) ≤ 2 * Real.log (n₁ : ℝ) := by
+              have hn2_lt : (n₂ : ℝ) < 2 * (n₁ : ℝ) := by exact_mod_cast (by omega : n₂ < 2 * n₁)
+              have h1 := Real.log_le_log (by positivity) hn2_lt.le
+              rw [Real.log_mul (by norm_num) hn₁_pos.ne'] at h1
+              have : Real.log 2 ≤ Real.log (n₁ : ℝ) := Real.log_le_log (by norm_num) (by linarith)
+              linarith
+            have hpow_le : (Real.log (n₂ : ℝ)) ^ 12 ≤ (2 * Real.log (n₁ : ℝ)) ^ 12 :=
+              pow_le_pow_left₀ (Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ n₂))) hlog_n2_le 12
+            have h2_12 : (2 : ℝ) ^ 12 ≤ (Real.log (n₁ : ℝ)) ^ 12 := by
+              have hlog2 : 2 ≤ Real.log (n₁ : ℝ) := by nlinarith
+              exact pow_le_pow_left₀ (by norm_num) hlog2 12
+            have hpow_ar : (2 * Real.log (n₁ : ℝ)) ^ 12 ≤ (Real.log (n₁ : ℝ)) ^ (A_R + 2) := by
+              rw [mul_pow]
+              calc (2 : ℝ) ^ 12 * (Real.log (n₁ : ℝ)) ^ 12
+                  ≤ (Real.log (n₁ : ℝ)) ^ 12 * (Real.log (n₁ : ℝ)) ^ 12 := by gcongr
+                _ = (Real.log (n₁ : ℝ)) ^ 24 := by ring
+                _ ≤ (Real.log (n₁ : ℝ)) ^ (A_R + 2) := pow_le_pow_right₀ (by nlinarith) (by omega)
+            have hy1_le : y₁ ≤ (n₁ : ℝ) / (Real.log (n₁ : ℝ)) ^ (A_R + 2) := by
+              dsimp [y₁]; exact div_le_div_of_nonneg_right (by exact_mod_cast le_of_lt h_lt_n₁) (by positivity)
+            have hn1_le_n2 : (n₁ : ℝ) ≤ (n₂ : ℝ) := by exact_mod_cast le_of_lt hlt
+            exact le_trans hP_lt_y₁.le (le_trans hy1_le (div_le_div₀ (by positivity) hn1_le_n2 (by positivity)
+              (le_trans hpow_le hpow_ar)))
           have hExp_at : ∀ (m : ℕ), N_exp ≤ m → m ≤ n₁ → P ≤ (m : ℝ) / (Real.log (m : ℝ)) ^ 12 →
               (2 : ℝ) ^ (-(R : ℤ)) * (Real.log (m : ℝ)) ^ A_R ≤ (m : ℝ) / P →
               ∀ (hm1 : ℤ) (w : ℝ → ℝ) (W₀ : ℝ),
