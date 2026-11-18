@@ -567,7 +567,7 @@ lemma lem_6_3_osc_bound
             exact mul_le_mul_of_nonneg_left (hterm_bd h₁ hh₁ h₂ hh₂) (by positivity)
         _ = (∑ h₁ ∈ S_H, ‖c_tilde h₁‖) * (∑ h₂ ∈ S_H, ‖c_tilde h₂‖) *
               (6 * C₂ * P * (δ ^ (-(R : ℤ) - 2) + 1) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) := by
-            simp_rw [← Finset.sum_mul, ← Finset.mul_sum]; ring
+            simp only [Finset.sum_mul, Finset.mul_sum, mul_assoc]
         _ ≤ ((4 / Real.pi) * (Real.log (2 * (H : ℝ) + 1) + 1)) ^ 2 *
               (6 * C₂ * P * (δ ^ (-(R : ℤ) - 2) + 1) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) := by
             rw [sq]; gcongr
@@ -575,7 +575,7 @@ lemma lem_6_3_osc_bound
     have hL1_ge1 : 1 ≤ L₁ := by
       dsimp [L₁]
       have hpi4 : 1 ≤ 4 / Real.pi := by rw [one_le_div Real.pi_pos]; linarith [Real.pi_lt_four]
-      have hlog1 : 0 ≤ Real.log (2 * (H : ℝ) + 1) := Real.log_nonneg (by positivity)
+      have hlog1 : 0 ≤ Real.log (2 * (H : ℝ) + 1) := Real.log_nonneg (by linarith [show (0 : ℝ) ≤ H by positivity])
       nlinarith
     have h_errC_bd : ‖errC‖ ≤ 3 * L₁ *
         (((4 * P * Real.log (2 * P)) / ((H : ℝ) + 1) +
@@ -601,7 +601,7 @@ lemma lem_6_3_osc_bound
             _ = ∑ h ∈ S_H, ‖c_tilde h‖ := by
                 apply Finset.sum_congr rfl; intro h _
                 rw [norm_mul]; unfold eExp
-                rw [show (2 * Real.pi * ((h : ℝ) * ((n₁ : ℝ) / (p : ℝ)) / 2) : ℂ) * Complex.I =
+                rw [show (2 * Real.pi * Complex.I * (((h : ℝ) * ((n₁ : ℝ) / (p : ℝ)) / 2) : ℝ) : ℂ) =
                   ((2 * Real.pi * ((h : ℝ) * ((n₁ : ℝ) / (p : ℝ)) / 2) : ℝ) : ℂ) * Complex.I by push_cast; ring,
                   Complex.norm_exp_ofReal_mul_I, mul_one]
             _ ≤ L₁ := h_L1
@@ -617,10 +617,10 @@ lemma lem_6_3_osc_bound
         rw [norm_mul, norm_mul]
         have h1' : ‖(((-1 : ℝ) ^ Int.floor ((n₁ : ℝ) / (p : ℝ)) : ℝ) : ℂ) - Psi_tilde ((n₁ : ℝ) / (p : ℝ))‖ ≤
             (B_tilde ((n₁ : ℝ) / (p : ℝ))).re := by
-          dsimp only [Psi_tilde, B_tilde, S_H]; exact h1
+          dsimp only [Psi_tilde, B_tilde, S_H]; simpa [Complex.ofReal_zpow] using h1
         have h2' : ‖(((-1 : ℝ) ^ Int.floor ((n₂ : ℝ) / (p : ℝ)) : ℝ) : ℂ) - Psi_tilde ((n₂ : ℝ) / (p : ℝ))‖ ≤
             (B_tilde ((n₂ : ℝ) / (p : ℝ))).re := by
-          dsimp only [Psi_tilde, B_tilde, S_H]; exact h2
+          dsimp only [Psi_tilde, B_tilde, S_H]; simpa [Complex.ofReal_zpow] using h2
         have hmul1 : ‖(((-1 : ℝ) ^ Int.floor ((n₁ : ℝ) / (p : ℝ)) : ℝ) : ℂ) - Psi_tilde ((n₁ : ℝ) / (p : ℝ))‖ *
             ‖(((-1 : ℝ) ^ Int.floor ((n₂ : ℝ) / (p : ℝ)) : ℝ) : ℂ)‖ ≤ (B_tilde ((n₁ : ℝ) / (p : ℝ))).re * 1 :=
           mul_le_mul h1' ha2_bd (norm_nonneg _) hB1_nn
