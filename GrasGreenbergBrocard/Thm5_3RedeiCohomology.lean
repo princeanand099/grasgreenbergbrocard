@@ -356,7 +356,7 @@ theorem thm_5_3_part2_dual_quartic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factoria
         intro q hq
         have hq_pr := (hS q (Finset.mem_insert_of_mem hq)).1
         exact ((Nat.coprime_primes ha.1 hq_pr).mpr (fun h => has (h ▸ hq))).pow _ _
-      exact hcop.mul_dvd ha.2 hs
+      exact Nat.Coprime.mul_dvd_of_dvd_of_dvd hcop ha.2 hs
   have hW1_dvd_z1 : W₁ ∣ z₁ := by
     unfold W₁ W_split
     apply h_prod_dvd_nat
