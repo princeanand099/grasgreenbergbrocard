@@ -313,14 +313,15 @@ private lemma k_eq_2_AB {n m X₁ Y₁ : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
     have hco_nz : ((2 * (X₁ : ℤ) * (Y₁ : ℤ) - (s_n n : ℤ)) : ℝ) ≠ 0 := by
       intro h0; rw [h0, zero_mul] at hdiff
       exact hne_z (by exact_mod_cast hdiff)
-    have hrat : Real.sqrt (q_n n : ℝ) =
-        (((m : ℤ) - ((X₁ : ℤ) ^ 2 + (q_n n : ℤ) * (Y₁ : ℤ) ^ 2) : ℤ) : ℝ) /
-        ((2 * (X₁ : ℤ) * (Y₁ : ℤ) - (s_n n : ℤ) : ℤ) : ℝ) := by
-      field_simp [hco_nz]; linarith
-    exact hirr ⟨((m : ℤ) - ((X₁ : ℤ) ^ 2 + (q_n n : ℤ) * (Y₁ : ℤ) ^ 2)) /
-      (2 * (X₁ : ℤ) * (Y₁ : ℤ) - (s_n n : ℤ)), by push_cast; exact hrat.symm⟩
+    let a_z : ℤ := (m : ℤ) - ((X₁ : ℤ) ^ 2 + (q_n n : ℤ) * (Y₁ : ℤ) ^ 2)
+    let b_z : ℤ := 2 * (X₁ : ℤ) * (Y₁ : ℤ) - (s_n n : ℤ)
+    have hrat : Real.sqrt (q_n n : ℝ) = (a_z : ℝ) / (b_z : ℝ) := by
+      rw [eq_div_iff hco_nz]
+      linarith [hdiff]
+    exact hirr ⟨(a_z : ℚ) / (b_z : ℚ), by push_cast; exact hrat.symm⟩
   have hpell := hfund.2.2.1
-  have hm_sub : m - 1 = 2 * q_n n * Y₁ ^ 2 := by zify [show 1 ≤ X₁ ^ 2 by nlinarith [hfund.1]] at hpell ⊢; linarith
+  have hm1_ge : 1 ≤ m := by nlinarith [hfund.1]
+  have hm_sub : m - 1 = 2 * q_n n * Y₁ ^ 2 := by zify [hm1_ge] at hpell ⊢; linarith
   have hm_add : m + 1 = 2 * X₁ ^ 2 := by zify [show 1 ≤ X₁ ^ 2 by nlinarith [hfund.1]] at hpell ⊢; linarith
   constructor
   · change (m - 1) / 2 = q_n n * Y₁ ^ 2; omega
@@ -353,7 +354,7 @@ theorem prop_6_2_part2_consecutive_equipartition :
   have hloglog : Filter.Tendsto (fun n : ℕ => Real.log (Real.log (n : ℝ)) / Real.log (n : ℝ))
       Filter.atTop (nhds 0) := by
     have h1 : Filter.Tendsto (fun x : ℝ => Real.log x / x) Filter.atTop (nhds 0) := by
-      simpa using Real.tendsto_pow_log_div_mul_add_atTop 1 1 0 (by norm_num)
+      simpa using Real.tendsto_pow_log_div_mul_add_atTop (1 : ℝ) 0 1 (by norm_num)
     exact (h1.comp Real.tendsto_log_atTop).comp tendsto_natCast_atTop_atTop
   obtain ⟨N₂, hN₂⟩ := Filter.eventually_atTop.mp
     (hloglog.eventually (Metric.ball_mem_nhds 0 (show (0 : ℝ) < 1 / 200 by norm_num)))
@@ -365,13 +366,16 @@ theorem prop_6_2_part2_consecutive_equipartition :
         filter_upwards [Filter.eventually_ge_atTop 3] with n hn
         have hlog0 : Real.log (n : ℝ) ≠ 0 := (Real.log_pos (by exact_mod_cast (by omega : 1 < n))).ne'
         field_simp [hlog0]
-      exact (tendsto_const_nhds.div_atTop tendsto_natCast_atTop_atTop).congr' this.symm
+      exact (tendsto_const_nhds.div_atTop tendsto_natCast_atTop_atTop).congr'
+        (Filter.Eventually.mono this (fun _ h => h.symm))
     refine squeeze_zero' ?_ ?_ h1
-    · filter_upwards [Filter.eventually_ge_atTop 3] with n hn; positivity
+    · filter_upwards [Filter.eventually_ge_atTop 3] with n hn
+      exact div_nonneg (Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ n + 1))) (by positivity)
     · filter_upwards [Filter.eventually_ge_atTop 3] with n hn
       gcongr
       have : (n : ℝ) + 1 ≤ (n : ℝ) ^ 2 := by
-        have : (3 : ℝ) ≤ n := by exact_mod_cast hn; nlinarith
+        have hn3 : (3 : ℝ) ≤ n := by exact_mod_cast hn
+        nlinarith
       calc Real.log ((n : ℝ) + 1) ≤ Real.log ((n : ℝ) ^ 2) := Real.log_le_log (by positivity) this
         _ = 2 * Real.log (n : ℝ) := by rw [Real.log_pow]; norm_num
   obtain ⟨N₃, hN₃⟩ := Filter.eventually_atTop.mp
@@ -381,17 +385,19 @@ theorem prop_6_2_part2_consecutive_equipartition :
     have h1 : Filter.Tendsto (fun n : ℕ => 4 / Real.log (n : ℝ)) Filter.atTop (nhds 0) :=
       tendsto_const_nhds.div_atTop (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop)
     refine squeeze_zero' ?_ ?_ h1
-    · filter_upwards [Filter.eventually_ge_atTop 3] with n hn; positivity
+    · filter_upwards [Filter.eventually_ge_atTop 3] with n hn
+      exact div_nonneg (mul_nonneg (by norm_num) (Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ n + 1)))) (sq_nonneg _)
     · filter_upwards [Filter.eventually_ge_atTop 3] with n hn
       have hlog_pos : 0 < Real.log (n : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n))
       have hle : Real.log ((n : ℝ) + 1) ≤ 2 * Real.log (n : ℝ) := by
         have : (n : ℝ) + 1 ≤ (n : ℝ) ^ 2 := by
-          have : (3 : ℝ) ≤ n := by exact_mod_cast hn; nlinarith
+          have hn3 : (3 : ℝ) ≤ n := by exact_mod_cast hn
+          nlinarith
         calc Real.log ((n : ℝ) + 1) ≤ Real.log ((n : ℝ) ^ 2) := Real.log_le_log (by positivity) this
           _ = 2 * Real.log (n : ℝ) := by rw [Real.log_pow]; norm_num
       calc 2 * Real.log ((n : ℝ) + 1) / (Real.log (n : ℝ)) ^ 2
           ≤ 2 * (2 * Real.log (n : ℝ)) / (Real.log (n : ℝ)) ^ 2 := by gcongr
-        _ = 4 / Real.log (n : ℝ) := by field_simp [hlog_pos.ne']
+        _ = 4 / Real.log (n : ℝ) := by field_simp [hlog_pos.ne']; ring
   obtain ⟨N₄, hN₄⟩ := Filter.eventually_atTop.mp
     (hinvlog.eventually (Metric.ball_mem_nhds 0 (show (0 : ℝ) < 1 / 40 by norm_num)))
   have hconst_div : Filter.Tendsto (fun n : ℕ => (2 * (C_mert + 1)) / Real.log (n : ℝ))
@@ -408,7 +414,7 @@ theorem prop_6_2_part2_consecutive_equipartition :
   have hX_ub : Real.log (X_gcd m₁ m₂ : ℝ) ≤
       (1 / 4 : ℝ) * Real.log (Nat.factorial n : ℝ) + 4 * Real.log ((n : ℝ) + 1) := by
     have := hEquip.2.2.2.2 (X_gcd m₁ m₂) (by simp)
-    exact (abs_le.mp this).2
+    linarith [(abs_le.mp this).2]
   have hfac_ub : Real.log (Nat.factorial n : ℝ) ≤ (n : ℝ) * Real.log (n : ℝ) := by
     have hle : Nat.factorial n ≤ n ^ n := Nat.factorial_le_pow n
     have h1 : Real.log (Nat.factorial n : ℝ) ≤ Real.log ((n : ℝ) ^ n) :=
@@ -425,8 +431,9 @@ theorem prop_6_2_part2_consecutive_equipartition :
     prop_6_1_coprime_and_factorization (by omega) hlt hm₁ hm₂
   have ⟨hA₁_val, _⟩ := k_eq_2_AB (by omega) (by omega) hm₁ hfund₁ hk₁
   have ⟨hA₂_val, _⟩ := k_eq_2_AB (by omega) (by omega) hm₂ hfund₂ hk₂
-  obtain ⟨a, b, c, d, ⟨_, _, _, _, _, _, _, hB₂_eq, _, _, _, _⟩, _⟩ :=
+  obtain ⟨⟨a, b, c, d⟩, hprop, _⟩ :=
     prop_6_1_part1_sl2_and_four_squares (by omega) hlt hm₁ hm₂
+  rcases hprop with ⟨_, _, _, _, _, _, _, hB₂_eq, _, _, _, _⟩
   have h4mul1 : 4 * A_sol m₁ * B_sol m₁ = Nat.factorial n :=
     (brocard_u1_u2_rel (by omega) hm₁).2.2.2.2.1
   have hcop1 : Nat.Coprime (A_sol m₁) (B_sol m₁) :=
@@ -681,9 +688,15 @@ theorem prop_6_2_part3_square_shift_exclusions :
       have h4 : 1 ≤ t ^ 2 := by nlinarith
       zify [h2, h3, h4] at h1 ⊢
       rw [hP_sq] at h1
+      push_cast at h1 ⊢
       linarith
+    have htsq_gt1 : 1 ≤ t ^ 2 - 1 := by
+      have : 4 ≤ t ^ 2 := by nlinarith
+      omega
     have hm_gt : m₂ < t * m₁ := by nlinarith
     have hdiff_mul : (t * m₁ - m₂) * (t * m₁ + m₂) = t ^ 2 - 1 := by
+      have hm2z : ((t * m₁ : ℕ) : ℤ) ^ 2 = (m₂ : ℤ) ^ 2 + ((t ^ 2 : ℤ) - 1) := by
+        zify [show 1 ≤ t ^ 2 by nlinarith]; exact hm2_rel
       zify [le_of_lt hm_gt, show 1 ≤ t ^ 2 by nlinarith]
       linarith
     set u := t * m₁ - m₂
@@ -693,9 +706,10 @@ theorem prop_6_2_part3_square_shift_exclusions :
       have : 2 * (t * m₁) = t ^ 2 := by omega
       have : 2 * m₁ = t := by nlinarith
       omega
-    · have : 2 * (t * m₁ + m₂) ≤ t ^ 2 - 1 := by
+    · have h2tm : 2 * (t * m₁ + m₂) ≤ t ^ 2 - 1 := by
         calc 2 * (t * m₁ + m₂) ≤ u * (t * m₁ + m₂) := Nat.mul_le_mul_right _ hu_ge2
           _ = t ^ 2 - 1 := hdiff_mul
+      have htm_lt : 2 * t * m₁ < t * t := by nlinarith
       have : 2 * m₁ < t := by nlinarith
       omega
   · intro t ht ⟨m₁, m₂, hm₁, hm₂⟩
@@ -704,12 +718,15 @@ theorem prop_6_2_part3_square_shift_exclusions :
       have : m₁ ≤ 2 := by nlinarith
       interval_cases m₁ <;> norm_num at hm₁
     · have ht3 : 3 ≤ t := by omega
-      have hn1_ge : 8 ≤ t ^ 2 - 1 := by nlinarith
-      have hlt : t ^ 2 - 1 < t ^ 2 := by nlinarith
+      have htsq9 : 9 ≤ t ^ 2 := by nlinarith
+      have hn1_ge : 8 ≤ t ^ 2 - 1 := by omega
+      have hlt : t ^ 2 - 1 < t ^ 2 := by omega
       have hP_eq : P_ratio (t ^ 2 - 1) (t ^ 2) = t ^ 2 := by
         unfold P_ratio
-        have hsucc : t ^ 2 = (t ^ 2 - 1) + 1 := by nlinarith
-        rw [hsucc, Nat.factorial_succ, Nat.mul_div_cancel _ (Nat.factorial_pos _)]
+        have hsucc : t ^ 2 = (t ^ 2 - 1) + 1 := by omega
+        have hfac_succ : Nat.factorial (t ^ 2) = t ^ 2 * Nat.factorial (t ^ 2 - 1) := by
+          conv_lhs => rw [hsucc, Nat.factorial_succ, ← hsucc]
+        rw [hfac_succ, Nat.mul_div_cancel _ (Nat.factorial_pos _)]
       have hP_lt : P_ratio (t ^ 2 - 1) (t ^ 2) < 4 * (Nat.factorial (t ^ 2 - 1) + 1) := by
         rw [hP_eq]
         have hfac : t ^ 2 < 4 * Nat.factorial (t ^ 2 - 1) := by
@@ -732,9 +749,12 @@ theorem prop_6_2_part3_square_shift_exclusions :
                 Nat.factorial (t ^ 2) := by exact_mod_cast hfac
             nlinarith
           zify [show 1 ≤ m₁ ^ 2 by nlinarith, show 1 ≤ m₂ ^ 2 by nlinarith, show 1 ≤ t ^ 2 by nlinarith] at h1 ⊢
-          rw [hP_eq] at h1; linarith
+          rw [hP_eq] at h1; push_cast at h1 ⊢; linarith
+        have htsq_gt1 : 1 ≤ t ^ 2 - 1 := by omega
         have hm_gt : m₂ < t * m₁ := by nlinarith
         have hdiff_mul : (t * m₁ - m₂) * (t * m₁ + m₂) = t ^ 2 - 1 := by
+          have hm2z : ((t * m₁ : ℕ) : ℤ) ^ 2 = (m₂ : ℤ) ^ 2 + ((t ^ 2 : ℤ) - 1) := by
+            zify [show 1 ≤ t ^ 2 by nlinarith]; exact hm2_rel
           zify [le_of_lt hm_gt, show 1 ≤ t ^ 2 by nlinarith]; linarith
         set u := t * m₁ - m₂
         have hu1 : 1 ≤ u := by omega
@@ -751,10 +771,11 @@ theorem prop_6_2_part3_square_shift_exclusions :
   · intro j m₁ m₂ hj hm₁ hm₂ T hT
     set n₁ := j ^ 2
     set n₂ := (j + 1) ^ 2
-    have hn₁ : 9 ≤ n₁ := by nlinarith
-    have hlt : n₁ < n₂ := by nlinarith
-    obtain ⟨a, b, c, d, ⟨ha, hb, hc, hd, hab, hcd, _, _, _, _, _, h4sq⟩, _⟩ :=
+    have hn₁ : 9 ≤ n₁ := by dsimp [n₁]; nlinarith
+    have hlt : n₁ < n₂ := by dsimp [n₁, n₂]; nlinarith
+    obtain ⟨⟨a, b, c, d⟩, hprop, _⟩ :=
       prop_6_1_part1_sl2_and_four_squares (by omega) hlt hm₁ hm₂
+    rcases hprop with ⟨ha, hb, hc, hd, hab, hcd, _, _, _, _, _, h4sq⟩
     rcases h4sq with ⟨hXsq, hYsq, hZsq, hWsq⟩
     set P := P_ratio n₁ n₂
     have hP_ge : 2 ≤ P := P_ratio_ge_two (by omega) hlt
