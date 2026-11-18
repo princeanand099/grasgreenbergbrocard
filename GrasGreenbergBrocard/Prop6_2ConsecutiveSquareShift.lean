@@ -948,7 +948,7 @@ theorem prop_6_2_part3_square_shift_exclusions :
         rw [Real.log_mul (by norm_num) hP_pos.ne']
         have hj3 : (3 : ℝ) ≤ j := by exact_mod_cast hj
         have hlog16 : Real.log 16 ≤ 4 * Real.log ((j : ℝ) + 1) := by
-          have : (16 : ℝ) ≤ ((j : ℝ) + 1) ^ 4 := by calc (16 : ℝ) = 2 ^ 4 := by norm_num; _ ≤ ((j : ℝ) + 1) ^ 4 := pow_le_pow_left₀ (by norm_num) (by linarith) 4
+          have : (16 : ℝ) ≤ ((j : ℝ) + 1) ^ 4 := le_trans (by norm_num) (pow_le_pow_left₀ (by norm_num) (by linarith) 4)
           have h1 := Real.log_le_log (by norm_num) this
           rwa [Real.log_pow, Nat.cast_ofNat] at h1
         have h4j : (4 * (j : ℝ) + 2) ≤ 20 * (j : ℝ) / 3 := by linarith
