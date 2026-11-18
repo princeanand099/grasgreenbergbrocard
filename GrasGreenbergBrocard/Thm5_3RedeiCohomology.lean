@@ -215,7 +215,7 @@ theorem thm_5_3_part2_inert_absorption {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.fact
       have hinv : ((z₁ : ℤ) : ZMod q) * ((z₁ : ℤ) : ZMod q)⁻¹ = 1 :=
         ZMod.mul_inv_of_unit _ (isUnit_iff_ne_zero.mpr hz1_ne)
       have hmod' : ((-(δ₁ : ℤ) : ℤ) : ZMod q) * ((z₁ : ℤ) : ZMod q) ^ 2 = 1 := by
-        push_cast; linarith
+        rw [Int.cast_neg, neg_mul]; exact hmod
       calc ((-(δ₁ : ℤ) : ℤ) : ZMod q) = ((-(δ₁ : ℤ) : ℤ) : ZMod q) * (((z₁ : ℤ) : ZMod q) * ((z₁ : ℤ) : ZMod q)⁻¹) ^ 2 := by
             rw [hinv, one_pow, mul_one]
         _ = (((-(δ₁ : ℤ) : ℤ) : ZMod q) * ((z₁ : ℤ) : ZMod q) ^ 2) * (((z₁ : ℤ) : ZMod q)⁻¹) ^ 2 := by ring
@@ -271,9 +271,9 @@ theorem thm_5_3_part2_dual_quartic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factoria
   have hz₂_pos : 0 < z₂ := sqPartNat_pos u₂
   have h1_eq : δ₁ * z₁ ^ 2 = u₁ := coreNat_mul_sqPartNat_sq hu₁_pos
   have h2_eq : δ₂ * z₂ ^ 2 = u₂ := coreNat_mul_sqPartNat_sq hu₂_pos
-  have hcop_z : Nat.Coprime z₁ z₂ :=
-    hcop_u.coprime_dvd_left (h1_eq ▸ dvd_of_mul_left_dvd (dvd_pow_self z₁ (by norm_num))) |>.coprime_dvd_right
-      (h2_eq ▸ dvd_of_mul_left_dvd (dvd_pow_self z₂ (by norm_num)))
+  have hz1_u1 : z₁ ∣ u₁ := h1_eq ▸ dvd_mul_of_dvd_right (dvd_pow_self z₁ (by norm_num)) δ₁
+  have hz2_u2 : z₂ ∣ u₂ := h2_eq ▸ dvd_mul_of_dvd_right (dvd_pow_self z₂ (by norm_num)) δ₂
+  have hcop_z : Nat.Coprime z₁ z₂ := (hcop_u.coprime_dvd_left hz1_u1).coprime_dvd_right hz2_u2
   have h_val_z : ∀ q : ℕ, q ∈ PevenPlus n →
       (q ∣ z₁ → padicValNat q z₁ = padicValNat q (Nat.factorial n) / 2) ∧
       (q ∣ z₂ → padicValNat q z₂ = padicValNat q (Nat.factorial n) / 2) ∧
