@@ -674,7 +674,7 @@ lemma lem_6_3_osc_bound
                   gcongr; exact hpw_bd p hp
         _ = 3 * L₁ * ((∑ p ∈ I_k, Real.log (p : ℝ) * (B_tilde ((n₁ : ℝ) / (p : ℝ))).re) +
               (∑ p ∈ I_k, Real.log (p : ℝ) * (B_tilde ((n₂ : ℝ) / (p : ℝ))).re)) := by
-            simp_rw [← Finset.sum_add_distrib, Finset.mul_sum]; apply Finset.sum_congr rfl; intro p _; ring
+            rw [← Finset.sum_add_distrib, Finset.mul_sum]; apply Finset.sum_congr rfl; intro p _; ring
         _ ≤ _ := mul_le_mul_of_nonneg_left (add_le_add hB1_sum hB2_sum) (by positivity)
     have h_comb : |∑ p ∈ I_k,
         ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
@@ -702,7 +702,7 @@ lemma lem_6_3_osc_bound
         have h1 := Real.log_le_log (by positivity) hH_ub
         rw [Real.log_pow] at h1; push_cast at h1; exact h1
       have h4pi : 4 / Real.pi ≤ 2 := by rw [div_le_iff₀ Real.pi_pos]; linarith [Real.pi_gt_three]
-      have hlog_nn : 0 ≤ Real.log (2 * (H : ℝ) + 1) := Real.log_nonneg (by positivity)
+      have hlog_nn : 0 ≤ Real.log (2 * (H : ℝ) + 1) := Real.log_nonneg (by linarith [show (0 : ℝ) ≤ H by positivity])
       calc (4 / Real.pi) * (Real.log (2 * (H : ℝ) + 1) + 1)
           ≤ 2 * (((R : ℝ) + 3) * Real.log (Real.log (n₁ : ℝ)) + 1) := by gcongr
         _ ≤ 2 * ((R : ℝ) + 4) * (Real.log (Real.log (n₁ : ℝ)) + 1) := by
@@ -720,7 +720,7 @@ lemma lem_6_3_osc_bound
         8 * P * (δ / 2) ^ (-(R : ℤ) - 2) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 1)) := by
       have h1 : ((δ / 2) * Real.log (n₁ : ℝ)) ^ (R + 2) =
           (δ / 2) ^ (R + 2 : ℤ) * (Real.log (n₁ : ℝ)) ^ (R + 2 : ℕ) := by
-        rw [mul_pow]; congr 1; norm_cast
+        rw [mul_pow]; norm_cast
       have hpow_pos : 0 < ((δ / 2) * Real.log (n₁ : ℝ)) ^ (R + 2) := by positivity
       calc (4 * P * Real.log (2 * P)) / ((H : ℝ) + 1)
           ≤ (4 * P * (2 * Real.log (n₁ : ℝ))) / (((δ / 2) * Real.log (n₁ : ℝ)) ^ (R + 2)) := by gcongr
@@ -757,7 +757,7 @@ lemma lem_6_3_osc_bound
           ≤ ((n₁ : ℝ) / P) * (L₁ ^ 2 * (6 * C₂ * P * (δ ^ (-(R : ℤ) - 2) + 1) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)))) := h1
         _ ≤ ((n₁ : ℝ) / P) * ((4 * ((R : ℝ) + 4) ^ 2 * (Real.log (Real.log (n₁ : ℝ)) + 1) ^ 2) *
               (6 * C₂ * P * ((δ / 2) ^ (-(R : ℤ) - 2) + 1) / (Real.log (n₁ : ℝ)) ^ 5)) := by
-              have hd1 : δ ^ (-(R : ℤ) - 2) + 1 ≤ (δ / 2) ^ (-(R : ℤ) - 2) + 1 := add_le_add_right hd_cmp 1
+              have hd1 : δ ^ (-(R : ℤ) - 2) + 1 ≤ (δ / 2) ^ (-(R : ℤ) - 2) + 1 := add_le_add hd_cmp (le_refl 1)
               have h6 : 6 * C₂ * P * (δ ^ (-(R : ℤ) - 2) + 1) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) ≤
                   6 * C₂ * P * ((δ / 2) ^ (-(R : ℤ) - 2) + 1) / (Real.log (n₁ : ℝ)) ^ 5 := by
                 rw [div_eq_mul_one_div]
