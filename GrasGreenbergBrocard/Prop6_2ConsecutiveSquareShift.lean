@@ -609,23 +609,25 @@ theorem prop_6_2_part2_consecutive_equipartition :
           exact (Nat.coprime_primes hp.1.1.1 hq.1.1.1).mpr hpq
       have hpos_prod : 0 < ∏ p ∈ S_bad_gt, p := by
         apply Finset.prod_pos; intro p hp
-        simp only [S_bad_gt, S_bad, Finset.mem_filter] at hp; exact hp.1.1.1.pos
-      have hle_n1 : (∏ p ∈ S_bad_gt, p : ℝ) ≤ (n : ℝ) + 1 := by
+        simp only [S_bad_gt, S_bad, Finset.mem_filter] at hp; have := hp.1.2.1; omega
+      have hle_n1 : ((∏ p ∈ S_bad_gt, p : ℕ) : ℝ) ≤ (n : ℝ) + 1 := by
         exact_mod_cast Nat.le_of_dvd (by omega) hdvd_prod
-      have hlog_le := Real.log_le_log (by exact_mod_cast hpos_prod) hle_n1
+      have hlog_le := Real.log_le_log (show (0 : ℝ) < ↑(∏ p ∈ S_bad_gt, p) by exact_mod_cast hpos_prod) hle_n1
       rw [Nat.cast_prod, Real.log_prod] at hlog_le
       · exact hlog_le
-      · intro p hp; simp only [S_bad_gt, S_bad, Finset.mem_filter] at hp; exact_mod_cast hp.1.1.1.ne_zero
+      · intro p hp; simp only [S_bad_gt, S_bad, Finset.mem_filter] at hp; exact_mod_cast (by have := hp.1.2.1; omega : p ≠ 0)
     have hlog_n_pos : 0 < Real.log (n : ℝ) := by linarith
     have h1_ball : Real.log (Real.log (n : ℝ)) / Real.log (n : ℝ) < 1 / 200 := by
       have := hN₂ n (by omega)
-      rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at this; exact this
+      have hll_nn : 0 ≤ Real.log (Real.log (n : ℝ)) := Real.log_nonneg (by linarith)
+      rw [Real.dist_eq, sub_zero, abs_of_nonneg (div_nonneg hll_nn hlog_n_pos.le)] at this; exact this
     have h2_ball : 2 * Real.log ((n : ℝ) + 1) / (Real.log (n : ℝ)) ^ 2 < 1 / 40 := by
       have := hN₄ n (by omega)
-      rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at this; exact this
+      have hln1_nn : 0 ≤ Real.log ((n : ℝ) + 1) := Real.log_nonneg (by linarith)
+      rw [Real.dist_eq, sub_zero, abs_of_nonneg (div_nonneg (mul_nonneg (by norm_num) hln1_nn) (sq_nonneg _))] at this; exact this
     have h5_ball : 2 * (C_mert + 1) / Real.log (n : ℝ) < 1 / 200 := by
       have := hN₅ n (by omega)
-      rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at this; exact this
+      rw [Real.dist_eq, sub_zero, abs_of_nonneg (div_nonneg (by linarith [hC_mert_pos]) hlog_n_pos.le)] at this; exact this
     have hA : (n : ℝ) * (2 * (Real.log (Real.log (n : ℝ)) + C_mert + 1)) ≤ 0.025 * (n : ℝ) * Real.log (n : ℝ) := by
       have h1 : 2 * Real.log (Real.log (n : ℝ)) ≤ 0.01 * Real.log (n : ℝ) := by
         have := (div_lt_iff₀ hlog_n_pos).mp h1_ball; linarith
@@ -701,7 +703,8 @@ theorem prop_6_2_part3_square_shift_exclusions :
       omega
     have hm_gt : m₂ < t * m₁ := by
       have hsq_lt : m₂ ^ 2 < (t * m₁) ^ 2 := by omega
-      nlinarith
+      by_contra hle; push_neg at hle
+      exact absurd (Nat.mul_le_mul hle hle) (by simpa [sq] using hsq_lt.not_ge)
     have hdiff_mul : (t * m₁ - m₂) * (t * m₁ + m₂) = t ^ 2 - 1 := by
       have hm2z : ((t * m₁ : ℕ) : ℤ) ^ 2 = (m₂ : ℤ) ^ 2 + ((t ^ 2 : ℤ) - 1) := by
         zify [show 1 ≤ t ^ 2 by nlinarith] at hm2_rel; exact hm2_rel
@@ -718,10 +721,10 @@ theorem prop_6_2_part3_square_shift_exclusions :
     · have h2tm : 2 * (t * m₁ + m₂) ≤ t ^ 2 - 1 := by
         calc 2 * (t * m₁ + m₂) ≤ u * (t * m₁ + m₂) := Nat.mul_le_mul_right _ hu_ge2
           _ = t ^ 2 - 1 := hdiff_mul
-      have htm_lt : 2 * t * m₁ < t * t := by
+      have htm_lt : 2 * (t * m₁) < t * t := by
         have htsq_lt : t ^ 2 - 1 < t * t := by rw [← sq]; omega
         omega
-      have : 2 * m₁ < t := by nlinarith
+      have : 2 * m₁ < t := by nlinarith [htm_lt]
       omega
   · intro t ht ⟨m₁, m₂, hm₁, hm₂⟩
     by_cases ht2 : t = 2
@@ -763,7 +766,8 @@ theorem prop_6_2_part3_square_shift_exclusions :
       have htsq_gt1 : 1 ≤ t ^ 2 - 1 := by omega
       have hm_gt : m₂ < t * m₁ := by
         have hsq_lt : m₂ ^ 2 < (t * m₁) ^ 2 := by omega
-        nlinarith
+        by_contra hle; push_neg at hle
+        exact absurd (Nat.mul_le_mul hle hle) (by simpa [sq] using hsq_lt.not_ge)
       have hdiff_mul : (t * m₁ - m₂) * (t * m₁ + m₂) = t ^ 2 - 1 := by
         have hm2z : ((t * m₁ : ℕ) : ℤ) ^ 2 = (m₂ : ℤ) ^ 2 + ((t ^ 2 : ℤ) - 1) := by
           zify [show 1 ≤ t ^ 2 by nlinarith] at hm2_rel; exact hm2_rel
@@ -780,10 +784,10 @@ theorem prop_6_2_part3_square_shift_exclusions :
       · have h2tm : 2 * (t * m₁ + m₂) ≤ t ^ 2 - 1 := by
           calc 2 * (t * m₁ + m₂) ≤ u * (t * m₁ + m₂) := Nat.mul_le_mul_right _ hu_ge2
             _ = t ^ 2 - 1 := hdiff_mul
-        have htm_lt : 2 * t * m₁ < t * t := by
+        have htm_lt : 2 * (t * m₁) < t * t := by
           have htsq_lt : t ^ 2 - 1 < t * t := by rw [← sq]; omega
           omega
-        have : 2 * m₁ < t := by nlinarith
+        have : 2 * m₁ < t := by nlinarith [htm_lt]
         omega
   · intro j m₁ m₂ hj hm₁ hm₂ T hT
     set n₁ := j ^ 2
@@ -799,13 +803,14 @@ theorem prop_6_2_part3_square_shift_exclusions :
     -- Bound P ≤ n₂^(2j+1) = (j+1)^(4j+2)
     have hP_ub : P ≤ (j + 1) ^ (4 * j + 2) := by
       have hfac_eq : P * Nat.factorial n₁ = Nat.factorial n₂ := P_ratio_mul_factorial hlt
-      have hprod : Nat.factorial n₂ = Nat.factorial n₁ * ∏ i ∈ Finset.Ioc n₁ n₂, i := by
-        have hsub : n₁ ≤ n₂ := le_of_lt hlt
-        induction n₂, hsub using Nat.le_induction with
+      have hprod_aux : ∀ a b : ℕ, a ≤ b → Nat.factorial b = Nat.factorial a * ∏ i ∈ Finset.Ioc a b, i := by
+        intro a b hab_le
+        induction b, hab_le using Nat.le_induction with
         | base => simp
         | succ k hk ih =>
-          rw [Nat.factorial_succ, Finset.prod_Ioc_succ_top hk]
-          rw [ih]; ring
+          rw [Nat.factorial_succ, Finset.prod_Ioc_succ_top hk, ih]; ring
+      have hprod : Nat.factorial n₂ = Nat.factorial n₁ * ∏ i ∈ Finset.Ioc n₁ n₂, i :=
+        hprod_aux n₁ n₂ (le_of_lt hlt)
       have hP_eq_prod : P = ∏ i ∈ Finset.Ioc n₁ n₂, i := by
         have : P * Nat.factorial n₁ = (∏ i ∈ Finset.Ioc n₁ n₂, i) * Nat.factorial n₁ := by
           rw [hfac_eq, hprod]; ring
@@ -820,10 +825,10 @@ theorem prop_6_2_part3_square_shift_exclusions :
             rw [Nat.card_Ioc]; congr 1; dsimp [n₁, n₂]; ring_nf; omega
         _ = (j + 1) ^ (4 * j + 2) := by rw [← pow_mul]; ring_nf
     -- From eq. (6.4), bound (P m₁ - m₂ - (P-1)) ≥ (1/2) P √(n₁!) and ≤ 4 P √(n₁!)
-    have ha_le : a ≤ P := by nlinarith
-    have hb_le : b ≤ P := by nlinarith
-    have hc_le : c ≤ P := by nlinarith
-    have hd_le : d ≤ P := by nlinarith
+    have ha_le : a ≤ P := le_trans (Nat.le_mul_of_pos_right a hb) (hab ▸ Nat.sub_le P 1)
+    have hb_le : b ≤ P := le_trans (Nat.le_mul_of_pos_left b ha) (hab ▸ Nat.sub_le P 1)
+    have hc_le : c ≤ P := le_trans (Nat.le_mul_of_pos_right c hd) hcd.le
+    have hd_le : d ≤ P := le_trans (Nat.le_mul_of_pos_left d hc) hcd.le
     have hfac_ge : 362880 ≤ Nat.factorial n₁ := by
       calc 362880 = Nat.factorial 9 := by norm_num [Nat.factorial]
         _ ≤ Nat.factorial n₁ := Nat.factorial_le hn₁
