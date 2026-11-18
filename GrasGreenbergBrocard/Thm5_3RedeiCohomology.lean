@@ -342,32 +342,41 @@ theorem thm_5_3_part2_dual_quartic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factoria
         hq_pr.ne_one (Nat.dvd_one.mp (hcop_u.gcd_eq_one ▸ Nat.dvd_gcd h1 hqu2))
       have hv0 : padicValNat q u₁ = 0 := padicValNat.eq_zero_of_not_dvd hqu1_nd
       rw [padicValNat_sqPartNat hq_pr, ← hv_fac_4u, hv0, zero_add]
+  have h_prod_dvd_nat : ∀ (z : ℕ) (S : Finset ℕ) (f : ℕ → ℕ),
+      (∀ q ∈ S, q.Prime ∧ q ^ f q ∣ z) → (∏ q ∈ S, q ^ f q) ∣ z := by
+    intro z S f hS
+    induction S using Finset.induction_on with
+    | empty => simp
+    | @insert a s has ih =>
+      rw [Finset.prod_insert has]
+      have ha := hS a (Finset.mem_insert_self a s)
+      have hs := ih (fun q hq => hS q (Finset.mem_insert_of_mem hq))
+      have hcop : Nat.Coprime (a ^ f a) (∏ q ∈ s, q ^ f q) := by
+        apply Nat.Coprime.prod_right
+        intro q hq
+        have hq_pr := (hS q (Finset.mem_insert_of_mem hq)).1
+        exact ((Nat.coprime_primes ha.1 hq_pr).mpr (fun h => has (h ▸ hq))).pow _ _
+      exact hcop.mul_dvd ha.2 hs
   have hW1_dvd_z1 : W₁ ∣ z₁ := by
     unfold W₁ W_split
-    apply Finset.prod_dvd_of_coprime
-    · intro a ha b hb hab
-      have ha_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp ha).1).1).2.1
-      have hb_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hb).1).1).2.1
-      exact Nat.coprime_iff_isCoprime.mp (((Nat.coprime_primes ha_pr hb_pr).mpr hab).pow _ _)
-    · intro q hq
-      have hq_mem := Finset.mem_filter.mp hq
-      have hq_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp hq_mem.1).1).2.1
-      haveI : Fact q.Prime := ⟨hq_pr⟩
-      rw [← (h_val_z q hq_mem.1).1 hq_mem.2]
-      exact pow_padicValNat_dvd
+    apply h_prod_dvd_nat
+    intro q hq
+    have hq_mem := Finset.mem_filter.mp hq
+    have hq_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp hq_mem.1).1).2.1
+    haveI : Fact q.Prime := ⟨hq_pr⟩
+    refine ⟨hq_pr, ?_⟩
+    rw [← (h_val_z q hq_mem.1).1 hq_mem.2]
+    exact pow_padicValNat_dvd
   have hW2_dvd_z2 : W₂ ∣ z₂ := by
     unfold W₂ W_split
-    apply Finset.prod_dvd_of_coprime
-    · intro a ha b hb hab
-      have ha_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp ha).1).1).2.1
-      have hb_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hb).1).1).2.1
-      exact Nat.coprime_iff_isCoprime.mp (((Nat.coprime_primes ha_pr hb_pr).mpr hab).pow _ _)
-    · intro q hq
-      have hq_mem := Finset.mem_filter.mp hq
-      have hq_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp hq_mem.1).1).2.1
-      haveI : Fact q.Prime := ⟨hq_pr⟩
-      rw [← (h_val_z q hq_mem.1).2.1 hq_mem.2]
-      exact pow_padicValNat_dvd
+    apply h_prod_dvd_nat
+    intro q hq
+    have hq_mem := Finset.mem_filter.mp hq
+    have hq_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp hq_mem.1).1).2.1
+    haveI : Fact q.Prime := ⟨hq_pr⟩
+    refine ⟨hq_pr, ?_⟩
+    rw [← (h_val_z q hq_mem.1).2.1 hq_mem.2]
+    exact pow_padicValNat_dvd
   have hW1_sq_u1 : W₁ ^ 2 ∣ u₁ := h1_eq ▸ dvd_mul_of_dvd_right (pow_dvd_pow_of_dvd hW1_dvd_z1 2) _
   have hW2_sq_u2 : W₂ ^ 2 ∣ u₂ := h2_eq ▸ dvd_mul_of_dvd_right (pow_dvd_pow_of_dvd hW2_dvd_z2 2) _
   have hu1_eq : u₁ = Btilde₁ * W₁ ^ 2 := (Nat.div_mul_cancel hW1_sq_u1).symm
