@@ -184,7 +184,9 @@ lemma lem_6_3_osc_bound
     rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at h5
     have h10 : 10 ≤ (δ / 2) * Real.log (n₁ : ℝ) := by
       have := (div_lt_iff₀ hlog_n₁_pos).mp h5; linarith
-    exact Nat.le_floor (one_le_pow₀ (by linarith only [h10]))
+    have h1_pow : (1 : ℝ) ≤ ((δ / 2) * Real.log (n₁ : ℝ)) ^ (R + 2) :=
+      one_le_pow₀ (by linarith only [h10])
+    exact Nat.le_floor (by simpa using h1_pow)
   obtain ⟨c_tilde, b_tilde, h_supp, h_ctilde_b, h_btilde0, h_btilde_b, h_vaaler_pw, h_L1⟩ :=
     vaaler_parity_approx H hH_ge1
   -- Bound on each dyadic block I_k
@@ -394,8 +396,9 @@ lemma lem_6_3_osc_bound
             by_contra hge; rw [not_lt] at hge
             exact absurd (Nat.log_pos hp_pr.one_lt hge) (by rw [h0]; exact lt_irrefl 0)
           rw [Nat.div_eq_of_lt this]; exact Nat.zero_le _
-        · simpa [pow_one, Nat.succ_eq_add_one] using Finset.single_le_sum (f := fun i => n₁ / p ^ i) (fun _ _ => Nat.zero_le _)
-            (Finset.mem_Ico.mpr ⟨le_refl 1, Nat.succ_le_succ hpos⟩)
+        · have hs := Finset.single_le_sum (f := fun i => n₁ / p ^ i) (fun _ _ => Nat.zero_le _)
+            (Finset.mem_Ico.mpr ⟨le_refl 1, by omega⟩)
+          rwa [pow_one] at hs
       have hv_le2 : n₂ / p ≤ padicValNat p (Nat.factorial n₂) := by
         haveI : Fact p.Prime := ⟨hp_pr⟩
         have hleg := padicValNat_factorial (p := p) (n := n₂) (b := Nat.log p n₂ + 1) (Nat.lt_succ_self _)
@@ -405,8 +408,9 @@ lemma lem_6_3_osc_bound
             by_contra hge; rw [not_lt] at hge
             exact absurd (Nat.log_pos hp_pr.one_lt hge) (by rw [h0]; exact lt_irrefl 0)
           rw [Nat.div_eq_of_lt this]; exact Nat.zero_le _
-        · simpa [pow_one, Nat.succ_eq_add_one] using Finset.single_le_sum (f := fun i => n₂ / p ^ i) (fun _ _ => Nat.zero_le _)
-            (Finset.mem_Ico.mpr ⟨le_refl 1, Nat.succ_le_succ hpos⟩)
+        · have hs := Finset.single_le_sum (f := fun i => n₂ / p ^ i) (fun _ _ => Nat.zero_le _)
+            (Finset.mem_Ico.mpr ⟨le_refl 1, by omega⟩)
+          rwa [pow_one] at hs
       have hfl1 : Int.floor ((n₁ : ℝ) / (p : ℝ)) = ((n₁ / p : ℕ) : ℤ) := by
         rw [Int.floor_eq_iff]; constructor
         · rw [Int.cast_natCast, le_div_iff₀ (by exact_mod_cast hp_pr.pos)]

@@ -163,25 +163,29 @@ private lemma log_consecutive_equipartition_aux {n m₁ m₂ : ℕ}
     have hX2 : (2 * (a : ℤ) * c) * (X : ℤ) ^ 2 > 2 * (a : ℤ) * c := by linarith only [hXsq, hX_lb_z, h2ac]
     by_contra hle; rw [not_lt] at hle
     have hsq : (X : ℤ) ^ 2 ≤ 1 := by nlinarith only [show (X : ℤ) ≤ 1 by exact_mod_cast hle, show (0 : ℤ) ≤ X by positivity]
-    nlinarith only [hX2, hsq, show (0 : ℤ) < 2 * a * c by positivity]
+    have hmul := mul_le_mul_of_nonneg_left hsq (show (0 : ℤ) ≤ 2 * a * c by positivity)
+    linarith only [hX2, hmul]
   have hY1 : 1 < Y := by
     have h2ad : (a : ℤ) * d ≤ n * (n + 1) := mul_le_mul (by exact_mod_cast ha_le) (by exact_mod_cast hd_le) (by positivity) (by positivity)
     have hY2 : (2 * (a : ℤ) * d) * (Y : ℤ) ^ 2 > 2 * (a : ℤ) * d := by linarith only [hYsq, hX_lb_z, h2ad]
     by_contra hle; rw [not_lt] at hle
     have hsq : (Y : ℤ) ^ 2 ≤ 1 := by nlinarith only [show (Y : ℤ) ≤ 1 by exact_mod_cast hle, show (0 : ℤ) ≤ Y by positivity]
-    nlinarith only [hY2, hsq, show (0 : ℤ) < 2 * a * d by positivity]
+    have hmul := mul_le_mul_of_nonneg_left hsq (show (0 : ℤ) ≤ 2 * a * d by positivity)
+    linarith only [hY2, hmul]
   have hZ1 : 1 < Z := by
     have h2bd : (b : ℤ) * d ≤ n * (n + 1) := mul_le_mul (by exact_mod_cast hb_le) (by exact_mod_cast hd_le) (by positivity) (by positivity)
     have hZ2 : (2 * (b : ℤ) * d) * (Z : ℤ) ^ 2 > 2 * (b : ℤ) * d := by linarith only [hZsq, hX_lb_z, h2bd, hm2_nn]
     by_contra hle; rw [not_lt] at hle
     have hsq : (Z : ℤ) ^ 2 ≤ 1 := by nlinarith only [show (Z : ℤ) ≤ 1 by exact_mod_cast hle, show (0 : ℤ) ≤ Z by positivity]
-    nlinarith only [hZ2, hsq, show (0 : ℤ) < 2 * b * d by positivity]
+    have hmul := mul_le_mul_of_nonneg_left hsq (show (0 : ℤ) ≤ 2 * b * d by positivity)
+    linarith only [hZ2, hmul]
   have hW1 : 1 < W := by
     have h2bc : (b : ℤ) * c ≤ n * (n + 1) := mul_le_mul (by exact_mod_cast hb_le) (by exact_mod_cast hc_le) (by positivity) (by positivity)
     have hW2 : (2 * (b : ℤ) * c) * (W : ℤ) ^ 2 > 2 * (b : ℤ) * c := by linarith only [hWsq, hX_lb_z, h2bc, hm2_nn]
     by_contra hle; rw [not_lt] at hle
     have hsq : (W : ℤ) ^ 2 ≤ 1 := by nlinarith only [show (W : ℤ) ≤ 1 by exact_mod_cast hle, show (0 : ℤ) ≤ W by positivity]
-    nlinarith only [hW2, hsq, show (0 : ℤ) < 2 * b * c by positivity]
+    have hmul := mul_le_mul_of_nonneg_left hsq (show (0 : ℤ) ≤ 2 * b * c by positivity)
+    linarith only [hW2, hmul]
   refine ⟨hX1, hY1, hZ1, hW1, ?_⟩
   have hS_lb : (1 / 2 : ℝ) * ((n : ℝ) + 1) * Real.sqrt (Nat.factorial n : ℝ) ≤
       ((n : ℝ) + 1) * m₁ - m₂ - n := by
@@ -307,25 +311,33 @@ private lemma log_consecutive_equipartition_aux {n m₁ m₂ : ℕ}
   have hnr_nn : (0 : ℝ) ≤ n := Nat.cast_nonneg n
   rcases hT with rfl | rfl | rfl | rfl
   · refine hbound_generic X (2 * a * c) (by nlinarith only [ha, hc]) (by nlinarith only [ha_le, hc_le]) hX1 ?_ ?_
-    · have : ((2 * a * c : ℕ) : ℝ) * (X : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ - m₂ - n := by exact_mod_cast hXsq
-      linarith only [this, hS_lb]
-    · have : ((2 * a * c : ℕ) : ℝ) * (X : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ - m₂ - n := by exact_mod_cast hXsq
-      linarith only [this, hS_ub, hm2r_nn, hnr_nn]
+    · have h : ((2 * a * c : ℕ) : ℝ) * (X : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ - m₂ - n := by
+        have h' := congrArg (Int.cast (R := ℝ)) hXsq; push_cast at h' ⊢; linarith only [h']
+      linarith only [h, hS_lb]
+    · have h : ((2 * a * c : ℕ) : ℝ) * (X : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ - m₂ - n := by
+        have h' := congrArg (Int.cast (R := ℝ)) hXsq; push_cast at h' ⊢; linarith only [h']
+      linarith only [h, hS_ub, hm2r_nn, hnr_nn]
   · refine hbound_generic Y (2 * a * d) (by nlinarith only [ha, hd]) (by nlinarith only [ha_le, hd_le]) hY1 ?_ ?_
-    · have : ((2 * a * d : ℕ) : ℝ) * (Y : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ - m₂ + n := by exact_mod_cast hYsq
-      linarith only [this, hS_lb, hnr_nn]
-    · have : ((2 * a * d : ℕ) : ℝ) * (Y : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ - m₂ + n := by exact_mod_cast hYsq
-      linarith only [this, hS_ub, hm2r_nn]
+    · have h : ((2 * a * d : ℕ) : ℝ) * (Y : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ - m₂ + n := by
+        have h' := congrArg (Int.cast (R := ℝ)) hYsq; push_cast at h' ⊢; linarith only [h']
+      linarith only [h, hS_lb, hnr_nn]
+    · have h : ((2 * a * d : ℕ) : ℝ) * (Y : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ - m₂ + n := by
+        have h' := congrArg (Int.cast (R := ℝ)) hYsq; push_cast at h' ⊢; linarith only [h']
+      linarith only [h, hS_ub, hm2r_nn]
   · refine hbound_generic Z (2 * b * d) (by nlinarith only [hb, hd]) (by nlinarith only [hb_le, hd_le]) hZ1 ?_ ?_
-    · have : ((2 * b * d : ℕ) : ℝ) * (Z : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ + m₂ - n := by exact_mod_cast hZsq
-      linarith only [this, hS_lb, hm2r_nn]
-    · have : ((2 * b * d : ℕ) : ℝ) * (Z : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ + m₂ - n := by exact_mod_cast hZsq
-      linarith only [this, hS_ub, hnr_nn]
+    · have h : ((2 * b * d : ℕ) : ℝ) * (Z : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ + m₂ - n := by
+        have h' := congrArg (Int.cast (R := ℝ)) hZsq; push_cast at h' ⊢; linarith only [h']
+      linarith only [h, hS_lb, hm2r_nn]
+    · have h : ((2 * b * d : ℕ) : ℝ) * (Z : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ + m₂ - n := by
+        have h' := congrArg (Int.cast (R := ℝ)) hZsq; push_cast at h' ⊢; linarith only [h']
+      linarith only [h, hS_ub, hnr_nn]
   · refine hbound_generic W (2 * b * c) (by nlinarith only [hb, hc]) (by nlinarith only [hb_le, hc_le]) hW1 ?_ ?_
-    · have : ((2 * b * c : ℕ) : ℝ) * (W : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ + m₂ + n := by exact_mod_cast hWsq
-      linarith only [this, hS_lb, hm2r_nn, hnr_nn]
-    · have : ((2 * b * c : ℕ) : ℝ) * (W : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ + m₂ + n := by exact_mod_cast hWsq
-      linarith only [this, hS_ub]
+    · have h : ((2 * b * c : ℕ) : ℝ) * (W : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ + m₂ + n := by
+        have h' := congrArg (Int.cast (R := ℝ)) hWsq; push_cast at h' ⊢; linarith only [h']
+      linarith only [h, hS_lb, hm2r_nn, hnr_nn]
+    · have h : ((2 * b * c : ℕ) : ℝ) * (W : ℝ) ^ 2 = ((n : ℝ) + 1) * m₁ + m₂ + n := by
+        have h' := congrArg (Int.cast (R := ℝ)) hWsq; push_cast at h' ⊢; linarith only [h']
+      linarith only [h, hS_ub]
 
 private lemma k_eq_2_AB {n m X₁ Y₁ : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
     (hm : Nat.factorial n + 1 = m ^ 2) (hfund : IsFundamentalPell (q_n n) X₁ Y₁)
