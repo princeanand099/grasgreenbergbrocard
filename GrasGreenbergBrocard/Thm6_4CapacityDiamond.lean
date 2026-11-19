@@ -119,8 +119,8 @@ lemma theta_weight_eq_zero_of_k2 {n m X₁ Y₁ : ℕ} (hn : 4 ≤ n) (hn6 : n �
     apply Finset.prod_eq_one; intro p hp
     have hp1 := (Finset.mem_filter.mp hp).1
     have hp_pr := (Finset.mem_filter.mp hp1).2.1
-    have hp_odd : ¬ 2 ∣ padicValNat p (Nat.factorial n) := (Finset.mem_filter.mp hp1).2.2
-    have hp_dvd_B : p ∣ B_sol m := (Finset.mem_filter.mp hp).2.2
+    have hp_dvd_B : p ∣ B_sol m :=
+      dvd_trans (Finset.mem_filter.mp hp).2.2 (Nat.ordCompl_dvd ((m + 1) / 2) 2)
     have hp_dvd_X1 : p ∣ X₁ := by
       rw [hB_val] at hp_dvd_B
       exact hp_pr.dvd_of_dvd_pow hp_dvd_B
@@ -133,7 +133,7 @@ lemma theta_weight_eq_zero_of_k2 {n m X₁ Y₁ : ℕ} (hn : 4 ≤ n) (hn6 : n �
         have : X₁ ^ 2 = q_n n * Y₁ ^ 2 + 1 := hpell
         exact (Nat.dvd_add_right h2).mp (this ▸ h1)
       exact hp_pr.not_dvd_one h3
-    exact False.elim (hp_ndvd_q ((p_dvd_q_n_iff n p hp_pr).mpr hp_odd))
+    exact False.elim (hp_ndvd_q (Finset.dvd_prod_of_mem (fun q => q) hp1))
   unfold theta_weight
   rw [hB_eq1]; simp
 
