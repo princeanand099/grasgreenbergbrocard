@@ -516,9 +516,12 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
               have hsq : (1 / 4 : ℝ) < Real.log 2 * Real.log 2 := by nlinarith only [hlog2_gt_half]
               have hcoeff : 0 ≤ Real.log 2 * Real.log 2 - (1 / 10 : ℝ) * Real.log 2 - 3 / 200 := by
                 nlinarith only [hsq, hlog2_lt_34]
+              have hterm1 : 0 ≤ ε * (Real.log 2 * Real.log 2 - (1 / 10 : ℝ) * Real.log 2 - 3 / 200) :=
+                mul_nonneg hε0.le hcoeff
+              have hterm2 : 0 ≤ ε ^ 2 * ((1 / 20 : ℝ) * Real.log 2 + 1 / 1000) := by positivity
               have hsc : (Real.log 2 + ε / 20) * (1 / 4 - ε * Real.log 2) ≤
                   (1 / 4 - (1 / 10 : ℝ) * ε) * (Real.log 2 - ε / 100) := by
-                nlinarith only [hcoeff, hlog2_pos, hε0, hε1]
+                linarith only [hterm1, hterm2]
               exact mul_le_mul_of_nonneg_right hsc hn_pos.le
           _ ≤ Real.log (G.card_A2 : ℝ) := hlogA2_tight
       exact le_of_mul_le_mul_left (le_trans hmul_le h1_rank) hrank_pos

@@ -25,20 +25,9 @@ namespace GrasGreenbergBrocard
 private lemma padicValNat_factorial_ge_div {n p : ℕ} (hp : p.Prime) (hn : 1 ≤ n) :
     n / p ≤ padicValNat p (Nat.factorial n) := by
   haveI : Fact p.Prime := ⟨hp⟩
-  have hlog_lt : Nat.log p n < n + 1 := by
-    have hself : ∀ m : ℕ, m < p ^ m := by
-      intro m
-      induction m with
-      | zero => norm_num
-      | succ m ihm =>
-        calc m + 1 ≤ p ^ m + 1 := by omega
-          _ < p ^ m * p := by
-            have h1 : 1 ≤ p ^ m := Nat.one_le_pow m p hp.pos
-            have hp2 : 2 ≤ p := hp.two_le
-            nlinarith
-          _ = p ^ (m + 1) := (pow_succ p m).symm
-    exact Nat.log_lt_of_lt_pow (by omega)
-      (lt_trans (hself n) (Nat.pow_lt_pow_right hp.one_lt (Nat.lt_succ_self n)))
+  have hlog_lt : Nat.log p n < n + 1 :=
+    Nat.log_lt_of_lt_pow (by omega)
+      (lt_trans (Nat.lt_pow_self hp.one_lt) (Nat.pow_lt_pow_right hp.one_lt (Nat.lt_succ_self n)))
   rw [padicValNat_factorial hlog_lt]
   have h1_mem : 1 ∈ Finset.Ico 1 (n + 1) := Finset.mem_Ico.mpr ⟨le_rfl, by omega⟩
   simpa using Finset.single_le_sum (f := fun i => n / p ^ i) (fun _ _ => Nat.zero_le _) h1_mem
@@ -113,7 +102,7 @@ theorem prime_in_band_val_and_coprime_k {n p k : ℕ} (hn : 116 ≤ n) (hp : p.P
   have h3p : 3 * p ≤ n := by exact_mod_cast (by linarith : 3 * (p : ℝ) ≤ (n : ℝ))
   have hn5p : n < 5 * p := by exact_mod_cast (by linarith : (n : ℝ) < 5 * (p : ℝ))
   have hdiv_ge : 3 ≤ n / p := (Nat.le_div_iff_mul_le hp.pos).mpr h3p
-  have hdiv_lt : n / p < 5 := Nat.div_lt_of_lt_mul hn5p
+  have hdiv_lt : n / p < 5 := Nat.div_lt_of_lt_mul (by linarith : n < p * 5)
   have hval_or : padicValNat p (Nat.factorial n) = 3 ∨ padicValNat p (Nat.factorial n) = 4 := by
     rw [hv_div]; omega
   have hk_lt_p : k < p := by
@@ -126,7 +115,7 @@ theorem prime_in_band_val_and_coprime_k {n p k : ℕ} (hn : 116 ≤ n) (hp : p.P
         rw [Real.log_lt_iff_lt_exp (by norm_num)]
         have he1 : (2.718 : ℝ) < Real.exp 1 := by have := Real.exp_one_gt_d9; linarith
         have he3 : (2.718 : ℝ) ^ 3 < Real.exp 3 := by
-          rw [show (3 : ℝ) = ((3 : ℕ) : ℝ) by norm_num, Real.exp_nat_mul, mul_one]
+          rw [show (3 : ℝ) = ((3 : ℕ) : ℝ) * 1 by norm_num, Real.exp_nat_mul]
           exact pow_lt_pow_left₀ he1 (by norm_num) (by norm_num)
         norm_num at he3
         linarith
@@ -176,12 +165,13 @@ private lemma p_dvd_q_n_iff {n p : ℕ} (hp : p.Prime) (hpn : p ≤ n) :
         intro q hq
         have hq_pr : q.Prime := (Finset.mem_filter.mp hq).2.1
         exact (Nat.coprime_primes hp hq_pr).mpr (fun h => hnot (h ▸ hq))
-      exact hp.not_dvd_one (hcop.dvd_of_dvd_mul_left (dvd_mul_of_dvd_right hdvd 1))
-    exact (Finset.mem_filter.mp hmem).2.2
+      exact hp.not_dvd_one (hcop.dvd_of_dvd_mul_left (by simpa [mul_comm] using dvd_mul_of_dvd_right hdvd 1))
+    have hnd : ¬ 2 ∣ padicValNat p (Nat.factorial n) := (Finset.mem_filter.mp hmem).2.2
+    omega
   · intro hodd
     unfold q_n
     apply Finset.dvd_prod_of_mem
-    exact Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hpn⟩, hp, hodd⟩
+    exact Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hpn⟩, hp, by omega⟩
 
 /-- **Theorem 1.2(i) (Parity-Independent Non-p-Rationality and p-Ramified Iwasawa Rank, eq. 1.8)**:
 For any prime `p ∈ [5, n/2]` with `v_p(R̃_p(K_n)) = ⌊v_p(n!)/2⌋`,

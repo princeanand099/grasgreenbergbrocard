@@ -197,7 +197,8 @@ lemma dyadic_sum_counting {α C : ℝ} (hα : 0 < α) (hC : 0 < C)
     have hsub : ∑ k ∈ Finset.range (K + 1), ((2 : ℝ) ^ (-α)) ^ (K - k) =
         ∑ j ∈ Finset.range (K + 1), ((2 : ℝ) ^ (-α)) ^ j := by
       rw [← Finset.sum_range_reflect (fun j => ((2 : ℝ) ^ (-α)) ^ j) (K + 1)]
-      refine Finset.sum_congr rfl fun k _ => by congr 1; omega
+      refine Finset.sum_congr rfl fun k _ => ?_
+      simp [Nat.add_sub_cancel]
     rw [hsub, geom_sum_eq hr_lt.ne]
     rw [div_eq_mul_one_div (((2 ^ K : ℕ) : ℝ) ^ α)]
     have hle : (((2 : ℝ) ^ (-α)) ^ (K + 1) - 1) / ((2 : ℝ) ^ (-α) - 1) ≤ 1 / (1 - (2 : ℝ) ^ (-α)) := by
@@ -311,7 +312,7 @@ theorem thm_1_3_part2_brocard_6_7 :
       refine ⟨x.natAbs, ?_⟩
       have hsq : (x.natAbs : ℤ) ^ 2 = x ^ 2 := Int.natAbs_sq x
       have hmZ : ((Nat.factorial n + 1 : ℕ) : ℤ) = ((x.natAbs ^ 2 : ℕ) : ℤ) := by
-        push_cast; linarith
+        rw [Nat.cast_add, Nat.cast_one, Nat.cast_pow, hsq]; linarith
       exact_mod_cast hmZ
   rw [heq]
   exact hbd N hN
