@@ -17,7 +17,7 @@ consecutive-squares `(k_{j^2}, k_{(j+1)^2}) ≠ (2, 2)` exclusion from **Proposi
 open scoped BigOperators
 open Real Finset Filter
 
-set_option maxHeartbeats 2000000
+set_option maxHeartbeats 4000000
 
 namespace GrasGreenbergBrocard
 
@@ -381,7 +381,8 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
   rw [Real.dist_eq, sub_zero, abs_of_nonneg (Real.rpow_nonneg (Nat.cast_nonneg n₁) _)] at h_al
   have hh_lt_n1 : n₂ - n₁ < n₁ := by
     have h1 : (n₁ : ℝ) ^ α = (n₁ : ℝ) * (n₁ : ℝ) ^ (α - 1) := by
-      rw [show α = 1 + (α - 1) by ring, Real.rpow_add hn₁_pos, Real.rpow_one]
+      conv_lhs => rw [show α = 1 + (α - 1) by ring]
+      rw [Real.rpow_add hn₁_pos, Real.rpow_one]
     have h2 : (n₂ - n₁ : ℝ) < (1 / 4 : ℝ) * (n₁ : ℝ) := by
       calc (n₂ - n₁ : ℝ) ≤ (n₁ : ℝ) ^ α := h_gap
         _ = (n₁ : ℝ) * (n₁ : ℝ) ^ (α - 1) := h1
@@ -858,7 +859,8 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
     rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at h_il
     have hna_ub : (n_a : ℝ) ≤ (1 + min (ε / 256) (1 / 4)) * (n₁ : ℝ) := by
       have h1 : (n₁ : ℝ) ^ α = (n₁ : ℝ) * (n₁ : ℝ) ^ (α - 1) := by
-        rw [show α = 1 + (α - 1) by ring, Real.rpow_add hn₁_pos, Real.rpow_one]
+        conv_lhs => rw [show α = 1 + (α - 1) by ring]
+        rw [Real.rpow_add hn₁_pos, Real.rpow_one]
       have h_gap_le : (n₂ - n₁ : ℝ) ≤ min (ε / 256) (1 / 4) * (n₁ : ℝ) := by
         calc (n₂ - n₁ : ℝ) ≤ (n₁ : ℝ) ^ α := h_gap
           _ = (n₁ : ℝ) * (n₁ : ℝ) ^ (α - 1) := h1
@@ -1070,23 +1072,24 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         rwa [Real.log_pow] at h2
       have hlog2n : Real.log (2 * (n₁ : ℝ)) ≤ 2 * Real.log (n₁ : ℝ) := by
         rw [Real.log_mul (by norm_num) hn₁_pos.ne']
-        have : Real.log 2 ≤ Real.log (n₁ : ℝ) := Real.log_le_log (by norm_num) (by linarith)
+        have hn1_2 : (2 : ℝ) ≤ (n₁ : ℝ) := by exact_mod_cast (by omega : 2 ≤ n₁)
+        have : Real.log 2 ≤ Real.log (n₁ : ℝ) := Real.log_le_log (by norm_num) hn1_2
         linarith
       have h_gap_le : ((n₂ - n₁ : ℕ) : ℝ) ≤ (ε / 256) * (n₁ : ℝ) := by
         have h1' : (n₁ : ℝ) ^ α = (n₁ : ℝ) * (n₁ : ℝ) ^ (α - 1) := by
-          rw [show α = 1 + (α - 1) by ring, Real.rpow_add hn₁_pos, Real.rpow_one]
+          conv_lhs => rw [show α = 1 + (α - 1) by ring]
+          rw [Real.rpow_add hn₁_pos, Real.rpow_one]
         have hmin : min (ε / 256) (1 / 4) ≤ ε / 256 := min_le_left _ _
         calc ((n₂ - n₁ : ℕ) : ℝ) = (n₂ : ℝ) - (n₁ : ℝ) := Nat.cast_sub hlt.le
           _ ≤ (n₁ : ℝ) ^ α := h_gap
           _ = (n₁ : ℝ) * (n₁ : ℝ) ^ (α - 1) := h1'
-          _ ≤ (n₁ : ℝ) * min (ε / 256) (1 / 4) := by gcongr
+          _ ≤ (n₁ : ℝ) * min (ε / 256) (1 / 4) := mul_le_mul_of_nonneg_left h_al.le hn₁_pos.le
           _ ≤ (ε / 256) * (n₁ : ℝ) := by nlinarith
       have hlogP1 : Real.log (P_ratio n₁ n₂ : ℝ) ≤ ((ε / 256) * (n₁ : ℝ)) * (2 * Real.log (n₁ : ℝ)) := by
-        calc Real.log (P_ratio n₁ n₂ : ℝ)
-            ≤ ((n₂ - n₁ : ℕ) : ℝ) * Real.log (2 * (n₁ : ℝ)) := h1
-          _ ≤ ((ε / 256) * (n₁ : ℝ)) * (2 * Real.log (n₁ : ℝ)) := by
-              gcongr
-              exact Real.log_nonneg (by linarith : (1 : ℝ) ≤ 2 * (n₁ : ℝ))
+        have h2n1 : (1 : ℝ) ≤ 2 * (n₁ : ℝ) := by
+          have : (1 : ℝ) ≤ (n₁ : ℝ) := by exact_mod_cast (by omega : 1 ≤ n₁)
+          linarith
+        exact le_trans h1 (mul_le_mul h_gap_le hlog2n (Real.log_nonneg h2n1) (by positivity))
       calc 6 * Real.log (P_ratio n₁ n₂ : ℝ)
           ≤ 6 * (((ε / 256) * (n₁ : ℝ)) * (2 * Real.log (n₁ : ℝ))) := by gcongr
         _ = (3 * ε / 64) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by ring
@@ -1168,10 +1171,10 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
           ≤ Real.log ((Z_gcd m₁ m₂ * W_gcd m₁ m₂ : ℕ) : ℝ) := hZW_lb_e
         _ ≤ (n₁ : ℝ) * Real.log 2 + Real.log (M₂₁ : ℝ) + Real.log (M₂₂ : ℝ) + parityFlipWeight n₁ n₂ := h_log_ZW_22
         _ ≤ (ε / 16) * Lnl + (theta_weight n₁ m₁ + ε / 16) * Lnl + (theta_weight n₂ m₂ + ε / 16) * Lnl +
-            (α / 2 + δ + ε / 16) * Lnl := by gcongr
+            (α / 2 + δ + ε / 16) * Lnl := add_le_add (add_le_add (add_le_add hn1_log2_e hM21_e) hM22_e) hflip_ub_e
         _ = (theta_weight n₁ m₁ + theta_weight n₂ m₂ + α / 2 + δ + 4 * (ε / 16)) * Lnl := by ring
     have hcoeff := le_of_mul_le_mul_right hcomb hnlog_pos
-    linarith
+    linarith only [hcoeff, hδ_le, hε]
   have h2 : theta_weight n₁ m₁ + theta_weight n₂ m₂ ≤ (3 + α) / 2 + ε := by
     have hcomb : (1 / 2 - ε / 16) * Lnl ≤
         (2 - (theta_weight n₁ m₁ + theta_weight n₂ m₂) + α / 2 + δ + 4 * (ε / 16)) * Lnl := by
@@ -1179,10 +1182,10 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
           ≤ Real.log ((Z_gcd m₁ m₂ * W_gcd m₁ m₂ : ℕ) : ℝ) := hZW_lb_e
         _ ≤ (n₁ : ℝ) * Real.log 2 + Real.log (M₁₁ : ℝ) + Real.log (M₁₂ : ℝ) + parityFlipWeight n₁ n₂ := h_log_ZW_11
         _ ≤ (ε / 16) * Lnl + (1 - theta_weight n₁ m₁ + ε / 16) * Lnl + (1 - theta_weight n₂ m₂ + ε / 16) * Lnl +
-            (α / 2 + δ + ε / 16) * Lnl := by gcongr
+            (α / 2 + δ + ε / 16) * Lnl := add_le_add (add_le_add (add_le_add hn1_log2_e hM11_e) hM12_e) hflip_ub_e
         _ = (2 - (theta_weight n₁ m₁ + theta_weight n₂ m₂) + α / 2 + δ + 4 * (ε / 16)) * Lnl := by ring
     have hcoeff := le_of_mul_le_mul_right hcomb hnlog_pos
-    linarith
+    linarith only [hcoeff, hδ_le, hε]
   have h3b : theta_weight n₁ m₁ - theta_weight n₂ m₂ ≤ (1 + α) / 2 + ε := by
     have hcomb : (1 / 2 - ε / 16) * Lnl ≤
         (1 + (theta_weight n₂ m₂ - theta_weight n₁ m₁) + α / 2 + δ + 4 * (ε / 16)) * Lnl := by
@@ -1190,10 +1193,10 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
           ≤ Real.log ((X_gcd m₁ m₂ * Y_gcd m₁ m₂ : ℕ) : ℝ) := hXY_lb_e
         _ ≤ (n₁ : ℝ) * Real.log 2 + Real.log (M₁₁ : ℝ) + Real.log (M₂₂ : ℝ) + parityFlipWeight n₁ n₂ := h_log_XY_12
         _ ≤ (ε / 16) * Lnl + (1 - theta_weight n₁ m₁ + ε / 16) * Lnl + (theta_weight n₂ m₂ + ε / 16) * Lnl +
-            (α / 2 + δ + ε / 16) * Lnl := by gcongr
+            (α / 2 + δ + ε / 16) * Lnl := add_le_add (add_le_add (add_le_add hn1_log2_e hM11_e) hM22_e) hflip_ub_e
         _ = (1 + (theta_weight n₂ m₂ - theta_weight n₁ m₁) + α / 2 + δ + 4 * (ε / 16)) * Lnl := by ring
     have hcoeff := le_of_mul_le_mul_right hcomb hnlog_pos
-    linarith
+    linarith only [hcoeff, hδ_le, hε]
   have h3a : theta_weight n₂ m₂ - theta_weight n₁ m₁ ≤ (1 + α) / 2 + ε := by
     have hcomb : (1 / 2 - ε / 16) * Lnl ≤
         (1 + (theta_weight n₁ m₁ - theta_weight n₂ m₂) + α / 2 + δ + 4 * (ε / 16)) * Lnl := by
@@ -1201,10 +1204,10 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
           ≤ Real.log ((X_gcd m₁ m₂ * Y_gcd m₁ m₂ : ℕ) : ℝ) := hXY_lb_e
         _ ≤ (n₁ : ℝ) * Real.log 2 + Real.log (M₂₁ : ℝ) + Real.log (M₁₂ : ℝ) + parityFlipWeight n₁ n₂ := h_log_XY_21
         _ ≤ (ε / 16) * Lnl + (theta_weight n₁ m₁ + ε / 16) * Lnl + (1 - theta_weight n₂ m₂ + ε / 16) * Lnl +
-            (α / 2 + δ + ε / 16) * Lnl := by gcongr
+            (α / 2 + δ + ε / 16) * Lnl := add_le_add (add_le_add (add_le_add hn1_log2_e hM21_e) hM12_e) hflip_ub_e
         _ = (1 + (theta_weight n₁ m₁ - theta_weight n₂ m₂) + α / 2 + δ + 4 * (ε / 16)) * Lnl := by ring
     have hcoeff := le_of_mul_le_mul_right hcomb hnlog_pos
-    linarith
+    linarith only [hcoeff, hδ_le, hε]
   exact ⟨h1, h2, abs_le.mpr ⟨by linarith, h3b⟩⟩
 
 open Classical in
