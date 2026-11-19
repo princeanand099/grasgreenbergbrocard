@@ -11,7 +11,6 @@ the manuscript's own contributions, where Mathlib v4.35.0 does not yet provide a
    $p$-adic uniformization for the Frey curves $\mathcal{E}_n$ and $F_n^{(2)}$.
 2. Dirichlet's analytic class number formula (Davenport 2000, Ch. 6), Gauss's genus theory
    (Gauss 1801), and Tatuzawa's effective refinement of Siegel's theorem (Tatuzawa 1951).
-3. Prime Number Theorem asymptotic $\pi(x) = (1 + o(1)) x / \log x$ (Hadamard / de la Vallée Poussin 1896).
 -/
 
 open Real Filter
@@ -30,12 +29,12 @@ structure FreyCurveArithmeticData (n m X₁ Y₁ : ℕ) where
   conductor_E : ℕ
   conductor_E_eq : conductor_E = 2 ^ alpha_E * ∏ p ∈ (Finset.Icc 3 n).filter Nat.Prime, p
   ap_E : ℕ → ℤ
-  ap_E_eq : ∀ p : ℕ, p.Prime → 3 ≤ p → p ≤ n →
-    ap_E p = legendreSym p (-(m : ℤ))
+  ap_E_eq : ∀ p : ℕ, (hp : p.Prime) → 3 ≤ p → p ≤ n →
+    ap_E p = @legendreSym p ⟨hp⟩ (-(m : ℤ))
   alpha_F2 : ℕ
   alpha_F2_le : alpha_F2 ≤ 3
   conductor_F2 : ℕ
-  surj_mod_ell_F2 : ∀ ℓ : ℕ, ℓ.Prime → 5 ≤ ℓ → Prop
+  surj_mod_ell_F2 : ℕ → Prop
 
 /-- **Modularity & Mazur–Kenku–Serre–Tate Package** (Wiles 1995; Breuil–Conrad–Diamond–Taylor 2001;
 Mazur 1978; Kenku 1982; Serre 1972): For any Brocard solution $n! + 1 = m^2$ ($n \ge 8$), the
@@ -46,7 +45,7 @@ axiom frey_curve_modularity_and_galois {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     (hm : Nat.factorial n + 1 = m ^ 2) :
     ∃ D : FreyCurveArithmeticData n m X₁ Y₁,
       D.isModular_E ∧ D.isModular_F2 ∧
-      (∀ ℓ : ℕ, ℓ.Prime → 5 ≤ ℓ → D.surj_mod_ell_F2 ℓ ‹_› ‹_›)
+      (∀ ℓ : ℕ, ℓ.Prime → 5 ≤ ℓ → D.surj_mod_ell_F2 ℓ)
 
 /-- Fundamental discriminant $D_n \in \{q_n, 4 q_n\}$ of $K_n = \mathbb{Q}(\sqrt{q_n})$. -/
 def fundDisc (n : ℕ) : ℕ :=
@@ -94,11 +93,5 @@ axiom tatuzawa_effective_siegel (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 / 8) :
     ∃ D_star : ℕ, ∀ (n X₁ Y₁ : ℕ) (G : RealQuadClassGroupData n X₁ Y₁),
       8 ≤ n → fundDisc n ≠ D_star →
       (0.655 : ℝ) * ε * (fundDisc n : ℝ) ^ (-ε) < G.L1_val
-
-/-- **Prime Number Theorem** (Hadamard / de la Vallée Poussin 1896):
-$\pi(n) = (1 + o(1)) n / \log n$ as $n \to \infty$. -/
-axiom pnt_pi_asymptotic :
-    (fun n : ℕ => piPrime (n : ℝ) - (n : ℝ) / Real.log (n : ℝ)) =o[atTop]
-      (fun n : ℕ => (n : ℝ) / Real.log (n : ℝ))
 
 end GrasGreenbergBrocard

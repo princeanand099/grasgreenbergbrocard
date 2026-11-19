@@ -95,7 +95,12 @@ structure PadeEvaluationData (r E ν s D M a n₀ : ℕ) (x₀ : ℝ) where
   form_lower : (1 : ℝ) / (Z : ℝ) ≤ nonZeroFormVal
   /-- Cauchy/Leibniz derivative upper bound and factorial-root approximation bound:
       $1 / Z \le s \cdot x_0^E \cdot u U^D \cdot \rho + x_0^E \cdot w W^{-D}$. -/
-  u U w W ρ C_P : ℝ
+  u : ℝ
+  U : ℝ
+  w : ℝ
+  W : ℝ
+  ρ : ℝ
+  C_P : ℝ
   u_pos : 0 < u
   U_pos : 0 < U
   w_pos : 0 < w

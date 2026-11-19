@@ -68,7 +68,7 @@ theorem thm_8_1_part1_frey_E {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n) (hm : Nat.fact
       X * (X + εk) * (X + εk_inv) = X ^ 3 + (2 * (m : ℤ) : Zsqrtd (q_n n : ℤ)) * X ^ 2 + X) ∧
     (∃ D : FreyCurveArithmeticData n m X₁ Y₁,
       D.isModular_E ∧ D.conductor_E = 2 ^ D.alpha_E * ∏ p ∈ (Finset.Icc 3 n).filter Nat.Prime, p ∧
-      D.alpha_E ≤ 3 ∧ ∀ p : ℕ, p.Prime → 3 ≤ p → p ≤ n → D.ap_E p = legendreSym p (-(m : ℤ))) := by
+      D.alpha_E ≤ 3 ∧ ∀ p : ℕ, (hp : p.Prime) → 3 ≤ p → p ≤ n → D.ap_E p = @legendreSym p ⟨hp⟩ (-(m : ℤ))) := by
   have hm_z : (Nat.factorial n : ℤ) + 1 = (m : ℤ) ^ 2 := by exact_mod_cast hm
   have hc4 : freyE_c4 m = 16 * (4 * (Nat.factorial n : ℤ) + 1) := by
     unfold freyE_c4 freyE_b2 freyE_b4; linarith
@@ -140,7 +140,7 @@ theorem thm_8_1_part2_level2_cm_reduction {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     (∀ p : ℕ, p.Prime → n / 2 < p → p ≤ n →
       padicValNat p (2 ^ 12 * (q_n n) ^ 2 * Y₁ ^ 4) = 2 ∧ ¬ ((p : ℤ) ∣ freyF2_c4 X₁)) ∧
     (∃ D : FreyCurveArithmeticData n m X₁ Y₁,
-      D.isModular_F2 ∧ ∀ ℓ : ℕ, ℓ.Prime → 5 ≤ ℓ → D.surj_mod_ell_F2 ℓ ‹_› ‹_›) := by
+      D.isModular_F2 ∧ ∀ ℓ : ℕ, ℓ.Prime → 5 ≤ ℓ → D.surj_mod_ell_F2 ℓ) := by
   have hX1_pos : 0 < X₁ := by have := hfund.1; omega
   have hY1_pos : 0 < Y₁ := hfund.2.1
   have hpell_z : (X₁ : ℤ) ^ 2 - 1 = (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 := by linarith [hfund.2.2.1]
