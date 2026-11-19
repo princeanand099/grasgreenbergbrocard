@@ -1052,10 +1052,12 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         have hprod_eq : P_ratio n₁ n₂ = ∏ j ∈ Finset.Ioc n₁ n₂, j := by
           have hfac := P_ratio_mul_factorial hlt
           have hprod : Nat.factorial n₂ = Nat.factorial n₁ * ∏ j ∈ Finset.Ioc n₁ n₂, j := by
-            have hle : n₁ ≤ n₂ := le_of_lt hlt
-            induction n₂, hle using Nat.le_induction with
-            | base => simp
-            | succ k hk ih => rw [Nat.factorial_succ, Finset.prod_Ioc_succ_top hk, ih]; ring
+            have hgen : ∀ b, n₁ ≤ b → Nat.factorial b = Nat.factorial n₁ * ∏ j ∈ Finset.Ioc n₁ b, j := by
+              intro b hb
+              induction b, hb using Nat.le_induction with
+              | base => simp
+              | succ k hk ih => rw [Nat.factorial_succ, Finset.prod_Ioc_succ_top hk, ih]; ring
+            exact hgen n₂ hlt.le
           have : P_ratio n₁ n₂ * Nat.factorial n₁ = (∏ j ∈ Finset.Ioc n₁ n₂, j) * Nat.factorial n₁ := by
             rw [hfac, hprod]; ring
           exact mul_right_cancel₀ (Nat.factorial_pos n₁).ne' this
