@@ -31,10 +31,11 @@ private lemma padicValNat_factorial_ge_div {n p : ℕ} (hp : p.Prime) (hn : 1 �
       induction m with
       | zero => norm_num
       | succ m ihm =>
-        calc m + 1 ≤ p ^ m := ihm
+        calc m + 1 ≤ p ^ m + 1 := by omega
           _ < p ^ m * p := by
-            have h1 : p ^ m * 1 < p ^ m * p := Nat.mul_lt_mul_of_pos_left hp.one_lt (Nat.pow_pos hp.pos)
-            simpa using h1
+            have h1 : 1 ≤ p ^ m := Nat.one_le_pow m p hp.pos
+            have hp2 : 2 ≤ p := hp.two_le
+            nlinarith
           _ = p ^ (m + 1) := (pow_succ p m).symm
     exact Nat.log_lt_of_lt_pow (by omega)
       (lt_trans (hself n) (Nat.pow_lt_pow_right hp.one_lt (Nat.lt_succ_self n)))
@@ -111,8 +112,8 @@ theorem prime_in_band_val_and_coprime_k {n p k : ℕ} (hn : 116 ≤ n) (hp : p.P
     padicValNat_factorial_eq_div_of_lt_sq hp hp_sq_gt
   have h3p : 3 * p ≤ n := by exact_mod_cast (by linarith : 3 * (p : ℝ) ≤ (n : ℝ))
   have hn5p : n < 5 * p := by exact_mod_cast (by linarith : (n : ℝ) < 5 * (p : ℝ))
-  have hdiv_ge : 3 ≤ n / p := (Nat.le_div_iff_mul_le hp.pos).mpr (by linarith)
-  have hdiv_lt : n / p < 5 := Nat.div_lt_of_lt_mul (by linarith : n < p * 5)
+  have hdiv_ge : 3 ≤ n / p := (Nat.le_div_iff_mul_le hp.pos).mpr h3p
+  have hdiv_lt : n / p < 5 := Nat.div_lt_of_lt_mul hn5p
   have hval_or : padicValNat p (Nat.factorial n) = 3 ∨ padicValNat p (Nat.factorial n) = 4 := by
     rw [hv_div]; omega
   have hk_lt_p : k < p := by
@@ -125,7 +126,7 @@ theorem prime_in_band_val_and_coprime_k {n p k : ℕ} (hn : 116 ≤ n) (hp : p.P
         rw [Real.log_lt_iff_lt_exp (by norm_num)]
         have he1 : (2.718 : ℝ) < Real.exp 1 := by have := Real.exp_one_gt_d9; linarith
         have he3 : (2.718 : ℝ) ^ 3 < Real.exp 3 := by
-          rw [show (3 : ℝ) = ((3 : ℕ) : ℝ) * 1 by norm_num, Real.exp_nat_mul]
+          rw [show (3 : ℝ) = ((3 : ℕ) : ℝ) by norm_num, Real.exp_nat_mul, mul_one]
           exact pow_lt_pow_left₀ he1 (by norm_num) (by norm_num)
         norm_num at he3
         linarith
@@ -175,13 +176,12 @@ private lemma p_dvd_q_n_iff {n p : ℕ} (hp : p.Prime) (hpn : p ≤ n) :
         intro q hq
         have hq_pr : q.Prime := (Finset.mem_filter.mp hq).2.1
         exact (Nat.coprime_primes hp hq_pr).mpr (fun h => hnot (h ▸ hq))
-      exact hp.not_dvd_one (hcop ▸ Nat.dvd_gcd dvd_rfl hdvd)
-    have hndvd := (Finset.mem_filter.mp hmem).2.2
-    omega
+      exact hp.not_dvd_one (hcop.dvd_of_dvd_mul_left (dvd_mul_of_dvd_right hdvd 1))
+    exact (Finset.mem_filter.mp hmem).2.2
   · intro hodd
     unfold q_n
     apply Finset.dvd_prod_of_mem
-    exact Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hpn⟩, hp, by omega⟩
+    exact Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hpn⟩, hp, hodd⟩
 
 /-- **Theorem 1.2(i) (Parity-Independent Non-p-Rationality and p-Ramified Iwasawa Rank, eq. 1.8)**:
 For any prime `p ∈ [5, n/2]` with `v_p(R̃_p(K_n)) = ⌊v_p(n!)/2⌋`,
@@ -189,16 +189,18 @@ For any prime `p ∈ [5, n/2]` with `v_p(R̃_p(K_n)) = ⌊v_p(n!)/2⌋`,
 and for `p ∈ [5, n/3]` we have `v_p(#T_{K_n, p}) ≥ 1`, `K_n` is non-`p`-rational, and
 `λ_p^*(K_n) = λ_p(χ_{D_n}) ≥ 1`. -/
 theorem thm_1_2_part1_valuation_law {n p : ℕ} (hp : p.Prime) (hp5 : 5 ≤ p) (hp_half : p ≤ n / 2)
-    (inv : RealQuadIwasawaInvariants (q_n n) p)
-    (h_reg : inv.v_reg = padicValNat p (Nat.factorial n) / 2) :
+    (h_reg : (canonicalRealQuadIwasawa (q_n n) p).v_reg = padicValNat p (Nat.factorial n) / 2) :
+    let inv := canonicalRealQuadIwasawa (q_n n) p
     inv.v_Lp = padicValNat p inv.classNumber + (padicValNat p (Nat.factorial n) + 1) / 2 - 1 ∧
     inv.v_T = padicValNat p inv.classNumber + (padicValNat p (Nat.factorial n) + 1) / 2 - 1 ∧
     (p ≤ n / 3 →
       1 ≤ inv.v_T ∧ inv.is_p_rational = false ∧
       inv.lambda_star = inv.lambda_chi ∧ 1 ≤ inv.lambda_star) := by
+  dsimp only
+  set inv := canonicalRealQuadIwasawa (q_n n) p
   obtain ⟨hv2, _, _⟩ := val_s_n_ge_one_on_half hp hp5 hp_half
   have hreg_ge1 : 1 ≤ inv.v_reg := by omega
-  obtain ⟨h_unram, h_ram⟩ := leopoldt_coates_valuation_law inv hp hp5 hreg_ge1
+  obtain ⟨h_unram, h_ram⟩ := leopoldt_coates_valuation_law (q := q_n n) (p := p) hp hp5 hreg_ge1
   have hpn : p ≤ n := by omega
   have hp_dvd_q_iff := p_dvd_q_n_iff hp hpn
   have hLp_eq : inv.v_Lp = padicValNat p inv.classNumber + (padicValNat p (Nat.factorial n) + 1) / 2 - 1 := by
@@ -224,7 +226,7 @@ theorem thm_1_2_part1_valuation_law {n p : ℕ} (hp : p.Prime) (hp5 : 5 ≤ p) (
   refine ⟨hLp_eq, hT_eq, fun hp_third => ?_⟩
   have h3p : 3 * p ≤ n := by omega
   have hv3 : 3 ≤ padicValNat p (Nat.factorial n) :=
-    le_trans ((Nat.le_div_iff_mul_le hp.pos).mpr (by linarith)) (padicValNat_factorial_ge_div hp (by omega))
+    le_trans ((Nat.le_div_iff_mul_le hp.pos).mpr h3p) (padicValNat_factorial_ge_div hp (by omega))
   have hT_ge1 : 1 ≤ inv.v_T := by omega
   have h_not_prat : inv.is_p_rational = false := by
     by_contra htrue
@@ -232,7 +234,7 @@ theorem thm_1_2_part1_valuation_law {n p : ℕ} (hp : p.Prime) (hp5 : 5 ≤ p) (
       cases h : inv.is_p_rational <;> simp_all
     have h0 := inv.h_prat_iff.mp hbool
     omega
-  obtain ⟨hlam_eq, hlam_ge1⟩ := iwasawa_main_conjecture_free_rank inv hp hp5 hT_ge1
+  obtain ⟨hlam_eq, hlam_ge1⟩ := iwasawa_main_conjecture_free_rank (q := q_n n) (p := p) hp hp5 hT_ge1
   exact ⟨hT_ge1, h_not_prat, hlam_eq, hlam_ge1⟩
 
 /-- **Theorem 1.2(ii) (Unramified Iwasawa Module at Split Primes)**:
@@ -241,18 +243,20 @@ For every split prime `p ∈ Peven(n) ∩ [5, n/4]` with `v_p(R̃_p(K_n)) = v_p(
 `λ_p(K_n) + ν_p(K_n) ≥ v_p(n!)/2 - 1 ≥ 1`, and `n_0^{(r)} > r + 1 → λ_p(K_n) ≥ 1`. -/
 theorem thm_1_2_part2_split_primes {n p : ℕ} (hp : p.Prime) (hp5 : 5 ≤ p) (hp_quarter : p ≤ n / 4)
     (hp_even : p ∈ Peven n)
-    (inv : RealQuadIwasawaInvariants (q_n n) p)
-    (h_splits : inv.splits = true)
-    (h_reg : inv.v_reg = padicValNat p (Nat.factorial n) / 2) :
+    (h_splits : (canonicalRealQuadIwasawa (q_n n) p).splits = true)
+    (h_reg : (canonicalRealQuadIwasawa (q_n n) p).v_reg = padicValNat p (Nat.factorial n) / 2) :
+    let inv := canonicalRealQuadIwasawa (q_n n) p
     2 ≤ inv.v_reg ∧
     (∀ m : ℕ, padicValNat p (Nat.factorial n) / 2 - 1 ≤ m →
       inv.v_X_Gamma = inv.v_T ∧ inv.v_A_m_Gamma m = inv.v_T) ∧
     1 ≤ inv.lambda_p + inv.nu_p ∧
     inv.X_trivial = false ∧
     ((∀ r : ℕ, r + 1 < inv.n0_r r) → 1 ≤ inv.lambda_p) := by
+  dsimp only
+  set inv := canonicalRealQuadIwasawa (q_n n) p
   have h4p : 4 * p ≤ n := by omega
   have hv4 : 4 ≤ padicValNat p (Nat.factorial n) :=
-    le_trans ((Nat.le_div_iff_mul_le hp.pos).mpr (by linarith)) (padicValNat_factorial_ge_div hp (by omega))
+    le_trans ((Nat.le_div_iff_mul_le hp.pos).mpr h4p) (padicValNat_factorial_ge_div hp (by omega))
   have hreg_ge2 : 2 ≤ inv.v_reg := by omega
   have hp_ndvd_q : ¬ p ∣ q_n n := by
     have hev : padicValNat p (Nat.factorial n) % 2 = 0 := by
@@ -262,7 +266,7 @@ theorem thm_1_2_part2_split_primes {n p : ℕ} (hp : p.Prime) (hp5 : 5 ≤ p) (h
     have hodd := (p_dvd_q_n_iff hp (by omega)).mp hdvd
     omega
   obtain ⟨h_eqs, h_lam_nu, h_taya⟩ :=
-    ozaki_taya_split_prime_iwasawa inv hp hp5 hp_ndvd_q h_splits hreg_ge2
+    ozaki_taya_split_prime_iwasawa (q := q_n n) (p := p) hp hp5 hp_ndvd_q h_splits hreg_ge2
   have h_lam_nu_ge1 : 1 ≤ inv.lambda_p + inv.nu_p := by omega
   have h_X_not_triv : inv.X_trivial = false := by
     by_contra htrue
@@ -279,12 +283,13 @@ If for a solution `(n, m)` with `n ≥ 116`, any of (a) `K_n` is `p`-rational at
 (c) `λ_p(K_n) = 0` and `n_0^{(r)} > r + 1` at some split `p ∈ Peven(n) ∩ [5, n/4]`,
 then we obtain a contradiction. -/
 theorem thm_1_2_part3_conditional_finiteness {n p : ℕ} (hn : 116 ≤ n) (hp : p.Prime)
-    (inv : RealQuadIwasawaInvariants (q_n n) p)
-    (h_reg : inv.v_reg = padicValNat p (Nat.factorial n) / 2) :
+    (h_reg : (canonicalRealQuadIwasawa (q_n n) p).v_reg = padicValNat p (Nat.factorial n) / 2) :
+    let inv := canonicalRealQuadIwasawa (q_n n) p
     ((n : ℝ) / 5 < (p : ℝ) → (p : ℝ) ≤ (n : ℝ) / 3 → inv.is_p_rational = true → False) ∧
     (5 ≤ p → p ≤ n / 4 → p ∈ Peven n → inv.splits = true → inv.X_trivial = true → False) ∧
     (5 ≤ p → p ≤ n / 4 → p ∈ Peven n → inv.splits = true →
       inv.lambda_p = 0 → (∀ r : ℕ, r + 1 < inv.n0_r r) → False) := by
+  dsimp only
   refine ⟨?_, ?_, ?_⟩
   · intro hlo hhi hprat
     have hp_gt23 : (23 : ℝ) < (p : ℝ) := by
@@ -297,17 +302,17 @@ theorem thm_1_2_part3_conditional_finiteness {n p : ℕ} (hn : 116 ≤ n) (hp : 
       linarith
     have hp_third : p ≤ n / 3 := by
       have h3p : 3 * p ≤ n := by exact_mod_cast (by linarith : 3 * (p : ℝ) ≤ (n : ℝ))
-      exact (Nat.le_div_iff_mul_le (by norm_num)).mpr (by linarith)
+      exact (Nat.le_div_iff_mul_le (by norm_num)).mpr h3p
     have hp_half : p ≤ n / 2 := by omega
-    have h_false := (thm_1_2_part1_valuation_law hp hp5 hp_half inv h_reg).2.2 hp_third
+    have h_false := (thm_1_2_part1_valuation_law hp hp5 hp_half h_reg).2.2 hp_third
     rw [h_false.2.1] at hprat
     contradiction
   · intro hp5 hp_q hp_ev h_spl h_triv
-    have h_res := thm_1_2_part2_split_primes hp hp5 hp_q hp_ev inv h_spl h_reg
+    have h_res := thm_1_2_part2_split_primes hp hp5 hp_q hp_ev h_spl h_reg
     rw [h_res.2.2.2.1] at h_triv
     contradiction
   · intro hp5 hp_q hp_ev h_spl h_lam0 h_n0
-    have h_res := thm_1_2_part2_split_primes hp hp5 hp_q hp_ev inv h_spl h_reg
+    have h_res := thm_1_2_part2_split_primes hp hp5 hp_q hp_ev h_spl h_reg
     have h1 := h_res.2.2.2.2 h_n0
     omega
 

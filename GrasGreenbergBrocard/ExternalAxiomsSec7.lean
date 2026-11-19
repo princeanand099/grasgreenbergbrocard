@@ -76,10 +76,12 @@ structure SupportWronskianData (m r D O M : ℕ) (S : Finset (Fin (m + 1))) (H :
 /-- **Siegel (1949), Ch. 2, Lemma 4 & Bui–Pratt–Zaharescu (2023), Lemmas 5.4, 5.6, 6.3**:
 Given $\mathbb{C}(x)$-linearly independent algebraic functions $f_0, \dots, f_m$ and non-zero
 integer polynomials $P_i$ ($i \in S$, $s = |S| \ge 2$) of degree $\le D$ and height $\le H$
-whose linear form vanishes to order $\ge O$ at $x = 0$, the support-reduced differential
+whose linear form vanishes to order $\ge O$ at $x = 0$ (necessarily satisfying
+$O - (s - 1) \le s D + \binom{s}{2} M$), the support-reduced differential
 Wronskian $\Delta_S(x) \in \mathbb{Z}[x]$ exists and satisfies all bounds in `SupportWronskianData`. -/
 axiom siegel_bpz_support_wronskian {m r D O M : ℕ} {S : Finset (Fin (m + 1))} {H : ℝ}
-    (hr : 2 ≤ r) (hM : 1 ≤ M) (hS : 2 ≤ S.card) (hH : 1 ≤ H) :
+    (hr : 2 ≤ r) (hM : 1 ≤ M) (hS : 2 ≤ S.card) (hH : 1 ≤ H)
+    (hO : O - (S.card - 1) ≤ S.card * D + Nat.choose S.card 2 * M) :
     Nonempty (SupportWronskianData m r D O M S H)
 
 /-- Evaluated Padé–Wronskian Diophantine approximation data at a cluster base point $n_0$
@@ -95,12 +97,7 @@ structure PadeEvaluationData (r E ν s D M a n₀ : ℕ) (x₀ : ℝ) where
   form_lower : (1 : ℝ) / (Z : ℝ) ≤ nonZeroFormVal
   /-- Cauchy/Leibniz derivative upper bound and factorial-root approximation bound:
       $1 / Z \le s \cdot x_0^E \cdot u U^D \cdot \rho + x_0^E \cdot w W^{-D}$. -/
-  u : ℝ
-  U : ℝ
-  w : ℝ
-  W : ℝ
-  ρ : ℝ
-  C_P : ℝ
+  u U w W ρ C_P : ℝ
   u_pos : 0 < u
   U_pos : 0 < U
   w_pos : 0 < w
@@ -116,6 +113,21 @@ the Padé–Wronskian inequality $\theta < \min(\theta_{d,E,\nu}(\varepsilon_0),
 clusters of $d + 1$ solutions in $[N, 2N]$ with gap $\le N^\theta$ from exceeding the Pigeonhole
 multiplicity threshold, yielding at most $O_{P, s_{\mathrm{mult}}, \varepsilon}(N^{1 - \theta + \varepsilon})$
 solutions in $[N, 2N]$ for all sufficiently large $N$. -/
+/-- Solution predicate for a polynomial-factorial equation $s_{\mathrm{mult}} \cdot n! = P(x)$. -/
+def IsPolyFactSol (s_mult : ℕ) (P : ℤ[X]) (n : ℕ) : Prop :=
+  ∃ x : ℤ, (s_mult : ℤ) * (Nat.factorial n : ℤ) = P.eval x
+
+/-- A polynomial $P \in \mathbb{Z}[X]$ of degree $r \ge 2$ has depressed degree gap $\nu$
+($2 \le \nu \le r$) if its depressed polynomial $P_{\mathrm{dep}}(y) = y^r + \sum_{j=0}^{r-\nu} b_j y^j$
+satisfies $r^r a_r^{r-1} P(x) = P_{\mathrm{dep}}(r a_r x + a_{r-1})$ for all $x \in \mathbb{Z}$. -/
+def HasDepressedDegreeGap (P : ℤ[X]) (ν : ℕ) : Prop :=
+  2 ≤ P.natDegree ∧ 2 ≤ ν ∧ ν ≤ P.natDegree ∧ P.leadingCoeff ≠ 0 ∧
+  ∃ P_dep : ℤ[X], P_dep.Monic ∧ P_dep.natDegree = P.natDegree ∧
+    (∀ j : ℕ, P.natDegree - ν < j → j < P.natDegree → P_dep.coeff j = 0) ∧
+    ∀ x : ℤ,
+      (P.natDegree : ℤ) ^ P.natDegree * P.leadingCoeff ^ (P.natDegree - 1) * P.eval x =
+        P_dep.eval ((P.natDegree : ℤ) * P.leadingCoeff * x + P.coeff (P.natDegree - 1))
+
 axiom bpz_dyadic_cluster_elimination (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
     (hP : 2 ≤ P_deg) (hν : 2 ≤ ν) (hd : 1 ≤ d) (hE : 1 ≤ E)
     (hE_le : E ≤ min (P_deg - 1) (ν - 1))
@@ -127,8 +139,11 @@ axiom bpz_dyadic_cluster_elimination (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
       ε₀ * (((ν : ℝ) - (E : ℝ)) * (((Nat.choose (d + E) d - 1 : ℕ) : ℝ) - ε₀) - (E : ℝ)) /
         ((((Nat.choose (d + E) d - 1 : ℕ) : ℝ) + 1 - ε₀) *
           ((ν : ℝ) * ((Nat.choose (d + E) d - 1 : ℕ) : ℝ) - (E : ℝ) * ε₀)))
-    (isSol : ℕ → Prop) [DecidablePred isSol] :
+    (s_mult : ℕ) (hs_mult : 1 ≤ s_mult) (P : ℤ[X])
+    (hP_deg : P.natDegree = P_deg) (hP_gap : HasDepressedDegreeGap P ν)
+    [DecidablePred (IsPolyFactSol s_mult P)] :
     ∀ δ : ℝ, 0 < δ → ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
-      (((Finset.Icc N (2 * N)).filter isSol).card : ℝ) ≤ C * (N : ℝ) ^ (1 - θ + δ)
+      (((Finset.Icc N (2 * N)).filter (IsPolyFactSol s_mult P)).card : ℝ) ≤
+        C * (N : ℝ) ^ (1 - θ + δ)
 
 end GrasGreenbergBrocard

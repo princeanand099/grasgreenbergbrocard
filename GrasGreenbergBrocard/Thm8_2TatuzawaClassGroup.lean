@@ -135,18 +135,18 @@ such that:
    $\exp(\mathcal{A}_2(q_n)) \ge n^{\frac{1}{4} - \varepsilon}$. -/
 theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 / 8) :
     ∃ n_star : ℕ, ∃ N₀ : ℕ, 8 ≤ N₀ ∧
-      (∀ (n m k X₁ Y₁ : ℕ) (G : RealQuadClassGroupData n X₁ Y₁),
-        8 ≤ n → n ≠ n_star →
+      (∀ (n m k X₁ Y₁ : ℕ) (hn : 8 ≤ n), n ≠ n_star →
         Nat.factorial n + 1 = m ^ 2 → 1 ≤ k →
-        IsFundamentalPell (q_n n) X₁ Y₁ →
+        ∀ (hfund : IsFundamentalPell (q_n n) X₁ Y₁),
         (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ k →
+        let G := canonicalRealQuadClassGroup hn hfund
         (0.655 : ℝ) * ε * (k : ℝ) * (q_n n : ℝ) ^ (1 / 2 - ε) /
           ((n : ℝ) * Real.log (n : ℝ) * (2 : ℝ) ^ (piPrime (n : ℝ))) < hNonGen n X₁ Y₁ G) ∧
-      (∀ (n m k X₁ Y₁ : ℕ) (G : RealQuadClassGroupData n X₁ Y₁),
-        N₀ ≤ n → n ≠ n_star →
+      (∀ (n m k X₁ Y₁ : ℕ) (hn : N₀ ≤ n) (hn8 : 8 ≤ n), n ≠ n_star →
         Nat.factorial n + 1 = m ^ 2 → 1 ≤ k →
-        IsFundamentalPell (q_n n) X₁ Y₁ →
+        ∀ (hfund : IsFundamentalPell (q_n n) X₁ Y₁),
         (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ k →
+        let G := canonicalRealQuadClassGroup hn8 hfund
         (q_n n : ℝ) ^ (1 / 2 - 2 * ε) ≤ hNonGen n X₁ Y₁ G ∧
         ((q_n n : ℝ) ^ (1 / 4 - ε) ≤ (G.card_Cl_odd : ℝ) ∨
           ((2 : ℝ) ^ ((Real.log 2 / 4 - ε) * (n : ℝ)) ≤ (G.card_A2 : ℝ) ∧
@@ -171,16 +171,18 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
     · exact q_n_ne_of_solutions (by omega) hlt hm (hns_eq ▸ hm') hq_eq
     · exact q_n_ne_of_solutions (by omega) hgt (hns_eq ▸ hm') hm hq_eq.symm
   -- Helper: eq. (8.4) for any n ≥ 8, n ≠ n_star
-  have h84 : ∀ (n m k X₁ Y₁ : ℕ) (G : RealQuadClassGroupData n X₁ Y₁),
-      8 ≤ n → n ≠ n_star →
+  have h84 : ∀ (n m k X₁ Y₁ : ℕ) (hn : 8 ≤ n), n ≠ n_star →
       Nat.factorial n + 1 = m ^ 2 → 1 ≤ k →
-      IsFundamentalPell (q_n n) X₁ Y₁ →
+      ∀ (hfund : IsFundamentalPell (q_n n) X₁ Y₁),
       (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ k →
+      let G := canonicalRealQuadClassGroup hn hfund
       (0.655 : ℝ) * ε * (k : ℝ) * (q_n n : ℝ) ^ (1 / 2 - ε) /
         ((n : ℝ) * Real.log (n : ℝ) * (2 : ℝ) ^ (piPrime (n : ℝ))) < hNonGen n X₁ Y₁ G := by
-    intro n m k X₁ Y₁ G hn hne hm hk hfund hpow
+    intro n m k X₁ Y₁ hn hne hm hk hfund hpow
+    dsimp only
+    set G := canonicalRealQuadClassGroup hn hfund
     have hD_ne := hn_star_uniq n m hn hne hm
-    have hL1 := hTat n X₁ Y₁ G hn hD_ne
+    have hL1 : (0.655 : ℝ) * ε * (fundDisc n : ℝ) ^ (-ε) < G.L1_val := hTat n X₁ Y₁ hn hfund hD_ne
     have hq_pos : (0 : ℝ) < (q_n n : ℝ) := by
       exact_mod_cast (show 0 < q_n n by unfold q_n; exact Finset.prod_pos (fun p hp => (Finset.mem_filter.mp hp).2.1.pos))
     have hD_pos : (0 : ℝ) < (fundDisc n : ℝ) := by
@@ -304,8 +306,12 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
   obtain ⟨N_ld, hN_ld⟩ := Filter.eventually_atTop.mp (h_log_div_n.eventually (Metric.ball_mem_nhds 0 (show (0 : ℝ) < ε / 100 by positivity)))
   let N₀ := max (max (max N_q (Nat.ceil N_pi)) (max N_podd N_lg)) (max N_ld 1000)
   refine ⟨n_star, N₀, by omega, h84, ?_⟩
-  intro n m k X₁ Y₁ G hn hne hm hk hfund hpow
-  have h84_n := h84 n m k X₁ Y₁ G (by omega) hne hm hk hfund hpow
+  intro n m k X₁ Y₁ hn hn8 hne hm hk hfund hpow
+  dsimp only
+  set G := canonicalRealQuadClassGroup hn8 hfund
+  have h84_n : (0.655 : ℝ) * ε * (k : ℝ) * (q_n n : ℝ) ^ (1 / 2 - ε) /
+      ((n : ℝ) * Real.log (n : ℝ) * (2 : ℝ) ^ (piPrime (n : ℝ))) < hNonGen n X₁ Y₁ G :=
+    h84 n m k X₁ Y₁ hn8 hne hm hk hfund hpow
   have hlogn_pos : 0 < Real.log (n : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n))
   have hn_pos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast (by omega : 0 < n)
   have hq_pos : (0 : ℝ) < (q_n n : ℝ) := by
@@ -510,12 +516,9 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
               have hsq : (1 / 4 : ℝ) < Real.log 2 * Real.log 2 := by nlinarith only [hlog2_gt_half]
               have hcoeff : 0 ≤ Real.log 2 * Real.log 2 - (1 / 10 : ℝ) * Real.log 2 - 3 / 200 := by
                 nlinarith only [hsq, hlog2_lt_34]
-              have hεc_pos : 0 ≤ ε * (Real.log 2 * Real.log 2 - (1 / 10 : ℝ) * Real.log 2 - 3 / 200) :=
-                mul_nonneg hε0.le hcoeff
-              have hε2_pos : 0 ≤ ε ^ 2 * ((1 / 20 : ℝ) * Real.log 2 + 1 / 1000) := by positivity
               have hsc : (Real.log 2 + ε / 20) * (1 / 4 - ε * Real.log 2) ≤
                   (1 / 4 - (1 / 10 : ℝ) * ε) * (Real.log 2 - ε / 100) := by
-                linarith only [hεc_pos, hε2_pos]
+                nlinarith only [hcoeff, hlog2_pos, hε0, hε1]
               exact mul_le_mul_of_nonneg_right hsc hn_pos.le
           _ ≤ Real.log (G.card_A2 : ℝ) := hlogA2_tight
       exact le_of_mul_le_mul_left (le_trans hmul_le h1_rank) hrank_pos

@@ -29,12 +29,12 @@ structure FreyCurveArithmeticData (n m X₁ Y₁ : ℕ) where
   conductor_E : ℕ
   conductor_E_eq : conductor_E = 2 ^ alpha_E * ∏ p ∈ (Finset.Icc 3 n).filter Nat.Prime, p
   ap_E : ℕ → ℤ
-  ap_E_eq : ∀ p : ℕ, (hp : p.Prime) → 3 ≤ p → p ≤ n →
-    ap_E p = @legendreSym p ⟨hp⟩ (-(m : ℤ))
+  ap_E_eq : ∀ p : ℕ, p.Prime → 3 ≤ p → p ≤ n →
+    ap_E p = legendreSym p (-(m : ℤ))
   alpha_F2 : ℕ
   alpha_F2_le : alpha_F2 ≤ 3
   conductor_F2 : ℕ
-  surj_mod_ell_F2 : ℕ → Prop
+  surj_mod_ell_F2 : ∀ ℓ : ℕ, ℓ.Prime → 5 ≤ ℓ → Prop
 
 /-- **Modularity & Mazur–Kenku–Serre–Tate Package** (Wiles 1995; Breuil–Conrad–Diamond–Taylor 2001;
 Mazur 1978; Kenku 1982; Serre 1972): For any Brocard solution $n! + 1 = m^2$ ($n \ge 8$), the
@@ -45,7 +45,7 @@ axiom frey_curve_modularity_and_galois {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     (hm : Nat.factorial n + 1 = m ^ 2) :
     ∃ D : FreyCurveArithmeticData n m X₁ Y₁,
       D.isModular_E ∧ D.isModular_F2 ∧
-      (∀ ℓ : ℕ, ℓ.Prime → 5 ≤ ℓ → D.surj_mod_ell_F2 ℓ)
+      (∀ ℓ : ℕ, ℓ.Prime → 5 ≤ ℓ → D.surj_mod_ell_F2 ℓ ‹_› ‹_›)
 
 /-- Fundamental discriminant $D_n \in \{q_n, 4 q_n\}$ of $K_n = \mathbb{Q}(\sqrt{q_n})$. -/
 def fundDisc (n : ℕ) : ℕ :=
@@ -78,20 +78,23 @@ structure RealQuadClassGroupData (n X₁ Y₁ : ℕ) where
   card_A2_le_exp_pow_rank : card_A2 ≤ exp_A2 ^ rank2_A2
 
 /-- **Dirichlet Class Number Formula & Gauss Genus Theory** (Davenport 2000, Ch. 6; Gauss 1801):
-Every real quadratic field $K_n = \mathbb{Q}(\sqrt{q_n})$ ($n \ge 8$, $N(\varepsilon_n) = +1$)
-admits `RealQuadClassGroupData`. -/
-axiom dirichlet_cnf_and_gauss_genus {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
+Canonical real quadratic class group and regulator data of $K_n = \mathbb{Q}(\sqrt{q_n})$
+($n \ge 8$, $N(\varepsilon_n) = +1$). Scoping Tatuzawa's lower bound strictly to this canonical
+object (rather than quantifying universally over arbitrary unconstrained records) prevents
+inconsistency from adversarial dummy instances. -/
+axiom canonicalRealQuadClassGroup {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     (hfund : IsFundamentalPell (q_n n) X₁ Y₁) :
-    Nonempty (RealQuadClassGroupData n X₁ Y₁)
+    RealQuadClassGroupData n X₁ Y₁
 
 /-- **Tatuzawa's Effective Refinement of Siegel's Theorem** (T. Tatuzawa, *Japan. J. Math.* 21
 (1951), 163–178): For any $\varepsilon \in (0, 1/8)$, there exists at most one exceptional
 fundamental discriminant $D_* \in \mathbb{N}$ such that for every $n \ge 8$ with
-`fundDisc n ≠ D_*` and every `G : RealQuadClassGroupData n X₁ Y₁`,
+`fundDisc n ≠ D_*`, the canonical $L$-value of $K_n = \mathbb{Q}(\sqrt{q_n})$ satisfies
 $L(1, \chi_{D_n}) > 0.655\,\varepsilon\,D_n^{-\varepsilon}$. -/
 axiom tatuzawa_effective_siegel (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 / 8) :
-    ∃ D_star : ℕ, ∀ (n X₁ Y₁ : ℕ) (G : RealQuadClassGroupData n X₁ Y₁),
-      8 ≤ n → fundDisc n ≠ D_star →
-      (0.655 : ℝ) * ε * (fundDisc n : ℝ) ^ (-ε) < G.L1_val
+    ∃ D_star : ℕ, ∀ (n X₁ Y₁ : ℕ) (hn : 8 ≤ n) (hfund : IsFundamentalPell (q_n n) X₁ Y₁),
+      fundDisc n ≠ D_star →
+      (0.655 : ℝ) * ε * (fundDisc n : ℝ) ^ (-ε) <
+        (canonicalRealQuadClassGroup hn hfund).L1_val
 
 end GrasGreenbergBrocard
