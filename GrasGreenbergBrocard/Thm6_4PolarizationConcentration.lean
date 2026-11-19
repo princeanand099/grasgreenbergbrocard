@@ -745,7 +745,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
                 · exact (Finset.mem_filter.mp h).2.2
               exact Finset.mem_Icc.mpr ⟨by
                 by_contra hle; push Not at hle
-                have : (p : ℝ) ≤ Nat.floor ((N' : ℝ) ^ (1 - ε / 2)) := by exact_mod_cast hle
+                have : (p : ℝ) ≤ Nat.floor ((N' : ℝ) ^ (1 - ε / 2)) := by exact_mod_cast (by omega : p ≤ Nat.floor ((N' : ℝ) ^ (1 - ε / 2)))
                 linarith [Nat.floor_le (by positivity : 0 ≤ (N' : ℝ) ^ (1 - ε / 2))], Nat.le_floor hp_m.2.2⟩
             have hcard1 : U2.card ≤ Nat.floor ((n : ℝ) ^ (1 - ε / 2)) - Nat.floor ((N' : ℝ) ^ (1 - ε / 2)) := by
               have := Finset.card_le_card hsub; simp only [Nat.card_Icc] at this; omega
@@ -841,7 +841,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
                 have hmul := Nat.div_mul_cancel (Nat.factorial_dvd_factorial hn_mem.1)
                 have hv := congrArg (padicValNat p) hmul
                 rw [padicValNat.mul hP_pos.ne' (Nat.factorial_pos N').ne',
-                  padicValNat.eq_zero_of_not_dvd hndvd, zero_add] at hv; exact hv
+                  padicValNat.eq_zero_of_not_dvd hndvd, zero_add] at hv; exact hv.symm
               apply hp_n1
               simp only [U_union, Finset.mem_union] at hp_m
               rcases hp_m.1 with hp_In | hp_I
@@ -892,7 +892,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
               ≤ 4 * (N' : ℝ) ^ (ε / 2) * ∑ p ∈ U3, Real.log (p : ℝ) := hsum_U3_le
             _ ≤ 4 * (N' : ℝ) ^ (ε / 2) * ((N' : ℝ) ^ (1 - ε) * Real.log (2 * (N' : ℝ))) := by
                 gcongr; exact le_trans hlog_U3 h_fac_ratio
-            _ = 4 * (N' : ℝ) ^ (1 - ε / 2) * Real.log (2 * (N' : ℝ)) := by rw [mul_assoc, hpow_sum]
+            _ = 4 * (N' : ℝ) ^ (1 - ε / 2) * Real.log (2 * (N' : ℝ)) := by rw [mul_assoc, hpow_sum]; ring
         have hU_split : ∑ p ∈ U_union, (if p ∈ P_I_n ∧ p ∈ P_I then
               ((padicValNat p (Nat.factorial n) - padicValNat p (Nat.factorial N') : ℕ) : ℝ) * Real.log (p : ℝ)
             else (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ)) =
