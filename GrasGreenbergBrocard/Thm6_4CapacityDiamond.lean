@@ -235,17 +235,19 @@ lemma log_ZW_and_XY_bounds {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hlt
       have hk1r : (1 : ℝ) ≤ k := by exact_mod_cast hk1
       have hsq : ((U : ℝ) * V) ^ 2 ≤ (5 * (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ)) ^ 2 :=
         le_trans (le_mul_of_one_le_left (by positivity) hk1r) hub
-      nlinarith
+      have hR_nn : 0 ≤ 5 * (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ) := by positivity
+      nlinarith only [hsq, hUV_pos, hR_nn]
     have hUV_lb : Real.sqrt (Nat.factorial n₁ : ℝ) / (40 * (P : ℝ)) ≤ (U : ℝ) * V := by
       have hk_r : (k : ℝ) ≤ 4 * (P : ℝ) ^ 4 := by exact_mod_cast hk_ub
       have hsq : (Real.sqrt (Nat.factorial n₁ : ℝ) / (40 * (P : ℝ))) ^ 2 ≤ ((U : ℝ) * V) ^ 2 := by
         calc (Real.sqrt (Nat.factorial n₁ : ℝ) / (40 * (P : ℝ))) ^ 2
             = ((1 / 20 : ℝ) * (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ)) ^ 2 / (4 * (P : ℝ) ^ 4) := by
-              field_simp; ring
+              field_simp
           _ ≤ ((1 / 20 : ℝ) * (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ)) ^ 2 / (k : ℝ) := by
               gcongr
           _ ≤ ((U : ℝ) * V) ^ 2 := (div_le_iff₀ (by positivity)).mpr (by linarith)
-      nlinarith
+      have hL_nn : 0 ≤ Real.sqrt (Nat.factorial n₁ : ℝ) / (40 * (P : ℝ)) := by positivity
+      nlinarith only [hsq, hUV_pos, hL_nn]
     have hlog_sqrt : Real.log (Real.sqrt (Nat.factorial n₁ : ℝ)) =
         (1 / 2 : ℝ) * Real.log (Nat.factorial n₁ : ℝ) := by
       rw [Real.sqrt_eq_rpow, Real.log_rpow hfac_pos]; ring
@@ -253,7 +255,7 @@ lemma log_ZW_and_XY_bounds {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hlt
     rw [Real.log_mul (by positivity) hsqrt_pos.ne', Real.log_mul (by norm_num) hP_pos.ne', hlog_sqrt] at h1
     have h2 := Real.log_le_log (by positivity) hUV_lb
     rw [Real.log_div hsqrt_pos.ne' (by positivity), Real.log_mul (by norm_num) hP_pos.ne', hlog_sqrt] at h2
-    have hlog5 : Real.log 5 ≤ 2 := by
+    have hlog5 : Real.log 5 ≤ 4 := by
       have := Real.log_le_sub_one_of_pos (by norm_num : (0 : ℝ) < 5); linarith
     have hlog40 : Real.log 40 ≤ 4 := by
       have : Real.log 40 ≤ Real.log (Real.exp 4) := by
@@ -265,8 +267,20 @@ lemma log_ZW_and_XY_bounds {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hlt
       rwa [Real.log_exp] at this
     have hlogP_nn : 0 ≤ Real.log (P : ℝ) := Real.log_nonneg (by exact_mod_cast (by omega : 1 ≤ P))
     rw [abs_le]; constructor <;> linarith
+  have h4bcd_le : 4 * b ^ 2 * c * d ≤ 4 * P ^ 4 := by
+    have h1 : b ^ 2 ≤ P ^ 2 := Nat.pow_le_pow_left hb_le 2
+    have h2 : c * d ≤ P * P := Nat.mul_le_mul hc_le hd_le
+    calc 4 * b ^ 2 * c * d = 4 * (b ^ 2 * (c * d)) := by ring
+      _ ≤ 4 * (P ^ 2 * (P * P)) := by gcongr
+      _ = 4 * P ^ 4 := by ring
+  have h4acd_le : 4 * a ^ 2 * c * d ≤ 4 * P ^ 4 := by
+    have h1 : a ^ 2 ≤ P ^ 2 := Nat.pow_le_pow_left ha_le 2
+    have h2 : c * d ≤ P * P := Nat.mul_le_mul hc_le hd_le
+    calc 4 * a ^ 2 * c * d = 4 * (a ^ 2 * (c * d)) := by ring
+      _ ≤ 4 * (P ^ 2 * (P * P)) := by gcongr
+      _ = 4 * P ^ 4 := by ring
   constructor
-  · refine hbound_pair Z W (4 * b ^ 2 * c * d) (by positivity) (by nlinarith) hZ_pos hW_pos ?_ ?_
+  · refine hbound_pair Z W (4 * b ^ 2 * c * d) (Nat.succ_le_of_lt (by positivity)) h4bcd_le hZ_pos hW_pos ?_ ?_
     · have hZW_eq : ((4 * b ^ 2 * c * d : ℕ) : ℝ) * ((Z : ℝ) * W) ^ 2 =
           ((P : ℝ) * m₁ + m₂ - ((P : ℝ) - 1)) * ((P : ℝ) * m₁ + m₂ + ((P : ℝ) - 1)) := by
         have hZ' : 2 * (b : ℝ) * d * (Z : ℝ) ^ 2 = (P : ℝ) * m₁ + m₂ - ((P : ℝ) - 1) := by exact_mod_cast hZsq
@@ -292,7 +306,7 @@ lemma log_ZW_and_XY_bounds {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hlt
         have hP1 : (1 : ℝ) ≤ P := by exact_mod_cast (by omega : 1 ≤ P)
         linarith
       rw [sq]; exact mul_le_mul h1 h_hi' (by linarith [h_lo']) (by positivity)
-  · refine hbound_pair X Y (4 * a ^ 2 * c * d) (by positivity) (by nlinarith) hX_pos hY_pos ?_ ?_
+  · refine hbound_pair X Y (4 * a ^ 2 * c * d) (Nat.succ_le_of_lt (by positivity)) h4acd_le hX_pos hY_pos ?_ ?_
     · have hXY_eq : ((4 * a ^ 2 * c * d : ℕ) : ℝ) * ((X : ℝ) * Y) ^ 2 =
           ((P : ℝ) * m₁ - m₂ - ((P : ℝ) - 1)) * ((P : ℝ) * m₁ - m₂ + ((P : ℝ) - 1)) := by
         have hX' : 2 * (a : ℝ) * c * (X : ℝ) ^ 2 = (P : ℝ) * m₁ - m₂ - ((P : ℝ) - 1) := by exact_mod_cast hXsq
@@ -388,6 +402,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         _ < (n₁ : ℝ) * min (ε / 256) (1 / 4) := by gcongr
         _ ≤ (n₁ : ℝ) * (1 / 4) := by gcongr; exact min_le_right _ _
         _ = (1 / 4 : ℝ) * (n₁ : ℝ) := by ring
+    have hsub : ((n₂ - n₁ : ℕ) : ℝ) = (n₂ : ℝ) - (n₁ : ℝ) := Nat.cast_sub hlt.le
     exact_mod_cast (by linarith : ((n₂ - n₁ : ℕ) : ℝ) < (n₁ : ℝ))
   have hflip_ub : parityFlipWeight n₁ n₂ ≤ (α / 2 + δ + ε / 16) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
     have hfl := h_flip n₁ n₂ (by omega) hlt hh_lt_n1
@@ -498,9 +513,11 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
           padicValNat.eq_zero_of_not_dvd hp_nv, add_zero]
       rw [hvp, ← hdec]
       have h2p : u = 2 ^ padicValNat 2 u * oddPartNat u := by
-        unfold oddPartNat; exact (Nat.ordProj_mul_ordCompl_eq_self u 2).symm
+        unfold oddPartNat
+        rw [← Nat.factorization_def u Nat.prime_two]
+        exact (Nat.ordProj_mul_ordCompl_eq_self u 2).symm
       conv_lhs => rw [h2p]
-      rw [padicValNat.mul (by positivity) (oddPartNat_pos u).ne',
+      rw [padicValNat.mul (by positivity) (oddPartNat_pos hu_pos).ne',
         padicValNat.eq_zero_of_not_dvd (fun h => hp_pr.not_dvd_one (hcop4 ▸ Nat.dvd_gcd (hp_pr.dvd_of_dvd_pow h) (by norm_num))),
         zero_add]
     have hp_nZ : ∀ u_val : ℕ, p ∈ Podd n_a → ¬ p ∣ Z_star n_a u_val := by
@@ -508,22 +525,25 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       unfold Z_star at hpZ
       rw [hp_pr.prime.dvd_finset_prod_iff] at hpZ
       obtain ⟨q, hq, hqd⟩ := hpZ
-      simp only [Peven, Finset.mem_filter, Finset.mem_Icc] at hq
-      have hq_pr := hq.1.1.2.1
+      have hq1 := (Finset.mem_filter.mp hq).1
+      have hq2 := (Finset.mem_filter.mp hq1).1
+      have hq_mem := Finset.mem_filter.mp hq2
+      have hq_pr := hq_mem.2.1
+      have hq_even := hq_mem.2.2
       have hpq : p = q := (Nat.prime_dvd_prime_iff_eq hp_pr hq_pr).mp (hp_pr.dvd_of_dvd_pow hqd)
       subst hpq
-      simp only [Podd, Finset.mem_filter] at hp_odd
-      exact hp_odd.2 hq.1.1.2.2
+      exact (Finset.mem_filter.mp hp_odd).2.2 hq_even
     have hp_nB : ∀ u_val : ℕ, ¬ p ∈ Podd n_a → ¬ p ∣ B_part n_a u_val := by
       intro u_val hp_even hpB
       unfold B_part at hpB
       rw [hp_pr.prime.dvd_finset_prod_iff] at hpB
       obtain ⟨q, hq, hqd⟩ := hpB
-      simp only [Podd, Finset.mem_filter, Finset.mem_Icc] at hq
-      have hq_pr := hq.1.1.2.1
+      have hq1 := (Finset.mem_filter.mp hq).1
+      have hq2 := (Finset.mem_filter.mp hq1).1
+      have hq_pr := (Finset.mem_filter.mp hq2).2.1
       have hpq : p = q := (Nat.prime_dvd_prime_iff_eq hp_pr hq_pr).mp (hp_pr.dvd_of_dvd_pow hqd)
       subst hpq
-      exact hp_even (Finset.mem_filter.mpr ⟨hq.1.1.1, hq_pr, hq.1.1.2.2⟩)
+      exact hp_even hq2
     constructor
     · intro hp_u1
       have hval := h_eq_u ((m_a - 1) / 2) ((m_a + 1) / 2) h4mul hcop hdec1 hp_u1
@@ -557,18 +577,17 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       rw [padicValNat.mul hP_pos.ne' (Nat.factorial_pos n₁).ne'] at this; exact this.symm
     simp only [Podd, Finset.mem_filter, Finset.mem_Icc]
     constructor
-    · rintro ⟨⟨hp_le, _⟩, hp_odd⟩
-      refine ⟨⟨le_trans hp_le hlt.le, hp_pr⟩, ?_⟩
-      omega
-    · rintro ⟨⟨_, _⟩, hp_odd⟩
+    · rintro ⟨⟨hp2, hp_le⟩, _, hp_odd⟩
+      refine ⟨⟨hp2, le_trans hp_le hlt.le⟩, hp_pr, ?_⟩
+      intro h2; apply hp_odd; rw [hv_eq] at h2; exact (Nat.dvd_add_right h2dvd).mp h2
+    · rintro ⟨⟨hp2, _⟩, _, hp_odd⟩
       have hfac_n1 : padicValNat p (Nat.factorial n₁) ≠ 0 := by
         intro h0; rw [h0, add_zero] at hv_eq
         exact hp_odd (hv_eq ▸ h2dvd)
       have hp_dvd_n1 : p ∣ Nat.factorial n₁ := by
-        have : 0 < padicValNat p (Nat.factorial n₁) := Nat.pos_of_ne_zero hfac_n1
-        exact dvd_of_padicValNat_pos (Nat.factorial_pos n₁).ne' this
-      refine ⟨⟨hp_pr.dvd_factorial.mp hp_dvd_n1, hp_pr⟩, ?_⟩
-      omega
+        by_contra hnd; exact hfac_n1 (padicValNat.eq_zero_of_not_dvd hnd)
+      refine ⟨⟨hp2, hp_pr.dvd_factorial.mp hp_dvd_n1⟩, hp_pr, ?_⟩
+      intro h2; exact hp_odd (by rw [hv_eq]; exact dvd_add h2dvd h2)
   let M₁₁ := B_part n₁ u₁₁ * Z_star n₁ u₂₁ ^ 2
   let M₂₁ := B_part n₁ u₂₁ * Z_star n₁ u₁₁ ^ 2
   let M₁₂ := B_part n₂ u₁₂ * Z_star n₂ u₂₂ ^ 2
@@ -586,7 +605,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
     have hle := Real.log_le_log
       (by exact_mod_cast hT : (0 : ℝ) < (T : ℝ))
       (by exact_mod_cast Nat.le_of_dvd (by positivity) hdvd : (T : ℝ) ≤ ((2 ^ padicValNat 2 (Nat.factorial n₁) * (Ma * Mb) * FlipProd : ℕ) : ℝ))
-    rw [Nat.cast_mul, Nat.cast_mul, Nat.cast_mul, Real.log_mul (by positivity) hFlip_pos.ne',
+    rw [Nat.cast_mul, Nat.cast_mul, Nat.cast_mul, Real.log_mul (by positivity) (by exact_mod_cast hFlip_pos.ne'),
       Real.log_mul (by positivity) (by positivity), Real.log_mul (by positivity) (by positivity),
       Nat.cast_pow, Real.log_pow] at hle
     have hv2_le : (padicValNat 2 (Nat.factorial n₁) : ℝ) ≤ (n₁ : ℝ) := by
@@ -598,9 +617,13 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       rw [Nat.cast_prod, Real.log_prod (fun p hp => Nat.cast_ne_zero.mpr (pow_ne_zero _ (Finset.mem_filter.mp hp).2.1.ne_zero))]
       apply Finset.sum_congr rfl; intro p _; rw [Nat.cast_pow, Real.log_pow]
     nlinarith [Real.log_nonneg (by norm_num : (1 : ℝ) ≤ 2)]
+  have hM11_pos : 0 < M₁₁ := mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)
+  have hM21_pos : 0 < M₂₁ := mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)
+  have hM12_pos : 0 < M₁₂ := mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)
+  have hM22_pos : 0 < M₂₂ := mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)
   have hdvd_ZW_22 : Z_gcd m₁ m₂ * W_gcd m₁ m₂ ∣
       2 ^ padicValNat 2 (Nat.factorial n₁) * (M₂₁ * M₂₂) * FlipProd := by
-    refine hdvd_universal _ M₂₁ M₂₂ (by positivity) (by positivity) hZW_dvd_fac ?_
+    refine hdvd_universal _ M₂₁ M₂₂ hM21_pos hM22_pos hZW_dvd_fac ?_
     intro p hp_pr hp3 h2dvd hpZW
     haveI : Fact p.Prime := ⟨hp_pr⟩
     have hv_le_n1 : padicValNat p (Z_gcd m₁ m₂ * W_gcd m₁ m₂) ≤ padicValNat p (Nat.factorial n₁) := by
@@ -625,14 +648,14 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         have hle_M22 : padicValNat p (B_part n₂ ((m₂ + 1) / 2)) ≤ padicValNat p M₂₂ := by
           dsimp [M₂₂, u₁₂, u₂₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; exact Nat.le_add_right _ _
         have hle_prod : padicValNat p M₂₂ ≤ padicValNat p (M₂₁ * M₂₂) := by
-          rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; exact Nat.le_add_left _ _
+          rw [padicValNat.mul hM21_pos.ne' hM22_pos.ne']; exact Nat.le_add_left _ _
         omega
       · have hp_u11 : p ∣ u₁₁ := dvd_trans hpZ (Nat.gcd_dvd_left _ _)
         have hZ11 := (h1.1 hp_u11).2 hp_odd
         have hle_M21 : padicValNat p (Z_star n₁ ((m₁ - 1) / 2) ^ 2) ≤ padicValNat p M₂₁ := by
           dsimp [M₂₁, u₁₁, u₂₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; exact Nat.le_add_left _ _
         have hle_prod : padicValNat p M₂₁ ≤ padicValNat p (M₂₁ * M₂₂) := by
-          rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; exact Nat.le_add_right _ _
+          rw [padicValNat.mul hM21_pos.ne' hM22_pos.ne']; exact Nat.le_add_right _ _
         omega
     · by_cases hp_odd : p ∈ Podd n₁
       · have hp_u21 : p ∣ u₂₁ := dvd_trans hpW (Nat.gcd_dvd_left _ _)
@@ -640,7 +663,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         have hle_M21 : padicValNat p (B_part n₁ ((m₁ + 1) / 2)) ≤ padicValNat p M₂₁ := by
           dsimp [M₂₁, u₁₁, u₂₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; exact Nat.le_add_right _ _
         have hle_prod : padicValNat p M₂₁ ≤ padicValNat p (M₂₁ * M₂₂) := by
-          rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; exact Nat.le_add_right _ _
+          rw [padicValNat.mul hM21_pos.ne' hM22_pos.ne']; exact Nat.le_add_right _ _
         omega
       · have hp_even2 : ¬ p ∈ Podd n₂ := fun h => hp_odd ((hPodd_iff p hp_pr hp3 h2dvd).mpr h)
         have hp_u12 : p ∣ u₁₂ := dvd_trans hpW (Nat.gcd_dvd_right _ _)
@@ -648,11 +671,11 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         have hle_M22 : padicValNat p (Z_star n₂ ((m₂ - 1) / 2) ^ 2) ≤ padicValNat p M₂₂ := by
           dsimp [M₂₂, u₁₂, u₂₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; exact Nat.le_add_left _ _
         have hle_prod : padicValNat p M₂₂ ≤ padicValNat p (M₂₁ * M₂₂) := by
-          rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; exact Nat.le_add_left _ _
+          rw [padicValNat.mul hM21_pos.ne' hM22_pos.ne']; exact Nat.le_add_left _ _
         omega
   have hdvd_ZW_11 : Z_gcd m₁ m₂ * W_gcd m₁ m₂ ∣
       2 ^ padicValNat 2 (Nat.factorial n₁) * (M₁₁ * M₁₂) * FlipProd := by
-    refine hdvd_universal _ M₁₁ M₁₂ (by positivity) (by positivity) hZW_dvd_fac ?_
+    refine hdvd_universal _ M₁₁ M₁₂ hM11_pos hM12_pos hZW_dvd_fac ?_
     intro p hp_pr hp3 h2dvd hpZW
     haveI : Fact p.Prime := ⟨hp_pr⟩
     have hv_le_n1 : padicValNat p (Z_gcd m₁ m₂ * W_gcd m₁ m₂) ≤ padicValNat p (Nat.factorial n₁) := by
@@ -676,7 +699,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         have hle_M11 : padicValNat p (B_part n₁ ((m₁ - 1) / 2)) ≤ padicValNat p M₁₁ := by
           dsimp [M₁₁, u₁₁, u₂₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; exact Nat.le_add_right _ _
         have hle_prod : padicValNat p M₁₁ ≤ padicValNat p (M₁₁ * M₁₂) := by
-          rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; exact Nat.le_add_right _ _
+          rw [padicValNat.mul hM11_pos.ne' hM12_pos.ne']; exact Nat.le_add_right _ _
         omega
       · have hp_even2 : ¬ p ∈ Podd n₂ := fun h => hp_odd ((hPodd_iff p hp_pr hp3 h2dvd).mpr h)
         have hp_u22 : p ∣ u₂₂ := dvd_trans hpZ (Nat.gcd_dvd_right _ _)
@@ -684,7 +707,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         have hle_M12 : padicValNat p (Z_star n₂ ((m₂ + 1) / 2) ^ 2) ≤ padicValNat p M₁₂ := by
           dsimp [M₁₂, u₁₂, u₂₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; exact Nat.le_add_left _ _
         have hle_prod : padicValNat p M₁₂ ≤ padicValNat p (M₁₁ * M₁₂) := by
-          rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; exact Nat.le_add_left _ _
+          rw [padicValNat.mul hM11_pos.ne' hM12_pos.ne']; exact Nat.le_add_left _ _
         omega
     · by_cases hp_odd : p ∈ Podd n₁
       · have hp_odd2 := (hPodd_iff p hp_pr hp3 h2dvd).mp hp_odd
@@ -693,18 +716,18 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         have hle_M12 : padicValNat p (B_part n₂ ((m₂ - 1) / 2)) ≤ padicValNat p M₁₂ := by
           dsimp [M₁₂, u₁₂, u₂₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; exact Nat.le_add_right _ _
         have hle_prod : padicValNat p M₁₂ ≤ padicValNat p (M₁₁ * M₁₂) := by
-          rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; exact Nat.le_add_left _ _
+          rw [padicValNat.mul hM11_pos.ne' hM12_pos.ne']; exact Nat.le_add_left _ _
         omega
       · have hp_u21 : p ∣ u₂₁ := dvd_trans hpW (Nat.gcd_dvd_left _ _)
         have hZ21 := (h1.2 hp_u21).2 hp_odd
         have hle_M11 : padicValNat p (Z_star n₁ ((m₁ + 1) / 2) ^ 2) ≤ padicValNat p M₁₁ := by
           dsimp [M₁₁, u₁₁, u₂₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; exact Nat.le_add_left _ _
         have hle_prod : padicValNat p M₁₁ ≤ padicValNat p (M₁₁ * M₁₂) := by
-          rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; exact Nat.le_add_right _ _
+          rw [padicValNat.mul hM11_pos.ne' hM12_pos.ne']; exact Nat.le_add_right _ _
         omega
   have hdvd_XY_12 : X_gcd m₁ m₂ * Y_gcd m₁ m₂ ∣
       2 ^ padicValNat 2 (Nat.factorial n₁) * (M₁₁ * M₂₂) * FlipProd := by
-    refine hdvd_universal _ M₁₁ M₂₂ (by positivity) (by positivity) hXY_dvd_fac ?_
+    refine hdvd_universal _ M₁₁ M₂₂ hM11_pos hM22_pos hXY_dvd_fac ?_
     intro p hp_pr hp3 h2dvd hpXY
     haveI : Fact p.Prime := ⟨hp_pr⟩
     have hv_le_n1 : padicValNat p (X_gcd m₁ m₂ * Y_gcd m₁ m₂) ≤ padicValNat p (Nat.factorial n₁) := by
@@ -728,7 +751,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         have hle_M11 : padicValNat p (B_part n₁ ((m₁ - 1) / 2)) ≤ padicValNat p M₁₁ := by
           dsimp [M₁₁, u₁₁, u₂₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; exact Nat.le_add_right _ _
         have hle_prod : padicValNat p M₁₁ ≤ padicValNat p (M₁₁ * M₂₂) := by
-          rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; exact Nat.le_add_right _ _
+          rw [padicValNat.mul hM11_pos.ne' hM22_pos.ne']; exact Nat.le_add_right _ _
         omega
       · have hp_even2 : ¬ p ∈ Podd n₂ := fun h => hp_odd ((hPodd_iff p hp_pr hp3 h2dvd).mpr h)
         have hp_u12 : p ∣ u₁₂ := dvd_trans hpX (Nat.gcd_dvd_right _ _)
@@ -736,7 +759,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         have hle_M22 : padicValNat p (Z_star n₂ ((m₂ - 1) / 2) ^ 2) ≤ padicValNat p M₂₂ := by
           dsimp [M₂₂, u₁₂, u₂₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; exact Nat.le_add_left _ _
         have hle_prod : padicValNat p M₂₂ ≤ padicValNat p (M₁₁ * M₂₂) := by
-          rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; exact Nat.le_add_left _ _
+          rw [padicValNat.mul hM11_pos.ne' hM22_pos.ne']; exact Nat.le_add_left _ _
         omega
     · by_cases hp_odd : p ∈ Podd n₁
       · have hp_odd2 := (hPodd_iff p hp_pr hp3 h2dvd).mp hp_odd
@@ -745,18 +768,18 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         have hle_M22 : padicValNat p (B_part n₂ ((m₂ + 1) / 2)) ≤ padicValNat p M₂₂ := by
           dsimp [M₂₂, u₁₂, u₂₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; exact Nat.le_add_right _ _
         have hle_prod : padicValNat p M₂₂ ≤ padicValNat p (M₁₁ * M₂₂) := by
-          rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; exact Nat.le_add_left _ _
+          rw [padicValNat.mul hM11_pos.ne' hM22_pos.ne']; exact Nat.le_add_left _ _
         omega
       · have hp_u21 : p ∣ u₂₁ := dvd_trans hpY (Nat.gcd_dvd_left _ _)
         have hZ21 := (h1.2 hp_u21).2 hp_odd
         have hle_M11 : padicValNat p (Z_star n₁ ((m₁ + 1) / 2) ^ 2) ≤ padicValNat p M₁₁ := by
           dsimp [M₁₁, u₁₁, u₂₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; exact Nat.le_add_left _ _
         have hle_prod : padicValNat p M₁₁ ≤ padicValNat p (M₁₁ * M₂₂) := by
-          rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; exact Nat.le_add_right _ _
+          rw [padicValNat.mul hM11_pos.ne' hM22_pos.ne']; exact Nat.le_add_right _ _
         omega
   have hdvd_XY_21 : X_gcd m₁ m₂ * Y_gcd m₁ m₂ ∣
       2 ^ padicValNat 2 (Nat.factorial n₁) * (M₂₁ * M₁₂) * FlipProd := by
-    refine hdvd_universal _ M₂₁ M₁₂ (by positivity) (by positivity) hXY_dvd_fac ?_
+    refine hdvd_universal _ M₂₁ M₁₂ hM21_pos hM12_pos hXY_dvd_fac ?_
     intro p hp_pr hp3 h2dvd hpXY
     haveI : Fact p.Prime := ⟨hp_pr⟩
     have hv_le_n1 : padicValNat p (X_gcd m₁ m₂ * Y_gcd m₁ m₂) ≤ padicValNat p (Nat.factorial n₁) := by
@@ -781,14 +804,14 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         have hle_M12 : padicValNat p (B_part n₂ ((m₂ - 1) / 2)) ≤ padicValNat p M₁₂ := by
           dsimp [M₁₂, u₁₂, u₂₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; exact Nat.le_add_right _ _
         have hle_prod : padicValNat p M₁₂ ≤ padicValNat p (M₂₁ * M₁₂) := by
-          rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; exact Nat.le_add_left _ _
+          rw [padicValNat.mul hM21_pos.ne' hM12_pos.ne']; exact Nat.le_add_left _ _
         omega
       · have hp_u11 : p ∣ u₁₁ := dvd_trans hpX (Nat.gcd_dvd_left _ _)
         have hZ11 := (h1.1 hp_u11).2 hp_odd
         have hle_M21 : padicValNat p (Z_star n₁ ((m₁ - 1) / 2) ^ 2) ≤ padicValNat p M₂₁ := by
           dsimp [M₂₁, u₁₁, u₂₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; exact Nat.le_add_left _ _
         have hle_prod : padicValNat p M₂₁ ≤ padicValNat p (M₂₁ * M₁₂) := by
-          rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; exact Nat.le_add_right _ _
+          rw [padicValNat.mul hM21_pos.ne' hM12_pos.ne']; exact Nat.le_add_right _ _
         omega
     · by_cases hp_odd : p ∈ Podd n₁
       · have hp_u21 : p ∣ u₂₁ := dvd_trans hpY (Nat.gcd_dvd_left _ _)
@@ -796,7 +819,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         have hle_M21 : padicValNat p (B_part n₁ ((m₁ + 1) / 2)) ≤ padicValNat p M₂₁ := by
           dsimp [M₂₁, u₁₁, u₂₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; exact Nat.le_add_right _ _
         have hle_prod : padicValNat p M₂₁ ≤ padicValNat p (M₂₁ * M₁₂) := by
-          rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; exact Nat.le_add_right _ _
+          rw [padicValNat.mul hM21_pos.ne' hM12_pos.ne']; exact Nat.le_add_right _ _
         omega
       · have hp_even2 : ¬ p ∈ Podd n₂ := fun h => hp_odd ((hPodd_iff p hp_pr hp3 h2dvd).mpr h)
         have hp_u22 : p ∣ u₂₂ := dvd_trans hpY (Nat.gcd_dvd_right _ _)
@@ -804,7 +827,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         have hle_M12 : padicValNat p (Z_star n₂ ((m₂ + 1) / 2) ^ 2) ≤ padicValNat p M₁₂ := by
           dsimp [M₁₂, u₁₂, u₂₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; exact Nat.le_add_left _ _
         have hle_prod : padicValNat p M₁₂ ≤ padicValNat p (M₂₁ * M₁₂) := by
-          rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; exact Nat.le_add_left _ _
+          rw [padicValNat.mul hM21_pos.ne' hM12_pos.ne']; exact Nat.le_add_left _ _
         omega
   have hlog_M_rel : ∀ (n_a m_a : ℕ), N₀ ≤ n_a → n₁ ≤ n_a → n_a ≤ n₂ → Nat.factorial n_a + 1 = m_a ^ 2 →
       let u₁a := (m_a - 1) / 2; let u₂a := (m_a + 1) / 2
