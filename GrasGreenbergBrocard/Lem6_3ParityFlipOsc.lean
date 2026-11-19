@@ -1801,7 +1801,8 @@ theorem lem_6_3_osc_bound_honest
           nlinarith
   -- Combine Steps 1, 2, 3
   have hpart_exc_clean : I_osc = I_exc ∪ I_clean := by
-    ext p; simp only [I_exc, I_clean, Finset.mem_union, Finset.mem_filter]; tauto
+    ext p; simp only [I_exc, I_clean, Finset.mem_union, Finset.mem_filter]
+    by_cases h : isExcised p <;> simp [h]
   have hdisj_exc_clean : Disjoint I_exc I_clean := by
     rw [Finset.disjoint_left]; intro p hp1 hp2
     exact (Finset.mem_filter.mp hp2).2 (Finset.mem_filter.mp hp1).2
@@ -1813,19 +1814,33 @@ theorem lem_6_3_osc_bound_honest
       (∑ p ∈ I_clean, ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
         (((n₁ : ℝ) / (p : ℝ)) * Real.log (p : ℝ))) := by
     rw [hpart_exc_clean, Finset.sum_union hdisj_exc_clean]
-  have htri1 := abs_add_le
-    (∑ p ∈ I_osc, ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
-        ((padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ)) -
-      ∑ p ∈ I_osc, ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
-        (((n₁ : ℝ) / (p : ℝ)) * Real.log (p : ℝ)))
-    (∑ p ∈ I_osc, ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
-        (((n₁ : ℝ) / (p : ℝ)) * Real.log (p : ℝ)))
-  rw [sub_add_cancel, hsplit_sum] at htri1
-  have htri2 := abs_add_le
-    (∑ p ∈ I_exc, ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
-      (((n₁ : ℝ) / (p : ℝ)) * Real.log (p : ℝ)))
-    (∑ p ∈ I_clean, ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
-      (((n₁ : ℝ) / (p : ℝ)) * Real.log (p : ℝ)))
-  linarith
+  change |∑ p ∈ I_osc,
+      ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
+        ((padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ))| ≤
+    (ε / 4) * (n₁ : ℝ) * Real.log (n₁ : ℝ)
+  have htri1 : |∑ p ∈ I_osc,
+      ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
+        ((padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ))| ≤
+      |∑ p ∈ I_osc, ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
+          ((padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ)) -
+        ∑ p ∈ I_osc, ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
+          (((n₁ : ℝ) / (p : ℝ)) * Real.log (p : ℝ))| +
+      |∑ p ∈ I_osc, ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
+          (((n₁ : ℝ) / (p : ℝ)) * Real.log (p : ℝ))| := by
+    simpa [sub_add_cancel] using abs_add_le
+      (∑ p ∈ I_osc, ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
+          ((padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ)) -
+        ∑ p ∈ I_osc, ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
+          (((n₁ : ℝ) / (p : ℝ)) * Real.log (p : ℝ)))
+      (∑ p ∈ I_osc, ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
+          (((n₁ : ℝ) / (p : ℝ)) * Real.log (p : ℝ)))
+  have htri2 : |∑ p ∈ I_osc, ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
+        (((n₁ : ℝ) / (p : ℝ)) * Real.log (p : ℝ))| ≤
+      |∑ p ∈ I_exc, ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
+        (((n₁ : ℝ) / (p : ℝ)) * Real.log (p : ℝ))| +
+      |∑ p ∈ I_clean, ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
+        (((n₁ : ℝ) / (p : ℝ)) * Real.log (p : ℝ))| := by
+    rw [hsplit_sum]; exact abs_add_le _ _
+  linarith only [htri1, htri2, hstep1, hstep2_exc, hstep3_clean]
 
 end GrasGreenbergBrocard
