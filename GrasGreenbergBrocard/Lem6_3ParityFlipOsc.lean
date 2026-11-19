@@ -350,7 +350,7 @@ private lemma lem63_padicValNat_factorial_eq_sum_Icc {p n r : ℕ} (hp : p.Prime
   rcases Nat.eq_zero_or_pos n with rfl | hn
   · simp
   · rw [padicValNat_factorial (Nat.log_lt_of_lt_pow hn.ne' hlt)]
-    congr 1; ext j; simp only [Finset.mem_Ico, Finset.mem_Icc]; omega
+    congr 1
 
 private lemma prod_sum_piFinset {α β γ : Type*} [Fintype α] [DecidableEq α] [DecidableEq β]
     [CommSemiring γ] (s : α → Finset β) (f : α → β → γ) :
