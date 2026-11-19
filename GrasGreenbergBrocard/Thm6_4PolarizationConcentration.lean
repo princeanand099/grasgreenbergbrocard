@@ -10,7 +10,7 @@ Cauchy–Schwarz)** and the resulting `C_ε η^{-2} N^ε` counting bound.
 open scoped BigOperators
 open Real Finset Filter
 
-set_option maxHeartbeats 4000000
+set_option maxHeartbeats 8000000
 
 namespace GrasGreenbergBrocard
 
@@ -33,6 +33,185 @@ private lemma nat_prod_dvd_of_pairwise_coprime {S : Finset ℕ} {f : ℕ → ℕ
 
 private def PolBad (ε η : ℝ) (n : ℕ) : Prop :=
   ∃ m : ℕ, Nat.factorial n + 1 = m ^ 2 ∧ |theta_eps_weight ε n m - 1 / 2| ≥ η
+
+open Classical in
+private lemma pol_counting_of_interval_bound (ε η : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 / 4)
+    (hη0 : 0 < η) (hη1 : η ≤ 1 / 2) (N₀ : ℕ) (hN₀ : 4 ≤ N₀)
+    (h_int_bd : ∀ N' : ℕ, N₀ ≤ N' →
+      ((Finset.Icc N' (N' + Nat.floor ((N' : ℝ) ^ (1 - ε)))).filter (PolBad ε η)).card ≤
+        Nat.floor ((η ^ 2 * ε)⁻¹) + 1) :
+    ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
+      (((Finset.Icc 4 N).filter (PolBad ε η)).card : ℝ) ≤
+        C * η ^ (-2 : ℤ) * (N : ℝ) ^ ε := by
+  let M : ℕ := Nat.floor ((η ^ 2 * ε)⁻¹) + 1
+  have hηε_lt : η ^ 2 * ε < 1 := by nlinarith [sq_nonneg η]
+  have h_int_bd' : ∀ N' : ℕ, N₀ ≤ N' →
+      ((Finset.Icc N' (N' + Nat.floor ((N' : ℝ) ^ (1 - ε)))).filter (PolBad ε η)).card ≤ M :=
+    fun N' hN' => h_int_bd N' hN'
+  have h2e_gt : 1 < (2 : ℝ) ^ ε := Real.one_lt_rpow (by norm_num) hε0
+  have h2e_pos : 0 < (2 : ℝ) ^ ε - 1 := sub_pos.mpr h2e_gt
+  let C_pol : ℝ := (N₀ : ℝ) + 8 * (2 : ℝ) ^ ε / (ε * ((2 : ℝ) ^ ε - 1))
+  refine ⟨C_pol, by positivity, fun N hN => ?_⟩
+  change (((Finset.Icc 4 N).filter (PolBad ε η)).card : ℝ) ≤ _
+  let S_all := (Finset.Icc 4 N).filter (PolBad ε η)
+  let S_low := S_all.filter (fun n => n < N₀)
+  let S_hi := S_all.filter (fun n => N₀ ≤ n)
+  have hS_split : S_all.card ≤ S_low.card + S_hi.card := by
+    have : S_all ⊆ S_low ∪ S_hi := by
+      intro n hn; simp only [Finset.mem_union, Finset.mem_filter, S_low, S_hi]
+      by_cases h : n < N₀; exact Or.inl ⟨hn, h⟩; exact Or.inr ⟨hn, le_of_not_gt h⟩
+    exact le_trans (Finset.card_le_card this) (Finset.card_union_le _ _)
+  have hS_low : (S_low.card : ℝ) ≤ (N₀ : ℝ) := by
+    have hsub : S_low ⊆ Finset.Icc 1 N₀ := by
+      intro n hn; simp only [S_low, S_all, Finset.mem_filter, Finset.mem_Icc] at hn ⊢
+      exact ⟨by omega, by omega⟩
+    exact_mod_cast le_trans (Finset.card_le_card hsub) (by simp)
+  have hS_hi : (S_hi.card : ℝ) ≤ (4 * (M : ℝ) * (2 : ℝ) ^ ε / ((2 : ℝ) ^ ε - 1)) * (N : ℝ) ^ ε := by
+    let K := Nat.log 2 N
+    have hsub_hi : S_hi ⊆ (Finset.range (K + 1)).biUnion
+        (fun k => S_hi.filter (fun n => 2 ^ k ≤ n ∧ n ≤ 2 ^ (k + 1) - 1)) := by
+      intro n hn
+      simp only [Finset.mem_biUnion, Finset.mem_range, Finset.mem_filter]
+      have hn_mem := Finset.mem_filter.mp hn
+      have hn1 : 4 ≤ n := (Finset.mem_Icc.mp (Finset.mem_filter.mp hn_mem.1).1).1
+      have hnN : n ≤ N := (Finset.mem_Icc.mp (Finset.mem_filter.mp hn_mem.1).1).2
+      refine ⟨Nat.log 2 n, Nat.lt_succ_of_le (Nat.log_mono_right hnN), hn, ?_, ?_⟩
+      · exact Nat.pow_log_le_self 2 (by omega)
+      · have := Nat.lt_pow_succ_log_self (by norm_num : 1 < 2) n; omega
+    have hcard_hi : S_hi.card ≤ ∑ k ∈ Finset.range (K + 1),
+        (S_hi.filter (fun n => 2 ^ k ≤ n ∧ n ≤ 2 ^ (k + 1) - 1)).card :=
+      le_trans (Finset.card_le_card hsub_hi) Finset.card_biUnion_le
+    have hblk_card : ∀ k ∈ Finset.range (K + 1),
+        ((S_hi.filter (fun n => 2 ^ k ≤ n ∧ n ≤ 2 ^ (k + 1) - 1)).card : ℝ) ≤
+          2 * (M : ℝ) * ((2 : ℝ) ^ ε) ^ k := by
+      intro k _
+      let B_k := S_hi.filter (fun n => 2 ^ k ≤ n ∧ n ≤ 2 ^ (k + 1) - 1)
+      by_cases hne : 2 ^ (k + 1) - 1 < N₀
+      · have hB_empty : B_k = ∅ := by
+          ext n; simp only [B_k, S_hi, Finset.mem_filter, Finset.notMem_empty, iff_false]
+          intro h; omega
+        change (B_k.card : ℝ) ≤ 2 * (M : ℝ) * ((2 : ℝ) ^ ε) ^ k
+        rw [hB_empty, Finset.card_empty, Nat.cast_zero]; positivity
+      · push Not at hne
+        let a_k := max N₀ (2 ^ k)
+        let L_k := Nat.floor ((a_k : ℝ) ^ (1 - ε))
+        let J_k := 2 ^ k / (L_k + 1) + 1
+        have hB_sub : B_k ⊆ (Finset.range J_k).biUnion (fun j =>
+            (Finset.Icc (a_k + j * (L_k + 1)) (a_k + j * (L_k + 1) + L_k)).filter (PolBad ε η)) := by
+          intro n hn
+          simp only [B_k, S_hi, S_all, Finset.mem_filter, Finset.mem_biUnion, Finset.mem_range, Finset.mem_Icc] at hn ⊢
+          have hna : a_k ≤ n := max_le hn.1.2 hn.2.1
+          have hdiff : n - a_k < 2 ^ k := by
+            have : 2 ^ k ≤ a_k := le_max_right _ _
+            have : 2 ^ (k + 1) = 2 * 2 ^ k := by ring
+            omega
+          refine ⟨(n - a_k) / (L_k + 1), ?_, ⟨?_, ?_⟩, hn.1.1.2⟩
+          · have h1 : (n - a_k) / (L_k + 1) ≤ (2 ^ k) / (L_k + 1) := Nat.div_le_div_right hdiff.le
+            omega
+          · have := Nat.div_mul_le_self (n - a_k) (L_k + 1)
+            omega
+          · have hlt_mod : (n - a_k) % (L_k + 1) < L_k + 1 := Nat.mod_lt (n - a_k) (by omega)
+            have hdiv_mod := Nat.div_add_mod (n - a_k) (L_k + 1)
+            rw [mul_comm] at hdiv_mod
+            omega
+        have hB_card_le : B_k.card ≤ J_k * M := by
+          calc B_k.card ≤ ((Finset.range J_k).biUnion (fun j =>
+                (Finset.Icc (a_k + j * (L_k + 1)) (a_k + j * (L_k + 1) + L_k)).filter (PolBad ε η))).card :=
+                  Finset.card_le_card hB_sub
+            _ ≤ ∑ j ∈ Finset.range J_k,
+                  ((Finset.Icc (a_k + j * (L_k + 1)) (a_k + j * (L_k + 1) + L_k)).filter (PolBad ε η)).card :=
+                  Finset.card_biUnion_le
+            _ ≤ ∑ _j ∈ Finset.range J_k, M := by
+                  apply Finset.sum_le_sum; intro j _
+                  let N' := a_k + j * (L_k + 1)
+                  have hN'_ge : N₀ ≤ N' := le_trans (le_max_left _ _) (Nat.le_add_right _ _)
+                  have hLk_le : L_k ≤ Nat.floor ((N' : ℝ) ^ (1 - ε)) := by
+                    apply Nat.floor_mono
+                    exact Real.rpow_le_rpow (by positivity) (by exact_mod_cast Nat.le_add_right a_k _) (by linarith)
+                  have hsub_j : (Finset.Icc N' (N' + L_k)).filter (PolBad ε η) ⊆
+                      (Finset.Icc N' (N' + Nat.floor ((N' : ℝ) ^ (1 - ε)))).filter (PolBad ε η) := by
+                    intro x hx; simp only [Finset.mem_filter, Finset.mem_Icc] at hx ⊢
+                    exact ⟨⟨hx.1.1, by omega⟩, hx.2⟩
+                  exact le_trans (Finset.card_le_card hsub_j) (h_int_bd' N' hN'_ge)
+            _ = J_k * M := by rw [Finset.sum_const, Finset.card_range, smul_eq_mul]
+        have hJk_le : (J_k : ℝ) ≤ ((2 : ℝ) ^ ε) ^ k + 1 := by
+          have hdiv_r : ((2 ^ k / (L_k + 1) : ℕ) : ℝ) ≤ (2 : ℝ) ^ k / ((L_k : ℝ) + 1) := by
+            rw [le_div_iff₀ (by positivity)]
+            exact_mod_cast Nat.div_mul_le_self (2 ^ k) (L_k + 1)
+          have hLk_gt : ((2 : ℝ) ^ k) ^ (1 - ε) < (L_k : ℝ) + 1 := by
+            have h1 : (a_k : ℝ) ^ (1 - ε) < (L_k : ℝ) + 1 := Nat.lt_floor_add_one _
+            have h2 : ((2 : ℝ) ^ k) ^ (1 - ε) ≤ (a_k : ℝ) ^ (1 - ε) :=
+              Real.rpow_le_rpow (by positivity) (by exact_mod_cast le_max_right N₀ (2 ^ k)) (by linarith)
+            linarith
+          have hdiv_pow : (2 : ℝ) ^ k / ((L_k : ℝ) + 1) ≤ ((2 : ℝ) ^ ε) ^ k := by
+            calc (2 : ℝ) ^ k / ((L_k : ℝ) + 1) ≤ (2 : ℝ) ^ k / ((2 : ℝ) ^ k) ^ (1 - ε) := by
+                  gcongr
+              _ = ((2 : ℝ) ^ ε) ^ k := by
+                  rw [← Real.rpow_natCast (2 : ℝ) k, ← Real.rpow_mul (by norm_num),
+                    ← Real.rpow_sub (by norm_num), show (k : ℝ) - (k : ℝ) * (1 - ε) = ε * (k : ℝ) by ring,
+                    Real.rpow_mul (by norm_num), Real.rpow_natCast]
+          have hJk_eq : (J_k : ℝ) = ((2 ^ k / (L_k + 1) : ℕ) : ℝ) + 1 := by
+            dsimp [J_k]; push_cast; ring
+          linarith
+        have h1_le : (1 : ℝ) ≤ ((2 : ℝ) ^ ε) ^ k := one_le_pow₀ h2e_gt.le
+        have hB_r : (B_k.card : ℝ) ≤ (J_k : ℝ) * (M : ℝ) := by exact_mod_cast hB_card_le
+        nlinarith [show (0 : ℝ) ≤ M by positivity]
+    have hsum_geom : ∑ k ∈ Finset.range (K + 1), 2 * (M : ℝ) * ((2 : ℝ) ^ ε) ^ k =
+        2 * (M : ℝ) * (((2 : ℝ) ^ ε) ^ (K + 1) - 1) / ((2 : ℝ) ^ ε - 1) := by
+      have : ∑ k ∈ Finset.range (K + 1), 2 * (M : ℝ) * ((2 : ℝ) ^ ε) ^ k =
+          (2 * (M : ℝ)) * ∑ k ∈ Finset.range (K + 1), ((2 : ℝ) ^ ε) ^ k := by
+        rw [Finset.mul_sum]
+      rw [this, geom_sum_eq h2e_gt.ne']; ring
+    have hK_pow : ((2 : ℝ) ^ ε) ^ (K + 1) ≤ (2 : ℝ) ^ ε * (N : ℝ) ^ ε := by
+      rw [pow_succ', ← Real.rpow_natCast ((2 : ℝ) ^ ε) K, ← Real.rpow_mul (by positivity),
+        mul_comm ε (K : ℝ), Real.rpow_mul (by positivity), Real.rpow_natCast]
+      gcongr
+      exact_mod_cast Nat.pow_log_le_self 2 (by omega : N ≠ 0)
+    have hcard_hi_r : (S_hi.card : ℝ) ≤ ∑ k ∈ Finset.range (K + 1),
+        ((S_hi.filter (fun n => 2 ^ k ≤ n ∧ n ≤ 2 ^ (k + 1) - 1)).card : ℝ) := by
+      exact_mod_cast hcard_hi
+    calc (S_hi.card : ℝ)
+        ≤ ∑ k ∈ Finset.range (K + 1), 2 * (M : ℝ) * ((2 : ℝ) ^ ε) ^ k := le_trans hcard_hi_r (Finset.sum_le_sum hblk_card)
+      _ = 2 * (M : ℝ) * (((2 : ℝ) ^ ε) ^ (K + 1) - 1) / ((2 : ℝ) ^ ε - 1) := hsum_geom
+      _ ≤ 2 * (M : ℝ) * ((2 : ℝ) ^ ε * (N : ℝ) ^ ε) / ((2 : ℝ) ^ ε - 1) := by
+          gcongr; linarith
+      _ ≤ (4 * (M : ℝ) * (2 : ℝ) ^ ε / ((2 : ℝ) ^ ε - 1)) * (N : ℝ) ^ ε := by
+          rw [div_mul_eq_mul_div]
+          have h_num : 2 * (M : ℝ) * ((2 : ℝ) ^ ε * (N : ℝ) ^ ε) ≤
+              4 * (M : ℝ) * (2 : ℝ) ^ ε * (N : ℝ) ^ ε := by
+            nlinarith [show 0 ≤ (M : ℝ) * ((2 : ℝ) ^ ε * (N : ℝ) ^ ε) by positivity]
+          gcongr
+  have hM_le : (M : ℝ) ≤ 2 / (η ^ 2 * ε) := by
+    have h1 : (M : ℝ) ≤ (η ^ 2 * ε)⁻¹ + 1 := by
+      have : (Nat.floor ((η ^ 2 * ε)⁻¹) : ℝ) ≤ (η ^ 2 * ε)⁻¹ := Nat.floor_le (by positivity)
+      dsimp [M]; push_cast; linarith
+    have h2 : (1 : ℝ) ≤ (η ^ 2 * ε)⁻¹ := by
+      rw [le_inv_comm₀ (by norm_num) (by positivity), inv_one]; nlinarith
+    rw [div_eq_mul_inv]; linarith
+  have h_coeff : 4 * (M : ℝ) * (2 : ℝ) ^ ε / ((2 : ℝ) ^ ε - 1) ≤
+      (8 * (2 : ℝ) ^ ε / (ε * ((2 : ℝ) ^ ε - 1))) * η ^ (-2 : ℤ) := by
+    have hη_eq : η ^ (-2 : ℤ) = (η ^ 2)⁻¹ := by rw [zpow_neg]; rfl
+    rw [hη_eq]
+    calc 4 * (M : ℝ) * (2 : ℝ) ^ ε / ((2 : ℝ) ^ ε - 1)
+        ≤ 4 * (2 / (η ^ 2 * ε)) * (2 : ℝ) ^ ε / ((2 : ℝ) ^ ε - 1) := by gcongr
+      _ = (8 * (2 : ℝ) ^ ε / (ε * ((2 : ℝ) ^ ε - 1))) * (η ^ 2)⁻¹ := by
+          field_simp [(by positivity : η ≠ 0), (by positivity : ε ≠ 0), (by linarith : (2 : ℝ) ^ ε - 1 ≠ 0)]; ring
+  have h1_le_N : (1 : ℝ) ≤ (N : ℝ) ^ ε := Real.one_le_rpow (by exact_mod_cast hN) hε0.le
+  have h1_le_eta : (1 : ℝ) ≤ η ^ (-2 : ℤ) := by
+    rw [show η ^ (-2 : ℤ) = (η ^ 2)⁻¹ by rw [zpow_neg]; rfl]
+    exact (one_le_inv₀ (by positivity)).mpr (by nlinarith)
+  have hS_all_r : (S_all.card : ℝ) ≤ (S_low.card : ℝ) + (S_hi.card : ℝ) := by exact_mod_cast hS_split
+  calc (S_all.card : ℝ)
+      ≤ (N₀ : ℝ) + (8 * (2 : ℝ) ^ ε / (ε * ((2 : ℝ) ^ ε - 1))) * η ^ (-2 : ℤ) * (N : ℝ) ^ ε := by
+        have : (4 * (M : ℝ) * (2 : ℝ) ^ ε / ((2 : ℝ) ^ ε - 1)) * (N : ℝ) ^ ε ≤
+            (8 * (2 : ℝ) ^ ε / (ε * ((2 : ℝ) ^ ε - 1))) * η ^ (-2 : ℤ) * (N : ℝ) ^ ε := by gcongr
+        linarith
+    _ ≤ C_pol * η ^ (-2 : ℤ) * (N : ℝ) ^ ε := by
+        dsimp [C_pol]
+        have : (N₀ : ℝ) ≤ (N₀ : ℝ) * η ^ (-2 : ℤ) * (N : ℝ) ^ ε := by
+          nlinarith [show (1 : ℝ) ≤ η ^ (-2 : ℤ) * (N : ℝ) ^ ε by nlinarith]
+        linarith
+
 
 open Classical in
 /-- **Theorem 6.4(b) (Polarization Concentration via Rankin Spherical Cap Cauchy–Schwarz)**:
@@ -720,15 +899,16 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
             (∑ p ∈ U1, ((padicValNat p (Nat.factorial n) - padicValNat p (Nat.factorial N') : ℕ) : ℝ) * Real.log (p : ℝ)) +
             (∑ p ∈ U2, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ)) +
             (∑ p ∈ U3, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ)) := by
-          rw [← Finset.sum_filter_add_sum_filter_not U_union (fun p => p ∈ P_I_n ∧ p ∈ P_I)]
+          rw [add_assoc, ← Finset.sum_filter_add_sum_filter_not U_union (fun p : ℕ => p ∈ P_I_n ∧ p ∈ P_I)]
           congr 1
           · apply Finset.sum_congr rfl; intro p hp; rw [if_pos (Finset.mem_filter.mp hp).2]
-          · rw [← Finset.sum_filter_add_sum_filter_not (U_union.filter (fun p => ¬ (p ∈ P_I_n ∧ p ∈ P_I)))
-              (fun p => (p : ℝ) ≤ (n : ℝ) ^ (1 - ε / 2))]
-            have hU2_eq : (U_union.filter (fun p => ¬ (p ∈ P_I_n ∧ p ∈ P_I))).filter (fun p => (p : ℝ) ≤ (n : ℝ) ^ (1 - ε / 2)) = U2 := by
-              ext p; simp [U2, Finset.mem_filter]; tauto
-            have hU3_eq : (U_union.filter (fun p => ¬ (p ∈ P_I_n ∧ p ∈ P_I))).filter (fun p => ¬ (p : ℝ) ≤ (n : ℝ) ^ (1 - ε / 2)) = U3 := by
-              ext p; simp [U3, Finset.mem_filter]; constructor <;> rintro ⟨h1, h2⟩ <;> exact ⟨h1.1, h1.2, by linarith⟩
+          · rw [← Finset.sum_filter_add_sum_filter_not (U_union.filter (fun p : ℕ => ¬ (p ∈ P_I_n ∧ p ∈ P_I)))
+              (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) ^ (1 - ε / 2))]
+            have hU2_eq : (U_union.filter (fun p : ℕ => ¬ (p ∈ P_I_n ∧ p ∈ P_I))).filter (fun p : ℕ => (p : ℝ) ≤ (n : ℝ) ^ (1 - ε / 2)) = U2 := by
+              ext p; simp only [U2, Finset.mem_filter]; tauto
+            have hU3_eq : (U_union.filter (fun p : ℕ => ¬ (p ∈ P_I_n ∧ p ∈ P_I))).filter (fun p : ℕ => ¬ (p : ℝ) ≤ (n : ℝ) ^ (1 - ε / 2)) = U3 := by
+              ext p; simp only [U3, Finset.mem_filter]
+              exact ⟨fun ⟨⟨h1, h2⟩, h3⟩ => ⟨h1, h2, lt_of_not_ge h3⟩, fun ⟨h1, h2, h3⟩ => ⟨⟨h1, h2⟩, not_le.mpr h3⟩⟩
             rw [hU2_eq, hU3_eq]
             congr 1 <;> (apply Finset.sum_congr rfl; intro p hp; rw [if_neg (Finset.mem_filter.mp hp).2.1])
         linarith
@@ -1305,15 +1485,6 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
       rw [mul_pow, Real.sq_sqrt (mul_nonneg (mul_nonneg (sq_nonneg η) hε0.le) (by linarith [hτ₀_lt]))] at h2
       exact h2
     -- Combine: t^2 * η^2 * ε * (1 - 20 τ₀) ≤ t + t * (t - 1) * τ₀ / (M + 1)
-    -- Wait: if t ≥ M + 1, then (t - 1) * τ₀ / (M + 1) ≤ t * τ₀ / (M + 1)... actually divide by t > 0:
-    -- t * (η^2 * ε * (1 - 20 τ₀)) ≤ 1 + (t - 1) * τ₀ / (M + 1) ≤ 1 + t * τ₀ / (M + 1)
-    -- Wait: what if t is HUGE compared to M + 1? Then t * τ₀ / (M + 1) could be large?
-    -- NO! t * τ₀ / (M + 1) ≤ t * τ₀ (since M + 1 ≥ 2), so move it to the LHS:
-    -- t * (η^2 * ε * (1 - 20 τ₀) - τ₀) ≤ 1!
-    -- Wait: η^2 * ε * (1 - 20 τ₀) - τ₀ ≥ η^2 * ε * (1 - 21 τ₀ / (η^2 ε)) = η^2 * ε - 21 τ₀ > η^2 * ε / (1 + η^2 ε / 2)!
-    -- Let's check: τ₀ = η^2 ε / (1000 (1 + η^2 ε)), so 21 τ₀ ≤ 21 / 1000 * η^2 ε / (1 + η^2 ε),
-    -- and (M + 1) > (η^2 ε)⁻¹ + 1, so t * (η^2 ε) ≥ (M + 1) * (η^2 ε) > 1 + η^2 ε!
-    -- Thus t * (η^2 ε - 21 τ₀) > (1 + η^2 ε) * (1 - 21 / 1000) > 1!!
     have ht_pos : (0 : ℝ) < t := by exact_mod_cast (by omega : 0 < t)
     have h_div_t : (t : ℝ) * (η ^ 2 * ε * (1 - 20 * τ₀) - τ₀) ≤ 1 := by
       have h1 : (t : ℝ) ^ 2 * (η ^ 2 * ε * (1 - 20 * τ₀)) ≤
@@ -1371,173 +1542,6 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
         _ = (t : ℝ) * ((η ^ 2 * ε) * (1 - 21 * (η ^ 2 * ε) / (1000 * (1 + η ^ 2 * ε)))) := by ring
         _ ≤ (t : ℝ) * (η ^ 2 * ε * (1 - 20 * τ₀) - τ₀) := by gcongr
     linarith
-  refine ⟨N₀, by omega, h_int_bd, ?_⟩
-  -- Counting bound from the interval bound via dyadic covering!
-  classical
-  have h_int_bd' : ∀ N' : ℕ, N₀ ≤ N' →
-      ((Finset.Icc N' (N' + Nat.floor ((N' : ℝ) ^ (1 - ε)))).filter (PolBad ε η)).card ≤ M :=
-    fun N' hN' => h_int_bd N' hN'
-  have h2e_gt : 1 < (2 : ℝ) ^ ε := Real.one_lt_rpow (by norm_num) hε0
-  let C_pol : ℝ := (N₀ : ℝ) + 8 * (2 : ℝ) ^ ε / (ε * ((2 : ℝ) ^ ε - 1))
-  refine ⟨C_pol, by positivity, fun N hN => ?_⟩
-  change (((Finset.Icc 4 N).filter (PolBad ε η)).card : ℝ) ≤ _
-  let S_all := (Finset.Icc 4 N).filter (PolBad ε η)
-  let S_low := S_all.filter (fun n => n < N₀)
-  let S_hi := S_all.filter (fun n => N₀ ≤ n)
-  have hS_split : S_all.card ≤ S_low.card + S_hi.card := by
-    have : S_all ⊆ S_low ∪ S_hi := by
-      intro n hn; simp only [Finset.mem_union, Finset.mem_filter, S_low, S_hi]
-      by_cases h : n < N₀; exact Or.inl ⟨hn, h⟩; exact Or.inr ⟨hn, le_of_not_gt h⟩
-    exact le_trans (Finset.card_le_card this) (Finset.card_union_le _ _)
-  have hS_low : (S_low.card : ℝ) ≤ (N₀ : ℝ) := by
-    have hsub : S_low ⊆ Finset.Icc 1 N₀ := by
-      intro n hn; simp only [S_low, S_all, Finset.mem_filter, Finset.mem_Icc] at hn ⊢
-      exact ⟨by omega, by omega⟩
-    exact_mod_cast le_trans (Finset.card_le_card hsub) (by simp)
-  have hS_hi : (S_hi.card : ℝ) ≤ (4 * (M : ℝ) * (2 : ℝ) ^ ε / ((2 : ℝ) ^ ε - 1)) * (N : ℝ) ^ ε := by
-    let K := Nat.log 2 N
-    have hsub_hi : S_hi ⊆ (Finset.range (K + 1)).biUnion
-        (fun k => S_hi.filter (fun n => 2 ^ k ≤ n ∧ n ≤ 2 ^ (k + 1) - 1)) := by
-      intro n hn
-      simp only [Finset.mem_biUnion, Finset.mem_range, Finset.mem_filter]
-      have hn_mem := Finset.mem_filter.mp hn
-      have hn1 : 4 ≤ n := (Finset.mem_Icc.mp (Finset.mem_filter.mp hn_mem.1).1).1
-      have hnN : n ≤ N := (Finset.mem_Icc.mp (Finset.mem_filter.mp hn_mem.1).1).2
-      refine ⟨Nat.log 2 n, Nat.lt_succ_of_le (Nat.log_mono_right hnN), hn, ?_, ?_⟩
-      · exact Nat.pow_log_le_self 2 (by omega)
-      · have := Nat.lt_pow_succ_log_self (by norm_num : 1 < 2) n; omega
-    have hcard_hi : S_hi.card ≤ ∑ k ∈ Finset.range (K + 1),
-        (S_hi.filter (fun n => 2 ^ k ≤ n ∧ n ≤ 2 ^ (k + 1) - 1)).card :=
-      le_trans (Finset.card_le_card hsub_hi) Finset.card_biUnion_le
-    have hblk_card : ∀ k ∈ Finset.range (K + 1),
-        ((S_hi.filter (fun n => 2 ^ k ≤ n ∧ n ≤ 2 ^ (k + 1) - 1)).card : ℝ) ≤
-          2 * (M : ℝ) * ((2 : ℝ) ^ ε) ^ k := by
-      intro k _
-      let B_k := S_hi.filter (fun n => 2 ^ k ≤ n ∧ n ≤ 2 ^ (k + 1) - 1)
-      by_cases hne : 2 ^ (k + 1) - 1 < N₀
-      · have hB_empty : B_k = ∅ := by
-          ext n; simp only [B_k, S_hi, Finset.mem_filter, Finset.notMem_empty, iff_false]
-          intro h; omega
-        change (B_k.card : ℝ) ≤ 2 * (M : ℝ) * ((2 : ℝ) ^ ε) ^ k
-        rw [hB_empty, Finset.card_empty, Nat.cast_zero]; positivity
-      · push Not at hne
-        let a_k := max N₀ (2 ^ k)
-        let L_k := Nat.floor ((a_k : ℝ) ^ (1 - ε))
-        let J_k := 2 ^ k / (L_k + 1) + 1
-        have hB_sub : B_k ⊆ (Finset.range J_k).biUnion (fun j =>
-            (Finset.Icc (a_k + j * (L_k + 1)) (a_k + j * (L_k + 1) + L_k)).filter (PolBad ε η)) := by
-          intro n hn
-          simp only [B_k, S_hi, S_all, Finset.mem_filter, Finset.mem_biUnion, Finset.mem_range, Finset.mem_Icc] at hn ⊢
-          have hna : a_k ≤ n := max_le hn.1.2 hn.2.1
-          have hdiff : n - a_k < 2 ^ k := by
-            have : 2 ^ k ≤ a_k := le_max_right _ _
-            have : 2 ^ (k + 1) = 2 * 2 ^ k := by ring
-            omega
-          refine ⟨(n - a_k) / (L_k + 1), ?_, ⟨?_, ?_⟩, hn.1.1.2⟩
-          · have h1 : (n - a_k) / (L_k + 1) ≤ (2 ^ k) / (L_k + 1) := Nat.div_le_div_right hdiff.le
-            omega
-          · have := Nat.div_mul_le_self (n - a_k) (L_k + 1)
-            omega
-          · have hlt_mod : (n - a_k) % (L_k + 1) < L_k + 1 := Nat.mod_lt (n - a_k) (by omega)
-            have hdiv_mod := Nat.div_add_mod (n - a_k) (L_k + 1)
-            rw [mul_comm] at hdiv_mod
-            omega
-        have hB_card_le : B_k.card ≤ J_k * M := by
-          calc B_k.card ≤ ((Finset.range J_k).biUnion (fun j =>
-                (Finset.Icc (a_k + j * (L_k + 1)) (a_k + j * (L_k + 1) + L_k)).filter (PolBad ε η))).card :=
-                  Finset.card_le_card hB_sub
-            _ ≤ ∑ j ∈ Finset.range J_k,
-                  ((Finset.Icc (a_k + j * (L_k + 1)) (a_k + j * (L_k + 1) + L_k)).filter (PolBad ε η)).card :=
-                  Finset.card_biUnion_le
-            _ ≤ ∑ _j ∈ Finset.range J_k, M := by
-                  apply Finset.sum_le_sum; intro j _
-                  let N' := a_k + j * (L_k + 1)
-                  have hN'_ge : N₀ ≤ N' := le_trans (le_max_left _ _) (Nat.le_add_right _ _)
-                  have hLk_le : L_k ≤ Nat.floor ((N' : ℝ) ^ (1 - ε)) := by
-                    apply Nat.floor_mono
-                    exact Real.rpow_le_rpow (by positivity) (by exact_mod_cast Nat.le_add_right a_k _) (by linarith)
-                  have hsub_j : (Finset.Icc N' (N' + L_k)).filter (PolBad ε η) ⊆
-                      (Finset.Icc N' (N' + Nat.floor ((N' : ℝ) ^ (1 - ε)))).filter (PolBad ε η) := by
-                    intro x hx; simp only [Finset.mem_filter, Finset.mem_Icc] at hx ⊢
-                    exact ⟨⟨hx.1.1, by omega⟩, hx.2⟩
-                  exact le_trans (Finset.card_le_card hsub_j) (h_int_bd' N' hN'_ge)
-            _ = J_k * M := by rw [Finset.sum_const, Finset.card_range, smul_eq_mul]
-        have hJk_le : (J_k : ℝ) ≤ ((2 : ℝ) ^ ε) ^ k + 1 := by
-          have hdiv_r : ((2 ^ k / (L_k + 1) : ℕ) : ℝ) ≤ (2 : ℝ) ^ k / ((L_k : ℝ) + 1) := by
-            rw [le_div_iff₀ (by positivity)]
-            exact_mod_cast Nat.div_mul_le_self (2 ^ k) (L_k + 1)
-          have hLk_gt : ((2 : ℝ) ^ k) ^ (1 - ε) < (L_k : ℝ) + 1 := by
-            have h1 : (a_k : ℝ) ^ (1 - ε) < (L_k : ℝ) + 1 := Nat.lt_floor_add_one _
-            have h2 : ((2 : ℝ) ^ k) ^ (1 - ε) ≤ (a_k : ℝ) ^ (1 - ε) :=
-              Real.rpow_le_rpow (by positivity) (by exact_mod_cast le_max_right N₀ (2 ^ k)) (by linarith)
-            linarith
-          have hdiv_pow : (2 : ℝ) ^ k / ((L_k : ℝ) + 1) ≤ ((2 : ℝ) ^ ε) ^ k := by
-            calc (2 : ℝ) ^ k / ((L_k : ℝ) + 1) ≤ (2 : ℝ) ^ k / ((2 : ℝ) ^ k) ^ (1 - ε) := by
-                  gcongr
-              _ = ((2 : ℝ) ^ ε) ^ k := by
-                  rw [← Real.rpow_natCast (2 : ℝ) k, ← Real.rpow_mul (by norm_num),
-                    ← Real.rpow_sub (by norm_num), show (k : ℝ) - (k : ℝ) * (1 - ε) = ε * (k : ℝ) by ring,
-                    Real.rpow_mul (by norm_num), Real.rpow_natCast]
-          have hJk_eq : (J_k : ℝ) = ((2 ^ k / (L_k + 1) : ℕ) : ℝ) + 1 := by
-            dsimp [J_k]; push_cast; ring
-          linarith
-        have h1_le : (1 : ℝ) ≤ ((2 : ℝ) ^ ε) ^ k := one_le_pow₀ h2e_gt.le
-        have hB_r : (B_k.card : ℝ) ≤ (J_k : ℝ) * (M : ℝ) := by exact_mod_cast hB_card_le
-        nlinarith [show (0 : ℝ) ≤ M by positivity]
-    have hsum_geom : ∑ k ∈ Finset.range (K + 1), 2 * (M : ℝ) * ((2 : ℝ) ^ ε) ^ k =
-        2 * (M : ℝ) * (((2 : ℝ) ^ ε) ^ (K + 1) - 1) / ((2 : ℝ) ^ ε - 1) := by
-      have : ∑ k ∈ Finset.range (K + 1), 2 * (M : ℝ) * ((2 : ℝ) ^ ε) ^ k =
-          (2 * (M : ℝ)) * ∑ k ∈ Finset.range (K + 1), ((2 : ℝ) ^ ε) ^ k := by
-        rw [Finset.mul_sum]
-      rw [this, geom_sum_eq h2e_gt.ne']; ring
-    have hK_pow : ((2 : ℝ) ^ ε) ^ (K + 1) ≤ (2 : ℝ) ^ ε * (N : ℝ) ^ ε := by
-      rw [pow_succ', ← Real.rpow_natCast ((2 : ℝ) ^ ε) K, ← Real.rpow_mul (by positivity),
-        mul_comm ε (K : ℝ), Real.rpow_mul (by positivity), Real.rpow_natCast]
-      gcongr
-      exact_mod_cast Nat.pow_log_le_self 2 (by omega : N ≠ 0)
-    have hcard_hi_r : (S_hi.card : ℝ) ≤ ∑ k ∈ Finset.range (K + 1),
-        ((S_hi.filter (fun n => 2 ^ k ≤ n ∧ n ≤ 2 ^ (k + 1) - 1)).card : ℝ) := by
-      exact_mod_cast hcard_hi
-    calc (S_hi.card : ℝ)
-        ≤ ∑ k ∈ Finset.range (K + 1), 2 * (M : ℝ) * ((2 : ℝ) ^ ε) ^ k := le_trans hcard_hi_r (Finset.sum_le_sum hblk_card)
-      _ = 2 * (M : ℝ) * (((2 : ℝ) ^ ε) ^ (K + 1) - 1) / ((2 : ℝ) ^ ε - 1) := hsum_geom
-      _ ≤ 2 * (M : ℝ) * ((2 : ℝ) ^ ε * (N : ℝ) ^ ε) / ((2 : ℝ) ^ ε - 1) := by
-          gcongr; linarith
-      _ ≤ (4 * (M : ℝ) * (2 : ℝ) ^ ε / ((2 : ℝ) ^ ε - 1)) * (N : ℝ) ^ ε := by
-          rw [div_mul_eq_mul_div]
-          have h_num : 2 * (M : ℝ) * ((2 : ℝ) ^ ε * (N : ℝ) ^ ε) ≤
-              4 * (M : ℝ) * (2 : ℝ) ^ ε * (N : ℝ) ^ ε := by
-            nlinarith [show 0 ≤ (M : ℝ) * ((2 : ℝ) ^ ε * (N : ℝ) ^ ε) by positivity]
-          gcongr
-  have hM_le : (M : ℝ) ≤ 2 / (η ^ 2 * ε) := by
-    have h1 : (M : ℝ) ≤ (η ^ 2 * ε)⁻¹ + 1 := by
-      have : (Nat.floor ((η ^ 2 * ε)⁻¹) : ℝ) ≤ (η ^ 2 * ε)⁻¹ := Nat.floor_le (by positivity)
-      dsimp [M]; push_cast; linarith
-    have h2 : (1 : ℝ) ≤ (η ^ 2 * ε)⁻¹ := by
-      rw [le_inv_comm₀ (by norm_num) (by positivity), inv_one]; nlinarith
-    rw [div_eq_mul_inv]; linarith
-  have h_coeff : 4 * (M : ℝ) * (2 : ℝ) ^ ε / ((2 : ℝ) ^ ε - 1) ≤
-      (8 * (2 : ℝ) ^ ε / (ε * ((2 : ℝ) ^ ε - 1))) * η ^ (-2 : ℤ) := by
-    have hη_eq : η ^ (-2 : ℤ) = (η ^ 2)⁻¹ := by rw [zpow_neg]; rfl
-    rw [hη_eq]
-    calc 4 * (M : ℝ) * (2 : ℝ) ^ ε / ((2 : ℝ) ^ ε - 1)
-        ≤ 4 * (2 / (η ^ 2 * ε)) * (2 : ℝ) ^ ε / ((2 : ℝ) ^ ε - 1) := by gcongr
-      _ = (8 * (2 : ℝ) ^ ε / (ε * ((2 : ℝ) ^ ε - 1))) * (η ^ 2)⁻¹ := by
-          field_simp [(by positivity : η ≠ 0), (by positivity : ε ≠ 0), (by linarith : (2 : ℝ) ^ ε - 1 ≠ 0)]; ring
-  have h1_le_N : (1 : ℝ) ≤ (N : ℝ) ^ ε := Real.one_le_rpow (by exact_mod_cast hN) hε0.le
-  have h1_le_eta : (1 : ℝ) ≤ η ^ (-2 : ℤ) := by
-    rw [show η ^ (-2 : ℤ) = (η ^ 2)⁻¹ by rw [zpow_neg]; rfl]
-    exact (one_le_inv₀ (by positivity)).mpr (by nlinarith)
-  have hS_all_r : (S_all.card : ℝ) ≤ (S_low.card : ℝ) + (S_hi.card : ℝ) := by exact_mod_cast hS_split
-  calc (S_all.card : ℝ)
-      ≤ (N₀ : ℝ) + (8 * (2 : ℝ) ^ ε / (ε * ((2 : ℝ) ^ ε - 1))) * η ^ (-2 : ℤ) * (N : ℝ) ^ ε := by
-        have : (4 * (M : ℝ) * (2 : ℝ) ^ ε / ((2 : ℝ) ^ ε - 1)) * (N : ℝ) ^ ε ≤
-            (8 * (2 : ℝ) ^ ε / (ε * ((2 : ℝ) ^ ε - 1))) * η ^ (-2 : ℤ) * (N : ℝ) ^ ε := by gcongr
-        linarith
-    _ ≤ C_pol * η ^ (-2 : ℤ) * (N : ℝ) ^ ε := by
-        dsimp [C_pol]
-        have : (N₀ : ℝ) ≤ (N₀ : ℝ) * η ^ (-2 : ℤ) * (N : ℝ) ^ ε := by
-          nlinarith [show (1 : ℝ) ≤ η ^ (-2 : ℤ) * (N : ℝ) ^ ε by nlinarith]
-        linarith
+  exact ⟨N₀, by omega, h_int_bd, pol_counting_of_interval_bound ε η hε0 hε1 hη0 hη1 N₀ (by omega) h_int_bd⟩
 
 end GrasGreenbergBrocard
