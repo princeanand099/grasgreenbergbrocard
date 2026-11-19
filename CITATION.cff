@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+title: "Formal Verification of Arithmetic Structure and Counting Bounds for the Brocard–Ramanujan Equation (Lean 4)"
+message: "If you use this Lean 4 formalization or the accompanying manuscript in your research, please cite both the paper and this software artifact."
+type: software
+authors:
+  - family-names: "Anand"
+    given-names: "Prince"
+    email: "princeanand123pc@gmail.com"
+repository-code: "https://github.com/princeanand099/grasgreenbergbrocard"
+url: "https://github.com/princeanand099/grasgreenbergbrocard"
+license: Apache-2.0
+date-released: "2026-11-19"
+keywords:
+  - lean4
+  - mathlib
+  - formal-verification
+  - number-theory
+  - brocard-ramanujan
+  - iwasawa-theory
+  - diophantine-equations
+  - pade-approximants
+preferred-citation:
+  type: article
+  authors:
+    - family-names: "Anand"
+      given-names: "Prince"
+      email: "princeanand123pc@gmail.com"
+  title: "Arithmetic Structure and Counting Bounds for the Brocard–Ramanujan Equation"
+  year: 2026
+  month: 11
+  url: "https://github.com/princeanand099/grasgreenbergbrocard/blob/main/brocard_arithmetic_structure_and_counting_bounds.pdf"
