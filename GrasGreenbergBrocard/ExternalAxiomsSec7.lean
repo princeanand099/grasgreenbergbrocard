@@ -97,7 +97,12 @@ structure PadeEvaluationData (r E ν s D M a n₀ : ℕ) (x₀ : ℝ) where
   form_lower : (1 : ℝ) / (Z : ℝ) ≤ nonZeroFormVal
   /-- Cauchy/Leibniz derivative upper bound and factorial-root approximation bound:
       $1 / Z \le s \cdot x_0^E \cdot u U^D \cdot \rho + x_0^E \cdot w W^{-D}$. -/
-  u U w W ρ C_P : ℝ
+  u : ℝ
+  U : ℝ
+  w : ℝ
+  W : ℝ
+  ρ : ℝ
+  C_P : ℝ
   u_pos : 0 < u
   U_pos : 0 < U
   w_pos : 0 < w
@@ -106,13 +111,6 @@ structure PadeEvaluationData (r E ν s D M a n₀ : ℕ) (x₀ : ℝ) where
   rho_le : ρ ≤ C_P * (M : ℝ) ^ E * x₀ ^ (-(ν : ℝ))
   form_upper : nonZeroFormVal ≤ (s : ℝ) * x₀ ^ E * u * U ^ D * ρ + x₀ ^ E * w * W ^ (-(D : ℝ))
 
-/-- **Bui–Pratt–Zaharescu (2023), Proposition 3.4 & §5 (Depression Reduction & Cauchy/Leibniz
-Elimination)**: For any polynomial-factorial equation $s_{\mathrm{mult}} \cdot n! = P(x)$ with
-depressed degree gap $\nu \ge 2$, any admissible tuple $(d, E, m, \varepsilon_0, \theta)$ satisfying
-the Padé–Wronskian inequality $\theta < \min(\theta_{d,E,\nu}(\varepsilon_0), 1/(d+2))$ forbids
-clusters of $d + 1$ solutions in $[N, 2N]$ with gap $\le N^\theta$ from exceeding the Pigeonhole
-multiplicity threshold, yielding at most $O_{P, s_{\mathrm{mult}}, \varepsilon}(N^{1 - \theta + \varepsilon})$
-solutions in $[N, 2N]$ for all sufficiently large $N$. -/
 /-- Solution predicate for a polynomial-factorial equation $s_{\mathrm{mult}} \cdot n! = P(x)$. -/
 def IsPolyFactSol (s_mult : ℕ) (P : ℤ[X]) (n : ℕ) : Prop :=
   ∃ x : ℤ, (s_mult : ℤ) * (Nat.factorial n : ℤ) = P.eval x
@@ -128,6 +126,13 @@ def HasDepressedDegreeGap (P : ℤ[X]) (ν : ℕ) : Prop :=
       (P.natDegree : ℤ) ^ P.natDegree * P.leadingCoeff ^ (P.natDegree - 1) * P.eval x =
         P_dep.eval ((P.natDegree : ℤ) * P.leadingCoeff * x + P.coeff (P.natDegree - 1))
 
+/-- **Bui–Pratt–Zaharescu (2023), Proposition 3.4 & §5 (Depression Reduction & Cauchy/Leibniz
+Elimination)**: For any polynomial-factorial equation $s_{\mathrm{mult}} \cdot n! = P(x)$ with
+depressed degree gap $\nu \ge 2$, any admissible tuple $(d, E, m, \varepsilon_0, \theta)$ satisfying
+the Padé–Wronskian inequality $\theta < \min(\theta_{d,E,\nu}(\varepsilon_0), 1/(d+2))$ forbids
+clusters of $d + 1$ solutions in $[N, 2N]$ with gap $\le N^\theta$ from exceeding the Pigeonhole
+multiplicity threshold, yielding at most $O_{P, s_{\mathrm{mult}}, \varepsilon}(N^{1 - \theta + \varepsilon})$
+solutions in $[N, 2N]$ for all sufficiently large $N$. -/
 axiom bpz_dyadic_cluster_elimination (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
     (hP : 2 ≤ P_deg) (hν : 2 ≤ ν) (hd : 1 ≤ d) (hE : 1 ≤ E)
     (hE_le : E ≤ min (P_deg - 1) (ν - 1))
