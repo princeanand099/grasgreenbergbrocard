@@ -855,7 +855,7 @@ theorem lem_6_3_osc_bound_honest
               mul_le_mul_of_nonneg_right hcard hterm_nn
             have h2 : (R : ℝ) * (C_mert * ((3 * (A_R : ℝ) + 12) * Real.log (Real.log (n₁ : ℝ)) + 3)) ≤
                 (R : ℝ) * C_mert * ((3 * (A_R : ℝ) + 14) * Real.log (Real.log (n₁ : ℝ)) + 4) := by
-              rw [← mul_assoc]; gcongr; linarith [hll_pos]
+              rw [← mul_assoc]; exact mul_le_mul_of_nonneg_left (by linarith [hll_pos]) (by positivity)
             exact le_trans h1 h2
     calc |∑ p ∈ I_exc, _|
         ≤ ∑ p ∈ I_exc, |((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
@@ -1416,7 +1416,8 @@ theorem lem_6_3_osc_bound_honest
                         rw [Complex.ofReal_sum, Finset.mul_sum, ← Finset.sum_coe_sort A]
                         push_cast
                         refine Finset.sum_congr rfl fun j _ => ?_
-                        simp only [j.2, ↓reduceDIte, hn₂_eq]
+                        have hn₂_eqC : (n₂ : ℂ) = (n₁ : ℂ) + (h : ℂ) := by exact_mod_cast (by omega : n₂ = n₁ + h)
+                        simp only [j.2, ↓reduceDIte, hn₂_eqC]
                         push_cast; ring
                       have hw_eq : ((Real.log (p : ℝ) / (p : ℝ) : ℝ) : ℂ) = ((1 / (p : ℝ)) * Real.log (p : ℝ) : ℂ) := by
                         push_cast; ring
