@@ -121,7 +121,8 @@ lemma theta_weight_eq_zero_of_k2 {n m X₁ Y₁ : ℕ} (hn : 4 ≤ n) (hn6 : n �
     have hp_pr := (Finset.mem_filter.mp hp1).2.1
     have hp_dvd_B : p ∣ B_sol m := by
       unfold B_sol
-      exact dvd_trans (Finset.mem_filter.mp hp).2.2 (by unfold oddPartNat; exact Nat.ordCompl_dvd ((m + 1) / 2) 2)
+      exact dvd_trans (Finset.mem_filter.mp hp).2.2
+        (by unfold oddPartNat; rw [← Nat.factorization_def _ Nat.prime_two]; exact Nat.ordCompl_dvd ((m + 1) / 2) 2)
     have hp_dvd_X1 : p ∣ X₁ := by
       rw [hB_val] at hp_dvd_B
       exact hp_pr.dvd_of_dvd_pow hp_dvd_B
