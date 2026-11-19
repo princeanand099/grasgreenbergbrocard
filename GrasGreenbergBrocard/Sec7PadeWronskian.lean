@@ -52,7 +52,7 @@ theorem siegel_lemma_pigeonhole {M_eq N_var : ℕ}
           ≤ ∑ j : Fin N_var, |A i j * ((v j : ℕ) : ℤ)| := Finset.abs_sum_le_sum_abs _ _
         _ ≤ ∑ _j : Fin N_var, ((A_max : ℤ) * (B : ℤ)) := by
             apply Finset.sum_le_sum; intro j _
-            rw [abs_mul, abs_of_nonneg (Nat.cast_nonneg (v j : ℕ))]
+            rw [abs_mul, mul_comm |A i j|, abs_of_nonneg (Nat.cast_nonneg (v j : ℕ)), mul_comm]
             have hvj : ((v j : ℕ) : ℤ) ≤ (B : ℤ) := by exact_mod_cast Nat.le_of_lt_succ (v j).isLt
             exact mul_le_mul (hA i j) hvj (Nat.cast_nonneg _) (Nat.cast_nonneg _)
         _ = (S : ℤ) := by simp [S, mul_assoc]
@@ -316,13 +316,16 @@ theorem gauss_leading_coeff_dvd_of_linear_factors {Delta : ℤ[X]} (hDelta : Del
   have hlead_lin : ∀ n ∈ T, (Polynomial.C (n : ℤ) * X - 1).leadingCoeff = (n : ℤ) := by
     intro n hn
     have hn_ne : (n : ℤ) ≠ 0 := by exact_mod_cast (hT n hn).ne'
-    have hdeg : (Polynomial.C (n : ℤ) * X - 1).natDegree = 1 := by
-      have h1 : (Polynomial.C (n : ℤ) * X - 1) = Polynomial.C (n : ℤ) * X + Polynomial.C (-1 : ℤ) := by
-        simp [sub_eq_add_neg]
-      rw [h1]
-      exact Polynomial.natDegree_C_mul_X_add_C hn_ne (-1)
-    rw [Polynomial.leadingCoeff, hdeg]
-    simp [Polynomial.coeff_X]
+    have h1 : (Polynomial.C (n : ℤ) * X - 1) = Polynomial.C (n : ℤ) * X + Polynomial.C (-1 : ℤ) := by
+      simp [sub_eq_add_neg]
+    have hdeg_cx : (Polynomial.C (n : ℤ) * X).natDegree = 1 :=
+      Polynomial.natDegree_C_mul_X (n : ℤ) hn_ne
+    have hdeg : (Polynomial.C (n : ℤ) * X + Polynomial.C (-1 : ℤ)).natDegree = 1 := by
+      rw [Polynomial.natDegree_add_eq_left_of_natDegree_lt]
+      · exact hdeg_cx
+      · rw [Polynomial.natDegree_C, hdeg_cx]; omega
+    rw [h1, Polynomial.leadingCoeff, hdeg, Polynomial.coeff_add, Polynomial.coeff_C_mul_X, Polynomial.coeff_C]
+    simp
   have hlead_prod : (∏ n ∈ T, (Polynomial.C (n : ℤ) * X - 1) ^ a n).leadingCoeff =
       ∏ n ∈ T, (n : ℤ) ^ a n := by
     rw [Polynomial.leadingCoeff_prod]
@@ -336,7 +339,10 @@ theorem gauss_leading_coeff_dvd_of_linear_factors {Delta : ℤ[X]} (hDelta : Del
   have habs_le : (∏ n ∈ T, (n : ℤ) ^ a n) ≤ |Delta.leadingCoeff| := by
     obtain ⟨k, hk⟩ := hlead_dvd
     have hk_ne : k ≠ 0 := fun h0 => hlc_ne (by rw [hk, h0, mul_zero])
-    have hk1 : (1 : ℤ) ≤ |k| := by omega
+    have hk1 : (1 : ℤ) ≤ |k| := by
+      rcases lt_or_gt_of_ne hk_ne with h | h
+      · rw [abs_of_neg h]; omega
+      · rw [abs_of_pos h]; omega
     have hnn : 0 ≤ ∏ n ∈ T, (n : ℤ) ^ a n := Finset.prod_nonneg (fun n _ => pow_nonneg (Nat.cast_nonneg _) _)
     rw [hk, abs_mul, abs_of_nonneg hnn]
     nlinarith
