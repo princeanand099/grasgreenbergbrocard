@@ -50,6 +50,8 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
         (((Finset.Icc 4 N).filter (fun n =>
           ∃ m : ℕ, Nat.factorial n + 1 = m ^ 2 ∧ |theta_eps_weight ε n m - 1 / 2| ≥ η)).card : ℝ) ≤
           C * η ^ (-2 : ℤ) * (N : ℝ) ^ ε) := by
+  -- Rankin spherical cap Cauchy-Schwarz on I = [N', N' + ⌊(N')^{1-ε}⌋]
+  -- 1. Asymptotic for W_I = ∑_{p ∈ P_I(N')} w_p = ε/4 + o(1) via multi_modulus_power_band_equidistribution
   let M : ℕ := Nat.floor ((η ^ 2 * ε)⁻¹) + 1
   let τ₀ : ℝ := (η ^ 2 * ε) ^ 2 / (1000 * (1 + η ^ 2 * ε))
   have hηε_lt : η ^ 2 * ε < 1 := by nlinarith [sq_nonneg η]
@@ -94,8 +96,10 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
       ∃ m : ℕ, Nat.factorial n + 1 = m ^ 2 ∧ |theta_eps_weight ε n m - 1 / 2| ≥ η)
     by_contra h_gt
     push Not at h_gt
+    -- Let t := S_pol.card ≥ M + 1
     set t := S_pol.card
     have ht_ge : M + 1 ≤ t := h_gt
+    -- Define P_base = (Icc 3 N').filter Prime and weight w
     let P_base := (Finset.Icc 3 N').filter Nat.Prime
     let W_tot := S_odd N' + S_even N'
     have hlogN'_pos : 0 < Real.log (N' : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < N'))
@@ -142,11 +146,13 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
       · exact Real.log_nonneg (by exact_mod_cast Nat.pos_of_ne_zero hp0)
     have hw_sum : ∑ p ∈ P_base, w p = 1 := by
       dsimp [w]; rw [← Finset.sum_div, ← hW_tot_eq, div_self hW_tot_pos.ne']
+    -- Upper-band set P_I on N'
     let P_I : Finset ℕ := (Podd N').filter (fun p : ℕ => 3 ≤ p ∧ (N' : ℝ) ^ (1 - ε / 2) < (p : ℝ))
     have hP_I_sub : P_I ⊆ P_base := by
       intro p hp; simp only [P_I, Podd, P_base, Finset.mem_filter, Finset.mem_Icc] at hp ⊢
       exact ⟨⟨hp.2.1, hp.1.1.2⟩, hp.1.2.1⟩
     let W_I := ∑ p ∈ P_I, w p
+    -- Bound W_I = ε/4 ± ε/40 using hN_band
     have hband_sum_eq : ∑ p ∈ P_I, (padicValNat p (Nat.factorial N') : ℝ) * Real.log (p : ℝ) =
         ∑ p ∈ (Finset.Icc 2 N').filter (fun p : ℕ =>
           p.Prime ∧ (N' : ℝ) ^ (1 - ε / 2) < (p : ℝ) ∧ (p : ℝ) ≤ (N' : ℝ) ^ (1 : ℝ) ∧
@@ -210,6 +216,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
         _ ≤ (ε / 4) * (1 + τ₀) * W_tot :=
             mul_le_mul_of_nonneg_left hW_tot_lb (by positivity)
     have hW_I_pos : 0 < W_I := lt_of_lt_of_le (by nlinarith) hW_I_lb
+    -- Define v_I(p) = if p ∈ P_I then 1 / √W_I else 0
     let v_I : ℕ → ℝ := fun p => if p ∈ P_I then 1 / Real.sqrt W_I else 0
     have hv_I_norm : ∑ p ∈ P_base, w p * (v_I p) ^ 2 = 1 := by
       have h1 : ∑ p ∈ P_base, w p * (v_I p) ^ 2 = ∑ p ∈ P_I, w p * (1 / W_I) := by
@@ -222,6 +229,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
       rw [h1, ← Finset.sum_mul]
       change W_I * (1 / W_I) = 1
       exact mul_one_div_cancel hW_I_pos.ne'
+    -- For each n ∈ S_pol, pick m(n) and define u(n, p)
     have hm_ex : ∀ n ∈ S_pol, ∃ m : ℕ, Nat.factorial n + 1 = m ^ 2 ∧ |theta_eps_weight ε n m - 1 / 2| ≥ η :=
       fun n hn => (Finset.mem_filter.mp hn).2
     choose m_fn hm_sq hm_pol using fun n (hn : n ∈ S_pol) => hm_ex n hn
@@ -231,6 +239,8 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
       have h1 : ∀ p ∈ P_base, w p * (u n hn p) ^ 2 = w p := by
         intro p _; dsimp [u]; split_ifs <;> ring
       rw [Finset.sum_congr rfl h1, hw_sum]
+    -- Bound |⟨u n hn, v_I⟩_w| ≥ η * √ε * (1 - 4 * τ₀)
+    -- Actually let's compute the difference between P_I(n) and P_I(N')!
     have h_uv_lb : ∀ n (hn : n ∈ S_pol),
         Real.sqrt (η ^ 2 * ε * (1 - 20 * τ₀)) ≤ |∑ p ∈ P_base, w p * u n hn p * v_I p| := by
       intro n hn
@@ -238,6 +248,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
       have hm := hm_sq n hn
       have hpol := hm_pol n hn
       have hn_mem := Finset.mem_Icc.mp (Finset.mem_filter.mp hn).1
+      -- Let P_I_n := (Podd n).filter (fun p => 3 ≤ p ∧ (n : ℝ) ^ (1 - ε / 2) < (p : ℝ))
       let P_I_n : Finset ℕ := (Podd n).filter (fun p : ℕ => 3 ≤ p ∧ (n : ℝ) ^ (1 - ε / 2) < (p : ℝ))
       let den_n : ℝ := ∑ p ∈ P_I_n, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ)
       let num_n : ℝ := ∑ p ∈ P_I_n.filter (fun p : ℕ => p ∣ B_part n ((m + 1) / 2)),
@@ -248,9 +259,13 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
             p ∣ B_part n ((m + 1) / 2)), (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) = num_n := by
           dsimp [num_n, P_I_n]; congr 1; ext p; simp only [Finset.mem_filter]; tauto
         rw [hnum_eq]
+      -- Since |θ_ε(n) - 1/2| ≥ η > 0, den_n > 0!
       have hden_pos : 0 < den_n := by
         by_contra hle
         rw [hθ_eq, if_neg hle] at hpol
+        have : |(0 : ℝ) - 1 / 2| = 1 / 2 := by norm_num
+        -- Wait: η ≤ 1/2, so if den_n = 0, |0 - 1/2| = 1/2 ≥ η IS possible if η = 1/2!
+        -- Good catch! For N' ≥ 1000, den_n > 0 by hN_band!
         have h_band_n := hN_band n (by omega)
         have hlogn_pos : 0 < Real.log (n : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n))
         rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (mul_nonneg (Nat.cast_nonneg _) hlogn_pos.le)] at h_band_n
@@ -285,8 +300,10 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
           mul_pos (by nlinarith) (mul_pos hn_pos hlogn_pos)
         linarith
       rw [hθ_eq, if_pos hden_pos] at hpol
+      -- 2 * num_n - den_n = ∑_{p ∈ P_I_n} v_p(n!) log p * u n hn p
       have h2num_sub : 2 * num_n - den_n =
           ∑ p ∈ P_I_n, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) * u n hn p := by
+        have hsub_part : P_I_n.filter (fun p => p ∣ B_part n ((m + 1) / 2)) ⊆ P_I_n := Finset.filter_subset _ _
         have h_u_eq : ∀ p ∈ P_I_n, u n hn p =
             if p ∣ B_part n ((m + 1) / 2) then (1 : ℝ) else -1 := by
           intro p hp
@@ -351,6 +368,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
             apply Finset.sum_congr rfl; intro p hp; rw [if_neg (Finset.mem_filter.mp hp).2]
           rw [this, Finset.sum_neg_distrib]; linarith
         rw [hpos_sum, hneg_sum]; ring
+      -- Hence |∑_{p ∈ P_I_n} v_p(n!) log p * u n hn p| ≥ 2 η den_n
       have h_abs_n : 2 * η * den_n ≤ |∑ p ∈ P_I_n, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) * u n hn p| := by
         rw [← h2num_sub]
         have h1 : |num_n / den_n - 1 / 2| = |2 * num_n - den_n| / (2 * den_n) := by
@@ -358,6 +376,16 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
             abs_div, abs_of_pos (mul_pos (by norm_num) hden_pos)]
         rw [h1, ge_iff_le, le_div_iff₀ (by positivity)] at hpol
         linarith
+      -- Now relate ∑_{p ∈ P_I} w p * u n hn p * v_I p = (1 / (W_tot * √W_I)) * ∑_{p ∈ P_I} v_p(N'!) log p * u n hn p
+      -- And bound |(∑_{p ∈ P_I_n} v_p(n!) log p * u) - (∑_{p ∈ P_I} v_p(N'!) log p * u)| ≤ O((N')^{1 - ε/2} log N')!
+      -- Since den_n ≥ (ε/4)(1 - τ₀/2) N' log N' and W_tot ≤ (1 + τ₀/2) N' log N' and W_I ≤ (ε/4)(1 + τ₀):
+      -- |⟨u, v_I⟩_w| ≥ (2 η den_n - diff) / (W_tot * √W_I) ≥ √(η^2 ε (1 - 20 τ₀))!
+      -- Let's bound the symmetric difference P_I_n Δ P_I cleanly:
+      -- Any p ∈ P_I ∩ P_I_n has v_p(n!) = v_p(N'!) + v_p(n!/N'!).
+      -- Any p ∈ P_I \ P_I_n has p ∣ n!/N'! (if p ≤ N' and parity flipped) or p ≤ n^{1-ε/2} (none? Wait: n ≥ N' so n^{1-ε/2} ≥ (N')^{1-ε/2}!).
+      -- Wait: (N')^{1-ε/2} < p ≤ n^{1-ε/2} is POSSIBLE, and its weight is ≤ n * log((n/N')^{1-ε/2}) ≤ n * (N')^{-ε} ≤ (N')^{1-ε} log N'!
+      -- Even simpler: for p ∈ P_I ∪ P_I_n:
+      -- ∑_{p ∈ P_I_n \ P_I} v_p(n!) log p ≤ ∑_{N' < p ≤ n} log p + ∑_{p ∣ n!/N'!} v_p(n!) log p ≤ 3 (N')^{1-ε/2} log(2N')!
       have hdiff_sum : |∑ p ∈ P_I_n, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) * u n hn p -
           ∑ p ∈ P_I, (padicValNat p (Nat.factorial N') : ℝ) * Real.log (p : ℝ) * u n hn p| ≤
           13 * (N' : ℝ) ^ (1 - ε / 2) * Real.log (2 * (N' : ℝ)) := by
@@ -450,6 +478,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
               show |u n hn p| = 1 by dsimp [u]; split_ifs <;> norm_num, mul_one,
               abs_of_nonneg (mul_nonneg (Nat.cast_nonneg _) (Real.log_nonneg (by exact_mod_cast (Finset.mem_filter.mp (Finset.mem_filter.mp h2).1).2.1.pos)))]
             have hp_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp h2).1).2.1
+            haveI : Fact p.Prime := ⟨hp_pr⟩
             have hv_le : padicValNat p (Nat.factorial N') ≤ padicValNat p (Nat.factorial n) := by
               have hf := (Nat.factorization_le_iff_dvd (Nat.factorial_pos N').ne' (Nat.factorial_pos n).ne').mpr
                 (Nat.factorial_dvd_factorial hn_mem.1) p
@@ -457,7 +486,9 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
             have hlog_nn : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by exact_mod_cast hp_pr.pos)
             gcongr
           · simp [U_union] at hp; tauto
-        have h_sum_abs := Finset.abs_sum_le_sum_abs _ U_union
+        have h_sum_abs := Finset.abs_sum_le_sum_abs (fun p =>
+            (if p ∈ P_I_n then (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) * u n hn p else 0) -
+            (if p ∈ P_I then (padicValNat p (Nat.factorial N') : ℝ) * Real.log (p : ℝ) * u n hn p else 0)) U_union
         have h_le_u := le_trans h_sum_abs (Finset.sum_le_sum hU_term)
         let U1 := U_union.filter (fun p => p ∈ P_I_n ∧ p ∈ P_I)
         let U2 := U_union.filter (fun p => ¬ (p ∈ P_I_n ∧ p ∈ P_I) ∧ (p : ℝ) ≤ (n : ℝ) ^ (1 - ε / 2))
@@ -852,11 +883,11 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
           exact (hXZ.mul_right hXW).mul_left (hYZ.mul_right hYW)
         exact hp_pr.not_dvd_one (hcop_all ▸ Nat.dvd_gcd hp1 hp2)
       have hun_XZ : P_base = P_XY ∪ P_ZW := by
-        ext p; simp only [P_XY, P_ZW, Finset.mem_union, Finset.mem_filter, P_base, Finset.mem_Icc]
+        ext p; simp only [Finset.mem_union, P_XY, P_ZW, Finset.mem_filter, P_base, Finset.mem_Icc]
         constructor
         · rintro ⟨⟨hp3, hpN'⟩, hp_pr⟩
           have hp_fac : p ∣ Nat.factorial n₁ := Nat.dvd_factorial hp_pr.pos (by omega)
-          have hp_xyzw : p ∣ (X_gcd m₁ m₂ * Y_gcd m₁ m₂) * (Z_gcd m₁ m₂ * W_gcd m₁ m₂) := by
+          have hp_xyzw : p ∣ X_gcd m₁ m₂ * Y_gcd m₁ m₂ * (Z_gcd m₁ m₂ * W_gcd m₁ m₂) := by
             have h1 : 4 * (X_gcd m₁ m₂ * Y_gcd m₁ m₂ * (Z_gcd m₁ m₂ * W_gcd m₁ m₂)) = Nat.factorial n₁ := by
               rw [← hprod]; ring
             rw [← h1] at hp_fac
@@ -1152,6 +1183,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
       constructor
       · rw [h2]; have := (abs_le.mp hZW_XY.1).2; rw [le_div_iff₀ hW_tot_pos] at h_b_ub; nlinarith [hW_tot_pos]
       · rw [h1]; have := (abs_le.mp hZW_XY.2).2; rw [le_div_iff₀ hW_tot_pos] at h_a_ub; nlinarith [hW_tot_pos]
+    -- Apply Rankin's spherical cap Cauchy-Schwarz inequality!
     let sgn : ∀ n, n ∈ S_pol → ℝ := fun n hn =>
       if 0 ≤ ∑ p ∈ P_base, w p * u n hn p * v_I p then 1 else -1
     let X_vec : ℕ → ℝ := fun p => ∑ hn ∈ S_pol.attach, sgn hn.1 hn.2 * u hn.1 hn.2 p
@@ -1232,6 +1264,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
           _ = |sgn hn₁.1 hn₁.2| * |sgn hn₂.1 hn₂.2| * |inner| := by rw [abs_mul, abs_mul]
           _ ≤ 1 * 1 * (τ₀ / ((M : ℝ) + 1)) := by rw [hs1, hs2]; gcongr
           _ = τ₀ / ((M : ℝ) + 1) := by ring
+      -- Split double sum into diagonal (t) and off-diagonal (t*(t-1) terms)
       have h_split : ∑ hn₁ ∈ S_pol.attach, ∑ hn₂ ∈ S_pol.attach,
           sgn hn₁.1 hn₁.2 * sgn hn₂.1 hn₂.2 * ∑ p ∈ P_base, w p * u hn₁.1 hn₁.2 p * u hn₂.1 hn₂.2 p =
           (∑ hn₁ ∈ S_pol.attach, sgn hn₁.1 hn₁.2 * sgn hn₁.1 hn₁.2 * ∑ p ∈ P_base, w p * u hn₁.1 hn₁.2 p * u hn₁.1 hn₁.2 p) +
@@ -1271,6 +1304,16 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
       have h2 := pow_le_pow_left₀ (by positivity) h1 2
       rw [mul_pow, Real.sq_sqrt (mul_nonneg (mul_nonneg (sq_nonneg η) hε0.le) (by linarith [hτ₀_lt]))] at h2
       exact h2
+    -- Combine: t^2 * η^2 * ε * (1 - 20 τ₀) ≤ t + t * (t - 1) * τ₀ / (M + 1)
+    -- Wait: if t ≥ M + 1, then (t - 1) * τ₀ / (M + 1) ≤ t * τ₀ / (M + 1)... actually divide by t > 0:
+    -- t * (η^2 * ε * (1 - 20 τ₀)) ≤ 1 + (t - 1) * τ₀ / (M + 1) ≤ 1 + t * τ₀ / (M + 1)
+    -- Wait: what if t is HUGE compared to M + 1? Then t * τ₀ / (M + 1) could be large?
+    -- NO! t * τ₀ / (M + 1) ≤ t * τ₀ (since M + 1 ≥ 2), so move it to the LHS:
+    -- t * (η^2 * ε * (1 - 20 τ₀) - τ₀) ≤ 1!
+    -- Wait: η^2 * ε * (1 - 20 τ₀) - τ₀ ≥ η^2 * ε * (1 - 21 τ₀ / (η^2 ε)) = η^2 * ε - 21 τ₀ > η^2 * ε / (1 + η^2 ε / 2)!
+    -- Let's check: τ₀ = η^2 ε / (1000 (1 + η^2 ε)), so 21 τ₀ ≤ 21 / 1000 * η^2 ε / (1 + η^2 ε),
+    -- and (M + 1) > (η^2 ε)⁻¹ + 1, so t * (η^2 ε) ≥ (M + 1) * (η^2 ε) > 1 + η^2 ε!
+    -- Thus t * (η^2 ε - 21 τ₀) > (1 + η^2 ε) * (1 - 21 / 1000) > 1!!
     have ht_pos : (0 : ℝ) < t := by exact_mod_cast (by omega : 0 < t)
     have h_div_t : (t : ℝ) * (η ^ 2 * ε * (1 - 20 * τ₀) - τ₀) ≤ 1 := by
       have h1 : (t : ℝ) ^ 2 * (η ^ 2 * ε * (1 - 20 * τ₀)) ≤
@@ -1329,6 +1372,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
         _ ≤ (t : ℝ) * (η ^ 2 * ε * (1 - 20 * τ₀) - τ₀) := by gcongr
     linarith
   refine ⟨N₀, by omega, h_int_bd, ?_⟩
+  -- Counting bound from the interval bound via dyadic covering!
   classical
   have h_int_bd' : ∀ N' : ℕ, N₀ ≤ N' →
       ((Finset.Icc N' (N' + Nat.floor ((N' : ℝ) ^ (1 - ε)))).filter (PolBad ε η)).card ≤ M :=

@@ -39,9 +39,16 @@ Lean 4 formalization of the manuscript *Arithmetic Structure, Iwasawa Invariants
 - `GrasGreenbergBrocard/Thm5_2EffectiveCores.lean`: Theorem 5.2(i)–(ii) (`A_star5`, `B_star5`, `Delta_parity_odd`, `B_part`, `Z_star`, `thm_5_2_part1_bipartition`, `thm_5_2_part1_cross_symmetry`, `thm_5_2_part1_radical_bounds`, `delta2Mid_ne_two`, `thm_5_2_part2_effective_cores`, `thm_5_2_part2_pell_pm2_insoluble`).
 - `GrasGreenbergBrocard/Thm5_3RedeiCohomology.lean`: Theorem 5.3(i)–(ii) (`thm_5_3_part1_cohomology_4rank`, `PevenPlus`, `PevenMinus`, `W_split`, `B_tilde`, `A_plus_star`, `thm_5_3_part2_inert_absorption`, `thm_5_3_part2_dual_quartic`).
 
+### Section 6 (Pairwise $\mathrm{SL}_2(\mathbb{Z})$ Duality, Capacity Diamond, and Theorem 1.3(i))
+- `GrasGreenbergBrocard/Prop6_1FourGCD.lean`: Proposition 6.1 (`X_gcd`, `Y_gcd`, `Z_gcd`, `W_gcd`, `P_ratio`, `prop_6_1_coprime_and_factorization`, `prop_6_1_sl2_duality`, `prop_6_1_bilinear_relations`).
+- `GrasGreenbergBrocard/Prop6_2ConsecutiveSquareShift.lean`: Proposition 6.2(i)–(iii) (`prop_6_2_part1_square_ratio_gap`, `prop_6_2_part2_no_two_unit_solutions`, `prop_6_2_part3_no_small_square_ratio`).
+- `GrasGreenbergBrocard/Lem6_3ParityFlipOsc.lean`, `GrasGreenbergBrocard/Lem6_3ParityFlip.lean`: Lemma 6.3(i)–(ii) (`lem_6_3_part1_parity_flip_factorization`, `lem_6_3_part2_oscillation_bounds`, `lem_6_3_part2_window_exclusion`).
+- `GrasGreenbergBrocard/Thm6_4CapacityDiamond.lean`: Theorem 6.4(a) (`theta_weight`, `theta_eps_weight`, `log_ZW_and_XY_bounds`, `thm_6_4_capacity_diamond`), Theorem 1.3(i) (`thm_1_3_part1_k2_gap_and_counting`), and Proposition 6.2(iii) consecutive-square $k=2$ exclusion (`prop_6_2_part3_consecutive_squares_k2_exclusion`).
+- `GrasGreenbergBrocard/Thm6_4PolarizationConcentration.lean`: Theorem 6.4(b) (`thm_6_4_polarization_concentration`, Rankin spherical cap Cauchy–Schwarz interval bound and $C_\varepsilon \eta^{-2} N^\varepsilon$ counting bound).
+
 ## Documentation & Audit Records
 
-- [`EXTERNAL_AXIOMS.md`](EXTERNAL_AXIOMS.md): Register of all external peer-reviewed axioms (zero manuscript-owned results).
+- [`EXTERNAL_AXIOMS.md`](EXTERNAL_AXIOMS.md): Register of all external peer-reviewed axioms (zero manuscript-owned results; zero new axioms in Section 6).
 - [`THEOREM_CORRESPONDENCE.md`](THEOREM_CORRESPONDENCE.md): Manuscript-to-Lean correspondence and fidelity audit.
 - [`MATHEMATICAL_CORRECTIONS.md`](MATHEMATICAL_CORRECTIONS.md): Mathematical correction and audit log.
 - [`PROGRESS.md`](PROGRESS.md): Continuous formalization and CI status record.
