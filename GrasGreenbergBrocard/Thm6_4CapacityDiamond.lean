@@ -893,6 +893,20 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       have h1 : (n₁ : ℝ) * Real.log (n₁ : ℝ) ≤ (n_a : ℝ) * Real.log (n_a : ℝ) := by
         gcongr <;> exact_mod_cast (by omega : n₁ ≤ n_a)
       nlinarith [show 0 ≤ (n₁ : ℝ) * Real.log (n₁ : ℝ) by positivity]
+    have h_na_13 : (n_a : ℝ) * Real.log (n_a : ℝ) ≤ (4 / 3 : ℝ) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
+      have hm1 : min (ε / 256) (1 / 4) ≤ 1 / 4 := min_le_right _ _
+      have hlog_a_101 : Real.log (n_a : ℝ) ≤ (101 / 100 : ℝ) * Real.log (n₁ : ℝ) := by
+        have h1' : (n_a : ℝ) ≤ 2 * (n₁ : ℝ) := by nlinarith
+        have h2' := Real.log_le_log hna_pos h1'
+        rw [Real.log_mul (by norm_num) hn₁_pos.ne'] at h2'
+        have hlog2 : Real.log 2 ≤ (1 / 100) * Real.log (n₁ : ℝ) := by
+          have := (div_lt_iff₀ hlog_n₁_pos).mp h_il
+          have hmin : min (ε / 256) (1 / 100) ≤ 1 / 100 := min_le_right _ _
+          linarith [Real.log_two_lt_d9]
+        linarith
+      calc (n_a : ℝ) * Real.log (n_a : ℝ)
+          ≤ ((5 / 4 : ℝ) * (n₁ : ℝ)) * ((101 / 100 : ℝ) * Real.log (n₁ : ℝ)) := by gcongr; linarith
+        _ ≤ (4 / 3 : ℝ) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by gcongr; norm_num
     have h_cs_err : C_cs * Real.exp (-(1 / 3 : ℝ) * (n_a : ℝ) * Real.log (n_a : ℝ)) +
         |(padicValNat 2 ((m_a - 1) / 2) : ℝ) - (padicValNat 2 ((m_a + 1) / 2) : ℝ)| * Real.log 2 / 2 +
         |Delta_parity_odd n_a| / 2 ≤ (ε / 32) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
@@ -1031,7 +1045,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       have hmin : min (ε / 256) (1 / 100) ≤ ε / 256 := min_le_left _ _
       nlinarith [show (0 : ℝ) ≤ n₁ by positivity]
     have h4_le : (4 : ℝ) ≤ (ε / 256) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by nlinarith [show (1 : ℝ) ≤ n₁ by exact_mod_cast (by omega : 1 ≤ n₁)]
-    have hlogP_le : 6 * Real.log (P_ratio n₁ n₂ : ℝ) ≤ (ε / 32) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
+    have hlogP_le : 6 * Real.log (P_ratio n₁ n₂ : ℝ) ≤ (3 * ε / 64) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
       have hP_le : (P_ratio n₁ n₂ : ℝ) ≤ (2 * (n₁ : ℝ)) ^ (n₂ - n₁) := by
         have hprod_eq : P_ratio n₁ n₂ = ∏ j ∈ Finset.Ioc n₁ n₂, j := by
           have hfac := P_ratio_mul_factorial hlt
@@ -1068,8 +1082,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
           _ ≤ (ε / 256) * (n₁ : ℝ) := by nlinarith
       calc 6 * Real.log (P_ratio n₁ n₂ : ℝ)
           ≤ 6 * (((ε / 256) * (n₁ : ℝ)) * (2 * Real.log (n₁ : ℝ))) := by gcongr
-        _ = (12 * ε / 256) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by ring
-        _ ≤ (ε / 32) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by gcongr; norm_num
+        _ = (3 * ε / 64) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by ring
     linarith
   have hn1_log2 : (n₁ : ℝ) * Real.log 2 ≤ (ε / 16) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
     have h_il := hN_il n₁ (by omega)
@@ -1088,14 +1101,18 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
     have := (abs_le.mp hZW_XY.2).1; linarith
   have hM1_rel := hlog_M_rel n₁ m₁ (by omega) hlt.le hm₁
   have hM2_rel := hlog_M_rel n₂ m₂ (by omega) (le_refl n₂) hm₂
+  have hM_pos : ∀ a b, 0 < B_part n₁ a * Z_star n₁ b ^ 2 := fun a b =>
+    mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)
+  have hM2_pos : ∀ a b, 0 < B_part n₂ a * Z_star n₂ b ^ 2 := fun a b =>
+    mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)
   have h_log_ZW_22 := h_log_bound_from_M (Z_gcd m₁ m₂ * W_gcd m₁ m₂) M₂₁ M₂₂
-    (mul_pos hZ_pos hW_pos) (by positivity) (by positivity) hdvd_ZW_22
+    (mul_pos hZ_pos hW_pos) (hM_pos _ _) (hM2_pos _ _) hdvd_ZW_22
   have h_log_ZW_11 := h_log_bound_from_M (Z_gcd m₁ m₂ * W_gcd m₁ m₂) M₁₁ M₁₂
-    (mul_pos hZ_pos hW_pos) (by positivity) (by positivity) hdvd_ZW_11
+    (mul_pos hZ_pos hW_pos) (hM_pos _ _) (hM2_pos _ _) hdvd_ZW_11
   have h_log_XY_12 := h_log_bound_from_M (X_gcd m₁ m₂ * Y_gcd m₁ m₂) M₁₁ M₂₂
-    (mul_pos hX_pos hY_pos) (by positivity) (by positivity) hdvd_XY_12
+    (mul_pos hX_pos hY_pos) (hM_pos _ _) (hM2_pos _ _) hdvd_XY_12
   have h_log_XY_21 := h_log_bound_from_M (X_gcd m₁ m₂ * Y_gcd m₁ m₂) M₂₁ M₁₂
-    (mul_pos hX_pos hY_pos) (by positivity) (by positivity) hdvd_XY_21
+    (mul_pos hX_pos hY_pos) (hM_pos _ _) (hM2_pos _ _) hdvd_XY_21
   have hM21_ub := (abs_le.mp hM1_rel.1).2
   have hM11_ub := (abs_le.mp hM1_rel.2).2
   have hM22_ub := (abs_le.mp hM2_rel.1).2
@@ -1308,9 +1325,8 @@ theorem thm_1_3_part1_k2_gap_and_counting (ε : ℝ) (hε : 0 < ε) :
       intro n hn
       simp only [Finset.mem_biUnion, Finset.mem_range, Finset.mem_filter]
       have hn_mem := Finset.mem_filter.mp hn
-      have hn1 : 1 ≤ n := (Finset.mem_Icc.mp (Finset.mem_filter.mp hn_mem.1).1).1
-      have hnN : n ≤ N := (Finset.mem_Icc.mp (Finset.mem_filter.mp hn_mem.1).1).2
-      refine ⟨Nat.log 2 n, Nat.lt_succ_of_le (Nat.log_mono_right hnN), hn, ?_, ?_⟩
+      have hn_icc := Finset.mem_Icc.mp (Finset.mem_filter.mp hn_mem.1).1
+      refine ⟨Nat.log 2 n, Nat.lt_succ_of_le (Nat.log_mono_right hn_icc.2), hn_mem, ?_, ?_⟩
       · exact Nat.pow_log_le_self 2 (by omega)
       · exact Nat.le_sub_one_of_lt (Nat.lt_pow_succ_log_self (by norm_num : 1 < 2) n)
     have hcard_hi : S_hi.card ≤ ∑ k ∈ Finset.range (K + 1),
@@ -1396,9 +1412,8 @@ theorem prop_6_2_part3_consecutive_squares_k2_exclusion :
   have hlt : j ^ 2 < (j + 1) ^ 2 := by nlinarith
   have h1 := hgap (j ^ 2) ((j + 1) ^ 2) m₁ m₂ X₁ Y₁ X₂ Y₂ hn1 hlt hm₁ hm₂ hfund₁ hfund₂ hk₁ hk₂
   have hdiff : ((j + 1 : ℝ) ^ 2 - (j : ℝ) ^ 2) = 2 * (j : ℝ) + 1 := by ring
-  have hpow : ((j : ℝ) ^ (3 / 2 : ℝ)) ≤ ((j ^ 2 : ℕ) : ℝ) ^ (1 - 1 / 4 : ℝ) := by
+  have hpow : ((j : ℝ) ^ (3 / 2 : ℝ)) ≤ ((j : ℝ) ^ 2) ^ (1 - 1 / 4 : ℝ) := by
     have hj_nn : (0 : ℝ) ≤ j := by positivity
-    push_cast
     rw [show (j : ℝ) ^ 2 = (j : ℝ) ^ (2 : ℝ) by norm_cast, ← Real.rpow_mul hj_nn]
     norm_num
   have h32 : 2 * (j : ℝ) + 1 ≤ (j : ℝ) ^ (3 / 2 : ℝ) := by
@@ -1408,5 +1423,6 @@ theorem prop_6_2_part3_consecutive_squares_k2_exclusion :
       norm_num; nlinarith
     nlinarith [Real.rpow_nonneg (by positivity : (0 : ℝ) ≤ j) (3 / 2)]
   push_cast at h1; linarith
+
 
 end GrasGreenbergBrocard
