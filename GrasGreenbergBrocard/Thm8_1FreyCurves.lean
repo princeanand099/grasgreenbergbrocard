@@ -25,6 +25,8 @@ open Real Finset Filter
 
 namespace GrasGreenbergBrocard
 
+set_option maxHeartbeats 800000
+
 /-- Radical of a positive natural number: $\operatorname{rad}(N) = \prod_{p \mid N} p$. -/
 def radNat (N : ℕ) : ℕ := ∏ p ∈ N.primeFactors, p
 
@@ -107,7 +109,11 @@ theorem thm_8_1_part1_frey_E {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n) (hm : Nat.fact
       exact_mod_cast factorial_eq_q_n_mul_s_n_sq n
     have hnorm : (m : ℤ) ^ 2 - (q_n n : ℤ) * (s_n n : ℤ) ^ 2 = 1 := by linarith
     have hmul1 : (⟨(m : ℤ), (s_n n : ℤ)⟩ : Zsqrtd (q_n n : ℤ)) * ⟨(m : ℤ), -(s_n n : ℤ)⟩ = 1 := by
-      ext <;> simp [Zsqrtd.mul_re, Zsqrtd.mul_im] <;> linarith
+      apply Zsqrtd.ext
+      · change (m : ℤ) * (m : ℤ) + (q_n n : ℤ) * (s_n n : ℤ) * (-(s_n n : ℤ)) = 1
+        linarith
+      · change (m : ℤ) * (-(s_n n : ℤ)) + (s_n n : ℤ) * (m : ℤ) = 0
+        ring
     refine ⟨hmul1, ?_⟩
     have hadd : (⟨(m : ℤ), (s_n n : ℤ)⟩ : Zsqrtd (q_n n : ℤ)) + ⟨(m : ℤ), -(s_n n : ℤ)⟩ =
         (2 * (m : ℤ) : Zsqrtd (q_n n : ℤ)) := by
@@ -183,7 +189,9 @@ theorem thm_8_1_part2_level2_cm_reduction {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     haveI : Fact p.Prime := ⟨hp⟩
     have hp_ge5 : 5 ≤ p := by omega
     have hv1 : padicValNat p (Nat.factorial n) = 1 := by
-      have hlog : Nat.log p n < 2 := Nat.log_lt_of_lt_pow (by omega) (by nlinarith)
+      have h2p : n < 2 * p := by omega
+      have hlt_sq : n < p ^ 2 := by nlinarith
+      have hlog : Nat.log p n < 2 := Nat.log_lt_of_lt_pow (by omega) hlt_sq
       rw [padicValNat_factorial (b := 2) hlog, Finset.sum_Ico_succ_top (by norm_num), Finset.Ico_self, Finset.sum_empty, zero_add, pow_one]
       exact Nat.div_eq_of_lt_le (by omega) (by omega)
     have hq_pos : 0 < q_n n := by unfold q_n; exact Finset.prod_pos (fun r hr => (Finset.mem_filter.mp hr).2.1.pos)
@@ -197,21 +205,25 @@ theorem thm_8_1_part2_level2_cm_reduction {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
       have hle1 : padicValNat p (q_n n) ≤ 1 := by
         by_contra hgt; push Not at hgt
         have hsq_dvd : p ^ 2 ∣ q_n n := (padicValNat_dvd_iff_le hq_pos.ne').mpr hgt
-        exact hp.not_unit (hsqf p (by simpa [sq] using hsq_dvd))
+        exact hp.prime.not_unit (hsqf p (by simpa [sq] using hsq_dvd))
       omega
     have hvp_Y1 : padicValNat p Y₁ = 0 := by
-      have hfac_eq' : Nat.factorial n = 4 * X₁ ^ 2 * q_n n * Y₁ ^ 2 := by
+      have hfac_eq' : Nat.factorial n = 4 * X₁ ^ 2 * q_n n * (Y₁ * Y₁) := by
         have := factorial_eq_q_n_mul_s_n_sq n
         rw [hs_eq] at this; linarith
       have hv_sum := congrArg (padicValNat p) hfac_eq'
-      rw [padicValNat.mul (by positivity) (pow_ne_zero 2 hY1_pos.ne'),
+      rw [padicValNat.mul (by positivity) (mul_ne_zero hY1_pos.ne' hY1_pos.ne'),
         padicValNat.mul (by positivity) hq_pos.ne',
-        padicValNat.pow 2 hY1_pos.ne', hv1, hvp_q] at hv_sum
+        padicValNat.mul hY1_pos.ne' hY1_pos.ne', hv1, hvp_q] at hv_sum
       omega
     constructor
-    · rw [padicValNat.mul (by positivity) (pow_ne_zero 4 hY1_pos.ne'),
-        padicValNat.mul (by norm_num) (pow_ne_zero 2 hq_pos.ne'),
-        padicValNat.pow 2 hq_pos.ne', padicValNat.pow 4 hY1_pos.ne', hvp_q, hvp_Y1]
+    · have hrew : 2 ^ 12 * (q_n n) ^ 2 * Y₁ ^ 4 = 2 ^ 12 * (q_n n * q_n n) * ((Y₁ * Y₁) * (Y₁ * Y₁)) := by ring
+      rw [hrew,
+        padicValNat.mul (by positivity) (by positivity),
+        padicValNat.mul (by norm_num) (mul_ne_zero hq_pos.ne' hq_pos.ne'),
+        padicValNat.mul hq_pos.ne' hq_pos.ne',
+        padicValNat.mul (mul_ne_zero hY1_pos.ne' hY1_pos.ne') (mul_ne_zero hY1_pos.ne' hY1_pos.ne'),
+        padicValNat.mul hY1_pos.ne' hY1_pos.ne', hvp_q, hvp_Y1]
       have h212 : padicValNat p (2 ^ 12) = 0 := by
         apply padicValNat.eq_zero_of_not_dvd; intro h
         have := (Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).mp (hp.dvd_of_dvd_pow h)
@@ -267,24 +279,22 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
     intro δ hδ
     obtain ⟨C₁, hC₁⟩ := hdlvp.bound
     obtain ⟨X₁, hX₁⟩ := Filter.eventually_atTop.mp hC₁
+    have hC1_nn : 0 ≤ C₁ := by
+      have h16 := hX₁ (max X₁ 16) (le_max_left _ _)
+      have hpos_rhs : 0 < (max X₁ 16) * Real.exp (-c₁ * Real.sqrt (Real.log (max X₁ 16))) := by positivity
+      rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_pos hpos_rhs] at h16
+      exact nonneg_of_mul_nonneg_left (le_trans (abs_nonneg _) h16) hpos_rhs
     have htend : Filter.Tendsto (fun n : ℕ => C₁ * Real.exp (-c₁ * Real.sqrt (Real.log (n : ℝ)))) atTop (nhds 0) := by
       have h1 : Filter.Tendsto (fun n : ℕ => Real.sqrt (Real.log (n : ℝ))) atTop atTop :=
         Real.tendsto_sqrt_atTop.comp (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop)
       have h2 : Filter.Tendsto (fun n : ℕ => -c₁ * Real.sqrt (Real.log (n : ℝ))) atTop atBot :=
-        Filter.Tendsto.const_mul_atTop_of_neg (by linarith) h1
+        Filter.Tendsto.const_mul_atTop_of_neg (r := -c₁) (by linarith) h1
       simpa using (Real.tendsto_exp_atBot.comp h2).const_mul C₁
     obtain ⟨N₁, hN₁⟩ := Filter.eventually_atTop.mp (htend.eventually (Metric.ball_mem_nhds 0 hδ))
     refine Filter.eventually_atTop.mpr ⟨max (max (Nat.ceil X₁) N₁) 16, fun n hn => ?_⟩
     have h1 := hX₁ (n : ℝ) (le_trans (Nat.le_ceil X₁) (by exact_mod_cast le_trans (le_max_left _ _) (le_trans (le_max_left _ _) hn)))
     have h2 := hN₁ n (le_trans (le_max_right _ _) (le_trans (le_max_left _ _) hn))
-    rw [Real.dist_eq, sub_zero, abs_of_nonneg (mul_nonneg (le_trans (norm_nonneg _) (by
-      have := hX₁ (max X₁ 16) (le_max_left _ _)
-      have hpos_rhs : 0 < (max X₁ 16) * Real.exp (-c₁ * Real.sqrt (Real.log (max X₁ 16))) := by positivity
-      have hnorm : ‖max X₁ 16 * Real.exp (-c₁ * Real.sqrt (Real.log (max X₁ 16)))‖ =
-          max X₁ 16 * Real.exp (-c₁ * Real.sqrt (Real.log (max X₁ 16))) := by
-        rw [Real.norm_eq_abs, abs_of_pos hpos_rhs]
-      rw [hnorm] at this
-      exact nonneg_of_mul_nonneg_left (le_trans (norm_nonneg _) this) hpos_rhs)) (Real.exp_pos _).le)] at h2
+    rw [Real.dist_eq, sub_zero, abs_of_nonneg (mul_nonneg hC1_nn (Real.exp_pos _).le)] at h2
     have hnn : 0 ≤ (n : ℝ) := Nat.cast_nonneg n
     rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (mul_nonneg hnn (Real.exp_pos _).le)] at h1
     rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg hnn]
@@ -317,14 +327,14 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
       have : X₁ + 1 = (X₁ - 1) + 2 := by omega
       rw [this]; exact dvd_add hc0_dvd1 hc0_dvd2
     have hsum : A_n + B_n = C_n := by
-      have h1 := Nat.div_mul_cancel hc0_dvd1
-      have h2 := Nat.div_mul_cancel hc0_dvd2
-      have h3 := Nat.div_mul_cancel hc0_dvd3
-      have hmul : (A_n + B_n) * c₀ = C_n * c₀ := by linarith
+      have h1 : A_n * c₀ = X₁ - 1 := Nat.div_mul_cancel hc0_dvd1
+      have h2 : B_n * c₀ = 2 := Nat.div_mul_cancel hc0_dvd2
+      have h3 : C_n * c₀ = X₁ + 1 := Nat.div_mul_cancel hc0_dvd3
+      have hmul : (A_n + B_n) * c₀ = C_n * c₀ := by rw [add_mul, h1, h2, h3]; omega
       exact mul_right_cancel₀ hc0_pos.ne' hmul
     have hcopAB : Nat.Coprime A_n B_n := Nat.coprime_div_gcd_div_gcd hc0_pos
-    have hcopAC : Nat.Coprime A_n C_n := by rw [← hsum]; exact hcopAB.add_right_self
-    have hcopBC : Nat.Coprime B_n C_n := by rw [← hsum, add_comm]; exact hcopAB.symm.add_right_self
+    have hcopAC : Nat.Coprime A_n C_n := by rw [← hsum]; exact Nat.coprime_self_add_right.mpr hcopAB
+    have hcopBC : Nat.Coprime B_n C_n := by rw [← hsum, add_comm]; exact Nat.coprime_self_add_right.mpr hcopAB.symm
     refine ⟨hsum, hcopAB, hcopAC, hcopBC, ?_⟩
     have hlogn_pos : 0 < Real.log (n : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n))
     have hrad_dvd_fac : radNat (A_n * B_n * C_n) ∣ ∏ p ∈ (Finset.Icc 2 n).filter Nat.Prime, p := by
@@ -335,12 +345,14 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
       have hp_dvd : p ∣ A_n * B_n * C_n := Nat.dvd_of_mem_primeFactors hp
       have hABC_dvd : A_n * B_n * C_n ∣ Nat.factorial n := by
         have h1 : A_n * C_n * c₀ ^ 2 = (X₁ - 1) * (X₁ + 1) := by
-          have hA := Nat.div_mul_cancel hc0_dvd1
-          have hC := Nat.div_mul_cancel hc0_dvd3
-          nlinarith
+          have hA : A_n * c₀ = X₁ - 1 := Nat.div_mul_cancel hc0_dvd1
+          have hC : C_n * c₀ = X₁ + 1 := Nat.div_mul_cancel hc0_dvd3
+          calc A_n * C_n * c₀ ^ 2 = (A_n * c₀) * (C_n * c₀) := by ring
+            _ = (X₁ - 1) * (X₁ + 1) := by rw [hA, hC]
         have h2 : A_n * C_n ∣ X₁ ^ 2 - 1 := by
           refine ⟨c₀ ^ 2, ?_⟩
-          have : (X₁ - 1) * (X₁ + 1) = X₁ ^ 2 - 1 := by zify [hX1_pos]; ring
+          have hsq : (X₁ - 1) * (X₁ + 1) = X₁ ^ 2 - 1 := by
+            zify [hX1_pos, show 1 ≤ X₁ ^ 2 by nlinarith]; ring
           linarith
         have h3 : B_n ∣ 2 := Nat.div_dvd_of_dvd hc0_dvd2
         have h4 : 2 * (X₁ ^ 2 - 1) ∣ Nat.factorial n := by
@@ -364,15 +376,19 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
         have h1 : 4 ≤ X₁ := by
           have h8 : Nat.factorial 8 ≤ Nat.factorial n := Nat.factorial_le (by omega)
           have h8v : Nat.factorial 8 = 40320 := by decide
-          have h4x : Nat.factorial n = 4 * X₁ ^ 2 * (X₁ ^ 2 - 1) := by
-            have := factorial_eq_q_n_mul_s_n_sq n; rw [hs_eq] at this
-            have hxp : X₁ ^ 2 - 1 = q_n n * Y₁ ^ 2 := by omega
-            rw [hxp]; linarith
-          nlinarith
-        have : c₀ ≤ 2 := Nat.le_of_dvd (by norm_num) hc0_dvd2
-        have := Nat.div_mul_cancel hc0_dvd3
-        nlinarith
-      have hABC_gt1 : 1 < A_n * B_n * C_n := by nlinarith
+          have h4x : Nat.factorial n ≤ 4 * X₁ ^ 4 := by
+            have : Nat.factorial n = 4 * X₁ ^ 2 * (X₁ ^ 2 - 1) := by
+              have := factorial_eq_q_n_mul_s_n_sq n; rw [hs_eq] at this
+              have hxp : X₁ ^ 2 - 1 = q_n n * Y₁ ^ 2 := by omega
+              rw [hxp]; linarith
+            nlinarith [Nat.sub_le (X₁ ^ 2) 1]
+          by_contra hlt4; push Not at hlt4
+          have : X₁ ^ 4 ≤ 3 ^ 4 := Nat.pow_le_pow_left (by omega) 4
+          omega
+        have hc2 : c₀ ≤ 2 := Nat.le_of_dvd (by norm_num) hc0_dvd2
+        have hCm : C_n * c₀ = X₁ + 1 := Nat.div_mul_cancel hc0_dvd3
+        nlinarith only [h1, hc2, hCm]
+      have hABC_gt1 : 1 < A_n * B_n * C_n := by nlinarith only [hA_pos, hB_pos, hC_gt1]
       obtain ⟨p, hp, hpd⟩ := Nat.exists_prime_and_dvd (by omega : A_n * B_n * C_n ≠ 1)
       have hmem : p ∈ (A_n * B_n * C_n).primeFactors := Nat.mem_primeFactors.mpr ⟨hp, hpd, by positivity⟩
       have hdvd_rad : p ∣ radNat (A_n * B_n * C_n) := Finset.dvd_prod_of_mem _ hmem
@@ -402,14 +418,14 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
         have hc0_le2 : (c₀ : ℝ) ≤ 2 := by exact_mod_cast Nat.le_of_dvd (by norm_num) hc0_dvd2
         have hmul : (C_n : ℝ) * (c₀ : ℝ) = (X₁ : ℝ) + 1 := by exact_mod_cast Nat.div_mul_cancel hc0_dvd3
         have hc0_rpos : (0 : ℝ) < (c₀ : ℝ) := by exact_mod_cast hc0_pos
-        rw [div_le_iff₀ (by norm_num)]; nlinarith
+        rw [div_le_iff₀ (by norm_num)]; nlinarith only [hc0_le2, hmul, hc0_rpos]
       have hfac_le_X1 : (Nat.factorial n : ℝ) ≤ 4 * (X₁ : ℝ) ^ 4 := by
         have : Nat.factorial n ≤ 4 * X₁ ^ 4 := by
           have h4x : Nat.factorial n = 4 * X₁ ^ 2 * (X₁ ^ 2 - 1) := by
             have := factorial_eq_q_n_mul_s_n_sq n; rw [hs_eq] at this
             have hxp : X₁ ^ 2 - 1 = q_n n * Y₁ ^ 2 := by omega
             rw [hxp]; linarith
-          nlinarith
+          nlinarith [Nat.sub_le (X₁ ^ 2) 1]
         exact_mod_cast this
       have hlog_fac : (n : ℝ) * Real.log (n : ℝ) - (n : ℝ) ≤ Real.log (Nat.factorial n : ℝ) :=
         (n_log_n_sub_n_le_log_factorial n (by omega)).1
@@ -421,9 +437,9 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
         have h1 := Real.log_le_log (by positivity : (0 : ℝ) < ((X₁ : ℝ) + 1) / 2) hC_ge
         rw [Real.log_div (by positivity) (by norm_num)] at h1
         have h2 : Real.log (X₁ : ℝ) ≤ Real.log ((X₁ : ℝ) + 1) := Real.log_le_log (by exact_mod_cast hX1_pos) (by linarith)
-        linarith
+        linarith only [h1, h2]
       have hlog4 : Real.log 4 = 2 * Real.log 2 := by rw [show (4 : ℝ) = 2 ^ 2 by norm_num, Real.log_pow]; norm_num
-      linarith
+      linarith only [hlog_fac, hlog_X1, hlog_C, hlog4]
     have hil := hN_lg n (by omega)
     rw [Real.dist_eq, sub_zero, abs_of_nonneg (div_nonneg zero_le_one hlogn_pos.le)] at hil
     have hlog4_lt : Real.log 4 < 2 := by
@@ -438,9 +454,15 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
     have h1_lt : 1 < (ε / 100) * Real.log (n : ℝ) := (div_lt_iff₀ hlogn_pos).mp hil
     calc (1 / 4 - ε) * Real.log (n : ℝ) * Real.log (radNat (A_n * B_n * C_n) : ℝ)
         ≤ (1 / 4 - ε) * Real.log (n : ℝ) * ((1 + ε / 100) * (n : ℝ)) :=
-          mul_le_mul_of_nonneg_left hrad_ub (mul_nonneg (by linarith) hlogn_pos.le)
+          mul_le_mul_of_nonneg_left hrad_ub (mul_nonneg (by linarith only [hε1]) hlogn_pos.le)
       _ ≤ (1 / 4 : ℝ) * ((n : ℝ) * Real.log (n : ℝ) - (n : ℝ)) - Real.log 4 := by
-          nlinarith [h1_lt, hn_ge100, hlog4_lt, hlogn_pos]
+          have hcoef : (1 / 4 - ε) * (1 + ε / 100) ≤ 1 / 4 - (3 / 4) * ε := by nlinarith only [hε0, hε1]
+          have hstep1 : (1 / 4 - ε) * Real.log (n : ℝ) * ((1 + ε / 100) * (n : ℝ)) ≤
+              (1 / 4 - (3 / 4) * ε) * ((n : ℝ) * Real.log (n : ℝ)) := by
+            have : (1 / 4 - ε) * Real.log (n : ℝ) * ((1 + ε / 100) * (n : ℝ)) =
+                ((1 / 4 - ε) * (1 + ε / 100)) * ((n : ℝ) * Real.log (n : ℝ)) := by ring
+            rw [this]; exact mul_le_mul_of_nonneg_right hcoef (by positivity)
+          nlinarith only [hstep1, h1_lt, hn_ge100, hlog4_lt, hlogn_pos, hε0, hε1]
       _ ≤ Real.log (C_n : ℝ) := hlog_Cn_lb
   · intro n m hn hm
     let u_n : ℕ := ∏ p ∈ (Finset.Icc 2 n).filter Nat.Prime, p ^ (padicValNat p (Nat.factorial n) / 3)
@@ -532,16 +554,15 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
       have hil := hN_lg n (by omega)
       rw [Real.dist_eq, sub_zero, abs_of_nonneg (div_nonneg zero_le_one hlogn_pos.le)] at hil
       have h1_lt : 1 < (ε / 100) * Real.log (n : ℝ) := (div_lt_iff₀ hlogn_pos).mp hil
-      have hlog_x_pos : 0 < Real.log ((u_n * v_n : ℕ) : ℝ) := by
-        have hn_pos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast (by omega : 0 < n)
-        have hlog_gt1 : 1 < Real.log (n : ℝ) := by nlinarith
-        nlinarith
-      rw [div_le_div_iff₀ hlog_x_pos hlogn_pos, Nat.cast_pow, Real.log_pow]
       have hn_pos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast (by omega : 0 < n)
+      have hlog_x_pos : 0 < Real.log ((u_n * v_n : ℕ) : ℝ) := by
+        have hlog_gt1 : 1 < Real.log (n : ℝ) := by nlinarith only [h1_lt, hε0, hε1]
+        nlinarith only [hlog_x_lb, hn_pos, hlog_gt1]
+      rw [div_le_div_iff₀ hlog_x_pos hlogn_pos, Nat.cast_pow, Real.log_pow]
       calc (2 : ℝ) * Real.log (v_n : ℝ) * Real.log (n : ℝ)
-          ≤ 2 * (2 * ((1 + ε / 100) * (n : ℝ))) * Real.log (n : ℝ) := by nlinarith [hlog_v_le, htheta_ub, hlogn_pos]
+          ≤ 2 * (2 * ((1 + ε / 100) * (n : ℝ))) * Real.log (n : ℝ) := by nlinarith only [hlog_v_le, htheta_ub, hlogn_pos]
         _ ≤ (12 + ε) * ((1 / 3 : ℝ) * ((n : ℝ) * Real.log (n : ℝ) - (n : ℝ))) := by
-            nlinarith [h1_lt, hn_pos, hlogn_pos]
-        _ ≤ (12 + ε) * Real.log ((u_n * v_n : ℕ) : ℝ) := mul_le_mul_of_nonneg_left hlog_x_lb (by linarith)
+            nlinarith only [h1_lt, hn_pos, hlogn_pos, hε0, hε1]
+        _ ≤ (12 + ε) * Real.log ((u_n * v_n : ℕ) : ℝ) := mul_le_mul_of_nonneg_left hlog_x_lb (by linarith only [hε0])
 
 end GrasGreenbergBrocard

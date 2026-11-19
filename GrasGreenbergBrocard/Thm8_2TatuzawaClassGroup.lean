@@ -20,6 +20,8 @@ open Real Filter Finset
 
 namespace GrasGreenbergBrocard
 
+set_option maxHeartbeats 800000
+
 /-- Non-genus class number $h_{\mathrm{non\text{-}gen}}(q_n) := h(q_n) / 2^{\omega(D_n) - 2}$. -/
 noncomputable def hNonGen (n X₁ Y₁ : ℕ) (G : RealQuadClassGroupData n X₁ Y₁) : ℝ :=
   (G.h : ℝ) / (2 : ℝ) ^ (omegaNat (fundDisc n) - 2)
@@ -44,21 +46,20 @@ private lemma fundDisc_eq_iff_q_n_eq {n₁ n₂ : ℕ} (hn₁ : 4 ≤ n₁) (hn�
 
 private lemma omegaNat_fundDisc_le_piPrime {n : ℕ} (hn : 8 ≤ n) :
     (omegaNat (fundDisc n) : ℝ) ≤ piPrime (n : ℝ) := by
-  have hsub : (fundDisc n).primeFactors ⊆ (Finset.range (Nat.floor (n : ℝ) + 1)).filter Nat.Prime := by
+  have hq_dvd_fac : q_n n ∣ Nat.factorial n := ⟨s_n n ^ 2, (factorial_eq_q_n_mul_s_n_sq n).symm⟩
+  have hsub : (fundDisc n).primeFactors ⊆ (Finset.Icc 2 (Nat.floor (n : ℝ))).filter Nat.Prime := by
     intro p hp
     have hp_pr := Nat.prime_of_mem_primeFactors hp
     have hp_dvd := Nat.dvd_of_mem_primeFactors hp
-    simp only [Finset.mem_filter, Finset.mem_range, Nat.floor_natCast]
-    refine ⟨?_, hp_pr⟩
+    simp only [Finset.mem_filter, Finset.mem_Icc, Nat.floor_natCast]
+    refine ⟨⟨hp_pr.two_le, ?_⟩, hp_pr⟩
     unfold fundDisc at hp_dvd
     split_ifs at hp_dvd
-    · have hle := hp_pr.dvd_factorial.mp (dvd_trans hp_dvd (q_n_dvd_factorial n))
-      omega
+    · exact hp_pr.dvd_factorial.mp (dvd_trans hp_dvd hq_dvd_fac)
     · rcases hp_pr.dvd_mul.mp hp_dvd with h4 | hq
       · have : p = 2 := (Nat.prime_dvd_prime_iff_eq hp_pr Nat.prime_two).mp (hp_pr.dvd_of_dvd_pow (show p ∣ 2 ^ 2 from h4))
         omega
-      · have hle := hp_pr.dvd_factorial.mp (dvd_trans hq (q_n_dvd_factorial n))
-        omega
+      · exact hp_pr.dvd_factorial.mp (dvd_trans hq hq_dvd_fac)
   unfold omegaNat piPrime
   exact_mod_cast Finset.card_le_card hsub
 
@@ -179,9 +180,11 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
     have hL1 := hTat n X₁ Y₁ G hn hD_ne
     have hq_pos : (0 : ℝ) < (q_n n : ℝ) := by
       exact_mod_cast (show 0 < q_n n by unfold q_n; exact Finset.prod_pos (fun p hp => (Finset.mem_filter.mp hp).2.1.pos))
+    have hD_pos : (0 : ℝ) < (fundDisc n : ℝ) := by
+      unfold fundDisc; split_ifs
+      · exact hq_pos
+      · push_cast; linarith
     have hD_ge_q : (q_n n : ℝ) ^ (1 / 2 - ε) ≤ Real.sqrt (fundDisc n : ℝ) * (fundDisc n : ℝ) ^ (-ε) := by
-      have hD_pos : (0 : ℝ) < (fundDisc n : ℝ) := by
-        unfold fundDisc; split_ifs <;> positivity
       rw [Real.sqrt_eq_rpow, ← Real.rpow_add hD_pos]
       have hle : (q_n n : ℝ) ≤ (fundDisc n : ℝ) := by
         unfold fundDisc; split_ifs
@@ -195,7 +198,7 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
       have hcnf := G.dirichlet_cnf
       have h1 : (1 / 2 : ℝ) * (0.655 : ℝ) * ε * (q_n n : ℝ) ^ (1 / 2 - ε) < (G.h : ℝ) * G.R := by
         rw [hcnf]
-        have hsqrt_pos : 0 < Real.sqrt (fundDisc n : ℝ) := Real.sqrt_pos.mpr (by unfold fundDisc; split_ifs <;> positivity)
+        have hsqrt_pos : 0 < Real.sqrt (fundDisc n : ℝ) := Real.sqrt_pos.mpr hD_pos
         have h2 : (1 / 2 : ℝ) * Real.sqrt (fundDisc n : ℝ) * ((0.655 : ℝ) * ε * (fundDisc n : ℝ) ^ (-ε)) <
             (1 / 2 : ℝ) * Real.sqrt (fundDisc n : ℝ) * G.L1_val := by gcongr
         have h3 : (1 / 2 : ℝ) * (0.655 : ℝ) * ε * (q_n n : ℝ) ^ (1 / 2 - ε) ≤
@@ -244,7 +247,9 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
     have htend : Filter.Tendsto (fun n : ℕ => C₀ * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ)))) atTop (nhds 0) := by
       have h1 : Filter.Tendsto (fun n : ℕ => Real.sqrt (Real.log (n : ℝ))) atTop atTop :=
         Real.tendsto_sqrt_atTop.comp (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop)
-      simpa using (Real.tendsto_exp_atBot.comp (Filter.Tendsto.const_mul_atTop_of_neg (by linarith) h1)).const_mul C₀
+      have h2 : Filter.Tendsto (fun n : ℕ => -c₀ * Real.sqrt (Real.log (n : ℝ))) atTop atBot :=
+        Filter.Tendsto.const_mul_atTop_of_neg (r := -c₀) (by linarith) h1
+      simpa using (Real.tendsto_exp_atBot.comp h2).const_mul C₀
     obtain ⟨N₂, hN₂⟩ := Filter.eventually_atTop.mp (htend.eventually (Metric.ball_mem_nhds 0 hδ))
     refine Filter.eventually_atTop.mpr ⟨max (max N₁ N₂) 16, fun n hn => ?_⟩
     have h1 := hN₁ n (le_trans (le_max_left _ _) (le_trans (le_max_left _ _) hn))
@@ -255,12 +260,13 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
       rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_pos hpos] at h16
       exact nonneg_of_mul_nonneg_left (le_trans (abs_nonneg _) h16) hpos
     rw [Real.dist_eq, sub_zero, abs_of_nonneg (mul_nonneg hC0_nn (Real.exp_pos _).le)] at h2
-    rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (mul_nonneg (Nat.cast_nonneg _) (Real.exp_pos _).le)] at h1
-    rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (Nat.cast_nonneg _)]
+    have hnn : 0 ≤ (n : ℝ) := Nat.cast_nonneg n
+    rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (mul_nonneg hnn (Real.exp_pos _).le)] at h1
+    rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg hnn]
     calc |Real.log (q_n n : ℝ) - Real.log 2 * (n : ℝ)|
         ≤ C₀ * ((n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ)))) := h1
       _ = (C₀ * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ)))) * (n : ℝ) := by ring
-      _ ≤ δ * (n : ℝ) := mul_le_mul_of_nonneg_right h2.le (Nat.cast_nonneg _)
+      _ ≤ δ * (n : ℝ) := mul_le_mul_of_nonneg_right h2.le hnn
   obtain ⟨N_q, hN_q⟩ := Filter.eventually_atTop.mp (Asymptotics.IsLittleO.bound hlogq_o (show (0 : ℝ) < ε / 100 by positivity))
   obtain ⟨N_pi, hN_pi⟩ := Filter.eventually_atTop.mp (Asymptotics.IsLittleO.bound pnt_pi_asymptotic (show (0 : ℝ) < ε / 100 by positivity))
   obtain ⟨N_podd, hN_podd⟩ := Filter.eventually_atTop.mp (Asymptotics.IsLittleO.bound card_Podd_asymptotic (show (0 : ℝ) < ε / 100 by positivity))
@@ -269,10 +275,11 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
   obtain ⟨N_lg, hN_lg⟩ := Filter.eventually_atTop.mp (h_inv_log.eventually (Metric.ball_mem_nhds 0 (show (0 : ℝ) < ε / 100 by positivity)))
   have h_log_div_n : Filter.Tendsto (fun n : ℕ => Real.log ((n : ℝ) * Real.log (n : ℝ) / ((0.655 : ℝ) * ε)) / (n : ℝ)) atTop (nhds 0) := by
     have h1 : Filter.Tendsto (fun n : ℕ => (2 * Real.log (n : ℝ) + |Real.log ((0.655 : ℝ) * ε)|) / (n : ℝ)) atTop (nhds 0) := by
-      have ha : Filter.Tendsto (fun n : ℕ => 2 * (Real.log (n : ℝ) / (n : ℝ))) atTop (nhds (2 * 0)) :=
-        (by
-          have := log_pow_div_rpow_tendsto_zero 1 (by norm_num : (0 : ℝ) < 1)
-          exact this.congr' (by filter_upwards [Filter.eventually_ge_atTop 1] with n _; simp)).const_mul 2
+      have ha0 : Filter.Tendsto (fun n : ℕ => Real.log (n : ℝ) / (n : ℝ)) atTop (nhds 0) := by
+        have hlp := log_pow_div_rpow_tendsto_zero 1 (by norm_num : (0 : ℝ) < 1)
+        exact hlp.congr' (by filter_upwards [Filter.eventually_ge_atTop 1] with n _; simp)
+      have ha : Filter.Tendsto (fun n : ℕ => 2 * (Real.log (n : ℝ) / (n : ℝ))) atTop (nhds 0) := by
+        simpa using ha0.const_mul 2
       have hb : Filter.Tendsto (fun n : ℕ => |Real.log ((0.655 : ℝ) * ε)| / (n : ℝ)) atTop (nhds 0) :=
         tendsto_const_nhds.div_atTop tendsto_natCast_atTop_atTop
       simpa [add_div, mul_div_assoc] using ha.add hb
@@ -291,7 +298,7 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
     have hloglog : Real.log (Real.log (n : ℝ)) ≤ Real.log (n : ℝ) := Real.log_le_log hlogn_pos hlogn_le
     linarith [neg_le_abs (Real.log ((0.655 : ℝ) * ε))]
   obtain ⟨N_ld, hN_ld⟩ := Filter.eventually_atTop.mp (h_log_div_n.eventually (Metric.ball_mem_nhds 0 (show (0 : ℝ) < ε / 100 by positivity)))
-  let N₀ := max (max (max N_q N_pi) (max N_podd N_lg)) (max N_ld 1000)
+  let N₀ := max (max (max N_q (Nat.ceil N_pi)) (max N_podd N_lg)) (max N_ld 1000)
   refine ⟨n_star, N₀, by omega, h84, ?_⟩
   intro n m k X₁ Y₁ G hn hne hm hk hfund hpow
   have h84_n := h84 n m k X₁ Y₁ G (by omega) hne hm hk hfund hpow
@@ -303,7 +310,7 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
   rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg hn_pos.le] at hlogq_bd
   have hlogq_lb : (Real.log 2 - ε / 100) * (n : ℝ) ≤ Real.log (q_n n : ℝ) := by linarith [(abs_le.mp hlogq_bd).1]
   have hlogq_ub : Real.log (q_n n : ℝ) ≤ (Real.log 2 + ε / 100) * (n : ℝ) := by linarith [(abs_le.mp hlogq_bd).2]
-  have hpi_bd := hN_pi n (by omega)
+  have hpi_bd := hN_pi (n : ℝ) (le_trans (Nat.le_ceil N_pi) (by exact_mod_cast (by omega : Nat.ceil N_pi ≤ n)))
   rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (div_nonneg hn_pos.le hlogn_pos.le)] at hpi_bd
   have hpi_ub : piPrime (n : ℝ) ≤ (1 + ε / 100) * ((n : ℝ) / Real.log (n : ℝ)) := by linarith [(abs_le.mp hpi_bd).2]
   have hil := hN_lg n (by omega)
@@ -316,7 +323,12 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
   have hpi_small : piPrime (n : ℝ) * Real.log 2 ≤ (ε / 50) * (n : ℝ) := by
     have h1 : (n : ℝ) / Real.log (n : ℝ) ≤ (ε / 100) * (n : ℝ) := by
       have := mul_le_mul_of_nonneg_right hil.le hn_pos.le; simpa [div_eq_mul_inv, mul_comm] using this
-    nlinarith [hpi_ub, hlog2_pos, hlog2_lt1]
+    have h2 : piPrime (n : ℝ) ≤ (1 + ε / 100) * ((ε / 100) * (n : ℝ)) :=
+      le_trans hpi_ub (mul_le_mul_of_nonneg_left h1 (by positivity))
+    have h3 : (1 + ε / 100) * (ε / 100) ≤ ε / 50 := by nlinarith only [hε0, hε1]
+    have hpi_le : piPrime (n : ℝ) ≤ (ε / 50) * (n : ℝ) := by nlinarith only [h2, h3, hn_pos]
+    have hpi_nn : 0 ≤ piPrime (n : ℝ) := Nat.cast_nonneg _
+    nlinarith only [hpi_le, hlog2_lt1, hlog2_pos, hpi_nn, hn_pos, hε0]
   have h_ng_lb : (q_n n : ℝ) ^ (1 / 2 - 2 * ε) ≤ hNonGen n X₁ Y₁ G := by
     have h1 : (q_n n : ℝ) ^ (1 / 2 - 2 * ε) ≤
         (0.655 : ℝ) * ε * (k : ℝ) * (q_n n : ℝ) ^ (1 / 2 - ε) /
@@ -325,14 +337,19 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
       have h2 : (n : ℝ) * Real.log (n : ℝ) / ((0.655 : ℝ) * ε) * (2 : ℝ) ^ (piPrime (n : ℝ)) ≤ (q_n n : ℝ) ^ ε := by
         rw [← Real.log_le_log_iff (by positivity) (by positivity),
           Real.log_mul (by positivity) (by positivity), Real.log_rpow (by norm_num), Real.log_rpow hq_pos]
-        nlinarith [hld_ub, hpi_small, hlogq_lb, hlog2_gt_half]
+        nlinarith only [hld_ub, hpi_small, hlogq_lb, hlog2_gt_half, hn_pos, hε0, hε1]
       have hk1 : (1 : ℝ) ≤ (k : ℝ) := by exact_mod_cast hk
+      have hqp : 0 < (q_n n : ℝ) ^ (1 / 2 - ε) := Real.rpow_pos_of_pos hq_pos (1 / 2 - ε)
       calc (q_n n : ℝ) ^ (1 / 2 - 2 * ε) * ((n : ℝ) * Real.log (n : ℝ) * (2 : ℝ) ^ (piPrime (n : ℝ)))
           = (0.655 : ℝ) * ε * (q_n n : ℝ) ^ (1 / 2 - 2 * ε) *
             ((n : ℝ) * Real.log (n : ℝ) / ((0.655 : ℝ) * ε) * (2 : ℝ) ^ (piPrime (n : ℝ))) := by field_simp [(by positivity : ε ≠ 0)]
         _ ≤ (0.655 : ℝ) * ε * (q_n n : ℝ) ^ (1 / 2 - 2 * ε) * (q_n n : ℝ) ^ ε := by gcongr
         _ = (0.655 : ℝ) * ε * (q_n n : ℝ) ^ (1 / 2 - ε) := by rw [mul_assoc, ← Real.rpow_add hq_pos]; ring_nf
-        _ ≤ (0.655 : ℝ) * ε * (k : ℝ) * (q_n n : ℝ) ^ (1 / 2 - ε) := by nlinarith [Real.rpow_pos_of_pos hq_pos (1 / 2 - ε)]
+        _ ≤ (0.655 : ℝ) * ε * (k : ℝ) * (q_n n : ℝ) ^ (1 / 2 - ε) := by
+            have : (0.655 : ℝ) * ε * (q_n n : ℝ) ^ (1 / 2 - ε) * 1 ≤
+                (0.655 : ℝ) * ε * (q_n n : ℝ) ^ (1 / 2 - ε) * (k : ℝ) :=
+              mul_le_mul_of_nonneg_left hk1 (by positivity)
+            linarith only [this]
     exact le_trans h1 h84_n.le
   refine ⟨h_ng_lb, ?_⟩
   by_cases hodd : (q_n n : ℝ) ^ (1 / 4 - ε) ≤ (G.card_Cl_odd : ℝ)
@@ -343,7 +360,7 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
       have hpow_ge1 : (1 : ℝ) ≤ (2 : ℝ) ^ (omegaNat (fundDisc n) - 2) := one_le_pow₀ (by norm_num)
       have h1 : hNonGen n X₁ Y₁ G ≤ (G.h : ℝ) := div_le_self (Nat.cast_nonneg _) hpow_ge1
       have : (G.h : ℝ) ≤ (2 * G.h : ℝ) := by linarith [show (0 : ℝ) ≤ G.h by positivity]
-      linarith
+      linarith only [h_ng_lb, h1, this]
     have hA2_gt_q : (q_n n : ℝ) ^ (1 / 4 - ε) < (G.card_A2 : ℝ) := by
       have hdecomp : (G.card_A2 : ℝ) * (G.card_Cl_odd : ℝ) = (2 * G.h : ℝ) := by
         exact_mod_cast G.narrow_class_decomp
@@ -351,15 +368,15 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
         mul_lt_mul_of_pos_left hodd (Real.rpow_pos_of_pos hq_pos _)
       have h2 : (q_n n : ℝ) ^ (1 / 4 - ε) * (q_n n : ℝ) ^ (1 / 4 - ε) = (q_n n : ℝ) ^ (1 / 2 - 2 * ε) := by
         rw [← Real.rpow_add hq_pos]; ring_nf
-      have h3 : (q_n n : ℝ) ^ (1 / 4 - ε) * (G.card_Cl_odd : ℝ) < (G.card_A2 : ℝ) * (G.card_Cl_odd : ℝ) := by linarith
+      have h3 : (q_n n : ℝ) ^ (1 / 4 - ε) * (G.card_Cl_odd : ℝ) < (G.card_A2 : ℝ) * (G.card_Cl_odd : ℝ) := by linarith only [h1, h2, h2h_ge, hdecomp]
       exact lt_of_mul_lt_mul_right h3 (Nat.cast_nonneg _)
     have hlogA2_lb : (1 / 4 - ε) * (Real.log 2 - ε / 100) * (n : ℝ) ≤ Real.log (G.card_A2 : ℝ) := by
       have h1 := Real.log_le_log (Real.rpow_pos_of_pos hq_pos _) hA2_gt_q.le
       rw [Real.log_rpow hq_pos] at h1
-      nlinarith [hlogq_lb]
+      nlinarith only [h1, hlogq_lb, hε1]
     have hA2_pow2 : (2 : ℝ) ^ ((Real.log 2 / 4 - ε) * (n : ℝ)) ≤ (G.card_A2 : ℝ) := by
       rw [← Real.log_le_log_iff (by positivity) (by exact_mod_cast G.card_A2_pos), Real.log_rpow (by norm_num)]
-      nlinarith [hlogA2_lb, hlog2_pos, hlog2_lt1, hn_pos]
+      nlinarith only [hlogA2_lb, hlog2_pos, hlog2_lt1, hn_pos, hε0, hε1]
     have hrank_ub : (G.rank2_A2 : ℝ) ≤ (Real.log 2 + ε / 20) * ((n : ℝ) / Real.log (n : ℝ)) := by
       have hsub_podd : (fundDisc n).primeFactors ⊆ insert 2 (Podd n) := by
         intro p hp
@@ -392,16 +409,16 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
         _ ≤ (Real.log 2 + ε / 100) * ((1 + ε / 100) * ((n : ℝ) / Real.log (n : ℝ))) :=
             mul_le_mul_of_nonneg_left hpi_ub (by positivity)
         _ ≤ (Real.log 2 + ε / 20) * ((n : ℝ) / Real.log (n : ℝ)) := by
-            have h1 : (Real.log 2 + ε / 100) * (1 + ε / 100) ≤ Real.log 2 + ε / 20 := by nlinarith [hlog2_lt1]
+            have h1 : (Real.log 2 + ε / 100) * (1 + ε / 100) ≤ Real.log 2 + ε / 20 := by nlinarith only [hlog2_lt1, hε0, hε1]
             have h2 : 0 ≤ (n : ℝ) / Real.log (n : ℝ) := div_nonneg hn_pos.le hlogn_pos.le
-            nlinarith
+            nlinarith only [h1, h2]
     have hrank_pos : (0 : ℝ) < (G.rank2_A2 : ℝ) := by
       have hcard_gt1 : 1 < G.card_A2 := by
         have hq_gt1 : 1 < (q_n n : ℝ) := by
-          have : 0 < Real.log (q_n n : ℝ) := by nlinarith [hlogq_lb, hlog2_gt_half, hn_pos]
+          have : 0 < Real.log (q_n n : ℝ) := by nlinarith only [hlogq_lb, hlog2_gt_half, hn_pos, hε1]
           exact (Real.log_pos_iff hq_pos.le).mp this
-        have : (1 : ℝ) < (q_n n : ℝ) ^ (1 / 4 - ε) := Real.one_lt_rpow hq_gt1 (by linarith)
-        exact_mod_cast (by linarith : (1 : ℝ) < (G.card_A2 : ℝ))
+        have : (1 : ℝ) < (q_n n : ℝ) ^ (1 / 4 - ε) := Real.one_lt_rpow hq_gt1 (by linarith only [hε1])
+        exact_mod_cast (by linarith only [this, hA2_gt_q] : (1 : ℝ) < (G.card_A2 : ℝ))
       have hpos : 0 < G.rank2_A2 := by
         by_contra h0; push Not at h0
         have h0' : G.rank2_A2 = 0 := by omega
@@ -416,31 +433,37 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
         have h2' : (n : ℝ) * Real.log (n : ℝ) / ((0.655 : ℝ) * ε) * (2 : ℝ) ^ (piPrime (n : ℝ)) ≤ (q_n n : ℝ) ^ ((1 / 10 : ℝ) * ε) := by
           rw [← Real.log_le_log_iff (by positivity) (by positivity),
             Real.log_mul (by positivity) (by positivity), Real.log_rpow (by norm_num), Real.log_rpow hq_pos]
-          nlinarith [hld_ub, hpi_small, hlogq_lb, hlog2_gt_half]
+          nlinarith only [hld_ub, hpi_small, hlogq_lb, hlog2_gt_half, hn_pos, hε0, hε1]
         have hk1 : (1 : ℝ) ≤ (k : ℝ) := by exact_mod_cast hk
+        have hqp : 0 < (q_n n : ℝ) ^ (1 / 2 - ε) := Real.rpow_pos_of_pos hq_pos (1 / 2 - ε)
         calc (q_n n : ℝ) ^ (1 / 2 - (11 / 10 : ℝ) * ε) * ((n : ℝ) * Real.log (n : ℝ) * (2 : ℝ) ^ (piPrime (n : ℝ)))
             = (0.655 : ℝ) * ε * (q_n n : ℝ) ^ (1 / 2 - (11 / 10 : ℝ) * ε) *
               ((n : ℝ) * Real.log (n : ℝ) / ((0.655 : ℝ) * ε) * (2 : ℝ) ^ (piPrime (n : ℝ))) := by field_simp [(by positivity : ε ≠ 0)]
           _ ≤ (0.655 : ℝ) * ε * (q_n n : ℝ) ^ (1 / 2 - (11 / 10 : ℝ) * ε) * (q_n n : ℝ) ^ ((1 / 10 : ℝ) * ε) := by gcongr
           _ = (0.655 : ℝ) * ε * (q_n n : ℝ) ^ (1 / 2 - ε) := by rw [mul_assoc, ← Real.rpow_add hq_pos]; ring_nf
-          _ ≤ (0.655 : ℝ) * ε * (k : ℝ) * (q_n n : ℝ) ^ (1 / 2 - ε) := by nlinarith [Real.rpow_pos_of_pos hq_pos (1 / 2 - ε)]
+          _ ≤ (0.655 : ℝ) * ε * (k : ℝ) * (q_n n : ℝ) ^ (1 / 2 - ε) := by
+              have : (0.655 : ℝ) * ε * (q_n n : ℝ) ^ (1 / 2 - ε) * 1 ≤
+                  (0.655 : ℝ) * ε * (q_n n : ℝ) ^ (1 / 2 - ε) * (k : ℝ) :=
+                mul_le_mul_of_nonneg_left hk1 (by positivity)
+              linarith only [this]
       exact le_trans h1' h84_n.le
     have hA2_tight : (q_n n : ℝ) ^ (1 / 4 - (1 / 10 : ℝ) * ε) < (G.card_A2 : ℝ) := by
       have hdecomp : (G.card_A2 : ℝ) * (G.card_Cl_odd : ℝ) = (2 * G.h : ℝ) := by exact_mod_cast G.narrow_class_decomp
       have hpow_ge1 : (1 : ℝ) ≤ (2 : ℝ) ^ (omegaNat (fundDisc n) - 2) := one_le_pow₀ (by norm_num)
       have h2h_t : (q_n n : ℝ) ^ (1 / 2 - (11 / 10 : ℝ) * ε) ≤ (2 * G.h : ℝ) := by
-        have := div_le_self (Nat.cast_nonneg G.h) hpow_ge1
-        unfold hNonGen at h_ng_tight; linarith
+        have h1 := div_le_self (Nat.cast_nonneg G.h) hpow_ge1
+        have h2 : (G.h : ℝ) ≤ (2 * G.h : ℝ) := by linarith [show (0 : ℝ) ≤ G.h by positivity]
+        unfold hNonGen at h_ng_tight; linarith only [h_ng_tight, h1, h2]
       have h1' : (q_n n : ℝ) ^ (1 / 4 - (1 / 10 : ℝ) * ε) * (G.card_Cl_odd : ℝ) <
           (q_n n : ℝ) ^ (1 / 4 - (1 / 10 : ℝ) * ε) * (q_n n : ℝ) ^ (1 / 4 - ε) :=
         mul_lt_mul_of_pos_left hodd (Real.rpow_pos_of_pos hq_pos _)
       have h2' : (q_n n : ℝ) ^ (1 / 4 - (1 / 10 : ℝ) * ε) * (q_n n : ℝ) ^ (1 / 4 - ε) =
           (q_n n : ℝ) ^ (1 / 2 - (11 / 10 : ℝ) * ε) := by rw [← Real.rpow_add hq_pos]; ring_nf
-      exact lt_of_mul_lt_mul_right (by linarith : (q_n n : ℝ) ^ (1 / 4 - (1 / 10 : ℝ) * ε) * (G.card_Cl_odd : ℝ) < (G.card_A2 : ℝ) * (G.card_Cl_odd : ℝ)) (Nat.cast_nonneg _)
+      exact lt_of_mul_lt_mul_right (by linarith only [h1', h2', h2h_t, hdecomp] : (q_n n : ℝ) ^ (1 / 4 - (1 / 10 : ℝ) * ε) * (G.card_Cl_odd : ℝ) < (G.card_A2 : ℝ) * (G.card_Cl_odd : ℝ)) (Nat.cast_nonneg _)
     have hlogA2_tight : (1 / 4 - (1 / 10 : ℝ) * ε) * (Real.log 2 - ε / 100) * (n : ℝ) ≤ Real.log (G.card_A2 : ℝ) := by
       have h' := Real.log_le_log (Real.rpow_pos_of_pos hq_pos _) hA2_tight.le
       rw [Real.log_rpow hq_pos] at h'
-      nlinarith [hlogq_lb]
+      nlinarith only [h', hlogq_lb, hε1]
     have h1_rank : Real.log (G.card_A2 : ℝ) ≤ (G.rank2_A2 : ℝ) * Real.log (G.exp_A2 : ℝ) := by
       have hle := Real.log_le_log (by exact_mod_cast G.card_A2_pos) (by exact_mod_cast G.card_A2_le_exp_pow_rank)
       rwa [Nat.cast_pow, Real.log_pow] at hle
@@ -448,10 +471,10 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
       have hmul_le : (G.rank2_A2 : ℝ) * ((1 / 4 - ε * Real.log 2) * Real.log (n : ℝ)) ≤ Real.log (G.card_A2 : ℝ) := by
         calc (G.rank2_A2 : ℝ) * ((1 / 4 - ε * Real.log 2) * Real.log (n : ℝ))
             ≤ ((Real.log 2 + ε / 20) * ((n : ℝ) / Real.log (n : ℝ))) * ((1 / 4 - ε * Real.log 2) * Real.log (n : ℝ)) :=
-              mul_le_mul_of_nonneg_right hrank_ub (mul_nonneg (by nlinarith [hlog2_lt1]) hlogn_pos.le)
+              mul_le_mul_of_nonneg_right hrank_ub (mul_nonneg (by nlinarith only [hlog2_lt1, hε0, hε1]) hlogn_pos.le)
           _ = (Real.log 2 + ε / 20) * (1 / 4 - ε * Real.log 2) * (n : ℝ) := by field_simp [hlogn_pos.ne']
           _ ≤ (1 / 4 - (1 / 10 : ℝ) * ε) * (Real.log 2 - ε / 100) * (n : ℝ) := by
-              nlinarith [hlog2_gt_half, hlog2_lt1, hn_pos]
+              nlinarith only [hlog2_gt_half, hlog2_lt1, hn_pos, hε0, hε1]
           _ ≤ Real.log (G.card_A2 : ℝ) := hlogA2_tight
       exact le_of_mul_le_mul_left (le_trans hmul_le h1_rank) hrank_pos
     have hlog2_exp_lb : (1 / (4 * Real.log 2) - ε) * Real.log (n : ℝ) ≤ Real.log (G.exp_A2 : ℝ) / Real.log 2 := by
@@ -465,7 +488,7 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
     have hexp_lb : (n : ℝ) ^ (1 / 4 - ε) ≤ (G.exp_A2 : ℝ) := by
       rw [← Real.log_le_log_iff (by positivity) (by exact_mod_cast G.exp_A2_pos), Real.log_rpow hn_pos]
       have : (1 / 4 - ε) * Real.log (n : ℝ) ≤ (1 / 4 - ε * Real.log 2) * Real.log (n : ℝ) := by
-        nlinarith [hlog2_lt1, hlogn_pos]
+        nlinarith only [hlog2_lt1, hlogn_pos, hε0]
       exact le_trans this hlog_exp_tight
     exact ⟨hA2_pow2, hlog2_exp_lb, hexp_lb⟩
 

@@ -52,7 +52,7 @@ theorem siegel_lemma_pigeonhole {M_eq N_var : ℕ}
           ≤ ∑ j : Fin N_var, |A i j * ((v j : ℕ) : ℤ)| := Finset.abs_sum_le_sum_abs _ _
         _ ≤ ∑ _j : Fin N_var, ((A_max : ℤ) * (B : ℤ)) := by
             apply Finset.sum_le_sum; intro j _
-            rw [abs_mul, abs_of_nonneg (Nat.cast_nonneg _)]
+            rw [abs_mul, abs_of_nonneg (Nat.cast_nonneg (v j : ℕ))]
             have hvj : ((v j : ℕ) : ℤ) ≤ (B : ℤ) := by exact_mod_cast Nat.le_of_lt_succ (v j).isLt
             exact mul_le_mul (hA i j) hvj (Nat.cast_nonneg _) (Nat.cast_nonneg _)
         _ = (S : ℤ) := by simp [S, mul_assoc]
@@ -73,6 +73,7 @@ theorem siegel_lemma_pigeonhole {M_eq N_var : ℕ}
     have hj := hall j
     apply Fin.ext; omega
   · intro j
+    dsimp only
     have h1 : (v₁ j : ℕ) ≤ B := Nat.le_of_lt_succ (v₁ j).isLt
     have h2 : (v₂ j : ℕ) ≤ B := Nat.le_of_lt_succ (v₂ j).isLt
     rw [abs_le]; omega
@@ -119,10 +120,15 @@ theorem lem_7_1_initial_pade_polynomials {m r M D O : ℕ}
     if p.2.val ≤ D + 1 + t.val then
       fam.clearedCoeff p.1.succ (D + 1 + t.val - p.2.val) * (r : ℤ) ^ (2 * p.2.val)
     else 0
-  have hbase_ge1 : (1 : ℝ) ≤ (r : ℝ) ^ 2 * fam.C_P * (M : ℝ) := by
-    have hr1 : (1 : ℝ) ≤ (r : ℝ) := by exact_mod_cast (show 1 ≤ r by omega)
+  have hCM_ge1 : (1 : ℝ) ≤ fam.C_P * (M : ℝ) := by
     have hM1 : (1 : ℝ) ≤ (M : ℝ) := by exact_mod_cast hM
     nlinarith [fam.C_P_pos]
+  have hr2_ge1 : (1 : ℝ) ≤ (r : ℝ) ^ 2 := by
+    have hr1 : (1 : ℝ) ≤ (r : ℝ) := by exact_mod_cast (show 1 ≤ r by omega)
+    nlinarith
+  have hbase_ge1 : (1 : ℝ) ≤ (r : ℝ) ^ 2 * fam.C_P * (M : ℝ) := by
+    have : (r : ℝ) ^ 2 * fam.C_P * (M : ℝ) = (r : ℝ) ^ 2 * (fam.C_P * (M : ℝ)) := by ring
+    rw [this]; nlinarith
   have hA_bound : ∀ t idx, |A t idx| ≤ (A_max : ℤ) := by
     intro t idx
     dsimp [A]
@@ -133,9 +139,9 @@ theorem lem_7_1_initial_pade_polynomials {m r M D O : ℕ}
           ((r : ℝ) ^ 2 * fam.C_P * (M : ℝ)) ^ (D + 1 + t.val - p.2.val) :=
         fam.coeff_bound _ _
       have hr2_le : ((r : ℝ) ^ 2) ^ p.2.val ≤ ((r : ℝ) ^ 2 * fam.C_P * (M : ℝ)) ^ p.2.val := by
-        have hM1 : (1 : ℝ) ≤ (M : ℝ) := by exact_mod_cast hM
         apply pow_le_pow_left₀ (by positivity)
-        nlinarith [fam.C_P_pos, sq_nonneg (r : ℝ)]
+        have : (r : ℝ) ^ 2 * fam.C_P * (M : ℝ) = (r : ℝ) ^ 2 * (fam.C_P * (M : ℝ)) := by ring
+        rw [this]; nlinarith [sq_nonneg (r : ℝ)]
       have hprod : |(fam.clearedCoeff p.1.succ (D + 1 + t.val - p.2.val) * (r : ℤ) ^ (2 * p.2.val) : ℝ)| ≤
           ((r : ℝ) ^ 2 * fam.C_P * (M : ℝ)) ^ O := by
         rw [abs_mul, abs_of_nonneg (by positivity : (0 : ℝ) ≤ ((r : ℤ) : ℝ) ^ (2 * p.2.val))]
@@ -241,7 +247,11 @@ theorem lem_7_2_monomial_product_puiseux_indep {K V : Type*} [Field K] [AddCommG
     subst he
     have hsing : (Fintype.piFinset (fun _ : Fin 0 => Finset.range (E + 1))).filter
         (fun e => ∑ i, e i ≤ E) = {Fin.elim0} := by
-      ext f; simp [Subsingleton.elim f Fin.elim0]
+      ext f
+      simp only [Finset.mem_filter, Finset.mem_singleton, Fintype.mem_piFinset]
+      constructor
+      · intro _; exact Subsingleton.elim f Fin.elim0
+      · intro hf; subst hf; exact ⟨fun i => Fin.elim0 i, by simp⟩
     rw [hsing, Finset.sum_singleton] at hsum
     exact (smul_eq_zero.mp hsum).resolve_right (hΩ0 Ω)
   | succ d' ih =>
@@ -264,7 +274,13 @@ theorem lem_7_2_monomial_product_puiseux_indep {K V : Type*} [Field K] [AddCommG
         intro x hx; simp only [Finset.mem_filter] at hx ⊢
         exact ⟨hx.1, by omega⟩
       rw [← Finset.sum_subset hsub]
-      · simpa [R'] using hslice_c
+      · have hcongr : ∑ x ∈ (Fintype.piFinset (fun _ : Fin d' => Finset.range (E + 1))).filter
+              (fun e' => ∑ i, e' i ≤ E - c), R' x • Ω_prev x =
+            ∑ x ∈ (Fintype.piFinset (fun _ : Fin d' => Finset.range (E + 1))).filter
+              (fun e' => ∑ i, e' i ≤ E - c), R (Fin.snoc x c) • Ω_prev x := by
+          apply Finset.sum_congr rfl; intro x hx
+          dsimp [R']; rw [if_pos (Finset.mem_filter.mp hx).2]
+        rw [hcongr]; exact hslice_c
       · intro x _ hx
         simp only [Finset.mem_filter] at hx
         have hnot : ¬ ∑ i, x i ≤ E - c := by
@@ -300,9 +316,13 @@ theorem gauss_leading_coeff_dvd_of_linear_factors {Delta : ℤ[X]} (hDelta : Del
   have hlead_lin : ∀ n ∈ T, (Polynomial.C (n : ℤ) * X - 1).leadingCoeff = (n : ℤ) := by
     intro n hn
     have hn_ne : (n : ℤ) ≠ 0 := by exact_mod_cast (hT n hn).ne'
-    have h1 : (Polynomial.C (n : ℤ) * X - 1) = Polynomial.C (n : ℤ) * X + Polynomial.C (-1 : ℤ) := by
-      simp [sub_eq_add_neg]
-    rw [h1, Polynomial.leadingCoeff_C_mul_X_add_C hn_ne]
+    have hdeg : (Polynomial.C (n : ℤ) * X - 1).natDegree = 1 := by
+      have h1 : (Polynomial.C (n : ℤ) * X - 1) = Polynomial.C (n : ℤ) * X + Polynomial.C (-1 : ℤ) := by
+        simp [sub_eq_add_neg]
+      rw [h1]
+      exact Polynomial.natDegree_C_mul_X_add_C hn_ne (-1)
+    rw [Polynomial.leadingCoeff, hdeg]
+    simp [Polynomial.coeff_X]
   have hlead_prod : (∏ n ∈ T, (Polynomial.C (n : ℤ) * X - 1) ^ a n).leadingCoeff =
       ∏ n ∈ T, (n : ℤ) ^ a n := by
     rw [Polynomial.leadingCoeff_prod]
@@ -314,10 +334,12 @@ theorem gauss_leading_coeff_dvd_of_linear_factors {Delta : ℤ[X]} (hDelta : Del
   refine ⟨hlead_dvd, ?_⟩
   have hlc_ne : Delta.leadingCoeff ≠ 0 := Polynomial.leadingCoeff_ne_zero.mpr hDelta
   have habs_le : (∏ n ∈ T, (n : ℤ) ^ a n) ≤ |Delta.leadingCoeff| := by
-    have h1 : |∏ n ∈ T, (n : ℤ) ^ a n| ≤ |Delta.leadingCoeff| :=
-      Int.le_of_dvd (abs_pos.mpr hlc_ne) (dvd_abs.mpr hlead_dvd)
+    obtain ⟨k, hk⟩ := hlead_dvd
+    have hk_ne : k ≠ 0 := fun h0 => hlc_ne (by rw [hk, h0, mul_zero])
+    have hk1 : (1 : ℤ) ≤ |k| := by omega
     have hnn : 0 ≤ ∏ n ∈ T, (n : ℤ) ^ a n := Finset.prod_nonneg (fun n _ => pow_nonneg (Nat.cast_nonneg _) _)
-    rwa [abs_of_nonneg hnn] at h1
+    rw [hk, abs_mul, abs_of_nonneg hnn]
+    nlinarith
   have hcast : ((∏ n ∈ T, n ^ a n : ℕ) : ℤ) = ∏ n ∈ T, (n : ℤ) ^ a n := by push_cast; rfl
   rw [← hcast] at habs_le
   exact_mod_cast habs_le
