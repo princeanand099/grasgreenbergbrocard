@@ -213,15 +213,12 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
     let v_I : ℕ → ℝ := fun p => if p ∈ P_I then 1 / Real.sqrt W_I else 0
     have hv_I_norm : ∑ p ∈ P_base, w p * (v_I p) ^ 2 = 1 := by
       have h1 : ∑ p ∈ P_base, w p * (v_I p) ^ 2 = ∑ p ∈ P_I, w p * (1 / W_I) := by
-        rw [← Finset.sum_filter_of_ne (p := (· ∈ P_I))]
-        · have hfilt : P_base.filter (· ∈ P_I) = P_I := by
-            ext p; simp only [Finset.mem_filter]; exact ⟨fun h => h.2, fun h => ⟨hP_I_sub h, h⟩⟩
-          rw [hfilt]; apply Finset.sum_congr rfl; intro p hp
-          change w p * (if p ∈ P_I then 1 / Real.sqrt W_I else 0) ^ 2 = w p * (1 / W_I)
-          rw [if_pos hp, one_div, inv_pow, Real.sq_sqrt hW_I_pos.le, one_div]
-        · intro p _ hp
+        rw [← Finset.sum_subset hP_I_sub (fun p _ hp => by
           change w p * (if p ∈ P_I then 1 / Real.sqrt W_I else 0) ^ 2 = 0
-          rw [if_neg hp]; ring
+          rw [if_neg hp]; ring)]
+        apply Finset.sum_congr rfl; intro p hp
+        change w p * (if p ∈ P_I then 1 / Real.sqrt W_I else 0) ^ 2 = w p * (1 / W_I)
+        rw [if_pos hp, one_div, inv_pow, Real.sq_sqrt hW_I_pos.le, one_div]
       rw [h1, ← Finset.sum_mul]
       change W_I * (1 / W_I) = 1
       exact mul_one_div_cancel hW_I_pos.ne'
@@ -439,12 +436,11 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
                 ((padicValNat p (Nat.factorial n) - padicValNat p (Nat.factorial N') : ℕ) : ℝ) :=
               (Nat.cast_sub hv_le).symm
             have hlog_nn : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by exact_mod_cast (Finset.mem_filter.mp (Finset.mem_filter.mp h1).1).2.1.pos)
-            calc |((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) * u n hn p) -
-                  ((padicValNat p (Nat.factorial N') : ℝ) * Real.log (p : ℝ) * u n hn p)|
-                = |((padicValNat p (Nat.factorial n) - padicValNat p (Nat.factorial N') : ℕ) : ℝ) * Real.log (p : ℝ)| * |u n hn p| := by
-                  rw [← hdiff_r, abs_mul]; congr 1; ring_nf
-              _ = ((padicValNat p (Nat.factorial n) - padicValNat p (Nat.factorial N') : ℕ) : ℝ) * Real.log (p : ℝ) := by
-                  rw [hu1, mul_one, abs_of_nonneg (by positivity)]
+            have heq_alg : ((padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) * u n hn p) -
+                ((padicValNat p (Nat.factorial N') : ℝ) * Real.log (p : ℝ) * u n hn p) =
+                (((padicValNat p (Nat.factorial n) - padicValNat p (Nat.factorial N') : ℕ) : ℝ) * Real.log (p : ℝ)) * u n hn p := by
+              rw [← hdiff_r]; ring
+            rw [heq_alg, abs_mul, hu1, mul_one, abs_of_nonneg (mul_nonneg (Nat.cast_nonneg _) hlog_nn)]
           · simp only [h1, h2, and_false, ↓reduceIte]
             rw [sub_zero, abs_mul,
               show |u n hn p| = 1 by dsimp [u]; split_ifs <;> norm_num, mul_one,
@@ -710,17 +706,15 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
             (W_tot * Real.sqrt W_I) := by
         have h1 : ∑ p ∈ P_base, w p * u n hn p * v_I p =
             ∑ p ∈ P_I, w p * u n hn p * (1 / Real.sqrt W_I) := by
-          rw [← Finset.sum_filter_of_ne (p := (· ∈ P_I))]
-          · have hfilt : P_base.filter (· ∈ P_I) = P_I := by
-              ext p; simp only [Finset.mem_filter]; exact ⟨fun h => h.2, fun h => ⟨hP_I_sub h, h⟩⟩
-            rw [hfilt]; apply Finset.sum_congr rfl; intro p hp
-            change w p * u n hn p * (if p ∈ P_I then 1 / Real.sqrt W_I else 0) = w p * u n hn p * (1 / Real.sqrt W_I)
-            rw [if_pos hp]
-          · intro p _ hp
+          rw [← Finset.sum_subset hP_I_sub (fun p _ hp => by
             change w p * u n hn p * (if p ∈ P_I then 1 / Real.sqrt W_I else 0) = 0
-            rw [if_neg hp]; ring
+            rw [if_neg hp]; ring)]
+          apply Finset.sum_congr rfl; intro p hp
+          change w p * u n hn p * (if p ∈ P_I then 1 / Real.sqrt W_I else 0) = w p * u n hn p * (1 / Real.sqrt W_I)
+          rw [if_pos hp]
         rw [h1, Finset.sum_div]
-        apply Finset.sum_congr rfl; intro p _; dsimp [w]; ring
+        apply Finset.sum_congr rfl; intro p _; dsimp [w]
+        field_simp [hW_tot_pos.ne', (Real.sqrt_pos.mpr hW_I_pos).ne']
       have hdiff_small : 13 * (N' : ℝ) ^ (1 - ε / 2) * Real.log (2 * (N' : ℝ)) ≤
           η * (ε / 4) * τ₀ * (N' : ℝ) * Real.log (N' : ℝ) := by
         have h2 := hN_e2 N' (by omega)
@@ -1135,7 +1129,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
         have h26_le : 26 * (N' : ℝ) ^ (-ε) * (N' : ℝ) * Real.log (N' : ℝ) ≤ (1 / 3 : ℝ) * E_err := by
           have hfrac : 26 * (τ₀ / (100 * ((M : ℝ) + 1))) ≤ (1 / 3 : ℝ) * (τ₀ / ((M : ℝ) + 1)) := by
             rw [show 26 * (τ₀ / (100 * ((M : ℝ) + 1))) = (26 / 100 : ℝ) * (τ₀ / ((M : ℝ) + 1)) by
-              field_simp [(by positivity : (M : ℝ) + 1 ≠ 0)]; ring]
+              field_simp [(by positivity : (M : ℝ) + 1 ≠ 0)]]
             nlinarith [show 0 < τ₀ / ((M : ℝ) + 1) by positivity]
           have h26a : 26 * (N' : ℝ) ^ (-ε) ≤ (1 / 3 : ℝ) * (τ₀ / ((M : ℝ) + 1)) := by linarith
           calc 26 * (N' : ℝ) ^ (-ε) * (N' : ℝ) * Real.log (N' : ℝ)
