@@ -73,7 +73,7 @@ theorem thm_8_1_part1_frey_E {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n) (hm : Nat.fact
     -- Modularity, conductor, and Frobenius traces
     (∃ D : FreyCurveArithmeticData n m X₁ Y₁,
       D.isModular_E ∧ D.conductor_E = 2 ^ D.alpha_E * ∏ p ∈ (Finset.Icc 3 n).filter Nat.Prime, p ∧
-      D.alpha_E ≤ 3 ∧ ∀ p : ℕ, p.Prime → 3 ≤ p → p ≤ n → D.ap_E p = legendreSym p (-(m : ℤ))) := by
+      D.alpha_E ≤ 3 ∧ ∀ (p : ℕ) [Fact p.Prime], 3 ≤ p → p ≤ n → D.ap_E p = legendreSym p (-(m : ℤ))) := by
   have hm_z : (Nat.factorial n : ℤ) + 1 = (m : ℤ) ^ 2 := by exact_mod_cast hm
   have hc4 : freyE_c4 m = 16 * (4 * (Nat.factorial n : ℤ) + 1) := by
     unfold freyE_c4 freyE_b2 freyE_b4; linarith
@@ -155,7 +155,7 @@ theorem thm_8_1_part2_level2_cm_reduction {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
       padicValNat p (2 ^ 12 * (q_n n) ^ 2 * Y₁ ^ 4) = 2 ∧ ¬ ((p : ℤ) ∣ freyF2_c4 X₁)) ∧
     -- Modularity and surjectivity of mod-ℓ Galois representation for ℓ ≥ 5
     (∃ D : FreyCurveArithmeticData n m X₁ Y₁,
-      D.isModular_F2 ∧ ∀ ℓ : ℕ, ℓ.Prime → 5 ≤ ℓ → D.surj_mod_ell_F2 ℓ ‹_› ‹_›) := by
+      D.isModular_F2 ∧ ∀ ℓ : ℕ, ℓ.Prime → 5 ≤ ℓ → D.surj_mod_ell_F2 ℓ) := by
   have hX1_pos : 0 < X₁ := by have := hfund.1; omega
   have hY1_pos : 0 < Y₁ := hfund.2.1
   have hpell_z : (X₁ : ℤ) ^ 2 - 1 = (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 := by linarith [hfund.2.2.1]
@@ -581,6 +581,7 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
         have hfac_le_r : (Nat.factorial n : ℝ) ≤ (((u_n * v_n) ^ 3 : ℕ) : ℝ) := by exact_mod_cast hfac_le_x3
         have h1 := Real.log_le_log hfac_pos_r hfac_le_r
         rw [Nat.cast_pow, Real.log_pow] at h1
+        push_cast at h1
         have h2 := (n_log_n_sub_n_le_log_factorial n (by omega : 1 ≤ n)).1
         linarith
       have hil := hN_lg n (by omega)
