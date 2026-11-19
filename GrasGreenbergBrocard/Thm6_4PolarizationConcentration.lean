@@ -14,6 +14,23 @@ set_option maxHeartbeats 4000000
 
 namespace GrasGreenbergBrocard
 
+private lemma nat_prod_dvd_of_pairwise_coprime {S : Finset ℕ} {f : ℕ → ℕ} {M : ℕ}
+    (hcop : ∀ a ∈ S, ∀ b ∈ S, a ≠ b → Nat.Coprime (f a) (f b))
+    (hdvd : ∀ a ∈ S, f a ∣ M) : ∏ a ∈ S, f a ∣ M := by
+  classical
+  induction S using Finset.induction_on with
+  | empty => simp
+  | @insert a s ha ih =>
+    rw [Finset.prod_insert ha]
+    have h1 : f a ∣ M := hdvd a (Finset.mem_insert_self a s)
+    have h2 : ∏ x ∈ s, f x ∣ M := ih
+      (fun x hx y hy hxy => hcop x (Finset.mem_insert_of_mem hx) y (Finset.mem_insert_of_mem hy) hxy)
+      (fun x hx => hdvd x (Finset.mem_insert_of_mem hx))
+    have hc : Nat.Coprime (f a) (∏ x ∈ s, f x) :=
+      Nat.Coprime.prod_right (fun x hx => hcop a (Finset.mem_insert_self a s) x
+        (Finset.mem_insert_of_mem hx) (fun h => ha (h ▸ hx)))
+    exact hc.mul_dvd_of_dvd_of_dvd h1 h2
+
 private def PolBad (ε η : ℝ) (n : ℕ) : Prop :=
   ∃ m : ℕ, Nat.factorial n + 1 = m ^ 2 ∧ |theta_eps_weight ε n m - 1 / 2| ≥ η
 
@@ -34,12 +51,13 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
           ∃ m : ℕ, Nat.factorial n + 1 = m ^ 2 ∧ |theta_eps_weight ε n m - 1 / 2| ≥ η)).card : ℝ) ≤
           C * η ^ (-2 : ℤ) * (N : ℝ) ^ ε) := by
   let M : ℕ := Nat.floor ((η ^ 2 * ε)⁻¹) + 1
-  let τ₀ : ℝ := η ^ 2 * ε / (1000 * (1 + η ^ 2 * ε))
+  let τ₀ : ℝ := (η ^ 2 * ε) ^ 2 / (1000 * (1 + η ^ 2 * ε))
+  have hηε_lt : η ^ 2 * ε < 1 := by nlinarith [sq_nonneg η]
   have hτ₀_pos : 0 < τ₀ := by positivity
   have hτ₀_lt : τ₀ < 1 / 100 := by
     dsimp [τ₀]
-    have : η ^ 2 * ε < 10 * (1 + η ^ 2 * ε) := by nlinarith
-    rw [div_lt_div_iff₀ (by positivity) (by norm_num)]; linarith
+    rw [div_lt_div_iff₀ (by positivity) (by norm_num)]
+    nlinarith [sq_nonneg (η ^ 2 * ε)]
   have h_band := multi_modulus_power_band_equidistribution 2 1 (by norm_num) (1 - ε / 2) 1
     (by linarith) (by linarith) le_rfl
   obtain ⟨N_band, hN_band⟩ := Filter.eventually_atTop.mp
@@ -112,7 +130,8 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
     have hW_tot_ub : W_tot ≤ (1 + τ₀ / 2) * (N' : ℝ) * Real.log (N' : ℝ) := by
       have h1 := (abs_le.mp hSodd_bd).2; have h2 := (abs_le.mp hSeven_bd).2
       dsimp [W_tot]; linarith
-    have hW_tot_pos : 0 < W_tot := by nlinarith [show (0 : ℝ) < N' by positivity]
+    have hN'_pos : (0 : ℝ) < (N' : ℝ) := by exact_mod_cast (by omega : 0 < N')
+    have hW_tot_pos : 0 < W_tot := by nlinarith [mul_pos hN'_pos hlogN'_pos]
     let w : ℕ → ℝ := fun p => (padicValNat p (Nat.factorial N') : ℝ) * Real.log (p : ℝ) / W_tot
     have hw_nn : ∀ p, 0 ≤ w p := fun p => by
       dsimp [w]; refine div_nonneg (mul_nonneg (Nat.cast_nonneg _) ?_) hW_tot_pos.le
@@ -124,7 +143,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
     let P_I : Finset ℕ := (Podd N').filter (fun p : ℕ => 3 ≤ p ∧ (N' : ℝ) ^ (1 - ε / 2) < (p : ℝ))
     have hP_I_sub : P_I ⊆ P_base := by
       intro p hp; simp only [P_I, Podd, P_base, Finset.mem_filter, Finset.mem_Icc] at hp ⊢
-      exact ⟨⟨hp.2.1, hp.1.1.2⟩, hp.1.2⟩
+      exact ⟨⟨hp.2.1, hp.1.1.2⟩, hp.1.2.1⟩
     let W_I := ∑ p ∈ P_I, w p
     have hband_sum_eq : ∑ p ∈ P_I, (padicValNat p (Nat.factorial N') : ℝ) * Real.log (p : ℝ) =
         ∑ p ∈ (Finset.Icc 2 N').filter (fun p : ℕ =>
@@ -165,12 +184,14 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
           ∑ p ∈ P_I, (padicValNat p (Nat.factorial N') : ℝ) * Real.log (p : ℝ) := by linarith
       dsimp [W_I, w]; rw [← Finset.sum_div, le_div_iff₀ hW_tot_pos]
       have h3 : (ε / 4) * (1 - τ₀) * (1 + τ₀ / 2) ≤ ε / 4 - ε * τ₀ / 16 := by
-        nlinarith [hε0, hτ₀_pos, hτ₀_lt]
+        have : (1 - τ₀) * (1 + τ₀ / 2) ≤ 1 - τ₀ / 4 := by nlinarith
+        nlinarith
       calc (ε / 4) * (1 - τ₀) * W_tot
           ≤ (ε / 4) * (1 - τ₀) * ((1 + τ₀ / 2) * (N' : ℝ) * Real.log (N' : ℝ)) :=
             mul_le_mul_of_nonneg_left hW_tot_ub (by nlinarith [hε0, hτ₀_lt])
-        _ ≤ (ε / 4 - ε * τ₀ / 16) * (N' : ℝ) * Real.log (N' : ℝ) := by
-            nlinarith [hNlog_nn]
+        _ = ((ε / 4) * (1 - τ₀) * (1 + τ₀ / 2)) * ((N' : ℝ) * Real.log (N' : ℝ)) := by ring
+        _ ≤ (ε / 4 - ε * τ₀ / 16) * ((N' : ℝ) * Real.log (N' : ℝ)) := mul_le_mul_of_nonneg_right h3 hNlog_nn
+        _ = (ε / 4 - ε * τ₀ / 16) * (N' : ℝ) * Real.log (N' : ℝ) := by ring
         _ ≤ _ := h2
     have hW_I_ub : W_I ≤ (ε / 4) * (1 + τ₀) := by
       have h1 := (abs_le.mp hband_bd).2
@@ -178,13 +199,15 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
           (ε / 4 + ε * τ₀ / 16) * (N' : ℝ) * Real.log (N' : ℝ) := by linarith
       dsimp [W_I, w]; rw [← Finset.sum_div, div_le_iff₀ hW_tot_pos]
       have h3 : (ε / 4 + ε * τ₀ / 16) ≤ (ε / 4) * (1 + τ₀) * (1 - τ₀ / 2) := by
-        nlinarith [hε0, hτ₀_pos, hτ₀_lt]
+        have : 1 + τ₀ / 4 ≤ (1 + τ₀) * (1 - τ₀ / 2) := by nlinarith
+        nlinarith
       calc _ ≤ (ε / 4 + ε * τ₀ / 16) * (N' : ℝ) * Real.log (N' : ℝ) := h2
-        _ ≤ (ε / 4) * (1 + τ₀) * ((1 - τ₀ / 2) * (N' : ℝ) * Real.log (N' : ℝ)) := by
-            nlinarith [hNlog_nn]
+        _ = (ε / 4 + ε * τ₀ / 16) * ((N' : ℝ) * Real.log (N' : ℝ)) := by ring
+        _ ≤ ((ε / 4) * (1 + τ₀) * (1 - τ₀ / 2)) * ((N' : ℝ) * Real.log (N' : ℝ)) := mul_le_mul_of_nonneg_right h3 hNlog_nn
+        _ = (ε / 4) * (1 + τ₀) * ((1 - τ₀ / 2) * (N' : ℝ) * Real.log (N' : ℝ)) := by ring
         _ ≤ (ε / 4) * (1 + τ₀) * W_tot :=
             mul_le_mul_of_nonneg_left hW_tot_lb (by positivity)
-    have hW_I_pos : 0 < W_I := by linarith
+    have hW_I_pos : 0 < W_I := lt_of_lt_of_le (by nlinarith) hW_I_lb
     let v_I : ℕ → ℝ := fun p => if p ∈ P_I then 1 / Real.sqrt W_I else 0
     have hv_I_norm : ∑ p ∈ P_base, w p * (v_I p) ^ 2 = 1 := by
       have h1 : ∑ p ∈ P_base, w p * (v_I p) ^ 2 = ∑ p ∈ P_I, w p * (1 / W_I) := by
@@ -192,8 +215,8 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
         · have hfilt : P_base.filter (· ∈ P_I) = P_I := by
             ext p; simp only [Finset.mem_filter]; exact ⟨fun h => h.2, fun h => ⟨hP_I_sub h, h⟩⟩
           rw [hfilt]; apply Finset.sum_congr rfl; intro p hp
-          dsimp [v_I]; rw [if_pos hp, one_div, inv_pow, Real.sq_sqrt hW_I_pos.le, one_div]
-        · intro p _ hp; dsimp [v_I]; rw [if_neg hp]; ring
+          simp only [v_I, if_pos hp, one_div, inv_pow, Real.sq_sqrt hW_I_pos.le]
+        · intro p _ hp; simp only [v_I, if_neg hp]; ring
       rw [h1, ← Finset.sum_mul]
       change W_I * (1 / W_I) = 1
       exact mul_one_div_cancel hW_I_pos.ne'
@@ -213,11 +236,16 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
       have hm := hm_sq n hn
       have hpol := hm_pol n hn
       have hn_mem := Finset.mem_Icc.mp (Finset.mem_filter.mp hn).1
-      let P_I_n := (Podd n).filter (fun p => 3 ≤ p ∧ (n : ℝ) ^ (1 - ε / 2) < (p : ℝ))
-      let den_n := ∑ p ∈ P_I_n, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ)
-      let num_n := ∑ p ∈ P_I_n.filter (fun p => p ∣ B_part n ((m + 1) / 2)),
+      let P_I_n : Finset ℕ := (Podd n).filter (fun p : ℕ => 3 ≤ p ∧ (n : ℝ) ^ (1 - ε / 2) < (p : ℝ))
+      let den_n : ℝ := ∑ p ∈ P_I_n, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ)
+      let num_n : ℝ := ∑ p ∈ P_I_n.filter (fun p : ℕ => p ∣ B_part n ((m + 1) / 2)),
         (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ)
-      have hθ_eq : theta_eps_weight ε n m = if 0 < den_n then num_n / den_n else 0 := rfl
+      have hθ_eq : theta_eps_weight ε n m = if 0 < den_n then num_n / den_n else 0 := by
+        unfold theta_eps_weight
+        have hnum_eq : ∑ p ∈ (Podd n).filter (fun p : ℕ => 3 ≤ p ∧ (n : ℝ) ^ (1 - ε / 2) < (p : ℝ) ∧
+            p ∣ B_part n ((m + 1) / 2)), (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) = num_n := by
+          dsimp [num_n, P_I_n]; congr 1; ext p; simp only [Finset.mem_filter]; tauto
+        rw [hnum_eq]
       have hden_pos : 0 < den_n := by
         by_contra hle
         rw [hθ_eq, if_neg hle] at hpol
@@ -250,12 +278,13 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
             intro h2d; rw [Nat.ModEq] at hp_mod; omega
         rw [hden_eq] at hle
         have h1 := (abs_le.mp h_band_n).1
-        have : (ε / 4 - ε * τ₀ / 4) * (n : ℝ) * Real.log (n : ℝ) > 0 := by nlinarith [show 0 < (n : ℝ) by positivity]
+        have hn_pos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast (by omega : 0 < n)
+        have hpos_val : 0 < (ε / 4 - ε * τ₀ / 16) * ((n : ℝ) * Real.log (n : ℝ)) :=
+          mul_pos (by nlinarith) (mul_pos hn_pos hlogn_pos)
         linarith
       rw [hθ_eq, if_pos hden_pos] at hpol
       have h2num_sub : 2 * num_n - den_n =
           ∑ p ∈ P_I_n, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) * u n hn p := by
-        have hsub_part : P_I_n.filter (fun p => p ∣ B_part n ((m + 1) / 2)) ⊆ P_I_n := Finset.filter_subset _ _
         have h_u_eq : ∀ p ∈ P_I_n, u n hn p =
             if p ∣ B_part n ((m + 1) / 2) then (1 : ℝ) else -1 := by
           intro p hp
@@ -338,7 +367,8 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
           linarith
         have h_fac_ratio : Real.log ((Nat.factorial n / Nat.factorial N' : ℕ) : ℝ) ≤ (N' : ℝ) ^ (1 - ε) * Real.log (2 * (N' : ℝ)) := by
           by_cases h_eqN : n = N'
-          · subst h_eqN; rw [Nat.div_self (Nat.factorial_pos _)]; simp; positivity
+          · subst h_eqN; rw [Nat.div_self (Nat.factorial_pos _), Nat.cast_one, Real.log_one]
+            exact mul_nonneg (by positivity) (Real.log_nonneg (by linarith [show (1000 : ℝ) ≤ N' by exact_mod_cast (by omega : 1000 ≤ N')]))
           · have hlt_N : N' < n := by omega
             have hprod_eq : Nat.factorial n / Nat.factorial N' = ∏ j ∈ Finset.Ioc N' n, j := by
               have hfac := Nat.div_mul_cancel (Nat.factorial_dvd_factorial hlt_N.le)
@@ -355,14 +385,18 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
             have hle_nat : ∏ j ∈ Finset.Ioc N' n, j ≤ (2 * N') ^ (n - N') := by
               calc ∏ j ∈ Finset.Ioc N' n, j ≤ ∏ _j ∈ Finset.Ioc N' n, (2 * N') :=
                     Finset.prod_le_prod' (fun j hj => by
-                      have := (Finset.mem_Ioc.mp hj).2
-                      exact_mod_cast le_trans (by exact_mod_cast this) hn_le_2N')
+                      have hj1 : (j : ℝ) ≤ (n : ℝ) := by exact_mod_cast (Finset.mem_Ioc.mp hj).2
+                      have hj2 : (j : ℝ) ≤ ((2 * N' : ℕ) : ℝ) := by push_cast; linarith
+                      exact_mod_cast hj2)
                 _ = (2 * N') ^ (Finset.Ioc N' n).card := Finset.prod_const _
                 _ = (2 * N') ^ (n - N') := by rw [Nat.card_Ioc]
             have hpos_p : 0 < Nat.factorial n / Nat.factorial N' := by
               rw [hprod_eq]; exact Finset.prod_pos (fun j hj => by have := (Finset.mem_Ioc.mp hj).1; omega)
-            have h1 := Real.log_le_log (by exact_mod_cast hpos_p) (by exact_mod_cast (hprod_eq ▸ hle_nat))
-            rw [Nat.cast_pow, Real.log_pow] at h1
+            have hpos_pr : (0 : ℝ) < ((Nat.factorial n / Nat.factorial N' : ℕ) : ℝ) := by exact_mod_cast hpos_p
+            have hle_pr : ((Nat.factorial n / Nat.factorial N' : ℕ) : ℝ) ≤ (((2 * N') ^ (n - N') : ℕ) : ℝ) := by
+              exact_mod_cast (hprod_eq ▸ hle_nat)
+            have h1 := Real.log_le_log hpos_pr hle_pr
+            rw [Nat.cast_pow, Nat.cast_mul, Nat.cast_ofNat, Real.log_pow] at h1
             have hsub_le : ((n - N' : ℕ) : ℝ) ≤ (N' : ℝ) ^ (1 - ε) := by
               have : n - N' ≤ L := by omega
               exact le_trans (by exact_mod_cast this) (Nat.floor_le (by positivity))
@@ -416,7 +450,10 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
             (N' : ℝ) ^ (1 - ε / 2) * Real.log (2 * (N' : ℝ)) := by
           have hdvd_U1 : ∏ p ∈ U1, p ^ (padicValNat p (Nat.factorial n) - padicValNat p (Nat.factorial N')) ∣
               Nat.factorial n / Nat.factorial N' := by
-            apply Finset.prod_primes_dvd
+            apply nat_prod_dvd_of_pairwise_coprime
+            · intro p hp q hq hpq
+              exact Nat.Coprime.pow _ _ ((Nat.coprime_primes (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hp).2.2).1).2.1
+                (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hq).2.2).1).2.1).mpr hpq)
             · intro p hp
               have hp_m := Finset.mem_filter.mp hp
               have hp_pr := (Finset.mem_filter.mp (Finset.mem_filter.mp hp_m.2.2).1).2.1
@@ -428,13 +465,13 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
                 have hv := congrArg (padicValNat p) hmul
                 rw [padicValNat.mul hP_pos.ne' (Nat.factorial_pos N').ne'] at hv; omega
               rw [← hv_eq]; exact pow_padicValNat_dvd
-            · intro p hp q hq hpq
-              exact Nat.Coprime.pow _ _ ((Nat.coprime_primes (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hp).2.2).1).2.1
-                (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hq).2.2).1).2.1).mpr hpq)
           have hpos_U1 : 0 < ∏ p ∈ U1, p ^ (padicValNat p (Nat.factorial n) - padicValNat p (Nat.factorial N')) :=
             Finset.prod_pos (fun p hp => pow_pos (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hp).2.2).1).2.1.pos _)
           have hP_pos : 0 < Nat.factorial n / Nat.factorial N' := Nat.div_pos (Nat.factorial_le hn_mem.1) (Nat.factorial_pos N')
-          have hlog_U1 := Real.log_le_log (by exact_mod_cast hpos_U1) (by exact_mod_cast Nat.le_of_dvd hP_pos hdvd_U1)
+          have hpos_U1r : (0 : ℝ) < ((∏ p ∈ U1, p ^ (padicValNat p (Nat.factorial n) - padicValNat p (Nat.factorial N')) : ℕ) : ℝ) := by exact_mod_cast hpos_U1
+          have hle_U1r : ((∏ p ∈ U1, p ^ (padicValNat p (Nat.factorial n) - padicValNat p (Nat.factorial N')) : ℕ) : ℝ) ≤
+              ((Nat.factorial n / Nat.factorial N' : ℕ) : ℝ) := by exact_mod_cast Nat.le_of_dvd hP_pos hdvd_U1
+          have hlog_U1 := Real.log_le_log hpos_U1r hle_U1r
           rw [Nat.cast_prod, Real.log_prod (fun p hp => Nat.cast_ne_zero.mpr (pow_ne_zero _ (Finset.mem_filter.mp (Finset.mem_filter.mp (Finset.mem_filter.mp hp).2.2).1).2.1.ne_zero))] at hlog_U1
           have hsum_eq : ∑ p ∈ U1, ((padicValNat p (Nat.factorial n) - padicValNat p (Nat.factorial N') : ℕ) : ℝ) * Real.log (p : ℝ) =
               ∑ p ∈ U1, Real.log ((p ^ (padicValNat p (Nat.factorial n) - padicValNat p (Nat.factorial N')) : ℕ) : ℝ) := by
@@ -465,7 +502,9 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
             _ ≤ 2 * (2 * (N' : ℝ)) / ((N' : ℝ) ^ (1 - ε / 2)) := by gcongr
             _ = 4 * ((N' : ℝ) / (N' : ℝ) ^ (1 - ε / 2)) := by ring
             _ = 4 * (N' : ℝ) ^ (ε / 2) := by
-                congr 1; rw [← Real.rpow_one (N' : ℝ), ← Real.rpow_sub (by positivity)]; ring_nf; rw [Real.rpow_one]
+                congr 1
+                rw [show (N' : ℝ) / (N' : ℝ) ^ (1 - ε / 2) = (N' : ℝ) ^ (1 : ℝ) / (N' : ℝ) ^ (1 - ε / 2) by rw [Real.rpow_one],
+                  ← Real.rpow_sub hN'_pos]; ring_nf
         have hU2_ub : ∑ p ∈ U2, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) ≤
             8 * (N' : ℝ) ^ (1 - ε / 2) * Real.log (2 * (N' : ℝ)) := by
           have hcard_U2 : (U2.card : ℝ) ≤ (N' : ℝ) ^ (1 - 3 * ε / 2) + 1 := by
@@ -490,7 +529,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
                 Nat.sub_one_lt_floor ((N' : ℝ) ^ (1 - ε / 2))]
             have hconc : (n : ℝ) ^ (1 - ε / 2) - (N' : ℝ) ^ (1 - ε / 2) ≤ (N' : ℝ) ^ (1 - 3 * ε / 2) := by
               let x : ℝ := ((n : ℝ) - (N' : ℝ)) / (N' : ℝ)
-              have hx_nn : 0 ≤ x := div_nonneg (by exact_mod_cast (by omega : (N' : ℤ) ≤ n)) (by positivity)
+              have hx_nn : 0 ≤ x := div_nonneg (sub_nonneg.mpr (by exact_mod_cast hn_mem.1)) (by positivity)
               have hx_le : x ≤ (N' : ℝ) ^ (-ε) := by
                 dsimp [x]
                 have h1 : (n : ℝ) - (N' : ℝ) ≤ (N' : ℝ) ^ (1 - ε) := by
@@ -498,16 +537,18 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
                   have hsub_eq : (n : ℝ) - (N' : ℝ) = ((n - N' : ℕ) : ℝ) := (Nat.cast_sub hn_mem.1).symm
                   rw [hsub_eq]; exact le_trans (by exact_mod_cast this) (Nat.floor_le (by positivity))
                 calc ((n : ℝ) - (N' : ℝ)) / (N' : ℝ) ≤ (N' : ℝ) ^ (1 - ε) / (N' : ℝ) := by gcongr
-                  _ = (N' : ℝ) ^ (-ε) := by rw [← Real.rpow_one (N' : ℝ), ← Real.rpow_sub (by positivity)]; ring_nf
+                  _ = (N' : ℝ) ^ (-ε) := by
+                      rw [show (N' : ℝ) ^ (1 - ε) / (N' : ℝ) = (N' : ℝ) ^ (1 - ε) / (N' : ℝ) ^ (1 : ℝ) by rw [Real.rpow_one],
+                        ← Real.rpow_sub hN'_pos]; ring_nf
               have h1x : (1 + x) ^ (1 - ε / 2) ≤ 1 + x := by
                 simpa using Real.rpow_le_rpow_of_exponent_le (by linarith) (by linarith : 1 - ε / 2 ≤ 1)
-              have hn_eq : (n : ℝ) = (N' : ℝ) * (1 + x) := by dsimp [x]; field_simp [(by positivity : (N' : ℝ) ≠ 0)]; ring
+              have hn_eq : (n : ℝ) = (N' : ℝ) * (1 + x) := by dsimp [x]; field_simp [hN'_pos.ne']; ring
               calc (n : ℝ) ^ (1 - ε / 2) - (N' : ℝ) ^ (1 - ε / 2)
                   = (N' : ℝ) ^ (1 - ε / 2) * ((1 + x) ^ (1 - ε / 2) - 1) := by
                     rw [hn_eq, Real.mul_rpow (by positivity) (by linarith)]; ring
                 _ ≤ (N' : ℝ) ^ (1 - ε / 2) * x := by gcongr; linarith
                 _ ≤ (N' : ℝ) ^ (1 - ε / 2) * (N' : ℝ) ^ (-ε) := by gcongr
-                _ = (N' : ℝ) ^ (1 - 3 * ε / 2) := by rw [← Real.rpow_add (by positivity)]; ring_nf
+                _ = (N' : ℝ) ^ (1 - 3 * ε / 2) := by rw [← Real.rpow_add hN'_pos]; ring_nf
             have hcard1_r : (U2.card : ℝ) ≤ (Nat.floor ((n : ℝ) ^ (1 - ε / 2)) : ℝ) -
                 (Nat.floor ((N' : ℝ) ^ (1 - ε / 2)) : ℝ) := by
               have hle_fl : Nat.floor ((N' : ℝ) ^ (1 - ε / 2)) ≤ Nat.floor ((n : ℝ) ^ (1 - ε / 2)) :=
@@ -533,7 +574,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
               rcases hp_m.1 with h | h <;> exact_mod_cast (Finset.mem_filter.mp (Finset.mem_filter.mp h).1).2.1.pos)) (by positivity)
           have h1_le_eps : ((N' : ℝ) ^ (1 - 3 * ε / 2) + 1) * (4 * (N' : ℝ) ^ (ε / 2)) ≤ 8 * (N' : ℝ) ^ (1 - ε / 2) := by
             have h1 : (N' : ℝ) ^ (1 - 3 * ε / 2) * (N' : ℝ) ^ (ε / 2) = (N' : ℝ) ^ (1 - ε) := by
-              rw [← Real.rpow_add (by positivity)]; ring_nf
+              rw [← Real.rpow_add hN'_pos]; ring_nf
             have h2 : (N' : ℝ) ^ (1 - ε) ≤ (N' : ℝ) ^ (1 - ε / 2) :=
               Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast (by omega : 1 ≤ N')) (by linarith)
             have h3 : (N' : ℝ) ^ (ε / 2) ≤ (N' : ℝ) ^ (1 - ε / 2) :=
@@ -550,7 +591,16 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
         have hU3_ub : ∑ p ∈ U3, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) ≤
             4 * (N' : ℝ) ^ (1 - ε / 2) * Real.log (2 * (N' : ℝ)) := by
           have hdvd_U3 : ∏ p ∈ U3, p ∣ Nat.factorial n / Nat.factorial N' := by
-            apply Finset.prod_primes_dvd
+            apply nat_prod_dvd_of_pairwise_coprime
+            · intro p hp q hq hpq
+              have hp_m := Finset.mem_filter.mp hp; have hq_m := Finset.mem_filter.mp hq
+              have hp_pr : p.Prime := by
+                simp only [U_union, Finset.mem_union] at hp_m
+                rcases hp_m.1 with h | h <;> exact (Finset.mem_filter.mp (Finset.mem_filter.mp h).1).2.1
+              have hq_pr : q.Prime := by
+                simp only [U_union, Finset.mem_union] at hq_m
+                rcases hq_m.1 with h | h <;> exact (Finset.mem_filter.mp (Finset.mem_filter.mp h).1).2.1
+              exact (Nat.coprime_primes hp_pr hq_pr).mpr hpq
             · intro p hp
               have hp_m := Finset.mem_filter.mp hp
               have hp_gt : (n : ℝ) ^ (1 - ε / 2) < (p : ℝ) := hp_m.2.2
@@ -588,21 +638,15 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
                 refine ⟨Finset.mem_filter.mpr ⟨Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨by omega, hp_le_n⟩, hp_pr, ?_⟩,
                   hp_mem.2.1, hp_gt⟩, hp_I⟩
                 rw [hv0]; exact (Finset.mem_filter.mp hp_mem.1).2.2
-            · intro p hp q hq hpq
-              have hp_m := Finset.mem_filter.mp hp; have hq_m := Finset.mem_filter.mp hq
-              have hp_pr : p.Prime := by
-                simp only [U_union, Finset.mem_union] at hp_m
-                rcases hp_m.1 with h | h <;> exact (Finset.mem_filter.mp (Finset.mem_filter.mp h).1).2.1
-              have hq_pr : q.Prime := by
-                simp only [U_union, Finset.mem_union] at hq_m
-                rcases hq_m.1 with h | h <;> exact (Finset.mem_filter.mp (Finset.mem_filter.mp h).1).2.1
-              exact (Nat.coprime_primes hp_pr hq_pr).mpr hpq
           have hpos_U3 : 0 < ∏ p ∈ U3, p := Finset.prod_pos (fun p hp => by
             have hp_m := Finset.mem_filter.mp hp
             simp only [U_union, Finset.mem_union] at hp_m
             rcases hp_m.1 with h | h <;> exact (Finset.mem_filter.mp (Finset.mem_filter.mp h).1).2.1.pos)
           have hP_pos : 0 < Nat.factorial n / Nat.factorial N' := Nat.div_pos (Nat.factorial_le hn_mem.1) (Nat.factorial_pos N')
-          have hlog_U3 := Real.log_le_log (by exact_mod_cast hpos_U3) (by exact_mod_cast Nat.le_of_dvd hP_pos hdvd_U3)
+          have hpos_U3r : (0 : ℝ) < ((∏ p ∈ U3, p : ℕ) : ℝ) := by exact_mod_cast hpos_U3
+          have hle_U3r : ((∏ p ∈ U3, p : ℕ) : ℝ) ≤ ((Nat.factorial n / Nat.factorial N' : ℕ) : ℝ) := by
+            exact_mod_cast Nat.le_of_dvd hP_pos hdvd_U3
+          have hlog_U3 := Real.log_le_log hpos_U3r hle_U3r
           rw [Nat.cast_prod, Real.log_prod (fun p hp => by
             have hp_m := Finset.mem_filter.mp hp
             simp only [U_union, Finset.mem_union] at hp_m
@@ -617,7 +661,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
             exact mul_le_mul_of_nonneg_right (hv_ub_U p (Finset.mem_filter.mp hp).1) hlog_nn
           have hpow_sum : (N' : ℝ) ^ (ε / 2) * ((N' : ℝ) ^ (1 - ε) * Real.log (2 * (N' : ℝ))) =
               (N' : ℝ) ^ (1 - ε / 2) * Real.log (2 * (N' : ℝ)) := by
-            rw [← mul_assoc, ← Real.rpow_add (by positivity)]; ring_nf
+            rw [← mul_assoc, ← Real.rpow_add hN'_pos]; ring_nf
           calc ∑ p ∈ U3, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ)
               ≤ 4 * (N' : ℝ) ^ (ε / 2) * ∑ p ∈ U3, Real.log (p : ℝ) := hsum_U3_le
             _ ≤ 4 * (N' : ℝ) ^ (ε / 2) * ((N' : ℝ) ^ (1 - ε) * Real.log (2 * (N' : ℝ))) := by
@@ -649,8 +693,8 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
           rw [← Finset.sum_filter_of_ne (p := (· ∈ P_I))]
           · have hfilt : P_base.filter (· ∈ P_I) = P_I := by
               ext p; simp only [Finset.mem_filter]; exact ⟨fun h => h.2, fun h => ⟨hP_I_sub h, h⟩⟩
-            rw [hfilt]; apply Finset.sum_congr rfl; intro p hp; dsimp [v_I]; rw [if_pos hp]
-          · intro p _ hp; dsimp [v_I]; rw [if_neg hp]; ring
+            rw [hfilt]; apply Finset.sum_congr rfl; intro p hp; simp only [v_I, if_pos hp]
+          · intro p _ hp; simp only [v_I, if_neg hp]; ring
         rw [h1]; dsimp [w]; rw [← Finset.sum_div, Finset.sum_div]
         apply Finset.sum_congr rfl; intro p _; ring
       have hdiff_small : 13 * (N' : ℝ) ^ (1 - ε / 2) * Real.log (2 * (N' : ℝ)) ≤
@@ -658,7 +702,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
         have h2 := hN_e2 N' (by omega)
         rw [Real.dist_eq, sub_zero, abs_of_nonneg (mul_nonneg (by positivity) hlogN'_pos.le)] at h2
         have hlog2N : Real.log (2 * (N' : ℝ)) ≤ 2 * Real.log (N' : ℝ) := by
-          rw [Real.log_mul (by norm_num) (by positivity)]
+          rw [Real.log_mul (by norm_num) hN'_pos.ne']
           have : Real.log 2 ≤ Real.log (N' : ℝ) := Real.log_le_log (by norm_num) (by exact_mod_cast (by omega : 2 ≤ N'))
           linarith
         have hpow_eq : (N' : ℝ) ^ (1 - ε / 2) = (N' : ℝ) * (N' : ℝ) ^ (-(ε / 2)) := by
@@ -669,7 +713,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
             have h1 : Real.exp 1 < 3 := by linarith [Real.exp_one_lt_d9]
             have h2' : Real.exp 2 = Real.exp 1 * Real.exp 1 := by rw [← Real.exp_add]; norm_num
             nlinarith [Real.exp_pos 1]
-          exact (Real.le_log_iff_exp_le (by positivity)).mpr (by linarith)
+          exact (Real.le_log_iff_exp_le hN'_pos).mpr (by linarith)
         calc 13 * (N' : ℝ) ^ (1 - ε / 2) * Real.log (2 * (N' : ℝ))
             ≤ 13 * ((N' : ℝ) * (N' : ℝ) ^ (-(ε / 2))) * (2 * Real.log (N' : ℝ)) := by rw [hpow_eq]; gcongr
           _ = 26 * (N' : ℝ) * ((N' : ℝ) ^ (-(ε / 2)) * Real.log (N' : ℝ)) := by ring
@@ -706,9 +750,15 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
             intro h2d; rw [Nat.ModEq] at hp_mod; omega
         rw [← hden_eq] at h_band_n
         have h1 := (abs_le.mp h_band_n).1
-        have h_nlog : (N' : ℝ) * Real.log (N' : ℝ) ≤ (n : ℝ) * Real.log (n : ℝ) := by
-          gcongr <;> exact_mod_cast hn_mem.1
-        nlinarith [show 0 < ε by positivity, show 0 < τ₀ by positivity]
+        have h_nlog : (N' : ℝ) * Real.log (N' : ℝ) ≤ (n : ℝ) * Real.log (n : ℝ) :=
+          mul_le_mul (by exact_mod_cast hn_mem.1) (Real.log_le_log hN'_pos (by exact_mod_cast hn_mem.1)) hlogN'_pos.le (by positivity)
+        have h_c1 : (ε / 4) * (1 - τ₀) ≤ ε / 4 - ε * τ₀ / 16 := by nlinarith
+        have h_c2 : 0 ≤ ε / 4 - ε * τ₀ / 16 := by nlinarith
+        calc (ε / 4) * (1 - τ₀) * (N' : ℝ) * Real.log (N' : ℝ)
+            = ((ε / 4) * (1 - τ₀)) * ((N' : ℝ) * Real.log (N' : ℝ)) := by ring
+          _ ≤ (ε / 4 - ε * τ₀ / 16) * ((N' : ℝ) * Real.log (N' : ℝ)) := mul_le_mul_of_nonneg_right h_c1 hNlog_nn
+          _ ≤ (ε / 4 - ε * τ₀ / 16) * ((n : ℝ) * Real.log (n : ℝ)) := mul_le_mul_of_nonneg_left h_nlog h_c2
+          _ ≤ den_n := by linarith
       have h_num_lb : 2 * η * (ε / 4) * (1 - 2 * τ₀) * (N' : ℝ) * Real.log (N' : ℝ) ≤
           |∑ p ∈ P_I, (padicValNat p (Nat.factorial N') : ℝ) * Real.log (p : ℝ) * u n hn p| := by
         have h1 : |∑ p ∈ P_I_n, (padicValNat p (Nat.factorial n) : ℝ) * Real.log (p : ℝ) * u n hn p| -
@@ -717,25 +767,43 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
             |∑ p ∈ P_I, (padicValNat p (Nat.factorial N') : ℝ) * Real.log (p : ℝ) * u n hn p| :=
           abs_sub_abs_le_abs_sub _ _
         have h2 : 2 * η * ((ε / 4) * (1 - τ₀) * (N' : ℝ) * Real.log (N' : ℝ)) ≤ 2 * η * den_n := by gcongr
-        nlinarith [show 0 < (N' : ℝ) * Real.log (N' : ℝ) by positivity]
+        have h3 : 2 * η * (ε / 4) * (1 - 2 * τ₀) * (N' : ℝ) * Real.log (N' : ℝ) ≤
+            2 * η * ((ε / 4) * (1 - τ₀) * (N' : ℝ) * Real.log (N' : ℝ)) -
+              η * (ε / 4) * τ₀ * (N' : ℝ) * Real.log (N' : ℝ) := by
+          have h_alg' : 2 * η * ((ε / 4) * (1 - τ₀) * (N' : ℝ) * Real.log (N' : ℝ)) -
+              η * (ε / 4) * τ₀ * (N' : ℝ) * Real.log (N' : ℝ) -
+              2 * η * (ε / 4) * (1 - 2 * τ₀) * (N' : ℝ) * Real.log (N' : ℝ) =
+              η * (ε / 4) * τ₀ * ((N' : ℝ) * Real.log (N' : ℝ)) := by ring
+          have h_nn : 0 ≤ η * (ε / 4) * τ₀ * ((N' : ℝ) * Real.log (N' : ℝ)) :=
+            mul_nonneg (by positivity) hNlog_nn
+          linarith
+        linarith
       rw [h_uv_eq, abs_div, abs_of_pos (mul_pos hW_tot_pos (Real.sqrt_pos.mpr hW_I_pos)), Real.sqrt_le_iff]
       refine ⟨by positivity, ?_⟩
       rw [div_pow, mul_pow, Real.sq_sqrt hW_I_pos.le, le_div_iff₀ (by positivity)]
       have h_sq_lb : (2 * η * (ε / 4) * (1 - 2 * τ₀) * (N' : ℝ) * Real.log (N' : ℝ)) ^ 2 ≤
           |∑ p ∈ P_I, (padicValNat p (Nat.factorial N') : ℝ) * Real.log (p : ℝ) * u n hn p| ^ 2 :=
-        pow_le_pow_left₀ (by positivity) h_num_lb 2
+        pow_le_pow_left₀ (mul_nonneg (mul_nonneg (mul_nonneg (by positivity) (by linarith [hτ₀_lt])) (Nat.cast_nonneg _)) hlogN'_pos.le) h_num_lb 2
       have h_denom_ub : W_tot ^ 2 * W_I ≤
           ((1 + τ₀ / 2) * (N' : ℝ) * Real.log (N' : ℝ)) ^ 2 * ((ε / 4) * (1 + τ₀)) := by gcongr
       have h_alg : η ^ 2 * ε * (1 - 20 * τ₀) * ((1 + τ₀ / 2) ^ 2 * (ε / 4) * (1 + τ₀)) ≤
           (2 * η * (ε / 4) * (1 - 2 * τ₀)) ^ 2 := by
+        have h1a : (1 + τ₀ / 2) ^ 2 ≤ 1 + 2 * τ₀ := by nlinarith
+        have h1b : (1 + τ₀ / 2) ^ 2 * (1 + τ₀) ≤ (1 + 2 * τ₀) * (1 + τ₀) :=
+          mul_le_mul_of_nonneg_right h1a (by positivity)
+        have h1c : (1 + 2 * τ₀) * (1 + τ₀) ≤ 1 + 4 * τ₀ := by nlinarith
+        have h1d : (1 - 20 * τ₀) * ((1 + τ₀ / 2) ^ 2 * (1 + τ₀)) ≤ (1 - 20 * τ₀) * (1 + 4 * τ₀) :=
+          mul_le_mul_of_nonneg_left (le_trans h1b h1c) (by linarith [hτ₀_lt])
+        have h1e : (1 - 20 * τ₀) * (1 + 4 * τ₀) ≤ (1 - 2 * τ₀) ^ 2 := by nlinarith
         have h1 : (1 - 20 * τ₀) * (1 + τ₀ / 2) ^ 2 * (1 + τ₀) ≤ (1 - 2 * τ₀) ^ 2 := by
-          nlinarith [show 0 < τ₀ by positivity, show τ₀ < 1 / 100 by exact hτ₀_lt]
+          linarith [show (1 - 20 * τ₀) * (1 + τ₀ / 2) ^ 2 * (1 + τ₀) = (1 - 20 * τ₀) * ((1 + τ₀ / 2) ^ 2 * (1 + τ₀)) by ring]
         calc η ^ 2 * ε * (1 - 20 * τ₀) * ((1 + τ₀ / 2) ^ 2 * (ε / 4) * (1 + τ₀))
             = (η ^ 2 * ε ^ 2 / 4) * ((1 - 20 * τ₀) * (1 + τ₀ / 2) ^ 2 * (1 + τ₀)) := by ring
           _ ≤ (η ^ 2 * ε ^ 2 / 4) * (1 - 2 * τ₀) ^ 2 := by gcongr
           _ = (2 * η * (ε / 4) * (1 - 2 * τ₀)) ^ 2 := by ring
       calc η ^ 2 * ε * (1 - 20 * τ₀) * (W_tot ^ 2 * W_I)
-          ≤ η ^ 2 * ε * (1 - 20 * τ₀) * (((1 + τ₀ / 2) * (N' : ℝ) * Real.log (N' : ℝ)) ^ 2 * ((ε / 4) * (1 + τ₀))) := by gcongr
+          ≤ η ^ 2 * ε * (1 - 20 * τ₀) * (((1 + τ₀ / 2) * (N' : ℝ) * Real.log (N' : ℝ)) ^ 2 * ((ε / 4) * (1 + τ₀))) :=
+            mul_le_mul_of_nonneg_left h_denom_ub (mul_nonneg (mul_nonneg (sq_nonneg η) hε0.le) (by linarith [hτ₀_lt]))
         _ = (η ^ 2 * ε * (1 - 20 * τ₀) * ((1 + τ₀ / 2) ^ 2 * (ε / 4) * (1 + τ₀))) *
               ((N' : ℝ) * Real.log (N' : ℝ)) ^ 2 := by ring
         _ ≤ (2 * η * (ε / 4) * (1 - 2 * τ₀)) ^ 2 * ((N' : ℝ) * Real.log (N' : ℝ)) ^ 2 := by gcongr
@@ -764,11 +832,11 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
           exact (hXZ.mul_right hXW).mul_left (hYZ.mul_right hYW)
         exact hp_pr.not_dvd_one (hcop_all ▸ Nat.dvd_gcd hp1 hp2)
       have hun_XZ : P_base = P_XY ∪ P_ZW := by
-        ext p; simp only [Finset.mem_union, P_XY, P_ZW, Finset.mem_filter, P_base, Finset.mem_Icc]
+        ext p; simp only [P_XY, P_ZW, Finset.mem_union, Finset.mem_filter, P_base, Finset.mem_Icc]
         constructor
         · rintro ⟨⟨hp3, hpN'⟩, hp_pr⟩
           have hp_fac : p ∣ Nat.factorial n₁ := Nat.dvd_factorial hp_pr.pos (by omega)
-          have hp_xyzw : p ∣ X_gcd m₁ m₂ * Y_gcd m₁ m₂ * (Z_gcd m₁ m₂ * W_gcd m₁ m₂) := by
+          have hp_xyzw : p ∣ (X_gcd m₁ m₂ * Y_gcd m₁ m₂) * (Z_gcd m₁ m₂ * W_gcd m₁ m₂) := by
             have h1 : 4 * (X_gcd m₁ m₂ * Y_gcd m₁ m₂ * (Z_gcd m₁ m₂ * W_gcd m₁ m₂)) = Nat.factorial n₁ := by
               rw [← hprod]; ring
             rw [← h1] at hp_fac
@@ -814,7 +882,10 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
       have h_a_ub : ∑ p ∈ P_XY, w p ≤ Real.log ((X_gcd m₁ m₂ : ℝ) * Y_gcd m₁ m₂) / W_tot := by
         dsimp [w]; rw [← Finset.sum_div]; gcongr
         have hdvd_XY : ∏ p ∈ P_XY, p ^ padicValNat p (Nat.factorial N') ∣ X_gcd m₁ m₂ * Y_gcd m₁ m₂ := by
-          apply Finset.prod_primes_dvd
+          apply nat_prod_dvd_of_pairwise_coprime
+          · intro p hp q hq hpq
+            exact Nat.Coprime.pow _ _ ((Nat.coprime_primes (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2
+              (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).2).mpr hpq)
           · intro p hp
             have hp_m := Finset.mem_filter.mp hp
             have hp_pr := (Finset.mem_filter.mp hp_m.1).2
@@ -839,20 +910,23 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
               exact (Nat.factorization_le_iff_dvd (pow_pos hp_pr.pos _).ne' (mul_pos hX_pos hY_pos).ne').mpr hpow_dvd p |>.trans' (by
                 simp [Nat.factorization_def _ hp_pr, padicValNat.prime_pow])
             exact dvd_trans (pow_dvd_pow p h1) (dvd_trans (pow_dvd_pow p h2) pow_padicValNat_dvd)
-          · intro p hp q hq hpq
-            exact Nat.Coprime.pow _ _ ((Nat.coprime_primes (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2
-              (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).2).mpr hpq)
         have ⟨hX_pos, hY_pos, _⟩ := prop_6_1_coprime_and_factorization (by omega) hlt hm₁ hm₂
         have hpos_p : 0 < ∏ p ∈ P_XY, p ^ padicValNat p (Nat.factorial N') :=
           Finset.prod_pos (fun p hp => pow_pos (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2.pos _)
-        have hle := Real.log_le_log (by exact_mod_cast hpos_p) (by exact_mod_cast Nat.le_of_dvd (mul_pos hX_pos hY_pos) hdvd_XY)
+        have hpos_r : (0 : ℝ) < ((∏ p ∈ P_XY, p ^ padicValNat p (Nat.factorial N') : ℕ) : ℝ) := by exact_mod_cast hpos_p
+        have hle_r : ((∏ p ∈ P_XY, p ^ padicValNat p (Nat.factorial N') : ℕ) : ℝ) ≤ ((X_gcd m₁ m₂ : ℝ) * (Y_gcd m₁ m₂ : ℝ)) := by
+          exact_mod_cast Nat.le_of_dvd (mul_pos hX_pos hY_pos) hdvd_XY
+        have hle := Real.log_le_log hpos_r hle_r
         rw [Nat.cast_prod, Real.log_prod (fun p hp => Nat.cast_ne_zero.mpr (pow_ne_zero _ (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2.ne_zero))] at hle
         refine le_trans (le_of_eq ?_) hle
         apply Finset.sum_congr rfl; intro p _; rw [Nat.cast_pow, Real.log_pow]
       have h_b_ub : ∑ p ∈ P_ZW, w p ≤ Real.log ((Z_gcd m₁ m₂ : ℝ) * W_gcd m₁ m₂) / W_tot := by
         dsimp [w]; rw [← Finset.sum_div]; gcongr
         have hdvd_ZW : ∏ p ∈ P_ZW, p ^ padicValNat p (Nat.factorial N') ∣ Z_gcd m₁ m₂ * W_gcd m₁ m₂ := by
-          apply Finset.prod_primes_dvd
+          apply nat_prod_dvd_of_pairwise_coprime
+          · intro p hp q hq hpq
+            exact Nat.Coprime.pow _ _ ((Nat.coprime_primes (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2
+              (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).2).mpr hpq)
           · intro p hp
             have hp_m := Finset.mem_filter.mp hp
             have hp_pr := (Finset.mem_filter.mp hp_m.1).2
@@ -877,13 +951,13 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
               exact (Nat.factorization_le_iff_dvd (pow_pos hp_pr.pos _).ne' (mul_pos hZ_pos hW_pos).ne').mpr hpow_dvd p |>.trans' (by
                 simp [Nat.factorization_def _ hp_pr, padicValNat.prime_pow])
             exact dvd_trans (pow_dvd_pow p h1) (dvd_trans (pow_dvd_pow p h2) pow_padicValNat_dvd)
-          · intro p hp q hq hpq
-            exact Nat.Coprime.pow _ _ ((Nat.coprime_primes (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2
-              (Finset.mem_filter.mp (Finset.mem_filter.mp hq).1).2).mpr hpq)
         have ⟨_, _, hZ_pos, hW_pos, _⟩ := prop_6_1_coprime_and_factorization (by omega) hlt hm₁ hm₂
         have hpos_p : 0 < ∏ p ∈ P_ZW, p ^ padicValNat p (Nat.factorial N') :=
           Finset.prod_pos (fun p hp => pow_pos (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2.pos _)
-        have hle := Real.log_le_log (by exact_mod_cast hpos_p) (by exact_mod_cast Nat.le_of_dvd (mul_pos hZ_pos hW_pos) hdvd_ZW)
+        have hpos_r : (0 : ℝ) < ((∏ p ∈ P_ZW, p ^ padicValNat p (Nat.factorial N') : ℕ) : ℝ) := by exact_mod_cast hpos_p
+        have hle_r : ((∏ p ∈ P_ZW, p ^ padicValNat p (Nat.factorial N') : ℕ) : ℝ) ≤ ((Z_gcd m₁ m₂ : ℝ) * (W_gcd m₁ m₂ : ℝ)) := by
+          exact_mod_cast Nat.le_of_dvd (mul_pos hZ_pos hW_pos) hdvd_ZW
+        have hle := Real.log_le_log hpos_r hle_r
         rw [Nat.cast_prod, Real.log_prod (fun p hp => Nat.cast_ne_zero.mpr (pow_ne_zero _ (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2.ne_zero))] at hle
         refine le_trans (le_of_eq ?_) hle
         apply Finset.sum_congr rfl; intro p _; rw [Nat.cast_pow, Real.log_pow]
@@ -893,17 +967,21 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
           (τ₀ / ((M : ℝ) + 1)) * W_tot := by
         have hfac_n1 : Real.log (Nat.factorial n₁ : ℝ) ≤ (N' : ℝ) * Real.log (N' : ℝ) + (N' : ℝ) ^ (1 - ε) * Real.log (2 * (N' : ℝ)) := by
           have h1 : Real.log (Nat.factorial N' : ℝ) ≤ (N' : ℝ) * Real.log (N' : ℝ) := by
-            have := Real.log_le_log (by exact_mod_cast Nat.factorial_pos N') (by exact_mod_cast Nat.factorial_le_pow N')
+            have hpos_f : (0 : ℝ) < (Nat.factorial N' : ℝ) := by exact_mod_cast Nat.factorial_pos N'
+            have hle_f : (Nat.factorial N' : ℝ) ≤ ((N' ^ N' : ℕ) : ℝ) := by exact_mod_cast Nat.factorial_le_pow N'
+            have := Real.log_le_log hpos_f hle_f
             rwa [Nat.cast_pow, Real.log_pow] at this
           have hmul : Nat.factorial n₁ = (Nat.factorial n₁ / Nat.factorial N') * Nat.factorial N' :=
             (Nat.div_mul_cancel (Nat.factorial_dvd_factorial hn1_m.1)).symm
           have hpos_d : 0 < Nat.factorial n₁ / Nat.factorial N' := Nat.div_pos (Nat.factorial_le hn1_m.1) (Nat.factorial_pos N')
           have hlog_eq : Real.log (Nat.factorial n₁ : ℝ) =
               Real.log ((Nat.factorial n₁ / Nat.factorial N' : ℕ) : ℝ) + Real.log (Nat.factorial N' : ℝ) := by
-            rw [hmul, Nat.cast_mul, Real.log_mul (by exact_mod_cast hpos_d.ne') (by exact_mod_cast (Nat.factorial_pos N').ne')]
+            conv_lhs => rw [hmul]
+            rw [Nat.cast_mul, Real.log_mul (by exact_mod_cast hpos_d.ne') (by exact_mod_cast (Nat.factorial_pos N').ne')]
           have h_d_le : Real.log ((Nat.factorial n₁ / Nat.factorial N' : ℕ) : ℝ) ≤ (N' : ℝ) ^ (1 - ε) * Real.log (2 * (N' : ℝ)) := by
             by_cases heq : n₁ = N'
-            · subst heq; rw [Nat.div_self (Nat.factorial_pos _)]; simp; positivity
+            · subst heq; rw [Nat.div_self (Nat.factorial_pos _), Nat.cast_one, Real.log_one]
+              exact mul_nonneg (by positivity) (Real.log_nonneg (by linarith [show (1000 : ℝ) ≤ N' by exact_mod_cast (by omega : 1000 ≤ N')]))
             · have hlt_N : N' < n₁ := by omega
               have hprod_eq : Nat.factorial n₁ / Nat.factorial N' = ∏ j ∈ Finset.Ioc N' n₁, j := by
                 have hfac := Nat.div_mul_cancel (Nat.factorial_dvd_factorial hlt_N.le)
@@ -927,12 +1005,16 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
               have hle_nat : ∏ j ∈ Finset.Ioc N' n₁, j ≤ (2 * N') ^ (n₁ - N') := by
                 calc ∏ j ∈ Finset.Ioc N' n₁, j ≤ ∏ _j ∈ Finset.Ioc N' n₁, (2 * N') :=
                       Finset.prod_le_prod' (fun j hj => by
-                        have := (Finset.mem_Ioc.mp hj).2
-                        exact_mod_cast le_trans (by exact_mod_cast this) hn1_2N')
+                        have hj1 : (j : ℝ) ≤ (n₁ : ℝ) := by exact_mod_cast (Finset.mem_Ioc.mp hj).2
+                        have hj2 : (j : ℝ) ≤ ((2 * N' : ℕ) : ℝ) := by push_cast; linarith
+                        exact_mod_cast hj2)
                   _ = (2 * N') ^ (Finset.Ioc N' n₁).card := Finset.prod_const _
                   _ = (2 * N') ^ (n₁ - N') := by rw [Nat.card_Ioc]
-              have h2 := Real.log_le_log (by exact_mod_cast hpos_d) (by exact_mod_cast (hprod_eq ▸ hle_nat))
-              rw [Nat.cast_pow, Real.log_pow] at h2
+              have hpos_dr : (0 : ℝ) < ((Nat.factorial n₁ / Nat.factorial N' : ℕ) : ℝ) := by exact_mod_cast hpos_d
+              have hle_dr : ((Nat.factorial n₁ / Nat.factorial N' : ℕ) : ℝ) ≤ (((2 * N') ^ (n₁ - N') : ℕ) : ℝ) := by
+                exact_mod_cast (hprod_eq ▸ hle_nat)
+              have h2 := Real.log_le_log hpos_dr hle_dr
+              rw [Nat.cast_pow, Nat.cast_mul, Nat.cast_ofNat, Real.log_pow] at h2
               have hsub_le : ((n₁ - N' : ℕ) : ℝ) ≤ (N' : ℝ) ^ (1 - ε) := by
                 have : n₁ - N' ≤ L := by omega
                 exact le_trans (by exact_mod_cast this) (Nat.floor_le (by positivity))
@@ -961,13 +1043,17 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
           have hle_nat : ∏ j ∈ Finset.Ioc n₁ n₂, j ≤ (4 * N') ^ (n₂ - n₁) := by
             calc ∏ j ∈ Finset.Ioc n₁ n₂, j ≤ ∏ _j ∈ Finset.Ioc n₁ n₂, (4 * N') :=
                   Finset.prod_le_prod' (fun j hj => by
-                    have := (Finset.mem_Ioc.mp hj).2
-                    exact_mod_cast le_trans (by exact_mod_cast this) hn2_4N')
+                    have hj1 : (j : ℝ) ≤ (n₂ : ℝ) := by exact_mod_cast (Finset.mem_Ioc.mp hj).2
+                    have hj2 : (j : ℝ) ≤ ((4 * N' : ℕ) : ℝ) := by push_cast; linarith
+                    exact_mod_cast hj2)
               _ = (4 * N') ^ (Finset.Ioc n₁ n₂).card := Finset.prod_const _
               _ = (4 * N') ^ (n₂ - n₁) := by rw [Nat.card_Ioc]
           have hP_pos : 0 < P_ratio n₁ n₂ := by have := P_ratio_ge_two (by omega : 4 ≤ n₁) hlt; omega
-          have h2 := Real.log_le_log (by exact_mod_cast hP_pos) (by exact_mod_cast (hP_eq ▸ hle_nat))
-          rw [Nat.cast_pow, Real.log_pow] at h2
+          have hpos_Pr : (0 : ℝ) < (P_ratio n₁ n₂ : ℝ) := by exact_mod_cast hP_pos
+          have hle_Pr : (P_ratio n₁ n₂ : ℝ) ≤ (((4 * N') ^ (n₂ - n₁) : ℕ) : ℝ) := by
+            exact_mod_cast (hP_eq ▸ hle_nat)
+          have h2 := Real.log_le_log hpos_Pr hle_Pr
+          rw [Nat.cast_pow, Nat.cast_mul, Nat.cast_ofNat, Real.log_pow] at h2
           have hsub_le : ((n₂ - n₁ : ℕ) : ℝ) ≤ (N' : ℝ) ^ (1 - ε) := by
             have : n₂ - n₁ ≤ L := by omega
             exact le_trans (by exact_mod_cast this) (Nat.floor_le (by positivity))
@@ -980,11 +1066,11 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
         have h_il_t := hN_il_tau N' (by omega)
         rw [Real.dist_eq, sub_zero, abs_of_nonneg (div_nonneg zero_le_one hlogN'_pos.le)] at h_il_t
         have hlog4N : Real.log (4 * (N' : ℝ)) ≤ 2 * Real.log (N' : ℝ) := by
-          rw [Real.log_mul (by norm_num) (by positivity)]
+          rw [Real.log_mul (by norm_num) hN'_pos.ne']
           have : Real.log 4 ≤ Real.log (N' : ℝ) := Real.log_le_log (by norm_num) (by exact_mod_cast (by omega : 4 ≤ N'))
           linarith
         have hlog2N : Real.log (2 * (N' : ℝ)) ≤ 2 * Real.log (N' : ℝ) := by
-          rw [Real.log_mul (by norm_num) (by positivity)]
+          rw [Real.log_mul (by norm_num) hN'_pos.ne']
           have : Real.log 2 ≤ Real.log (N' : ℝ) := Real.log_le_log (by norm_num) (by exact_mod_cast (by omega : 2 ≤ N'))
           linarith
         have hpow_eq : (N' : ℝ) ^ (1 - ε) = (N' : ℝ) * (N' : ℝ) ^ (-ε) := by
@@ -1000,20 +1086,39 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
               12 * ((N' : ℝ) * (N' : ℝ) ^ (-ε)) * (2 * Real.log (N' : ℝ)) :=
             mul_le_mul_of_nonneg_left hlog4N (by positivity)
           linarith
-        have hW_tight : (N' : ℝ) * Real.log (N' : ℝ) - W_tot ≤
-            (τ₀ / (50 * ((M : ℝ) + 1))) * (N' : ℝ) * Real.log (N' : ℝ) := by
+        set E_err : ℝ := (τ₀ / ((M : ℝ) + 1)) * ((N' : ℝ) * Real.log (N' : ℝ))
+        have hE_nn : 0 ≤ E_err := mul_nonneg (by positivity) hNlog_nn
+        have hW_tight : (N' : ℝ) * Real.log (N' : ℝ) - W_tot ≤ (1 / 50 : ℝ) * E_err := by
           have h1 := (abs_le.mp hSodd_bd_tight).1; have h2 := (abs_le.mp hSeven_bd_tight).1
+          have hfrac : 2 * (τ₀ / (100 * ((M : ℝ) + 1)) * (N' : ℝ) * Real.log (N' : ℝ)) =
+              (1 / 50 : ℝ) * E_err := by dsimp [E_err]; ring
           dsimp [W_tot]; linarith
-        have h8_le : (8 : ℝ) ≤ (τ₀ / (10 * ((M : ℝ) + 1))) * (N' : ℝ) * Real.log (N' : ℝ) := by
+        have h8_le : (8 : ℝ) ≤ (1 / 10 : ℝ) * E_err := by
           have h1 := (div_lt_iff₀ hlogN'_pos).mp h_il_t
-          nlinarith [show (8 : ℝ) ≤ (N' : ℝ) by exact_mod_cast (by omega : 8 ≤ N')]
-        have h26_le : 26 * (N' : ℝ) ^ (-ε) * (N' : ℝ) * Real.log (N' : ℝ) ≤
-            (τ₀ / (3 * ((M : ℝ) + 1))) * (N' : ℝ) * Real.log (N' : ℝ) := by
-          have : 26 * (N' : ℝ) ^ (-ε) ≤ τ₀ / (3 * ((M : ℝ) + 1)) := by nlinarith
-          nlinarith [show 0 ≤ (N' : ℝ) * Real.log (N' : ℝ) by positivity]
-        have hW_half : (1 / 2 : ℝ) * (N' : ℝ) * Real.log (N' : ℝ) ≤ W_tot := by
-          nlinarith [hτ₀_lt, show 0 ≤ (N' : ℝ) * Real.log (N' : ℝ) by positivity]
-        nlinarith [show 0 ≤ τ₀ / ((M : ℝ) + 1) by positivity]
+          have h10 : (1 / 10 : ℝ) * E_err =
+              10 * (N' : ℝ) * (τ₀ / (100 * ((M : ℝ) + 1)) * Real.log (N' : ℝ)) := by dsimp [E_err]; ring
+          rw [h10]
+          have hN8 : (8 : ℝ) ≤ (N' : ℝ) := by exact_mod_cast (by omega : 8 ≤ N')
+          nlinarith
+        have h26_le : 26 * (N' : ℝ) ^ (-ε) * (N' : ℝ) * Real.log (N' : ℝ) ≤ (1 / 3 : ℝ) * E_err := by
+          have hfrac : 26 * (τ₀ / (100 * ((M : ℝ) + 1))) ≤ (1 / 3 : ℝ) * (τ₀ / ((M : ℝ) + 1)) := by
+            rw [show 26 * (τ₀ / (100 * ((M : ℝ) + 1))) = (26 / 100 : ℝ) * (τ₀ / ((M : ℝ) + 1)) by ring]
+            nlinarith [show 0 < τ₀ / ((M : ℝ) + 1) by positivity]
+          have h26a : 26 * (N' : ℝ) ^ (-ε) ≤ (1 / 3 : ℝ) * (τ₀ / ((M : ℝ) + 1)) := by linarith
+          calc 26 * (N' : ℝ) ^ (-ε) * (N' : ℝ) * Real.log (N' : ℝ)
+              = (26 * (N' : ℝ) ^ (-ε)) * ((N' : ℝ) * Real.log (N' : ℝ)) := by ring
+            _ ≤ ((1 / 3 : ℝ) * (τ₀ / ((M : ℝ) + 1))) * ((N' : ℝ) * Real.log (N' : ℝ)) :=
+                mul_le_mul_of_nonneg_right h26a hNlog_nn
+            _ = (1 / 3 : ℝ) * E_err := by dsimp [E_err]; ring
+        have hW_half : (1 / 2 : ℝ) * ((N' : ℝ) * Real.log (N' : ℝ)) ≤ W_tot := by
+          have : (1 / 2 : ℝ) * ((N' : ℝ) * Real.log (N' : ℝ)) ≤ (1 - τ₀ / 2) * ((N' : ℝ) * Real.log (N' : ℝ)) := by
+            nlinarith [hτ₀_lt, hNlog_nn]
+          linarith [show (1 - τ₀ / 2) * (N' : ℝ) * Real.log (N' : ℝ) = (1 - τ₀ / 2) * ((N' : ℝ) * Real.log (N' : ℝ)) by ring]
+        have h_half_W : (1 / 2 : ℝ) * E_err ≤ (τ₀ / ((M : ℝ) + 1)) * W_tot := by
+          calc (1 / 2 : ℝ) * E_err
+              = (τ₀ / ((M : ℝ) + 1)) * ((1 / 2 : ℝ) * ((N' : ℝ) * Real.log (N' : ℝ))) := by dsimp [E_err]; ring
+            _ ≤ (τ₀ / ((M : ℝ) + 1)) * W_tot := mul_le_mul_of_nonneg_left hW_half (by positivity)
+        linarith
       rw [hsum_XZ, abs_le]
       have h1 : (∑ p ∈ P_XY, w p) - (∑ p ∈ P_ZW, w p) = 2 * (∑ p ∈ P_XY, w p) - 1 := by linarith
       have h2 : (∑ p ∈ P_XY, w p) - (∑ p ∈ P_ZW, w p) = 1 - 2 * (∑ p ∈ P_ZW, w p) := by linarith
@@ -1036,7 +1141,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
         simp_rw [Finset.mul_sum]
         rw [Finset.sum_comm]
         apply Finset.sum_congr rfl; intro p _
-        dsimp [X_vec]; rw [Finset.sum_mul, Finset.mul_sum]
+        dsimp [X_vec]; rw [Finset.mul_sum, Finset.sum_mul]
         apply Finset.sum_congr rfl; intro hn _
         have hsq : Real.sqrt (w p) * Real.sqrt (w p) = w p := Real.mul_self_sqrt (hw_nn p)
         calc sgn hn.1 hn.2 * (w p * u hn.1 hn.2 p * v_I p)
@@ -1094,8 +1199,10 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
               ∑ p ∈ P_base, w p * u hn₂.1 hn₂.2 p * u hn₁.1 hn₁.2 p by
               apply Finset.sum_congr rfl; intro p _; ring]
             exact h_uu_ub hn₂.1 hn₂.2 hn₁.1 hn₁.2 hgt
-        calc sgn hn₁.1 hn₁.2 * sgn hn₂.1 hn₂.2 * _ ≤ |sgn hn₁.1 hn₁.2 * sgn hn₂.1 hn₂.2 * _| := le_abs_self _
-          _ = |sgn hn₁.1 hn₁.2| * |sgn hn₂.1 hn₂.2| * |_| := by rw [abs_mul, abs_mul]
+        set inner := ∑ p ∈ P_base, w p * u hn₁.1 hn₁.2 p * u hn₂.1 hn₂.2 p
+        calc sgn hn₁.1 hn₁.2 * sgn hn₂.1 hn₂.2 * inner
+            ≤ |sgn hn₁.1 hn₁.2 * sgn hn₂.1 hn₂.2 * inner| := le_abs_self _
+          _ = |sgn hn₁.1 hn₁.2| * |sgn hn₂.1 hn₂.2| * |inner| := by rw [abs_mul, abs_mul]
           _ ≤ 1 * 1 * (τ₀ / ((M : ℝ) + 1)) := by rw [hs1, hs2]; gcongr
           _ = τ₀ / ((M : ℝ) + 1) := by ring
       have h_split : ∑ hn₁ ∈ S_pol.attach, ∑ hn₂ ∈ S_pol.attach,
@@ -1105,7 +1212,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
             sgn hn₁.1 hn₁.2 * sgn hn₂.1 hn₂.2 * ∑ p ∈ P_base, w p * u hn₁.1 hn₁.2 p * u hn₂.1 hn₂.2 p) := by
         rw [← Finset.sum_add_distrib]
         apply Finset.sum_congr rfl; intro hn₁ h1
-        rw [Finset.add_sum_erase _ _ h1]
+        exact (Finset.add_sum_erase _ _ h1).symm
       rw [h_split]
       have h_diag_eq : (∑ hn₁ ∈ S_pol.attach, sgn hn₁.1 hn₁.2 * sgn hn₁.1 hn₁.2 * ∑ p ∈ P_base, w p * u hn₁.1 hn₁.2 p * u hn₁.1 hn₁.2 p) = (t : ℝ) := by
         simpa using h_diag
@@ -1120,7 +1227,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
             rw [Finset.card_erase_of_mem h1, Finset.card_attach, Nat.cast_sub (by omega : 1 ≤ t), Nat.cast_one]
           calc ∑ hn₂ ∈ S_pol.attach.erase hn₁, _ ≤ ∑ _hn₂ ∈ S_pol.attach.erase hn₁, (τ₀ / ((M : ℝ) + 1)) :=
                 Finset.sum_le_sum (fun hn₂ h2 => h_off hn₁ h1 hn₂ (Finset.mem_of_mem_erase h2) (Finset.ne_of_mem_erase h2).symm)
-            _ = ((t : ℝ) - 1) * (τ₀ / ((M : ℝ) + 1)) := by rw [Finset.sum_const, hcard, nsmul_eq_mul]
+            _ = ((t : ℝ) - 1) * (τ₀ / ((M : ℝ) + 1)) := by rw [Finset.sum_const, nsmul_eq_mul, hcard]
         calc ∑ hn₁ ∈ S_pol.attach, _ ≤ ∑ _hn₁ ∈ S_pol.attach, ((t : ℝ) - 1) * (τ₀ / ((M : ℝ) + 1)) := Finset.sum_le_sum h1
           _ = (t : ℝ) * ((t : ℝ) - 1) * (τ₀ / ((M : ℝ) + 1)) := by
               rw [Finset.sum_const, Finset.card_attach, nsmul_eq_mul]; ring
@@ -1135,7 +1242,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
           _ ≤ ∑ hn ∈ S_pol.attach, |∑ p ∈ P_base, w p * u hn.1 hn.2 p * v_I p| :=
               Finset.sum_le_sum (fun hn _ => h_uv_lb hn.1 hn.2)
       have h2 := pow_le_pow_left₀ (by positivity) h1 2
-      rw [mul_pow, Real.sq_sqrt (by nlinarith [hτ₀_lt])] at h2
+      rw [mul_pow, Real.sq_sqrt (mul_nonneg (mul_nonneg (sq_nonneg η) hε0.le) (by linarith [hτ₀_lt]))] at h2
       exact h2
     have ht_pos : (0 : ℝ) < t := by exact_mod_cast (by omega : 0 < t)
     have h_div_t : (t : ℝ) * (η ^ 2 * ε * (1 - 20 * τ₀) - τ₀) ≤ 1 := by
@@ -1150,13 +1257,14 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
               = (t : ℝ) * (((t : ℝ) - 1) / ((M : ℝ) + 1)) * τ₀ := by ring
             _ ≤ (t : ℝ) * (t : ℝ) * τ₀ := by gcongr
             _ = (t : ℝ) ^ 2 * τ₀ := by ring
-        linarith [h_lhs_lb, h_cs, hv_I_norm, h_X_norm]
+        rw [hv_I_norm, mul_one] at h_cs
+        linarith [h_lhs_lb, h_cs, h_X_norm]
       have h2 : (t : ℝ) * ((t : ℝ) * (η ^ 2 * ε * (1 - 20 * τ₀) - τ₀)) ≤ (t : ℝ) * 1 := by
         linarith
       exact le_of_mul_le_mul_left h2 ht_pos
     have hM_gt : 1 + η ^ 2 * ε < ((M : ℝ) + 1) * (η ^ 2 * ε) := by
       have hfl : (η ^ 2 * ε)⁻¹ < (M : ℝ) := by
-        dsimp [M]; exact Nat.lt_floor_add_one _
+        dsimp [M]; push_cast; exact Nat.lt_floor_add_one _
       calc 1 + η ^ 2 * ε = ((η ^ 2 * ε)⁻¹ + 1) * (η ^ 2 * ε) := by
             field_simp [(by positivity : η ^ 2 * ε ≠ 0)]
         _ < ((M : ℝ) + 1) * (η ^ 2 * ε) := by gcongr
@@ -1165,24 +1273,32 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
       calc 1 + η ^ 2 * ε < ((M : ℝ) + 1) * (η ^ 2 * ε) := hM_gt
         _ ≤ (t : ℝ) * (η ^ 2 * ε) := by gcongr
     have h_contra : 1 < (t : ℝ) * (η ^ 2 * ε * (1 - 20 * τ₀) - τ₀) := by
-      have h_coeff : η ^ 2 * ε * (1 - 20 * τ₀) - τ₀ ≥ (η ^ 2 * ε) * (1 - 21 / (1000 * (1 + η ^ 2 * ε))) := by
-        dsimp [τ₀]
-        have h1 : 20 * (η ^ 2 * ε) * (η ^ 2 * ε) / (1000 * (1 + η ^ 2 * ε)) ≤
-            20 * (η ^ 2 * ε) / (1000 * (1 + η ^ 2 * ε)) := by
+      have h_coeff : η ^ 2 * ε * (1 - 20 * τ₀) - τ₀ ≥
+          (η ^ 2 * ε) * (1 - 21 * (η ^ 2 * ε) / (1000 * (1 + η ^ 2 * ε))) := by
+        have h_tau_le : τ₀ ≤ (η ^ 2 * ε) / (1000 * (1 + η ^ 2 * ε)) := by
+          dsimp [τ₀]
+          have : (η ^ 2 * ε) ^ 2 ≤ η ^ 2 * ε := by nlinarith [hηε_lt, show 0 < η ^ 2 * ε by positivity]
           gcongr
-          have : η ^ 2 * ε ≤ 1 := by nlinarith
-          nlinarith
-        linarith
-      have h_prod : (1 + η ^ 2 * ε) * (1 - 21 / (1000 * (1 + η ^ 2 * ε))) ≥ 1 := by
+        have h_eq : η ^ 2 * ε * (1 - 20 * τ₀) - τ₀ =
+            (η ^ 2 * ε) * (1 - 20 * τ₀ - (η ^ 2 * ε) / (1000 * (1 + η ^ 2 * ε))) := by
+          dsimp [τ₀]; ring
+        rw [h_eq]
+        have h_in : 1 - 21 * (η ^ 2 * ε) / (1000 * (1 + η ^ 2 * ε)) ≤
+            1 - 20 * τ₀ - (η ^ 2 * ε) / (1000 * (1 + η ^ 2 * ε)) := by
+          have : 21 * (η ^ 2 * ε) / (1000 * (1 + η ^ 2 * ε)) =
+              20 * ((η ^ 2 * ε) / (1000 * (1 + η ^ 2 * ε))) + (η ^ 2 * ε) / (1000 * (1 + η ^ 2 * ε)) := by ring
+          linarith
+        exact mul_le_mul_of_nonneg_left h_in (by positivity)
+      have h_prod : (1 + η ^ 2 * ε) * (1 - 21 * (η ^ 2 * ε) / (1000 * (1 + η ^ 2 * ε))) ≥ 1 := by
         have h1 : 1 + η ^ 2 * ε > 0 := by positivity
         field_simp [h1.ne']
         nlinarith [show 0 < η ^ 2 * ε by positivity]
-      calc 1 ≤ (1 + η ^ 2 * ε) * (1 - 21 / (1000 * (1 + η ^ 2 * ε))) := h_prod
-        _ < ((t : ℝ) * (η ^ 2 * ε)) * (1 - 21 / (1000 * (1 + η ^ 2 * ε))) := by
-            gcongr; have : 0 < 1 - 21 / (1000 * (1 + η ^ 2 * ε)) := by
+      calc 1 ≤ (1 + η ^ 2 * ε) * (1 - 21 * (η ^ 2 * ε) / (1000 * (1 + η ^ 2 * ε))) := h_prod
+        _ < ((t : ℝ) * (η ^ 2 * ε)) * (1 - 21 * (η ^ 2 * ε) / (1000 * (1 + η ^ 2 * ε))) := by
+            gcongr; have : 0 < 1 - 21 * (η ^ 2 * ε) / (1000 * (1 + η ^ 2 * ε)) := by
               rw [sub_pos, div_lt_one (by positivity)]; nlinarith [show 0 < η ^ 2 * ε by positivity]
             exact this
-        _ = (t : ℝ) * ((η ^ 2 * ε) * (1 - 21 / (1000 * (1 + η ^ 2 * ε)))) := by ring
+        _ = (t : ℝ) * ((η ^ 2 * ε) * (1 - 21 * (η ^ 2 * ε) / (1000 * (1 + η ^ 2 * ε)))) := by ring
         _ ≤ (t : ℝ) * (η ^ 2 * ε * (1 - 20 * τ₀) - τ₀) := by gcongr
     linarith
   refine ⟨N₀, by omega, h_int_bd, ?_⟩
@@ -1251,7 +1367,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
             omega
           · have := Nat.div_mul_le_self (n - a_k) (L_k + 1)
             omega
-          · have hlt_mod := Nat.mod_lt (n - a_k) (Nat.succ_pos L_k)
+          · have hlt_mod : (n - a_k) % (L_k + 1) < L_k + 1 := Nat.mod_lt (n - a_k) (by omega)
             have hdiv_mod := Nat.div_add_mod (n - a_k) (L_k + 1)
             rw [mul_comm] at hdiv_mod
             omega
@@ -1286,7 +1402,7 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
             linarith
           have hdiv_pow : (2 : ℝ) ^ k / ((L_k : ℝ) + 1) ≤ ((2 : ℝ) ^ ε) ^ k := by
             calc (2 : ℝ) ^ k / ((L_k : ℝ) + 1) ≤ (2 : ℝ) ^ k / ((2 : ℝ) ^ k) ^ (1 - ε) := by
-                  gcongr; positivity
+                  gcongr
               _ = ((2 : ℝ) ^ ε) ^ k := by
                   rw [← Real.rpow_natCast (2 : ℝ) k, ← Real.rpow_mul (by norm_num),
                     ← Real.rpow_sub (by norm_num), show (k : ℝ) - (k : ℝ) * (1 - ε) = ε * (k : ℝ) by ring,
@@ -1328,18 +1444,19 @@ theorem thm_6_4_polarization_concentration (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε
       dsimp [M]; push_cast; linarith
     have h2 : (1 : ℝ) ≤ (η ^ 2 * ε)⁻¹ := by
       rw [le_inv_comm₀ (by norm_num) (by positivity), inv_one]; nlinarith
-    linarith [show (η ^ 2 * ε)⁻¹ = 1 / (η ^ 2 * ε) by rw [one_div]]
+    rw [div_eq_mul_inv]; linarith
   have h_coeff : 4 * (M : ℝ) * (2 : ℝ) ^ ε / ((2 : ℝ) ^ ε - 1) ≤
       (8 * (2 : ℝ) ^ ε / (ε * ((2 : ℝ) ^ ε - 1))) * η ^ (-2 : ℤ) := by
-    have hη_eq : η ^ (-2 : ℤ) = (η ^ 2)⁻¹ := by rw [zpow_neg, zpow_natCast]
+    have hη_eq : η ^ (-2 : ℤ) = (η ^ 2)⁻¹ := by rw [zpow_neg]; rfl
     rw [hη_eq]
     calc 4 * (M : ℝ) * (2 : ℝ) ^ ε / ((2 : ℝ) ^ ε - 1)
         ≤ 4 * (2 / (η ^ 2 * ε)) * (2 : ℝ) ^ ε / ((2 : ℝ) ^ ε - 1) := by gcongr
       _ = (8 * (2 : ℝ) ^ ε / (ε * ((2 : ℝ) ^ ε - 1))) * (η ^ 2)⁻¹ := by
-          field_simp [(by positivity : η ≠ 0), (by positivity : ε ≠ 0), (by linarith : (2 : ℝ) ^ ε - 1 ≠ 0)]
+          field_simp [(by positivity : η ≠ 0), (by positivity : ε ≠ 0), (by linarith : (2 : ℝ) ^ ε - 1 ≠ 0)]; ring
   have h1_le_N : (1 : ℝ) ≤ (N : ℝ) ^ ε := Real.one_le_rpow (by exact_mod_cast hN) hε0.le
   have h1_le_eta : (1 : ℝ) ≤ η ^ (-2 : ℤ) := by
-    rw [zpow_neg, zpow_natCast, le_inv_comm₀ (by norm_num) (by positivity), inv_one]; nlinarith
+    rw [show η ^ (-2 : ℤ) = (η ^ 2)⁻¹ by rw [zpow_neg]; rfl]
+    exact one_le_inv₀ (by positivity) (by nlinarith)
   have hS_all_r : (S_all.card : ℝ) ≤ (S_low.card : ℝ) + (S_hi.card : ℝ) := by exact_mod_cast hS_split
   calc (S_all.card : ℝ)
       ≤ (N₀ : ℝ) + (8 * (2 : ℝ) ^ ε / (ε * ((2 : ℝ) ^ ε - 1))) * η ^ (-2 : ℤ) * (N : ℝ) ^ ε := by
