@@ -3,11 +3,13 @@ project:
   name: "grasgreenbergbrocard"
   title: "Arithmetic Structure and Counting Bounds for the Brocard–Ramanujan Equation"
   author: "Prince Anand"
+  doi: "10.5281/zenodo.24278751"
+  doi_url: "https://doi.org/10.5281/zenodo.24278751"
   repository: "https://github.com/princeanand099/grasgreenbergbrocard"
   license: "Apache-2.0"
   manuscript:
     tex: "brocard_arithmetic_structure_and_counting_bounds.tex"
-    pdf: "brocard_arithmetic_structure_and_counting_bounds.pdf"
+    pdf: "Brocard Arithmetic Structure And Counting Bounds.pdf"
     msc2020:
       primary: ["11D61", "11D85"]
       secondary: ["11R11", "11R23", "11J13", "11L07", "11G05"]

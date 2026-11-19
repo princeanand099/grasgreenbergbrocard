@@ -1,13 +1,18 @@
 cff-version: 1.2.0
 title: "Formal Verification of Arithmetic Structure and Counting Bounds for the Brocard–Ramanujan Equation (Lean 4)"
-message: "If you use this Lean 4 formalization or the accompanying manuscript in your research, please cite both the paper and this software artifact."
+message: "If you use this Lean 4 formalization or the accompanying manuscript in your research, please cite both the paper and this archived Zenodo release."
 type: software
 authors:
   - family-names: "Anand"
     given-names: "Prince"
     email: "princeanand123pc@gmail.com"
+doi: "10.5281/zenodo.24278751"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.24278751"
+    description: "Zenodo archival DOI for the manuscript and Lean 4 formalization repository."
 repository-code: "https://github.com/princeanand099/grasgreenbergbrocard"
-url: "https://github.com/princeanand099/grasgreenbergbrocard"
+url: "https://doi.org/10.5281/zenodo.24278751"
 license: Apache-2.0
 date-released: "2026-11-19"
 keywords:
@@ -28,4 +33,5 @@ preferred-citation:
   title: "Arithmetic Structure and Counting Bounds for the Brocard–Ramanujan Equation"
   year: 2026
   month: 11
-  url: "https://github.com/princeanand099/grasgreenbergbrocard/blob/main/brocard_arithmetic_structure_and_counting_bounds.pdf"
+  doi: "10.5281/zenodo.24278751"
+  url: "https://doi.org/10.5281/zenodo.24278751"

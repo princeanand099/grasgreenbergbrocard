@@ -1,6 +1,6 @@
 # Independent Verification and Audit Guide
 
-This document describes how an independent referee or reader can reproduce the complete Lean 4 verification of *Arithmetic Structure and Counting Bounds for the Brocard–Ramanujan Equation* and audit its trust base from scratch.
+This document describes how an independent referee or reader can reproduce the complete Lean 4 verification of *Arithmetic Structure and Counting Bounds for the Brocard–Ramanujan Equation* ([DOI: 10.5281/zenodo.24278751](https://doi.org/10.5281/zenodo.24278751)) and audit its trust base from scratch.
 
 ## 1. Prerequisites
 
@@ -48,8 +48,9 @@ Expected results:
 - Commands 1 and 2 return no matches (excluding comments/docstrings in `AuditAxioms.lean`).
 - Command 3 returns declarations exclusively inside `ExternalAxiomsAnalytic.lean`, `ExternalAxiomsSec3.lean`, `ExternalAxiomsSec5.lean`, `ExternalAxiomsSec7.lean`, and `ExternalAxiomsSec8.lean`, matching [`EXTERNAL_AXIOMS.md`](EXTERNAL_AXIOMS.md).
 
-## 5. Continuous Integration Verification Record
+## 5. Continuous Integration and Archival Verification Record
 
+- **Permanent Archival DOI**: [https://doi.org/10.5281/zenodo.24278751](https://doi.org/10.5281/zenodo.24278751)
 - **Latest Verified Full CI Run**: [GitHub Actions Run #44567866016](https://github.com/princeanand099/grasgreenbergbrocard/actions/runs/44567866016/job/135714460223) (`9,091/9,091` targets, `exit 0`).
 - **Verbatim `#print axioms` CI Log**: [`ci-logs` commit `56e1d6d4`](https://github.com/princeanand099/grasgreenbergbrocard/commit/56e1d6d4bca09efcde64400ed0b5fb3fe1c5e309).
 - **Adversarial Audit Hardening**: [PR #7](https://github.com/princeanand099/grasgreenbergbrocard/pull/7) (`d22839cc`) and [PR #8](https://github.com/princeanand099/grasgreenbergbrocard/pull/8) (`0def862b`).

@@ -1,5 +1,6 @@
 # Arithmetic Structure and Counting Bounds for the Brocard–Ramanujan Equation (Lean 4 Formalization)
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24278751.svg)](https://doi.org/10.5281/zenodo.24278751)
 [![Lean 4](https://img.shields.io/badge/Lean-v4.35.0-blue)](https://lean-lang.org/)
 [![Lake Build](https://img.shields.io/badge/Lake%20Build-9091%2F9091%20Passing-brightgreen)](https://github.com/princeanand099/grasgreenbergbrocard/actions/runs/44567866016/job/135714460223)
 [![Sorry Count](https://img.shields.io/badge/sorry-0-brightgreen)](https://github.com/princeanand099/grasgreenbergbrocard/commit/56e1d6d4bca09efcde64400ed0b5fb3fe1c5e309)
@@ -10,13 +11,15 @@
 This repository provides a complete, machine-checked **Lean 4** (`v4.35.0`) formalization of the manuscript:
 
 > **Prince Anand**, *Arithmetic Structure and Counting Bounds for the Brocard–Ramanujan Equation* (November 2026).
-> - **Self-Contained Manuscript (PDF)**: [`brocard_arithmetic_structure_and_counting_bounds.pdf`](brocard_arithmetic_structure_and_counting_bounds.pdf)
+> - **Permanent DOI**: [`10.5281/zenodo.24278751`](https://doi.org/10.5281/zenodo.24278751)
+> - **Self-Contained Manuscript (PDF)**: [`Brocard Arithmetic Structure And Counting Bounds.pdf`](Brocard%20Arithmetic%20Structure%20And%20Counting%20Bounds.pdf)
 > - **LaTeX Source**: [`brocard_arithmetic_structure_and_counting_bounds.tex`](brocard_arithmetic_structure_and_counting_bounds.tex)
 
 The formalization comprises **43 Lean modules** covering Sections 1–8 of the paper, together with an automated kernel-level axiom audit module (`GrasGreenbergBrocard/AuditAxioms.lean`). All `9,091` Lake build targets compile with `exit 0`, **zero `sorry`**, **zero `admit`**, and **zero `native_decide` / `Lean.trustCompiler`**.
 
 | Verification Metric | Verified State | Evidence |
 | :--- | :--- | :--- |
+| Permanent Archival DOI | `10.5281/zenodo.24278751` | [Zenodo Record](https://doi.org/10.5281/zenodo.24278751) |
 | Lean 4 Toolchain | `leanprover/lean4:v4.35.0` | [`lean-toolchain`](lean-toolchain) |
 | Lake Build Targets | `9,091 / 9,091` passing (`exit 0`) | [CI Run #44567866016](https://github.com/princeanand099/grasgreenbergbrocard/actions/runs/44567866016/job/135714460223) |
 | Audited Main Declarations | `42` theorems, propositions, and lemmas | [`AuditAxioms.lean`](GrasGreenbergBrocard/AuditAxioms.lean) |
@@ -90,7 +93,7 @@ For full third-party audit commands (including `leanchecker` and source-level ch
 
 ## 6. How to Cite
 
-Citation metadata is provided in [`CITATION.cff`](CITATION.cff) (supported natively by GitHub's *Cite this repository* menu):
+Citation metadata is provided in [`CITATION.cff`](CITATION.cff) (supported natively by GitHub's *Cite this repository* menu) and archived on Zenodo at [`10.5281/zenodo.24278751`](https://doi.org/10.5281/zenodo.24278751):
 
 ```bibtex
 @article{Anand2026Brocard,
@@ -98,7 +101,8 @@ Citation metadata is provided in [`CITATION.cff`](CITATION.cff) (supported nativ
   title   = {Arithmetic Structure and Counting Bounds for the {Brocard--Ramanujan} Equation},
   year    = {2026},
   month   = nov,
-  url     = {https://github.com/princeanand099/grasgreenbergbrocard}
+  doi     = {10.5281/zenodo.24278751},
+  url     = {https://doi.org/10.5281/zenodo.24278751}
 }
 
 @software{Anand2026BrocardLean4,
@@ -106,6 +110,7 @@ Citation metadata is provided in [`CITATION.cff`](CITATION.cff) (supported nativ
   title   = {Formal Verification of Arithmetic Structure and Counting Bounds for the {Brocard--Ramanujan} Equation ({Lean} 4)},
   year    = {2026},
   month   = nov,
+  doi     = {10.5281/zenodo.24278751},
   url     = {https://github.com/princeanand099/grasgreenbergbrocard},
   license = {Apache-2.0}
 }
