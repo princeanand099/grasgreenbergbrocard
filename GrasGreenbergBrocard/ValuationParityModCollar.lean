@@ -465,9 +465,31 @@ theorem collar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         rw [abs_of_nonneg (one_div_nonneg.mpr ht_sub_pos.le)]
         rw [one_div, inv_le_comm₀ ht_sub_pos (div_pos (by norm_num) hP_pos), inv_div]
         linarith
+      have hI_sub : IsPrimeSubinterval P (J m_r) := by
+        refine isPrimeSubinterval_of_bounds
+          (a := max (max (max (2 : ℝ) ((n : ℝ) ^ δ)) ((n : ℝ) ^ a))
+            (max (((n : ℝ) / ((m_r : ℝ) + 1)) ^ (1 / (r : ℝ)))
+              ((n : ℝ) ^ (1 / (r : ℝ)) / (Real.log (n : ℝ)) ^ ((A_R : ℝ) / (r : ℝ)))))
+          (b := min (min (min (Nat.sqrt n : ℝ) ((n : ℝ) ^ b))
+            (((n : ℝ) / (m_r : ℝ)) ^ (1 / (r : ℝ)))) ((n : ℝ) ^ (1 / (r : ℝ))))
+          hP_pos.le (J m_r) ?_ (fun p hp => (hI_prime p hp).2)
+        intro p
+        simp only [J, S_r, Finset.mem_filter, Finset.mem_Icc, collarSubinterval, collar,
+          Set.mem_inter_iff, Set.mem_Ioc, max_lt_iff, le_min_iff]
+        constructor
+        · rintro ⟨⟨⟨hp3, hpsq⟩, hpr, hpnd, hpa, hpb, hcol⟩, ⟨hlo, hhi⟩, _⟩
+          exact ⟨hpr, ⟨⟨⟨by exact_mod_cast (by omega : 2 < p), hpnd⟩, hpa⟩, hlo, hcol.1⟩,
+            ⟨⟨⟨by exact_mod_cast hpsq, hpb⟩, hhi⟩, hcol.2⟩⟩
+        · rintro ⟨hpr, ⟨⟨⟨hp2, hpnd⟩, hpa⟩, hlo, hcol1⟩, ⟨⟨⟨hpsq, hpb⟩, hhi⟩, hcol2⟩⟩
+          have hp3 : 3 ≤ p := by
+            have : 2 < p := by exact_mod_cast hp2
+            omega
+          exact ⟨⟨⟨hp3, by exact_mod_cast hpsq⟩, hpr, hpnd, hpa, hpb, hcol1, hcol2⟩, ⟨hlo, hhi⟩, hcol1, hcol2⟩
       let w : ℝ → ℝ := fun t => 1 / (t - 1)
+      have hW_anti : AntitoneOn w (Set.Icc P (2 * P)) :=
+        fun s hs t _ hst => one_div_le_one_div_of_le (by linarith [hs.1, le_trans hnd2 hP_lo]) (by linarith)
       have h_res := hexp_n P (J m_r) A h_fn w (2 / P) hA_nz
-        hP_lo hP_hi hI_prime hA_range hh_le hPhase hW_bound (by positivity)
+        hP_lo hP_hi hI_sub hA_range hh_le hPhase hW_bound hW_anti (by positivity)
       let r₀ := (A.filter (fun s => h_fn s ≠ 0)).min' (by
         obtain ⟨s, hsA, hs0⟩ := hA_nz; exact ⟨s, Finset.mem_filter.mpr ⟨hsA, hs0⟩⟩)
       have hr₀_mem : r₀ ∈ A := (Finset.mem_filter.mp (Finset.min'_mem (A.filter (fun s => h_fn s ≠ 0)) _)).1
