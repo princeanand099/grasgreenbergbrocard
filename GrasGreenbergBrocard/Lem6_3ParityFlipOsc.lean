@@ -83,7 +83,8 @@ private lemma norm_prod_sub_prod_le {ι : Type*} [DecidableEq ι] (S : Finset ι
     have hgs : ∀ i ∈ s, ‖g i‖ ≤ M := fun i hi => hg i (Finset.mem_insert_of_mem hi)
     have hprod_f : ‖∏ i ∈ s, f i‖ ≤ 1 := by
       rw [norm_prod]
-      exact Finset.prod_le_one (fun i _ => norm_nonneg (f i)) (fun i hi => hfs i hi)
+      calc ∏ i ∈ s, ‖f i‖ ≤ ∏ _i ∈ s, (1 : ℝ) := by gcongr with i hi; exact hfs i hi
+        _ = 1 := by simp
     have hid : f a * ∏ i ∈ s, f i - g a * ∏ i ∈ s, g i =
         (f a - g a) * ∏ i ∈ s, f i + g a * (∏ i ∈ s, f i - ∏ i ∈ s, g i) := by ring
     rw [hid]
@@ -346,8 +347,24 @@ private lemma vaaler_btilde_dyadic_sum_bound_inv
 private lemma lem63_padicValNat_factorial_eq_sum_Icc {p n r : ℕ} (hp : p.Prime) (hlt : n < p ^ (r + 1)) :
     padicValNat p (Nat.factorial n) = ∑ j ∈ Finset.Icc 1 r, n / p ^ j := by
   haveI : Fact p.Prime := ⟨hp⟩
-  rw [padicValNat_factorial hlt]
-  congr 1; ext j; simp only [Finset.mem_Ico, Finset.mem_Icc]; omega
+  rcases Nat.eq_zero_or_pos n with rfl | hn
+  · simp
+  · rw [padicValNat_factorial (Nat.log_lt_of_lt_pow hn.ne' hlt)]
+    congr 1; ext j; simp only [Finset.mem_Ico, Finset.mem_Icc]; omega
+
+private lemma prod_sum_piFinset {α β γ : Type*} [Fintype α] [DecidableEq α] [DecidableEq β]
+    [CommSemiring γ] (s : α → Finset β) (f : α → β → γ) :
+    ∏ a : α, ∑ b ∈ s a, f a b = ∑ g ∈ Fintype.piFinset s, ∏ a : α, f a (g a) := by
+  have h1 : (∏ a : α, ∑ b ∈ s a, f a b) = ∏ a : α, ∑ b : s a, f a b.1 :=
+    Finset.prod_congr rfl fun a _ => (Finset.sum_coe_sort (s a) (f a)).symm
+  rw [h1, Fintype.prod_sum]
+  refine Finset.sum_bij (fun (g : ∀ a, s a) _ => fun a => (g a).1) ?_ ?_ ?_ ?_
+  · intro g _; exact Fintype.mem_piFinset.mpr fun a => (g a).2
+  · intro g₁ _ g₂ _ h
+    funext a; exact Subtype.ext (congrFun h a)
+  · intro g hg
+    exact ⟨fun a => ⟨g a, Fintype.mem_piFinset.mp hg a⟩, Finset.mem_univ _, rfl⟩
+  · intro _ _; rfl
 
 /-- **Honest Oscillatory Correlation Bound for Lemma 6.3**:
 Uses ONLY the tightened `prime_exp_sum_bounds_general_phase` with:
@@ -489,7 +506,7 @@ theorem lem_6_3_osc_bound_honest
         congr 1
         have hsub : A_R + 6 = (R + 3) + d_exp := by dsimp [d_exp, A_R]; omega
         conv_lhs => rw [hsub, pow_add]
-        field_simp [hx0]
+        field_simp [hx0]; rw [pow_add, pow_add]
       have hz : Tendsto (fun x : ℝ => 10 * x ^ (-(d_exp : ℝ))) atTop (nhds 0) := by
         have hpos : (0 : ℝ) < (d_exp : ℝ) := by exact_mod_cast (by dsimp [d_exp, A_R]; omega : 0 < d_exp)
         simpa using (tendsto_rpow_neg_atTop hpos).const_mul 10
@@ -625,7 +642,7 @@ theorem lem_6_3_osc_bound_honest
           calc |(padicValNat p (Nat.factorial n₁) : ℝ) - (n₁ : ℝ) / (p : ℝ)| * Real.log (p : ℝ)
               ≤ (2 * (n₁ : ℝ) / (p : ℝ) ^ 2 + 1) * Real.log (p : ℝ) := mul_le_mul_of_nonneg_right hv hlogp_nn
             _ = 2 * (n₁ : ℝ) / (p : ℝ) * (Real.log (p : ℝ) / (p : ℝ)) + Real.log (p : ℝ) := by
-                field_simp [hp_pos.ne']; ring
+                field_simp [hp_pos.ne']
             _ ≤ (2 * (n₁ : ℝ) / (n₁ : ℝ) ^ δ) * (Real.log (p : ℝ) / (p : ℝ)) + Real.log (n₁ : ℝ) := by
                 gcongr
       _ = (2 * (n₁ : ℝ) / (n₁ : ℝ) ^ δ) * (∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ)) +
@@ -805,8 +822,10 @@ theorem lem_6_3_osc_bound_honest
           simp only [Finset.mem_union, Finset.mem_biUnion, Finset.mem_filter] at hp
           rcases hp with ⟨_, _, h, _⟩ | ⟨_, _, h, _⟩ <;> exact h
         exact div_nonneg (Real.log_nonneg (by exact_mod_cast (Finset.mem_filter.mp (Finset.mem_filter.mp hp_osc).1).2.one_lt.le)) (Nat.cast_nonneg p)
+      let U_exc := ((Finset.Icc 2 R).biUnion (fun r => I_osc.filter (fun p : ℕ => (p : ℝ) ∈ Set.Ioc (powCollar r).1 (powCollar r).2))) ∪
+          ((Finset.Icc 2 R).biUnion (fun j₀ => I_osc.filter (fun p : ℕ => (p : ℝ) ∈ Set.Ioc (resCollar j₀).1 (resCollar j₀).2)))
       calc ∑ p ∈ I_exc, Real.log (p : ℝ) / (p : ℝ)
-          ≤ ∑ p ∈ _, Real.log (p : ℝ) / (p : ℝ) := Finset.sum_le_sum_of_subset_of_nonneg hsub_exc (fun p hp _ => hnn p hp)
+          ≤ ∑ p ∈ U_exc, Real.log (p : ℝ) / (p : ℝ) := Finset.sum_le_sum_of_subset_of_nonneg hsub_exc (fun p hp _ => hnn p hp)
         _ ≤ (∑ p ∈ (Finset.Icc 2 R).biUnion (fun r => I_osc.filter (fun p : ℕ => (p : ℝ) ∈ Set.Ioc (powCollar r).1 (powCollar r).2)),
               Real.log (p : ℝ) / (p : ℝ)) +
             (∑ p ∈ (Finset.Icc 2 R).biUnion (fun j₀ => I_osc.filter (fun p : ℕ => (p : ℝ) ∈ Set.Ioc (resCollar j₀).1 (resCollar j₀).2)),
@@ -824,7 +843,7 @@ theorem lem_6_3_osc_bound_honest
         _ ≤ (R : ℝ) * C_mert * ((3 * (A_R : ℝ) + 14) * Real.log (Real.log (n₁ : ℝ)) + 4) := by
             rw [Finset.sum_const, Finset.sum_const, nsmul_eq_mul, nsmul_eq_mul]
             have hcard : ((Finset.Icc 2 R).card : ℝ) ≤ (R : ℝ) := by
-              have : (Finset.Icc 2 R).card ≤ R := by simp; omega
+              have : (Finset.Icc 2 R).card ≤ R := by simp
               exact_mod_cast this
             have hterm_nn : 0 ≤ C_mert * ((3 * (A_R : ℝ) + 12) * Real.log (Real.log (n₁ : ℝ)) + 3) := by positivity
             have hsum_eq : ((Finset.Icc 2 R).card : ℝ) * (C_mert * ((A_R : ℝ) * Real.log (Real.log (n₁ : ℝ)) + 2)) +
@@ -836,8 +855,7 @@ theorem lem_6_3_osc_bound_honest
               mul_le_mul_of_nonneg_right hcard hterm_nn
             have h2 : (R : ℝ) * (C_mert * ((3 * (A_R : ℝ) + 12) * Real.log (Real.log (n₁ : ℝ)) + 3)) ≤
                 (R : ℝ) * C_mert * ((3 * (A_R : ℝ) + 14) * Real.log (Real.log (n₁ : ℝ)) + 4) := by
-              have hR_nn : (0 : ℝ) ≤ (R : ℝ) := Nat.cast_nonneg R
-              nlinarith [hC_mert_pos, hll_pos]
+              rw [← mul_assoc]; gcongr; linarith [hll_pos]
             exact le_trans h1 h2
     calc |∑ p ∈ I_exc, _|
         ≤ ∑ p ∈ I_exc, |((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
@@ -935,7 +953,7 @@ theorem lem_6_3_osc_bound_honest
         have hr_icc := Finset.mem_Icc.mp hr_mem.1
         refine ⟨r, hr_icc, hp, max_lt hp_m.1 hr_mem.2, le_min hp_m.2 ?_⟩
         by_cases hr1 : r = 1
-        · subst hr1
+        · rw [hr1]
           rw [Nat.cast_one, div_one, Real.rpow_one]
           exact le_trans hp_m.2 (le_trans hy₁_le_n₁ (div_le_div_of_nonneg_left hn₁_pos.le (by positivity)
             (pow_le_pow_right₀ (by linarith) (by omega))))
@@ -1188,11 +1206,12 @@ theorem lem_6_3_osc_bound_honest
                 exact_mod_cast h1
               have hv1 := lem63_padicValNat_factorial_eq_sum_Icc hp_pr (lt_trans hlt hn₂_lt_p)
               have hv2 := lem63_padicValNat_factorial_eq_sum_Icc hp_pr hn₂_lt_p
+              have hp_pos_r : (0 : ℝ) < (p : ℝ) := by exact_mod_cast hp_pr.pos
               have hfl : ∀ (m j : ℕ), Int.floor ((m : ℝ) / (p : ℝ) ^ j) = ((m / p ^ j : ℕ) : ℤ) := fun m j => by
                 rw [Int.floor_eq_iff]; constructor
-                · rw [Int.cast_natCast, le_div_iff₀ (by positivity)]
+                · rw [Int.cast_natCast, le_div_iff₀ (pow_pos hp_pos_r j)]
                   exact_mod_cast Nat.div_mul_le_self m (p ^ j)
-                · rw [Int.cast_natCast, div_lt_iff₀ (by positivity)]
+                · rw [Int.cast_natCast, div_lt_iff₀ (pow_pos hp_pos_r j)]
                   have hlt_nat : m < (m / p ^ j + 1) * p ^ j := by
                     rw [add_mul, one_mul]; exact Nat.lt_div_mul_add (a := m) (pow_pos hp_pr.pos j)
                   exact_mod_cast hlt_nat
@@ -1309,13 +1328,13 @@ theorem lem_6_3_osc_bound_honest
                         _ ≤ (m : ℝ) / P ^ j := by gcongr
                         _ = (1 * (m : ℝ)) / P ^ j := by ring
                         _ ≤ (|(h' : ℝ)| * (m : ℝ)) / P ^ j := by gcongr
-                        _ = |(h' : ℝ) * (m : ℝ)| / P ^ j := by rw [abs_mul, abs_of_nonneg (Nat.cast_nonneg m)]
+                        _ = |(h' : ℝ) * (m : ℝ)| / P ^ j := by rw [abs_mul, abs_of_nonneg (a := (m : ℝ)) (Nat.cast_nonneg m)]
                     have hres := hGen P I_k {j} (fun _ => (h' : ℝ) * (m : ℝ)) j (fun t => 1 / t) (1 / P)
                       hP_lo hP_hi hIk_sub (fun s hs => by rw [Finset.mem_singleton.mp hs]; omega)
                       (Finset.mem_singleton_self j) hT₀ (fun s hs => by simp at hs) hw_bd hw_anti (by positivity)
                     have hcancel : C₂ * (1 / P) * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) =
                         C₂ * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by field_simp [hP_pos.ne']
-                    simpa [hcancel] using hres)
+                    rw [hcancel] at hres; simpa using hres)
                 have h4_le : (4 * Real.log (2 * P)) / ((H : ℝ) + 1) ≤ 4 * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by
                   have h2P_le : Real.log (2 * P) ≤ Real.log (n₁ : ℝ) := by
                     apply Real.log_le_log (by positivity)
@@ -1377,10 +1396,10 @@ theorem lem_6_3_osc_bound_honest
                       refine Finset.sum_congr rfl fun p _ => ?_
                       have hp1 : (∏ j ∈ A, ∑ m ∈ S_H, c_tilde m * eExp ((m : ℝ) * ((n₁ : ℝ) / (p : ℝ) ^ j) / 2)) =
                           ∑ f₁ ∈ PiSet, ∏ j : A, (c_tilde (f₁ j) * eExp ((f₁ j : ℝ) * ((n₁ : ℝ) / (p : ℝ) ^ (j : ℕ)) / 2)) := by
-                        rw [← Finset.prod_coe_sort A, Fintype.prod_sum]
+                        rw [← Finset.prod_coe_sort A]; exact prod_sum_piFinset (fun _ : A => S_H) _
                       have hp2 : (∏ j ∈ A, ∑ m ∈ S_H, c_tilde m * eExp ((m : ℝ) * ((n₂ : ℝ) / (p : ℝ) ^ j) / 2)) =
                           ∑ f₂ ∈ PiSet, ∏ j : A, (c_tilde (f₂ j) * eExp ((f₂ j : ℝ) * ((n₂ : ℝ) / (p : ℝ) ^ (j : ℕ)) / 2)) := by
-                        rw [← Finset.prod_coe_sort A, Fintype.prod_sum]
+                        rw [← Finset.prod_coe_sort A]; exact prod_sum_piFinset (fun _ : A => S_H) _
                       rw [hp1, hp2, Finset.sum_mul, Finset.mul_sum]
                       refine Finset.sum_congr rfl fun f₁ _ => ?_
                       rw [Finset.mul_sum, Finset.mul_sum]
@@ -1394,7 +1413,7 @@ theorem lem_6_3_osc_bound_honest
                         simp_rw [← Complex.exp_add]
                         rw [← Complex.exp_sum]
                         congr 1
-                        rw [Finset.mul_sum, ← Finset.sum_coe_sort A]
+                        rw [Complex.ofReal_sum, Finset.mul_sum, ← Finset.sum_coe_sort A]
                         push_cast
                         refine Finset.sum_congr rfl fun j _ => ?_
                         simp only [j.2, ↓reduceDIte, hn₂_eq]
@@ -1521,7 +1540,8 @@ theorem lem_6_3_osc_bound_honest
                 have h2le : (2 : ℝ) ^ (-(R : ℤ)) ≤ 1 := zpow_le_one_of_nonpos₀ (by norm_num) (by omega)
                 have hsmall_d10 : 10 * ((Real.log (n₁ : ℝ)) ^ (R + 3) / (n₁ : ℝ) ^ δ) ≤ c₁_low / ((R : ℝ) * Mmax + 1) := by
                   have hmul := mul_le_mul_of_nonneg_left hsmall_d (by norm_num : (0 : ℝ) ≤ 10)
-                  have h10 : 10 * (c₁_low / (10 * ((R : ℝ) * Mmax + 1))) = c₁_low / ((R : ℝ) * Mmax + 1) := by ring
+                  have h10 : 10 * (c₁_low / (10 * ((R : ℝ) * Mmax + 1))) = c₁_low / ((R : ℝ) * Mmax + 1) := by
+                    rw [← mul_div_assoc, mul_div_mul_left _ _ (by norm_num : (10 : ℝ) ≠ 0)]
                   linarith
                 -- Choose dominant index r₀ ∈ A
                 have hDom_exists : ∃ r₀ ∈ A,
@@ -1555,7 +1575,9 @@ theorem lem_6_3_osc_bound_honest
                       have hj_in_2R : j_star ∈ Finset.Icc 2 R := Finset.mem_Icc.mpr ⟨hj_icc.1, le_trans hj_icc.2 hr_icc.2⟩
                       have hdisj_j := hL_disj (a_m, b_m) hu_mem (resCollar j_star) (hresList_mem j_star hj_in_2R)
                       have hcases := disjoint_Ioc_cases hlt_ab (hresList_lt _ (hresList_mem j_star hj_in_2R)) hdisj_j
-                      have hj1_pos : (0 : ℝ) < (j_star : ℝ) - 1 := by exact_mod_cast (by omega : 0 < j_star - 1)
+                      have hj1_pos : (0 : ℝ) < (j_star : ℝ) - 1 := by
+                        have : (2 : ℝ) ≤ (j_star : ℝ) := by exact_mod_cast hj_icc.1
+                        linarith
                       have hj1_ge1 : 1 ≤ j_star - 1 := by omega
                       rcases hcases with hb_le_c | hd_le_a
                       · -- P < b_m ≤ c_{j_star} ⇒ j_star dominates!
@@ -1702,7 +1724,7 @@ theorem lem_6_3_osc_bound_honest
                   hr₀A hT₀ hDom hw_bd hw_anti (by positivity)
                 have hcancel : C₂ * (1 / P) * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) =
                     C₂ * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by field_simp [hP_pos.ne']
-                simpa [M, hcancel] using hres
+                rw [hcancel] at hres; simpa [M] using hres
               calc ‖∑ f₁ ∈ PiSet, ∑ f₂ ∈ PiSet, _‖
                   ≤ ∑ f₁ ∈ PiSet, ‖∑ f₂ ∈ PiSet, _‖ := norm_sum_le _ _
                 _ ≤ ∑ f₁ ∈ PiSet, ∑ f₂ ∈ PiSet, ‖((∏ j : A, c_tilde (f₁ j)) * (∏ j : A, c_tilde (f₂ j))) * _‖ :=
@@ -1718,13 +1740,12 @@ theorem lem_6_3_osc_bound_honest
                     simp only [Finset.sum_mul, Finset.mul_sum, mul_assoc]; exact Finset.sum_comm
                 _ ≤ L₁ ^ (2 * r) * (C₂ * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) := by
                     have hsum_pi : ∑ f ∈ PiSet, ∏ j : A, ‖c_tilde (f j)‖ ≤ L₁ ^ r := by
-                      have heq_pi : (∏ _j : A, ∑ m ∈ S_H, ‖c_tilde m‖) = ∑ f ∈ PiSet, ∏ j : A, ‖c_tilde (f j)‖ := by
-                        dsimp only [PiSet]; rw [Fintype.prod_sum]
+                      have heq_pi : (∏ _j : A, ∑ m ∈ S_H, ‖c_tilde m‖) = ∑ f ∈ PiSet, ∏ j : A, ‖c_tilde (f j)‖ :=
+                        prod_sum_piFinset (fun _ : A => S_H) (fun _ m => ‖c_tilde m‖)
                       rw [← heq_pi]
                       have hcardA : Fintype.card A = r := by simp [A]
                       calc ∏ _j : A, ∑ m ∈ S_H, ‖c_tilde m‖
-                          ≤ ∏ _j : A, L₁ := Finset.prod_le_prod (fun _ _ => Finset.sum_nonneg fun _ _ => norm_nonneg _)
-                              (fun _ _ => le_trans h_L1 hL₁_ge)
+                          ≤ ∏ _j : A, L₁ := by gcongr; exact le_trans h_L1 hL₁_ge
                         _ = L₁ ^ Fintype.card A := by simp
                         _ = L₁ ^ r := by rw [hcardA]
                     have hsq : (∑ f₁ ∈ PiSet, ∏ j : A, ‖c_tilde (f₁ j)‖) * (∑ f₂ ∈ PiSet, ∏ j : A, ‖c_tilde (f₂ j)‖) ≤ L₁ ^ (2 * r) := by
