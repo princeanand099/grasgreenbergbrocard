@@ -18,7 +18,7 @@ and **Table 2** (0 `sorry`s, 0 `admit`s):
 -/
 
 open scoped BigOperators
-open Real Finset
+open Polynomial Real Finset
 
 namespace GrasGreenbergBrocard
 
@@ -197,12 +197,17 @@ lemma dyadic_sum_counting {α C : ℝ} (hα : 0 < α) (hC : 0 < C)
     have hsub : ∑ k ∈ Finset.range (K + 1), ((2 : ℝ) ^ (-α)) ^ (K - k) =
         ∑ j ∈ Finset.range (K + 1), ((2 : ℝ) ^ (-α)) ^ j := by
       rw [← Finset.sum_range_reflect (fun j => ((2 : ℝ) ^ (-α)) ^ j) (K + 1)]
+      refine Finset.sum_congr rfl fun k _ => by congr 1; omega
     rw [hsub, geom_sum_eq hr_lt.ne]
     rw [div_eq_mul_one_div (((2 ^ K : ℕ) : ℝ) ^ α)]
     have hle : (((2 : ℝ) ^ (-α)) ^ (K + 1) - 1) / ((2 : ℝ) ^ (-α) - 1) ≤ 1 / (1 - (2 : ℝ) ^ (-α)) := by
-      rw [show (((2 : ℝ) ^ (-α)) ^ (K + 1) - 1) / ((2 : ℝ) ^ (-α) - 1) =
-          (1 - ((2 : ℝ) ^ (-α)) ^ (K + 1)) / (1 - (2 : ℝ) ^ (-α)) by field_simp; ring]
-      exact div_le_div_of_nonneg_right (by linarith [pow_nonneg (Real.rpow_nonneg (by norm_num) (-α)) (K + 1)]) hr_pos.le
+      have hflip : (((2 : ℝ) ^ (-α)) ^ (K + 1) - 1) / ((2 : ℝ) ^ (-α) - 1) =
+          (1 - ((2 : ℝ) ^ (-α)) ^ (K + 1)) / (1 - (2 : ℝ) ^ (-α)) := by
+        rw [← neg_div_neg_eq]; congr 1 <;> ring
+      rw [hflip]
+      have hpow_nn : 0 ≤ ((2 : ℝ) ^ (-α)) ^ (K + 1) :=
+        pow_nonneg (Real.rpow_nonneg (by norm_num) (-α)) (K + 1)
+      exact div_le_div_of_nonneg_right (by linarith) hr_pos.le
     exact mul_le_mul_of_nonneg_left hle (by positivity)
   have h2K_le : ((2 ^ K : ℕ) : ℝ) ^ α ≤ (N : ℝ) ^ α :=
     Real.rpow_le_rpow (by positivity) (by exact_mod_cast Nat.pow_log_le_self 2 (by omega)) hα.le
@@ -273,14 +278,14 @@ lemma brocard_poly_depressed_gap :
   · intro x
     rw [hdeg, hlead]
     have hc1 : (Polynomial.X ^ 2 - Polynomial.C (1 : ℤ)).coeff 1 = 0 := by
-      simp [Polynomial.coeff_X_pow, Polynomial.coeff_C]
+      simp [Polynomial.coeff_X_pow, Polynomial.coeff_C, Polynomial.coeff_one]
     rw [show (2 - 1 : ℕ) = 1 from rfl, hc1]
     simp [Polynomial.eval_sub, Polynomial.eval_pow, Polynomial.eval_X, Polynomial.eval_C]
     ring
 
+open Classical in
 /-- **Theorem 1.3(ii) (Brocard–Ramanujan Specialization)**:
 $\mathcal{N}_{\mathrm{Brocard}}(N) \ll_\varepsilon N^{6/7 + \varepsilon}$. -/
-open Classical in
 theorem thm_1_3_part2_brocard_6_7 :
     ∀ ε : ℝ, 0 < ε → ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
       (((Finset.Icc 1 N).filter (fun n => ∃ m : ℕ, Nat.factorial n + 1 = m ^ 2)).card : ℝ) ≤

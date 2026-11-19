@@ -29,8 +29,8 @@ structure FreyCurveArithmeticData (n m X₁ Y₁ : ℕ) where
   conductor_E : ℕ
   conductor_E_eq : conductor_E = 2 ^ alpha_E * ∏ p ∈ (Finset.Icc 3 n).filter Nat.Prime, p
   ap_E : ℕ → ℤ
-  ap_E_eq : ∀ p : ℕ, p.Prime → 3 ≤ p → p ≤ n →
-    ap_E p = legendreSym p (-(m : ℤ))
+  ap_E_eq : ∀ p : ℕ, (hp : p.Prime) → 3 ≤ p → p ≤ n →
+    ap_E p = @legendreSym p ⟨hp⟩ (-(m : ℤ))
   alpha_F2 : ℕ
   alpha_F2_le : alpha_F2 ≤ 3
   conductor_F2 : ℕ
@@ -45,7 +45,7 @@ axiom frey_curve_modularity_and_galois {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     (hm : Nat.factorial n + 1 = m ^ 2) :
     ∃ D : FreyCurveArithmeticData n m X₁ Y₁,
       D.isModular_E ∧ D.isModular_F2 ∧
-      (∀ ℓ : ℕ, ℓ.Prime → 5 ≤ ℓ → D.surj_mod_ell_F2 ℓ ‹_› ‹_›)
+      (∀ ℓ : ℕ, (hℓ : ℓ.Prime) → (hℓ5 : 5 ≤ ℓ) → D.surj_mod_ell_F2 ℓ hℓ hℓ5)
 
 /-- Fundamental discriminant $D_n \in \{q_n, 4 q_n\}$ of $K_n = \mathbb{Q}(\sqrt{q_n})$. -/
 def fundDisc (n : ℕ) : ℕ :=
