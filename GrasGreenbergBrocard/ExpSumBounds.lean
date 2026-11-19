@@ -15,7 +15,6 @@ Formalizes Section 2.3 (eq. 2.11–2.14):
   and inter-collar intervals `D_r(n)`.
 - `iteratedDeriv_neg_pow`: exact `j`-th derivative of `t ↦ t^(-r : ℤ)` for `t > 0`.
 - `prime_exp_sum_bounds` (Lemma 2.4(i)–(ii), eq. 2.13–2.14).
-- `prime_exp_sum_bounds_general_phase`: dominant-term phase corollary for multi-digit sums.
 -/
 
 noncomputable section
@@ -578,9 +577,7 @@ theorem prime_exp_sum_bounds_general_phase (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ
   have hev_log : ∀ᶠ n : ℕ in atTop, (2 : ℝ) ≤ Real.log (n : ℝ) :=
     (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 2)
   filter_upwards [Filter.eventually_ge_atTop 4, hev2, hev_log] with n hn hsmall2 hlog2
-  intro P I A M r₀ w W₀ hP_lo hP_hi hI_sub hA_range hr₀_mem hT₀_ge hDom hW_bound hW_anti hW₀
-  set T₀ := |M r₀| / P ^ r₀
-  set F : ℝ → ℝ := fun t => ∑ s ∈ A, M s / (2 * t ^ s)
+  intro P I A M r₀ w W₀ hP_lo hP_hi hI_sub hA_range hr₀_mem T₀ hT₀_ge hDom hW_bound hW_anti hW₀ F
   have hr₀_range : 1 ≤ r₀ ∧ r₀ ≤ R := hA_range r₀ hr₀_mem
   have hP_ge1 : (1 : ℝ) ≤ P :=
     le_trans (Real.one_le_rpow (by exact_mod_cast (by omega : 1 ≤ n)) hδ0.le) hP_lo
@@ -636,7 +633,7 @@ theorem prime_exp_sum_bounds_general_phase (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ
           rw [zpow_neg, zpow_natCast, pow_add]; field_simp [hP_pos.ne']
         calc 2 * c₁_low * T₀ / P ^ j
             = (|M r₀| / 2) * 1 * ((2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) * ((1 / P ^ r₀) / P ^ j)) := by
-              unfold c₁_low T₀; ring
+              unfold c₁_low; dsimp only [T₀]; ring
           _ ≤ (|M r₀| / 2) * |negPowDerivCoeff r₀ j| * t ^ (-((r₀ + j : ℕ) : ℤ)) := by
               apply mul_le_mul
               · exact mul_le_mul_of_nonneg_left hcoeff_ge (by positivity)
@@ -658,15 +655,13 @@ theorem prime_exp_sum_bounds_general_phase (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ
             exact Nat.le_mul_of_pos_left _ (Finset.prod_pos (fun k _ => by omega))
           exact_mod_cast le_trans hN1 hN2
         have ht_ge : t ^ (-((r₀ + j : ℕ) : ℤ)) ≤ (1 / P ^ r₀) / P ^ j := by
-          rw [zpow_neg, zpow_natCast]
-          have h1 : (t ^ (r₀ + j))⁻¹ ≤ (P ^ (r₀ + j))⁻¹ :=
-            inv_anti₀ (pow_pos hP_pos _) (pow_le_pow_left₀ hP_pos.le ht.1 _)
-          rw [pow_add] at h1; convert h1 using 1; field_simp [hP_pos.ne']
+          rw [zpow_neg, zpow_natCast, div_div, ← pow_add, one_div]
+          exact inv_anti₀ (pow_pos hP_pos _) (pow_le_pow_left₀ hP_pos.le ht.1 _)
         calc (|M r₀| / 2) * |negPowDerivCoeff r₀ j| * t ^ (-((r₀ + j : ℕ) : ℤ))
             ≤ (|M r₀| / 2) * Mmax * ((1 / P ^ r₀) / P ^ j) := by
               apply mul_le_mul (mul_le_mul_of_nonneg_left hcoeff_le (by positivity)) ht_ge
                 (by positivity) (by positivity)
-          _ = (1 / 2 : ℝ) * (Mmax * T₀ / P ^ j) := by unfold T₀; ring
+          _ = (1 / 2 : ℝ) * (Mmax * T₀ / P ^ j) := by dsimp only [T₀]; ring
           _ ≤ Mmax * T₀ / P ^ j := by nlinarith [show 0 ≤ Mmax * T₀ / P ^ j by positivity]
       have htail_hi : |∑ s ∈ A.erase r₀, (M s / 2) * negPowDerivCoeff s j * t ^ (-((s + j : ℕ) : ℤ))| ≤
           c₁_low * T₀ / P ^ j := by
@@ -689,10 +684,8 @@ theorem prime_exp_sum_bounds_general_phase (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ
               exact Nat.le_mul_of_pos_left _ (Finset.prod_pos (fun k _ => by omega))
             exact_mod_cast le_trans hN1 hN2
           have ht_ge : t ^ (-((s + j : ℕ) : ℤ)) ≤ (1 / P ^ s) / P ^ j := by
-            rw [zpow_neg, zpow_natCast]
-            have h1 : (t ^ (s + j))⁻¹ ≤ (P ^ (s + j))⁻¹ :=
-              inv_anti₀ (pow_pos hP_pos _) (pow_le_pow_left₀ hP_pos.le ht.1 _)
-            rw [pow_add] at h1; convert h1 using 1; field_simp [hP_pos.ne']
+            rw [zpow_neg, zpow_natCast, div_div, ← pow_add, one_div]
+            exact inv_anti₀ (pow_pos hP_pos _) (pow_le_pow_left₀ hP_pos.le ht.1 _)
           calc (|M s| / 2) * |negPowDerivCoeff s j| * t ^ (-((s + j : ℕ) : ℤ))
               ≤ (|M s| / 2) * Mmax * ((1 / P ^ s) / P ^ j) := by
                 apply mul_le_mul (mul_le_mul_of_nonneg_left hcoeff_le (by positivity)) ht_ge
@@ -728,6 +721,7 @@ theorem prime_exp_sum_bounds_general_phase (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ
       · have hrev := abs_sub_abs_le_abs_add
           ((M r₀ / 2) * negPowDerivCoeff r₀ j * t ^ (-((r₀ + j : ℕ) : ℤ)))
           (∑ s ∈ A.erase r₀, (M s / 2) * negPowDerivCoeff s j * t ^ (-((s + j : ℕ) : ℤ)))
+        have h2c : 2 * c₁_low * T₀ / P ^ j = c₁_low * T₀ / P ^ j + c₁_low * T₀ / P ^ j := by ring
         linarith
       · have htri := abs_add_le
           ((M r₀ / 2) * negPowDerivCoeff r₀ j * t ^ (-((r₀ + j : ℕ) : ℤ)))
