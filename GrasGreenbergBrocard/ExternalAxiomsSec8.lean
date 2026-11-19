@@ -78,20 +78,23 @@ structure RealQuadClassGroupData (n X₁ Y₁ : ℕ) where
   card_A2_le_exp_pow_rank : card_A2 ≤ exp_A2 ^ rank2_A2
 
 /-- **Dirichlet Class Number Formula & Gauss Genus Theory** (Davenport 2000, Ch. 6; Gauss 1801):
-Every real quadratic field $K_n = \mathbb{Q}(\sqrt{q_n})$ ($n \ge 8$, $N(\varepsilon_n) = +1$)
-admits `RealQuadClassGroupData`. -/
-axiom dirichlet_cnf_and_gauss_genus {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
+Canonical real quadratic class group and regulator data of $K_n = \mathbb{Q}(\sqrt{q_n})$
+($n \ge 8$, $N(\varepsilon_n) = +1$). Scoping Tatuzawa's lower bound strictly to this canonical
+object (rather than quantifying universally over arbitrary unconstrained records) prevents
+inconsistency from adversarial dummy instances. -/
+axiom canonicalRealQuadClassGroup {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     (hfund : IsFundamentalPell (q_n n) X₁ Y₁) :
-    Nonempty (RealQuadClassGroupData n X₁ Y₁)
+    RealQuadClassGroupData n X₁ Y₁
 
 /-- **Tatuzawa's Effective Refinement of Siegel's Theorem** (T. Tatuzawa, *Japan. J. Math.* 21
 (1951), 163–178): For any $\varepsilon \in (0, 1/8)$, there exists at most one exceptional
 fundamental discriminant $D_* \in \mathbb{N}$ such that for every $n \ge 8$ with
-`fundDisc n ≠ D_*` and every `G : RealQuadClassGroupData n X₁ Y₁`,
+`fundDisc n ≠ D_*`, the canonical $L$-value of $K_n = \mathbb{Q}(\sqrt{q_n})$ satisfies
 $L(1, \chi_{D_n}) > 0.655\,\varepsilon\,D_n^{-\varepsilon}$. -/
 axiom tatuzawa_effective_siegel (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 / 8) :
-    ∃ D_star : ℕ, ∀ (n X₁ Y₁ : ℕ) (G : RealQuadClassGroupData n X₁ Y₁),
-      8 ≤ n → fundDisc n ≠ D_star →
-      (0.655 : ℝ) * ε * (fundDisc n : ℝ) ^ (-ε) < G.L1_val
+    ∃ D_star : ℕ, ∀ (n X₁ Y₁ : ℕ) (hn : 8 ≤ n) (hfund : IsFundamentalPell (q_n n) X₁ Y₁),
+      fundDisc n ≠ D_star →
+      (0.655 : ℝ) * ε * (fundDisc n : ℝ) ^ (-ε) <
+        (canonicalRealQuadClassGroup hn hfund).L1_val
 
 end GrasGreenbergBrocard

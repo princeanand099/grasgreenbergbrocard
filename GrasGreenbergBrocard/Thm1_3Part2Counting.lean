@@ -18,7 +18,7 @@ and **Table 2** (0 `sorry`s, 0 `admit`s):
 -/
 
 open scoped BigOperators
-open Real Finset
+open Polynomial Real Finset
 
 namespace GrasGreenbergBrocard
 
@@ -197,18 +197,17 @@ lemma dyadic_sum_counting {α C : ℝ} (hα : 0 < α) (hC : 0 < C)
     have hsub : ∑ k ∈ Finset.range (K + 1), ((2 : ℝ) ^ (-α)) ^ (K - k) =
         ∑ j ∈ Finset.range (K + 1), ((2 : ℝ) ^ (-α)) ^ j := by
       rw [← Finset.sum_range_reflect (fun j => ((2 : ℝ) ^ (-α)) ^ j) (K + 1)]
-      simp only [Nat.add_sub_cancel]
+      refine Finset.sum_congr rfl fun k _ => ?_
+      simp [Nat.add_sub_cancel]
     rw [hsub, geom_sum_eq hr_lt.ne]
     rw [div_eq_mul_one_div (((2 ^ K : ℕ) : ℝ) ^ α)]
     have hle : (((2 : ℝ) ^ (-α)) ^ (K + 1) - 1) / ((2 : ℝ) ^ (-α) - 1) ≤ 1 / (1 - (2 : ℝ) ^ (-α)) := by
-      have hneq1 : (2 : ℝ) ^ (-α) - 1 ≠ 0 := by linarith
-      have hneq2 : 1 - (2 : ℝ) ^ (-α) ≠ 0 := hr_pos.ne'
-      have heq : (((2 : ℝ) ^ (-α)) ^ (K + 1) - 1) / ((2 : ℝ) ^ (-α) - 1) =
+      have hflip : (((2 : ℝ) ^ (-α)) ^ (K + 1) - 1) / ((2 : ℝ) ^ (-α) - 1) =
           (1 - ((2 : ℝ) ^ (-α)) ^ (K + 1)) / (1 - (2 : ℝ) ^ (-α)) := by
-        rw [div_eq_div_iff hneq1 hneq2]; ring
-      rw [heq]
+        rw [← neg_div_neg_eq]; congr 1 <;> ring
+      rw [hflip]
       have hpow_nn : 0 ≤ ((2 : ℝ) ^ (-α)) ^ (K + 1) :=
-        pow_nonneg (Real.rpow_nonneg (by norm_num : (0 : ℝ) ≤ 2) (-α)) (K + 1)
+        pow_nonneg (Real.rpow_nonneg (by norm_num) (-α)) (K + 1)
       exact div_le_div_of_nonneg_right (by linarith) hr_pos.le
     exact mul_le_mul_of_nonneg_left hle (by positivity)
   have h2K_le : ((2 ^ K : ℕ) : ℝ) ^ α ≤ (N : ℝ) ^ α :=
@@ -221,13 +220,16 @@ lemma dyadic_sum_counting {α C : ℝ} (hα : 0 < α) (hC : 0 < C)
         nlinarith [h2K_le, Real.rpow_pos_of_pos (show (0 : ℝ) < (N : ℝ) by exact_mod_cast hN) α, div_pos hC hr_pos]
 
 /-- **Theorem 1.3(ii) (Global $O_{P, s, \varepsilon}(N^{6/7 + \varepsilon})$ Bound, eq. 1.10)**:
-For any polynomial-factorial equation $s \cdot n! = P(x)$ with $\deg P \ge 2$ (and in particular
-Brocard–Ramanujan $n! + 1 = m^2$), the number of solutions $n \le N$ is
-$O_{P, s, \varepsilon}(N^{6/7 + \varepsilon})$ for every $\varepsilon > 0$. -/
+For any polynomial-factorial equation $s \cdot n! = P(x)$ with $\deg P \ge 2$ and depressed
+degree gap $\nu \ge 2$ (and in particular Brocard–Ramanujan $n! + 1 = m^2$), the number of
+solutions $n \le N$ is $O_{P, s, \varepsilon}(N^{6/7 + \varepsilon})$ for every $\varepsilon > 0$. -/
 theorem thm_1_3_part2_global_6_7 (P_deg : ℕ) (hP : 2 ≤ P_deg)
-    (isSol : ℕ → Prop) [DecidablePred isSol] :
+    (s_mult : ℕ) (hs_mult : 1 ≤ s_mult) (P : ℤ[X])
+    (hP_deg : P.natDegree = P_deg) (hP_gap : HasDepressedDegreeGap P 2)
+    [DecidablePred (IsPolyFactSol s_mult P)] :
     ∀ ε : ℝ, 0 < ε → ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
-      (((Finset.Icc 1 N).filter isSol).card : ℝ) ≤ C * (N : ℝ) ^ ((6 / 7 : ℝ) + ε) := by
+      (((Finset.Icc 1 N).filter (IsPolyFactSol s_mult P)).card : ℝ) ≤
+        C * (N : ℝ) ^ ((6 / 7 : ℝ) + ε) := by
   intro ε hε
   let δ := min (ε / 2) (1 / 14)
   have hδ_pos : 0 < δ := lt_min (by positivity) (by norm_num)
@@ -247,14 +249,40 @@ theorem thm_1_3_part2_global_6_7 (P_deg : ℕ) (hP : 2 ≤ P_deg)
     (by linarith [min_le_right (ε / 2) (1 / 14)])
     (by norm_num; linarith)
     (by simpa [theta_monomial] using hθ_lt)
-    isSol δ hδ_pos
+    s_mult hs_mult P hP_deg hP_gap δ hδ_pos
   have hα_pos : 0 < 1 - ((1 / 7 : ℝ) - δ) + δ := by linarith
-  obtain ⟨C', hC', hsum⟩ := dyadic_sum_counting hα_pos hC isSol hdyad
+  obtain ⟨C', hC', hsum⟩ := dyadic_sum_counting hα_pos hC (IsPolyFactSol s_mult P) hdyad
   refine ⟨C', hC', fun N hN => ?_⟩
   refine le_trans (hsum N hN) ?_
   have hexp : 1 - ((1 / 7 : ℝ) - δ) + δ ≤ (6 / 7 : ℝ) + ε := by
     have := min_le_left (ε / 2) (1 / 14); linarith
   exact mul_le_mul_of_nonneg_left (Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast hN) hexp) hC'.le
+
+/-- The Brocard polynomial $P(x) = x^2 - 1 \in \mathbb{Z}[x]$ has degree $2$ and depressed
+degree gap $\nu = 2$ (with depressed polynomial $P_{\mathrm{dep}}(y) = y^2 - 4$). -/
+lemma brocard_poly_depressed_gap :
+    (Polynomial.X ^ 2 - Polynomial.C (1 : ℤ)).natDegree = 2 ∧
+    HasDepressedDegreeGap (Polynomial.X ^ 2 - Polynomial.C (1 : ℤ)) 2 := by
+  have hdeg : (Polynomial.X ^ 2 - Polynomial.C (1 : ℤ)).natDegree = 2 :=
+    Polynomial.natDegree_X_pow_sub_C
+  have hmon : (Polynomial.X ^ 2 - Polynomial.C (1 : ℤ)).Monic :=
+    Polynomial.monic_X_pow_sub_C 1 (by norm_num)
+  have hlead : (Polynomial.X ^ 2 - Polynomial.C (1 : ℤ)).leadingCoeff = 1 := hmon.leadingCoeff
+  refine ⟨hdeg, by omega, by omega, by omega, by rw [hlead]; norm_num,
+    Polynomial.X ^ 2 - Polynomial.C (4 : ℤ),
+    Polynomial.monic_X_pow_sub_C 4 (by norm_num),
+    by rw [Polynomial.natDegree_X_pow_sub_C, hdeg], ?_, ?_⟩
+  · intro j hj1 hj2
+    have hj : j = 1 := by omega
+    subst hj
+    simp [Polynomial.coeff_X_pow, Polynomial.coeff_C]
+  · intro x
+    rw [hdeg, hlead]
+    have hc1 : (Polynomial.X ^ 2 - Polynomial.C (1 : ℤ)).coeff 1 = 0 := by
+      simp [Polynomial.coeff_X_pow, Polynomial.coeff_C, Polynomial.coeff_one]
+    rw [show (2 - 1 : ℕ) = 1 from rfl, hc1]
+    simp [Polynomial.eval_sub, Polynomial.eval_pow, Polynomial.eval_X, Polynomial.eval_C]
+    ring
 
 open Classical in
 /-- **Theorem 1.3(ii) (Brocard–Ramanujan Specialization)**:
@@ -263,7 +291,31 @@ theorem thm_1_3_part2_brocard_6_7 :
     ∀ ε : ℝ, 0 < ε → ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
       (((Finset.Icc 1 N).filter (fun n => ∃ m : ℕ, Nat.factorial n + 1 = m ^ 2)).card : ℝ) ≤
         C * (N : ℝ) ^ ((6 / 7 : ℝ) + ε) := by
-  exact thm_1_3_part2_global_6_7 2 (by norm_num) (fun n => ∃ m : ℕ, Nat.factorial n + 1 = m ^ 2)
+  intro ε hε
+  obtain ⟨hdeg, hgap⟩ := brocard_poly_depressed_gap
+  obtain ⟨C, hC, hbd⟩ := thm_1_3_part2_global_6_7 2 (by norm_num) 1 (by norm_num)
+    (Polynomial.X ^ 2 - Polynomial.C (1 : ℤ)) hdeg hgap ε hε
+  refine ⟨C, hC, fun N hN => ?_⟩
+  have heq : (Finset.Icc 1 N).filter (fun n => ∃ m : ℕ, Nat.factorial n + 1 = m ^ 2) =
+      (Finset.Icc 1 N).filter (IsPolyFactSol 1 (Polynomial.X ^ 2 - Polynomial.C (1 : ℤ))) := by
+    apply Finset.filter_congr
+    intro n _
+    unfold IsPolyFactSol
+    simp only [Nat.cast_one, one_mul, Polynomial.eval_sub, Polynomial.eval_pow,
+      Polynomial.eval_X, Polynomial.eval_C]
+    constructor
+    · rintro ⟨m, hm⟩
+      refine ⟨(m : ℤ), ?_⟩
+      have hmZ : (Nat.factorial n : ℤ) + 1 = (m : ℤ) ^ 2 := by exact_mod_cast hm
+      linarith
+    · rintro ⟨x, hx⟩
+      refine ⟨x.natAbs, ?_⟩
+      have hsq : (x.natAbs : ℤ) ^ 2 = x ^ 2 := Int.natAbs_sq x
+      have hmZ : ((Nat.factorial n + 1 : ℕ) : ℤ) = ((x.natAbs ^ 2 : ℕ) : ℤ) := by
+        rw [Nat.cast_add, Nat.cast_one, Nat.cast_pow, hsq]; linarith
+      exact_mod_cast hmZ
+  rw [heq]
+  exact hbd N hN
 
 /-- **Theorem 1.3(ii) (Decoupled Monomial-Product Degree-Gap Counting Bounds, Table 2)**:
 For depressed polynomial-factorial equations $s \cdot n! = P(x)$ with degree gap $\nu$:
@@ -273,17 +325,24 @@ For depressed polynomial-factorial equations $s \cdot n! = P(x)$ with degree gap
 - $\nu \ge 6$ ($\deg P \ge 3$): $O_\varepsilon(N^{3/4 + \varepsilon})$,
 - $\nu \ge 25$ ($\deg P \ge 7$): $O_\varepsilon(N^{2/3 + \varepsilon})$. -/
 theorem thm_1_3_part2_degree_gap_bounds (P_deg ν : ℕ)
-    (isSol : ℕ → Prop) [DecidablePred isSol] :
+    (s_mult : ℕ) (hs_mult : 1 ≤ s_mult) (P : ℤ[X])
+    (hP_deg : P.natDegree = P_deg) (hP_gap : HasDepressedDegreeGap P ν)
+    [DecidablePred (IsPolyFactSol s_mult P)] :
     ((3 ≤ P_deg ∧ ν = 3) → ∀ ε : ℝ, 0 < ε → ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
-      (((Finset.Icc 1 N).filter isSol).card : ℝ) ≤ C * (N : ℝ) ^ ((5 / 6 : ℝ) + ε)) ∧
+      (((Finset.Icc 1 N).filter (IsPolyFactSol s_mult P)).card : ℝ) ≤
+        C * (N : ℝ) ^ ((5 / 6 : ℝ) + ε)) ∧
     ((4 ≤ P_deg ∧ ν = 4) → ∀ ε : ℝ, 0 < ε → ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
-      (((Finset.Icc 1 N).filter isSol).card : ℝ) ≤ C * (N : ℝ) ^ ((4 / 5 : ℝ) + ε)) ∧
+      (((Finset.Icc 1 N).filter (IsPolyFactSol s_mult P)).card : ℝ) ≤
+        C * (N : ℝ) ^ ((4 / 5 : ℝ) + ε)) ∧
     ((5 ≤ P_deg ∧ ν = 5) → ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
-      (((Finset.Icc 1 N).filter isSol).card : ℝ) ≤ C * (N : ℝ) ^ (0.78939 : ℝ)) ∧
+      (((Finset.Icc 1 N).filter (IsPolyFactSol s_mult P)).card : ℝ) ≤
+        C * (N : ℝ) ^ (0.78939 : ℝ)) ∧
     ((3 ≤ P_deg ∧ 6 ≤ ν) → ∀ ε : ℝ, 0 < ε → ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
-      (((Finset.Icc 1 N).filter isSol).card : ℝ) ≤ C * (N : ℝ) ^ ((3 / 4 : ℝ) + ε)) ∧
+      (((Finset.Icc 1 N).filter (IsPolyFactSol s_mult P)).card : ℝ) ≤
+        C * (N : ℝ) ^ ((3 / 4 : ℝ) + ε)) ∧
     ((7 ≤ P_deg ∧ 25 ≤ ν) → ∀ ε : ℝ, 0 < ε → ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
-      (((Finset.Icc 1 N).filter isSol).card : ℝ) ≤ C * (N : ℝ) ^ ((2 / 3 : ℝ) + ε)) := by
+      (((Finset.Icc 1 N).filter (IsPolyFactSol s_mult P)).card : ℝ) ≤
+        C * (N : ℝ) ^ ((2 / 3 : ℝ) + ε)) := by
   refine ⟨?_, ?_, ?_, ?_, ?_⟩
   · rintro ⟨hP, rfl⟩ ε hε
     let δ := min (ε / 2) (1 / 12)
@@ -295,8 +354,8 @@ theorem thm_1_3_part2_degree_gap_bounds (P_deg ν : ℕ)
       (by linarith [min_le_right (ε / 2) (1 / 12)])
       (by norm_num; linarith)
       (by have := table2_nu3; unfold theta_monomial at this; linarith)
-      isSol δ hδ
-    obtain ⟨C', hC', hsum⟩ := dyadic_sum_counting (by linarith) hC isSol hdyad
+      s_mult hs_mult P hP_deg hP_gap δ hδ
+    obtain ⟨C', hC', hsum⟩ := dyadic_sum_counting (by linarith) hC (IsPolyFactSol s_mult P) hdyad
     refine ⟨C', hC', fun N hN => le_trans (hsum N hN) ?_⟩
     exact mul_le_mul_of_nonneg_left (Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast hN) (by linarith [min_le_left (ε / 2) (1 / 12)])) hC'.le
   · rintro ⟨hP, rfl⟩ ε hε
@@ -309,12 +368,11 @@ theorem thm_1_3_part2_degree_gap_bounds (P_deg ν : ℕ)
       (by linarith [min_le_right (ε / 2) (1 / 10)])
       (by norm_num; linarith)
       (by have := table2_nu4; unfold theta_monomial at this; linarith)
-      isSol δ hδ
-    obtain ⟨C', hC', hsum⟩ := dyadic_sum_counting (by linarith) hC isSol hdyad
+      s_mult hs_mult P hP_deg hP_gap δ hδ
+    obtain ⟨C', hC', hsum⟩ := dyadic_sum_counting (by linarith) hC (IsPolyFactSol s_mult P) hdyad
     refine ⟨C', hC', fun N hN => le_trans (hsum N hN) ?_⟩
     exact mul_le_mul_of_nonneg_left (Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast hN) (by linarith [min_le_left (ε / 2) (1 / 10)])) hC'.le
   · rintro ⟨hP, rfl⟩
-    -- 0.210615 < theta_monomial 2 2 5 (76/25) = 7372 / 35002 = 0.2106165...
     have hθ5 : (0.210615 : ℝ) < theta_monomial 2 2 5 (76 / 25) := by
       unfold theta_monomial
       have hch : Nat.choose (2 + 2) 2 - 1 = 5 := by decide
@@ -324,8 +382,8 @@ theorem thm_1_3_part2_degree_gap_bounds (P_deg ν : ℕ)
       (by omega) (by norm_num) (by norm_num) (by norm_num) (by omega)
       (by norm_num) (by rw [hch]; norm_num) (by norm_num) (by norm_num)
       (by unfold theta_monomial at hθ5; exact hθ5)
-      isSol 0.000005 (by norm_num)
-    obtain ⟨C', hC', hsum⟩ := dyadic_sum_counting (by norm_num) hC isSol hdyad
+      s_mult hs_mult P hP_deg hP_gap 0.000005 (by norm_num)
+    obtain ⟨C', hC', hsum⟩ := dyadic_sum_counting (by norm_num) hC (IsPolyFactSol s_mult P) hdyad
     refine ⟨C', hC', fun N hN => le_trans (hsum N hN) ?_⟩
     exact mul_le_mul_of_nonneg_left (Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast hN) (by norm_num)) hC'.le
   · rintro ⟨hP, hν⟩ ε hε
@@ -338,8 +396,8 @@ theorem thm_1_3_part2_degree_gap_bounds (P_deg ν : ℕ)
       (by linarith [min_le_right (ε / 2) (1 / 8)])
       (by norm_num; linarith)
       (by have := table2_nu6_ge hν; unfold theta_monomial at this; linarith)
-      isSol δ hδ
-    obtain ⟨C', hC', hsum⟩ := dyadic_sum_counting (by linarith) hC isSol hdyad
+      s_mult hs_mult P hP_deg hP_gap δ hδ
+    obtain ⟨C', hC', hsum⟩ := dyadic_sum_counting (by linarith) hC (IsPolyFactSol s_mult P) hdyad
     refine ⟨C', hC', fun N hN => le_trans (hsum N hN) ?_⟩
     exact mul_le_mul_of_nonneg_left (Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast hN) (by linarith [min_le_left (ε / 2) (1 / 8)])) hC'.le
   · rintro ⟨hP, hν⟩ ε hε
@@ -352,8 +410,8 @@ theorem thm_1_3_part2_degree_gap_bounds (P_deg ν : ℕ)
       (by linarith [min_le_right (ε / 2) (1 / 6)])
       (by norm_num; linarith)
       (by have := table2_nu_large hν; unfold theta_monomial at this; linarith)
-      isSol δ hδ
-    obtain ⟨C', hC', hsum⟩ := dyadic_sum_counting (by linarith) hC isSol hdyad
+      s_mult hs_mult P hP_deg hP_gap δ hδ
+    obtain ⟨C', hC', hsum⟩ := dyadic_sum_counting (by linarith) hC (IsPolyFactSol s_mult P) hdyad
     refine ⟨C', hC', fun N hN => le_trans (hsum N hN) ?_⟩
     exact mul_le_mul_of_nonneg_left (Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast hN) (by linarith [min_le_left (ε / 2) (1 / 6)])) hC'.le
 

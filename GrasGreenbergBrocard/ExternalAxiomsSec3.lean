@@ -92,16 +92,17 @@ structure RealQuadIwasawaInvariants (q p : ℕ) where
   X_trivial : Bool
   h_X_triv : X_trivial = true ↔ lambda_p = 0 ∧ nu_p = 0
 
+/-- Canonical algebraic and Iwasawa-theoretic invariants of the real quadratic field
+`K = ℚ(√q)` at an odd prime `p ≥ 5`. Scoping the external Iwasawa axioms strictly to this
+canonical object (rather than quantifying universally over arbitrary unconstrained records)
+prevents inconsistency from adversarial dummy instances. -/
+axiom canonicalRealQuadIwasawa (q p : ℕ) : RealQuadIwasawaInvariants q p
+
 /-- **Leopoldt's `p`-Adic Class Number Formula (Washington 1997, Theorem 5.24)** and
-**Coates's Formula (Coates 1977, Appendix Lemma 8; Taya 1996, Prop. 1)** for `K = ℚ(√q)` at `p ≥ 5`:
-- In the unramified case (`p ∤ q`, i.e., `2 ∣ v_p(n!)`), `v_p(1 - χ_D(p)p⁻¹) = -1` and
-  `v_p(∏_{𝔭∣p}(1 - N(𝔭)⁻¹)) = -2`.
-- In the ramified case (`p ∣ q`, i.e., `2 ∤ v_p(n!)`), `v_p(1 - χ_D(p)p⁻¹) = 0` and
-  `v_p(∏_{𝔭∣p}(1 - N(𝔭)⁻¹)) = -1`.
-In both cases, `v_p(w_1(K(μ_p))) = 1` for `p ≥ 5`, giving the exact valuation formulas for
-`L_p(1, χ_D)` and `#T_{K, p}` whenever `v_reg ≥ 1`. -/
+**Coates's Formula (Coates 1977, Appendix Lemma 8; Taya 1996, Prop. 1)** for `K = ℚ(√q)` at `p ≥ 5`. -/
 axiom leopoldt_coates_valuation_law :
-    ∀ {q p : ℕ} (inv : RealQuadIwasawaInvariants q p),
+    ∀ {q p : ℕ},
+      let inv := canonicalRealQuadIwasawa q p
       p.Prime → 5 ≤ p → 1 ≤ inv.v_reg →
       ((¬ p ∣ q →
           inv.v_Lp = padicValNat p inv.classNumber + inv.v_reg - 1 ∧
@@ -115,7 +116,8 @@ For the real quadratic field `K = ℚ(√q)` at `p ≥ 5`, `μ_p(χ_D) = 0`, `X_
 `ℤ_p`-module of rank `λ_p^*(K) = λ_p(χ_D)`, and `T_{K,p} ≠ 0` (`1 ≤ inv.v_T`) implies
 `λ_p^*(K) = λ_p(χ_D) ≥ 1`. -/
 axiom iwasawa_main_conjecture_free_rank :
-    ∀ {q p : ℕ} (inv : RealQuadIwasawaInvariants q p),
+    ∀ {q p : ℕ},
+      let inv := canonicalRealQuadIwasawa q p
       p.Prime → 5 ≤ p → 1 ≤ inv.v_T →
       inv.lambda_star = inv.lambda_chi ∧ 1 ≤ inv.lambda_star
 
@@ -125,7 +127,8 @@ For a split prime `p ≥ 5` (`¬ p ∣ q`, `inv.splits = true`) with `2 ≤ inv.
 - `λ_p(K) + ν_p(K) ≥ inv.v_reg - 1`,
 - If `n_0^{(r)}(K) > r + 1` for all `r ≥ 0`, then `λ_p(K) ≥ 1`. -/
 axiom ozaki_taya_split_prime_iwasawa :
-    ∀ {q p : ℕ} (inv : RealQuadIwasawaInvariants q p),
+    ∀ {q p : ℕ},
+      let inv := canonicalRealQuadIwasawa q p
       p.Prime → 5 ≤ p → ¬ p ∣ q → inv.splits = true → 2 ≤ inv.v_reg →
       (∀ m : ℕ, inv.v_reg - 1 ≤ m →
         inv.v_X_Gamma = inv.v_T ∧ inv.v_A_m_Gamma m = inv.v_T) ∧

@@ -1,0 +1,90 @@
+import GrasGreenbergBrocard.ValuationParityLayer
+import GrasGreenbergBrocard.ValuationParityVaaler
+import GrasGreenbergBrocard.ExpSumBounds
+import GrasGreenbergBrocard.ValuationParityThm
+import GrasGreenbergBrocard.ValuationParityMod
+import GrasGreenbergBrocard.Thm1_1Collapse
+import GrasGreenbergBrocard.Picard2Torsion
+import GrasGreenbergBrocard.Thm1_2Iwasawa
+import GrasGreenbergBrocard.Prop4_1SmoothBiquad
+import GrasGreenbergBrocard.Thm4_2QuarticCores
+import GrasGreenbergBrocard.Prop5_1MidpointBias
+import GrasGreenbergBrocard.Thm5_2EffectiveCores
+import GrasGreenbergBrocard.Thm5_3RedeiCohomology
+import GrasGreenbergBrocard.Prop6_1FourGCD
+import GrasGreenbergBrocard.Prop6_2ConsecutiveSquareShift
+import GrasGreenbergBrocard.Lem6_3ParityFlip
+import GrasGreenbergBrocard.Thm6_4CapacityDiamond
+import GrasGreenbergBrocard.Thm6_4PolarizationConcentration
+import GrasGreenbergBrocard.Sec7PadeWronskian
+import GrasGreenbergBrocard.Thm1_3Part2Counting
+import GrasGreenbergBrocard.Thm8_1FreyCurves
+import GrasGreenbergBrocard.Thm8_2TatuzawaClassGroup
+
+/-!
+# Machine-Checked `#print axioms` Audit for All Manuscript Theorems
+
+Running `lake build GrasGreenbergBrocard.AuditAxioms` prints the exact Lean 4 kernel axiom
+closure of every main theorem, proposition, and lemma across Sections 1–8 of the manuscript,
+verifying:
+- zero `sorryAx`,
+- zero `Lean.ofReduceBool` / `Lean.trustCompiler` (`native_decide`),
+- only Lean's standard logical axioms (`propext`, `Classical.choice`, `Quot.sound`) plus
+  explicitly documented, sound external axioms.
+-/
+
+-- Section 2
+#print axioms GrasGreenbergBrocard.log_q_n_asymptotic
+#print axioms GrasGreenbergBrocard.vaaler_parity_approx
+#print axioms GrasGreenbergBrocard.prime_exp_sum_bounds
+#print axioms GrasGreenbergBrocard.Delta_parity_second_order
+#print axioms GrasGreenbergBrocard.S_odd_asymptotic
+#print axioms GrasGreenbergBrocard.multi_modulus_power_band_equidistribution
+
+-- Section 3 & Theorems 1.1–1.2
+#print axioms GrasGreenbergBrocard.pell_index_collapse_large
+#print axioms GrasGreenbergBrocard.fundamental_regulator_quantization
+#print axioms GrasGreenbergBrocard.q_n_ne_of_solutions
+#print axioms GrasGreenbergBrocard.J_n_principal_iff_k_eq_2
+#print axioms GrasGreenbergBrocard.thm_1_2_part1_valuation_law
+#print axioms GrasGreenbergBrocard.thm_1_2_part2_split_primes
+#print axioms GrasGreenbergBrocard.thm_1_2_part3_conditional_finiteness
+
+-- Section 4
+#print axioms GrasGreenbergBrocard.prop_4_1_part1
+#print axioms GrasGreenbergBrocard.prop_4_1_part2
+#print axioms GrasGreenbergBrocard.thm_4_2_part1_euclidean_lock
+#print axioms GrasGreenbergBrocard.thm_4_2_part2_dual_quartic
+#print axioms GrasGreenbergBrocard.thm_4_2_part3_midpoint_core_bounds
+
+-- Section 5
+#print axioms GrasGreenbergBrocard.prop_5_1_part1
+#print axioms GrasGreenbergBrocard.prop_5_1_part2_bias
+#print axioms GrasGreenbergBrocard.thm_5_2_part1_cross_symmetry
+#print axioms GrasGreenbergBrocard.thm_5_2_part2_effective_cores
+#print axioms GrasGreenbergBrocard.thm_5_3_part1_cohomology_4rank
+#print axioms GrasGreenbergBrocard.thm_5_3_part2_dual_quartic
+
+-- Section 6 & Theorem 1.3(i)
+#print axioms GrasGreenbergBrocard.prop_6_1_part1_sl2_and_four_squares
+#print axioms GrasGreenbergBrocard.prop_6_2_part3_square_shift_exclusions
+#print axioms GrasGreenbergBrocard.lem_6_3_parity_flip_uniform
+#print axioms GrasGreenbergBrocard.thm_6_4_capacity_diamond
+#print axioms GrasGreenbergBrocard.thm_1_3_part1_k2_gap_and_counting
+#print axioms GrasGreenbergBrocard.thm_6_4_polarization_concentration
+
+-- Section 7 & Theorem 1.3(ii)
+#print axioms GrasGreenbergBrocard.siegel_lemma_pigeonhole
+#print axioms GrasGreenbergBrocard.lem_7_1_initial_pade_polynomials
+#print axioms GrasGreenbergBrocard.lem_7_2_monomial_product_puiseux_indep
+#print axioms GrasGreenbergBrocard.lem_7_3_support_reduced_wronskian
+#print axioms GrasGreenbergBrocard.lem_7_4_denominator_clearing
+#print axioms GrasGreenbergBrocard.thm_1_3_part2_global_6_7
+#print axioms GrasGreenbergBrocard.thm_1_3_part2_brocard_6_7
+#print axioms GrasGreenbergBrocard.thm_1_3_part2_degree_gap_bounds
+
+-- Section 8
+#print axioms GrasGreenbergBrocard.thm_8_1_part1_frey_E
+#print axioms GrasGreenbergBrocard.thm_8_1_part2_level2_cm_reduction
+#print axioms GrasGreenbergBrocard.thm_8_1_part2_abc_and_hall_bounds
+#print axioms GrasGreenbergBrocard.thm_8_2_tatuzawa_and_narrow_2J_rank
