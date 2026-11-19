@@ -374,7 +374,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
   let N₀ := max (max (max N_flip N_cs) (max N_sodd N_dp)) (max (max N_al N_il) (max N_cs_exp 1000))
   refine ⟨N₀, by omega, ?_⟩
   intro n₁ n₂ m₁ m₂ hn₁ hlt h_gap hm₁ hm₂
-  have hn₁_pos : (0 : ℝ) < n₁ := by positivity
+  have hn₁_pos : (0 : ℝ) < n₁ := by exact_mod_cast (by omega : 0 < n₁)
   have hlog_n₁_pos : 0 < Real.log (n₁ : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n₁))
   have h_al := hN_al n₁ (by omega)
   rw [Real.dist_eq, sub_zero, abs_of_nonneg (Real.rpow_nonneg (Nat.cast_nonneg n₁) _)] at h_al
@@ -622,31 +622,31 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       · have hp_odd2 := (hPodd_iff p hp_pr hp3 h2dvd).mp hp_odd
         have hp_u22 : p ∣ u₂₂ := dvd_trans hpZ (Nat.gcd_dvd_right _ _)
         have hB22 := (h2.2 hp_u22).1 hp_odd2
-        have hle_M22 : padicValNat p (B_part n₂ u₂₂) ≤ padicValNat p M₂₂ := by
-          dsimp [M₂₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
+        have hle_M22 : padicValNat p (B_part n₂ ((m₂ + 1) / 2)) ≤ padicValNat p M₂₂ := by
+          dsimp [M₂₂, u₁₂, u₂₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
         have hle_prod : padicValNat p M₂₂ ≤ padicValNat p (M₂₁ * M₂₂) := by
           rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; omega
         omega
       · have hp_u11 : p ∣ u₁₁ := dvd_trans hpZ (Nat.gcd_dvd_left _ _)
         have hZ11 := (h1.1 hp_u11).2 hp_odd
-        have hle_M21 : padicValNat p (Z_star n₁ u₁₁ ^ 2) ≤ padicValNat p M₂₁ := by
-          dsimp [M₂₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
+        have hle_M21 : padicValNat p (Z_star n₁ ((m₁ - 1) / 2) ^ 2) ≤ padicValNat p M₂₁ := by
+          dsimp [M₂₁, u₁₁, u₂₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
         have hle_prod : padicValNat p M₂₁ ≤ padicValNat p (M₂₁ * M₂₂) := by
           rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; omega
         omega
     · by_cases hp_odd : p ∈ Podd n₁
       · have hp_u21 : p ∣ u₂₁ := dvd_trans hpW (Nat.gcd_dvd_left _ _)
         have hB21 := (h1.2 hp_u21).1 hp_odd
-        have hle_M21 : padicValNat p (B_part n₁ u₂₁) ≤ padicValNat p M₂₁ := by
-          dsimp [M₂₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
+        have hle_M21 : padicValNat p (B_part n₁ ((m₁ + 1) / 2)) ≤ padicValNat p M₂₁ := by
+          dsimp [M₂₁, u₁₁, u₂₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
         have hle_prod : padicValNat p M₂₁ ≤ padicValNat p (M₂₁ * M₂₂) := by
           rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; omega
         omega
       · have hp_even2 : ¬ p ∈ Podd n₂ := fun h => hp_odd ((hPodd_iff p hp_pr hp3 h2dvd).mpr h)
         have hp_u12 : p ∣ u₁₂ := dvd_trans hpW (Nat.gcd_dvd_right _ _)
         have hZ12 := (h2.1 hp_u12).2 hp_even2
-        have hle_M22 : padicValNat p (Z_star n₂ u₁₂ ^ 2) ≤ padicValNat p M₂₂ := by
-          dsimp [M₂₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
+        have hle_M22 : padicValNat p (Z_star n₂ ((m₂ - 1) / 2) ^ 2) ≤ padicValNat p M₂₂ := by
+          dsimp [M₂₂, u₁₂, u₂₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
         have hle_prod : padicValNat p M₂₂ ≤ padicValNat p (M₂₁ * M₂₂) := by
           rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; omega
         omega
@@ -673,16 +673,16 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
     · by_cases hp_odd : p ∈ Podd n₁
       · have hp_u11 : p ∣ u₁₁ := dvd_trans hpZ (Nat.gcd_dvd_left _ _)
         have hB11 := (h1.1 hp_u11).1 hp_odd
-        have hle_M11 : padicValNat p (B_part n₁ u₁₁) ≤ padicValNat p M₁₁ := by
-          dsimp [M₁₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
+        have hle_M11 : padicValNat p (B_part n₁ ((m₁ - 1) / 2)) ≤ padicValNat p M₁₁ := by
+          dsimp [M₁₁, u₁₁, u₂₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
         have hle_prod : padicValNat p M₁₁ ≤ padicValNat p (M₁₁ * M₁₂) := by
           rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; omega
         omega
       · have hp_even2 : ¬ p ∈ Podd n₂ := fun h => hp_odd ((hPodd_iff p hp_pr hp3 h2dvd).mpr h)
         have hp_u22 : p ∣ u₂₂ := dvd_trans hpZ (Nat.gcd_dvd_right _ _)
         have hZ22 := (h2.2 hp_u22).2 hp_even2
-        have hle_M12 : padicValNat p (Z_star n₂ u₂₂ ^ 2) ≤ padicValNat p M₁₂ := by
-          dsimp [M₁₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
+        have hle_M12 : padicValNat p (Z_star n₂ ((m₂ + 1) / 2) ^ 2) ≤ padicValNat p M₁₂ := by
+          dsimp [M₁₂, u₁₂, u₂₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
         have hle_prod : padicValNat p M₁₂ ≤ padicValNat p (M₁₁ * M₁₂) := by
           rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; omega
         omega
@@ -690,15 +690,15 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       · have hp_odd2 := (hPodd_iff p hp_pr hp3 h2dvd).mp hp_odd
         have hp_u12 : p ∣ u₁₂ := dvd_trans hpW (Nat.gcd_dvd_right _ _)
         have hB12 := (h2.1 hp_u12).1 hp_odd2
-        have hle_M12 : padicValNat p (B_part n₂ u₁₂) ≤ padicValNat p M₁₂ := by
-          dsimp [M₁₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
+        have hle_M12 : padicValNat p (B_part n₂ ((m₂ - 1) / 2)) ≤ padicValNat p M₁₂ := by
+          dsimp [M₁₂, u₁₂, u₂₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
         have hle_prod : padicValNat p M₁₂ ≤ padicValNat p (M₁₁ * M₁₂) := by
           rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; omega
         omega
       · have hp_u21 : p ∣ u₂₁ := dvd_trans hpW (Nat.gcd_dvd_left _ _)
         have hZ21 := (h1.2 hp_u21).2 hp_odd
-        have hle_M11 : padicValNat p (Z_star n₁ u₂₁ ^ 2) ≤ padicValNat p M₁₁ := by
-          dsimp [M₁₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
+        have hle_M11 : padicValNat p (Z_star n₁ ((m₁ + 1) / 2) ^ 2) ≤ padicValNat p M₁₁ := by
+          dsimp [M₁₁, u₁₁, u₂₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
         have hle_prod : padicValNat p M₁₁ ≤ padicValNat p (M₁₁ * M₁₂) := by
           rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; omega
         omega
@@ -725,16 +725,16 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
     · by_cases hp_odd : p ∈ Podd n₁
       · have hp_u11 : p ∣ u₁₁ := dvd_trans hpX (Nat.gcd_dvd_left _ _)
         have hB11 := (h1.1 hp_u11).1 hp_odd
-        have hle_M11 : padicValNat p (B_part n₁ u₁₁) ≤ padicValNat p M₁₁ := by
-          dsimp [M₁₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
+        have hle_M11 : padicValNat p (B_part n₁ ((m₁ - 1) / 2)) ≤ padicValNat p M₁₁ := by
+          dsimp [M₁₁, u₁₁, u₂₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
         have hle_prod : padicValNat p M₁₁ ≤ padicValNat p (M₁₁ * M₂₂) := by
           rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; omega
         omega
       · have hp_even2 : ¬ p ∈ Podd n₂ := fun h => hp_odd ((hPodd_iff p hp_pr hp3 h2dvd).mpr h)
         have hp_u12 : p ∣ u₁₂ := dvd_trans hpX (Nat.gcd_dvd_right _ _)
         have hZ12 := (h2.1 hp_u12).2 hp_even2
-        have hle_M22 : padicValNat p (Z_star n₂ u₁₂ ^ 2) ≤ padicValNat p M₂₂ := by
-          dsimp [M₂₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
+        have hle_M22 : padicValNat p (Z_star n₂ ((m₂ - 1) / 2) ^ 2) ≤ padicValNat p M₂₂ := by
+          dsimp [M₂₂, u₁₂, u₂₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
         have hle_prod : padicValNat p M₂₂ ≤ padicValNat p (M₁₁ * M₂₂) := by
           rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; omega
         omega
@@ -742,15 +742,15 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       · have hp_odd2 := (hPodd_iff p hp_pr hp3 h2dvd).mp hp_odd
         have hp_u22 : p ∣ u₂₂ := dvd_trans hpY (Nat.gcd_dvd_right _ _)
         have hB22 := (h2.2 hp_u22).1 hp_odd2
-        have hle_M22 : padicValNat p (B_part n₂ u₂₂) ≤ padicValNat p M₂₂ := by
-          dsimp [M₂₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
+        have hle_M22 : padicValNat p (B_part n₂ ((m₂ + 1) / 2)) ≤ padicValNat p M₂₂ := by
+          dsimp [M₂₂, u₁₂, u₂₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
         have hle_prod : padicValNat p M₂₂ ≤ padicValNat p (M₁₁ * M₂₂) := by
           rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; omega
         omega
       · have hp_u21 : p ∣ u₂₁ := dvd_trans hpY (Nat.gcd_dvd_left _ _)
         have hZ21 := (h1.2 hp_u21).2 hp_odd
-        have hle_M11 : padicValNat p (Z_star n₁ u₂₁ ^ 2) ≤ padicValNat p M₁₁ := by
-          dsimp [M₁₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
+        have hle_M11 : padicValNat p (Z_star n₁ ((m₁ + 1) / 2) ^ 2) ≤ padicValNat p M₁₁ := by
+          dsimp [M₁₁, u₁₁, u₂₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
         have hle_prod : padicValNat p M₁₁ ≤ padicValNat p (M₁₁ * M₂₂) := by
           rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; omega
         omega
@@ -778,31 +778,31 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       · have hp_odd2 := (hPodd_iff p hp_pr hp3 h2dvd).mp hp_odd
         have hp_u12 : p ∣ u₁₂ := dvd_trans hpX (Nat.gcd_dvd_right _ _)
         have hB12 := (h2.1 hp_u12).1 hp_odd2
-        have hle_M12 : padicValNat p (B_part n₂ u₁₂) ≤ padicValNat p M₁₂ := by
-          dsimp [M₁₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
+        have hle_M12 : padicValNat p (B_part n₂ ((m₂ - 1) / 2)) ≤ padicValNat p M₁₂ := by
+          dsimp [M₁₂, u₁₂, u₂₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
         have hle_prod : padicValNat p M₁₂ ≤ padicValNat p (M₂₁ * M₁₂) := by
           rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; omega
         omega
       · have hp_u11 : p ∣ u₁₁ := dvd_trans hpX (Nat.gcd_dvd_left _ _)
         have hZ11 := (h1.1 hp_u11).2 hp_odd
-        have hle_M21 : padicValNat p (Z_star n₁ u₁₁ ^ 2) ≤ padicValNat p M₂₁ := by
-          dsimp [M₂₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
+        have hle_M21 : padicValNat p (Z_star n₁ ((m₁ - 1) / 2) ^ 2) ≤ padicValNat p M₂₁ := by
+          dsimp [M₂₁, u₁₁, u₂₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
         have hle_prod : padicValNat p M₂₁ ≤ padicValNat p (M₂₁ * M₁₂) := by
           rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; omega
         omega
     · by_cases hp_odd : p ∈ Podd n₁
       · have hp_u21 : p ∣ u₂₁ := dvd_trans hpY (Nat.gcd_dvd_left _ _)
         have hB21 := (h1.2 hp_u21).1 hp_odd
-        have hle_M21 : padicValNat p (B_part n₁ u₂₁) ≤ padicValNat p M₂₁ := by
-          dsimp [M₂₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
+        have hle_M21 : padicValNat p (B_part n₁ ((m₁ + 1) / 2)) ≤ padicValNat p M₂₁ := by
+          dsimp [M₂₁, u₁₁, u₂₁]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
         have hle_prod : padicValNat p M₂₁ ≤ padicValNat p (M₂₁ * M₁₂) := by
           rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; omega
         omega
       · have hp_even2 : ¬ p ∈ Podd n₂ := fun h => hp_odd ((hPodd_iff p hp_pr hp3 h2dvd).mpr h)
         have hp_u22 : p ∣ u₂₂ := dvd_trans hpY (Nat.gcd_dvd_right _ _)
         have hZ22 := (h2.2 hp_u22).2 hp_even2
-        have hle_M12 : padicValNat p (Z_star n₂ u₂₂ ^ 2) ≤ padicValNat p M₁₂ := by
-          dsimp [M₁₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
+        have hle_M12 : padicValNat p (Z_star n₂ ((m₂ + 1) / 2) ^ 2) ≤ padicValNat p M₁₂ := by
+          dsimp [M₁₂, u₁₂, u₂₂]; rw [padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne')]; omega
         have hle_prod : padicValNat p M₁₂ ≤ padicValNat p (M₂₁ * M₁₂) := by
           rw [padicValNat.mul (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne' (mul_pos (B_part_pos _ _) (pow_pos (Z_star_pos _ _) 2)).ne']; omega
         omega
@@ -813,18 +813,19 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       |Real.log ((B_part n_a u₁a * Z_star n_a u₂a ^ 2 : ℕ) : ℝ) -
         (1 - theta_weight n_a m_a) * (n₁ : ℝ) * Real.log (n₁ : ℝ)| ≤ (ε / 16) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
     intro n_a m_a hna hna_ge hna_le hma
+    have hna_pos : (0 : ℝ) < n_a := by exact_mod_cast (by omega : 0 < n_a)
+    have hlog_a_pos : 0 < Real.log (n_a : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n_a))
     have hcs := h_cs n_a m_a (by omega) hma
     dsimp only at hcs
     have hSodd_a : |S_odd n_a - (1 / 2 : ℝ) * (n_a : ℝ) * Real.log (n_a : ℝ)| ≤
         min (ε / 256) (1 / 8) * (n_a : ℝ) * Real.log (n_a : ℝ) := by
       have h1 := hN_sodd n_a (by omega)
-      rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (by positivity)] at h1
-      linarith
+      rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (mul_nonneg hna_pos.le hlog_a_pos.le)] at h1
+      simpa [mul_assoc] using h1
     have hSodd_pos : 0 < S_odd n_a := by
       have := (abs_le.mp hSodd_a).1
       have h1 : (1 / 8 : ℝ) ≥ min (ε / 256) (1 / 8) := min_le_right _ _
-      have hlog_a : 0 < Real.log (n_a : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n_a))
-      nlinarith [show (0 : ℝ) < n_a by positivity]
+      nlinarith [hna_pos, hlog_a_pos]
     have hθ_eq : Real.log (B_part n_a ((m_a + 1) / 2) : ℝ) = theta_weight n_a m_a * S_odd n_a := by
       unfold theta_weight; rw [if_pos hSodd_pos, div_mul_cancel₀ _ hSodd_pos.ne']
     have hB_prod : B_part n_a ((m_a - 1) / 2) * B_part n_a ((m_a + 1) / 2) = B_star5 n_a :=
@@ -851,10 +852,8 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       rw [Nat.cast_mul, Real.log_mul (by exact_mod_cast (B_part_pos _ _).ne')
         (by exact_mod_cast (pow_pos (Z_star_pos _ _) 2).ne'), Nat.cast_pow]
       ring
-    have hna_pos : (0 : ℝ) < n_a := by positivity
-    have hlog_a_pos : 0 < Real.log (n_a : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n_a))
     have h_il := hN_il n₁ (by omega)
-    rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at h_il
+    rw [Real.dist_eq, sub_zero, abs_of_nonneg (div_nonneg zero_le_one hlog_n₁_pos.le)] at h_il
     have hna_ub : (n_a : ℝ) ≤ (1 + min (ε / 256) (1 / 4)) * (n₁ : ℝ) := by
       have h1 : (n₁ : ℝ) ^ α = (n₁ : ℝ) * (n₁ : ℝ) ^ (α - 1) := by
         conv_lhs => rw [show α = 1 + (α - 1) by ring]
@@ -893,7 +892,8 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
                 1 + 2 * (ε / 256) + (1 / 4) * (ε / 256) := by linarith
             nlinarith [show 0 ≤ (n₁ : ℝ) * Real.log (n₁ : ℝ) by positivity]
         _ ≤ (1 + ε / 64) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
-            gcongr; linarith
+            have hcoeff2 : 1 + 2 * (ε / 256) + (1 / 4) * (ε / 256) ≤ 1 + ε / 64 := by linarith
+            nlinarith [show 0 ≤ (n₁ : ℝ) * Real.log (n₁ : ℝ) by positivity]
     have hna_log_lb : (1 - ε / 64) * (n₁ : ℝ) * Real.log (n₁ : ℝ) ≤ (n_a : ℝ) * Real.log (n_a : ℝ) := by
       have h1 : (n₁ : ℝ) * Real.log (n₁ : ℝ) ≤ (n_a : ℝ) * Real.log (n_a : ℝ) := by
         gcongr <;> exact_mod_cast hna_ge
@@ -907,7 +907,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         nlinarith
       have hC_le : C_cs ≤ (ε / 128) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
         have h := hN_cs_exp n₁ (by omega)
-        rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at h
+        rw [Real.dist_eq, sub_zero, abs_of_nonneg (div_nonneg hC_cs.le hlog_n₁_pos.le)] at h
         have h' := (div_lt_iff₀ hlog_n₁_pos).mp h
         have hn1_1 : (1 : ℝ) ≤ n₁ := by exact_mod_cast (by omega : 1 ≤ n₁)
         nlinarith [show 0 ≤ Real.log (n₁ : ℝ) by linarith]
@@ -1039,7 +1039,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       (1 / 2 : ℝ) * Real.log (Nat.factorial n₁ : ℝ) - (6 * Real.log (P_ratio n₁ n₂ : ℝ) + 4) := by
     have hfac := n_log_n_sub_n_le_log_factorial n₁ (by omega)
     have h_il := hN_il n₁ (by omega)
-    rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at h_il
+    rw [Real.dist_eq, sub_zero, abs_of_nonneg (div_nonneg zero_le_one hlog_n₁_pos.le)] at h_il
     have hn1_le : (n₁ : ℝ) ≤ (ε / 256) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
       have hdiv := (div_lt_iff₀ hlog_n₁_pos).mp h_il
       have hmin : min (ε / 256) (1 / 100) ≤ ε / 256 := min_le_left _ _
@@ -1100,7 +1100,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
     linarith
   have hn1_log2 : (n₁ : ℝ) * Real.log 2 ≤ (ε / 16) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
     have h_il := hN_il n₁ (by omega)
-    rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at h_il
+    rw [Real.dist_eq, sub_zero, abs_of_nonneg (div_nonneg zero_le_one hlog_n₁_pos.le)] at h_il
     have h1 : Real.log 2 ≤ (ε / 16) * Real.log (n₁ : ℝ) := by
       have hdiv := (div_lt_iff₀ hlog_n₁_pos).mp h_il
       have hmin : min (ε / 256) (1 / 100) ≤ ε / 256 := min_le_left _ _
