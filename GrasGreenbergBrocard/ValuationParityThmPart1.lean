@@ -761,9 +761,25 @@ theorem Delta_parity_second_order :
             intro p hp
             simp only [Ik, Finset.mem_filter, S_mid, S_all] at hp
             exact ⟨hp.1.1.2, hp.2⟩
+          have hIk_sub : IsPrimeSubinterval P Ik := by
+            refine isPrimeSubinterval_of_bounds (a := max (max (2 : ℝ) (Nat.sqrt n : ℝ)) P)
+              (b := min (min (n : ℝ) ((n : ℝ) / (R₁ : ℝ))) (2 * P)) (by positivity) Ik ?_ (fun p hp => (hIk_pr p hp).2)
+            intro p
+            simp only [Ik, S_mid, S_all, Finset.mem_filter, Finset.mem_Icc, max_lt_iff, le_min_iff]
+            constructor
+            · rintro ⟨⟨⟨⟨hp3, hpn⟩, hpr⟩, hpsq, hpr1⟩, hpP, hp2P⟩
+              exact ⟨hpr, ⟨⟨by exact_mod_cast (by omega : 2 < p), by exact_mod_cast hpsq⟩, hpP⟩,
+                ⟨⟨by exact_mod_cast hpn, hpr1⟩, hp2P⟩⟩
+            · rintro ⟨hpr, ⟨⟨hp2, hpsq⟩, hpP⟩, ⟨⟨hpn, hpr1⟩, hp2P⟩⟩
+              have hp3 : 3 ≤ p := by
+                have : 2 < p := by exact_mod_cast hp2
+                omega
+              exact ⟨⟨⟨⟨hp3, by exact_mod_cast hpn⟩, hpr⟩, by exact_mod_cast hpsq, hpr1⟩, hpP, hp2P⟩
+          have hW_anti : AntitoneOn (fun t : ℝ => (n : ℝ) / t) (Set.Icc P (2 * P)) :=
+            fun s hs t _ hst => div_le_div_of_nonneg_left hn_pos.le (lt_of_lt_of_le (by positivity) hs.1) hst
           have hexp_app := hexp_n P Ik {1} (fun _ => h) (fun t => (n : ℝ) / t) ((n : ℝ) / P)
             ⟨1, Finset.mem_singleton_self _, hh0⟩
-            hP_lo hP_hi hIk_pr (fun r hr => by rw [Finset.mem_singleton.mp hr]; norm_num)
+            hP_lo hP_hi hIk_sub (fun r hr => by rw [Finset.mem_singleton.mp hr]; norm_num)
             (fun r hr => by
               have h5_eq : Nat.floor (1 / (1 / 3 : ℝ)) + 2 = 5 := by norm_num
               simp_rw [h5_eq]
@@ -780,6 +796,7 @@ theorem Delta_parity_second_order :
             (fun t ht => by
               rw [abs_of_nonneg (div_nonneg hn_pos.le (by linarith [ht.1, hP_lo, hn_pos]))]
               exact div_le_div_of_nonneg_left hn_pos.le (by positivity) ht.1)
+            hW_anti
             (by positivity)
           dsimp only at hexp_app
           have h_rhs : C₂e * ((n : ℝ) / P) * P * (Real.log (n : ℝ)) ^ (-((Nat.floor (1 / (1 / 3 : ℝ)) : ℝ) + 2)) =

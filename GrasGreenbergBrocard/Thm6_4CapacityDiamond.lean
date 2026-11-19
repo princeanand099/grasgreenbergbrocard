@@ -51,6 +51,10 @@ lemma theta_weight_le_one {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 =
       by exact_mod_cast Nat.le_of_dvd (B_star5_pos n) hB_dvd
     have hlog_le : Real.log (B_part n ((m + 1) / 2) : ℝ) ≤ Real.log (B_star5 n : ℝ) :=
       Real.log_le_log (by exact_mod_cast B_part_pos n ((m + 1) / 2)) hle
+    -- And 2 * log(B_star5 n) ≤ S_odd n? Wait: B_star5 = ∏_{p ∈ Podd n, p ≥ 3} p^{v_p(n!)},
+    -- NO! B_star5 = ∏_{p ∈ Podd n, p ≥ 3} p^{(v_p(n!) - 1)/2} ? No, let's check B_star5 in Thm5_2EffectiveCores!
+    -- Wait: A_star5 * B_star5 = oddPartNat(n!) / ..., so log(B_star5) = S_odd n?
+    -- Actually, let's check: B_part n u ≤ ∏_{p ∈ Podd n, p ≥ 3} p^{v_p(n!)} so log(B_part n u) ≤ S_odd n!
     have hB_dvd_prod : B_part n ((m + 1) / 2) ∣
         ∏ p ∈ (Podd n).filter (fun p => 3 ≤ p), p ^ padicValNat p (Nat.factorial n) := by
       unfold B_part
@@ -369,6 +373,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
     (Asymptotics.IsLittleO.bound S_odd_asymptotic (show (0 : ℝ) < min (ε / 256) (1 / 8) by positivity))
   obtain ⟨N_dp, hN_dp⟩ := Filter.eventually_atTop.mp
     (Asymptotics.IsLittleO.bound Delta_parity_isLittleO_mul_log (show (0 : ℝ) < ε / 256 by positivity))
+  -- Also need n^α / n → 0 so n₂ ≤ 2 n₁ and n₂ log n₂ ≤ (1 + ε/32) n₁ log n₁, and 6 log P + 4 ≤ (ε/16) n₁ log n₁
   have h_alpha_div : Filter.Tendsto (fun n : ℕ => (n : ℝ) ^ (α - 1)) Filter.atTop (nhds 0) := by
     have h1 := tendsto_rpow_neg_atTop (show 0 < 1 - α by linarith) |>.comp tendsto_natCast_atTop_atTop
     refine h1.congr (fun n => ?_)
@@ -383,11 +388,16 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
     ((tendsto_const_nhds.div_atTop (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop) :
       Filter.Tendsto (fun n : ℕ => C_cs / Real.log (n : ℝ)) Filter.atTop (nhds 0)).eventually
       (Metric.ball_mem_nhds 0 (show (0 : ℝ) < ε / 128 by positivity)))
-  let N₀ := max (max (max N_flip N_cs) (max N_sodd N_dp)) (max (max N_al N_il) (max N_cs_exp 1000))
+  have h_log_gap : Filter.Tendsto (fun n : ℕ => (Real.log (n : ℝ)) ^ (6 * Nat.floor (1 / δ) + 34) / (n : ℝ) ^ (1 - α))
+      Filter.atTop (nhds 0) := log_pow_div_rpow_tendsto_zero (6 * Nat.floor (1 / δ) + 34) (by linarith)
+  obtain ⟨N_lg, hN_lg⟩ := Filter.eventually_atTop.mp
+    (h_log_gap.eventually (Metric.ball_mem_nhds 0 (by norm_num : (0 : ℝ) < 1)))
+  let N₀ := max (max (max N_flip N_cs) (max N_sodd N_dp)) (max (max N_al N_il) (max (max N_cs_exp N_lg) 1000))
   refine ⟨N₀, by omega, ?_⟩
   intro n₁ n₂ m₁ m₂ hn₁ hlt h_gap hm₁ hm₂
   have hn₁_pos : (0 : ℝ) < n₁ := by exact_mod_cast (by omega : 0 < n₁)
   have hlog_n₁_pos : 0 < Real.log (n₁ : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n₁))
+  -- Show n₂ - n₁ < n₁ and n₂ ≤ 2 n₁
   have h_al := hN_al n₁ (by omega)
   rw [Real.dist_eq, sub_zero, abs_of_nonneg (Real.rpow_nonneg (Nat.cast_nonneg n₁) _)] at h_al
   have hh_lt_n1 : n₂ - n₁ < n₁ := by
@@ -402,8 +412,22 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         _ = (1 / 4 : ℝ) * (n₁ : ℝ) := by ring
     have hsub : ((n₂ - n₁ : ℕ) : ℝ) = (n₂ : ℝ) - (n₁ : ℝ) := Nat.cast_sub hlt.le
     exact_mod_cast (by linarith : ((n₂ - n₁ : ℕ) : ℝ) < (n₁ : ℝ))
+  -- Upper bound parityFlipWeight n₁ n₂ ≤ (α/2 + δ + ε/16) * n₁ * log n₁
+  have hh_ub_log : ((n₂ - n₁ : ℕ) : ℝ) ≤ (n₁ : ℝ) / (Real.log (n₁ : ℝ)) ^ (6 * Nat.floor (1 / δ) + 34) := by
+    have hlg := hN_lg n₁ (by omega)
+    rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at hlg
+    have hpow_le : (Real.log (n₁ : ℝ)) ^ (6 * Nat.floor (1 / δ) + 34) ≤ (n₁ : ℝ) ^ (1 - α) := by
+      have := (div_lt_iff₀ (Real.rpow_pos_of_pos hn₁_pos (1 - α))).mp hlg
+      linarith
+    have hgap' : ((n₂ - n₁ : ℕ) : ℝ) ≤ (n₁ : ℝ) ^ α := by rw [Nat.cast_sub hlt.le]; exact h_gap
+    have hmul : (n₁ : ℝ) ^ α * (n₁ : ℝ) ^ (1 - α) = (n₁ : ℝ) := by
+      rw [← Real.rpow_add hn₁_pos, show α + (1 - α) = 1 by ring, Real.rpow_one]
+    rw [le_div_iff₀ (by positivity)]
+    calc ((n₂ - n₁ : ℕ) : ℝ) * (Real.log (n₁ : ℝ)) ^ (6 * Nat.floor (1 / δ) + 34)
+        ≤ (n₁ : ℝ) ^ α * (n₁ : ℝ) ^ (1 - α) := mul_le_mul hgap' hpow_le (by positivity) (by positivity)
+      _ = (n₁ : ℝ) := hmul
   have hflip_ub : parityFlipWeight n₁ n₂ ≤ (α / 2 + δ + ε / 16) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
-    have hfl := h_flip n₁ n₂ (by omega) hlt hh_lt_n1
+    have hfl := h_flip n₁ n₂ (by omega) hlt hh_ub_log
     by_cases hδ_le : ((n₂ - n₁ : ℕ) : ℝ) ≤ (n₁ : ℝ) ^ δ
     · have h1 := hfl.1 hδ_le
       nlinarith [show 0 ≤ (n₁ : ℝ) * Real.log (n₁ : ℝ) by positivity]
@@ -415,9 +439,19 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         have := Real.log_le_log (by exact_mod_cast (by omega : 0 < n₂ - n₁)) h_gap'
         rwa [Real.log_rpow hn₁_pos] at this
       nlinarith [show 0 ≤ (n₁ : ℝ) * Real.log (n₁ : ℝ) by positivity]
+  -- Now prove the 4 divisibilities:
+  -- (1) Z * W ∣ 2^{v_2(n₁!)} * B^{(2)}(n₁) * B^{(2)}(n₂) * Z₁^*(n₁)^2 * Z₁^*(n₂)^2 * ∏_{flip} p^{v_p(n₁!)}
+  -- (2) Z * W ∣ 2^{v_2(n₁!)} * B^{(1)}(n₁) * B^{(1)}(n₂) * Z₂^*(n₁)^2 * Z₂^*(n₂)^2 * ∏_{flip} p^{v_p(n₁!)}
+  -- (3) X * Y ∣ 2^{v_2(n₁!)} * B^{(1)}(n₁) * B^{(2)}(n₂) * Z₂^*(n₁)^2 * Z₁^*(n₂)^2 * ∏_{flip} p^{v_p(n₁!)}
+  -- (4) X * Y ∣ 2^{v_2(n₁!)} * B^{(2)}(n₁) * B^{(1)}(n₂) * Z₁^*(n₁)^2 * Z₂^*(n₂)^2 * ∏_{flip} p^{v_p(n₁!)}
+  -- Using oddPartNat_u_eq_B_mul_Z_sq and A_sol m_i = (m_i-1)/2, B_sol m_i = (m_i+1)/2:
   have hZW_XY := log_ZW_and_XY_bounds (by omega) hlt hm₁ hm₂
   have ⟨_, _, _, _, hXY, _, _, _, _, hZW, hA₁_eq, hB₁_eq, hprod⟩ :=
     prop_6_1_coprime_and_factorization (by omega) hlt hm₁ hm₂
+  have hdiv_core : ∀ (T₁ T₂ : ℕ), T₁ * T₂ ∣ Nat.factorial n₁ →
+      (∀ p : ℕ, p.Prime → 3 ≤ p → ¬ 2 ∣ padicValNat p (P_ratio n₁ n₂) →
+        ¬ p ∣ (T₁ * T₂) → False) → True := fun _ _ _ _ => trivial
+  -- Let's write a clean helper for the 4 prime-power divisibilities!
   set u₁₁ := (m₁ - 1) / 2; set u₂₁ := (m₁ + 1) / 2
   set u₁₂ := (m₂ - 1) / 2; set u₂₂ := (m₂ + 1) / 2
   have ⟨hdec11, hdec21, _⟩ := oddPartNat_u_eq_B_mul_Z_sq (by omega) hm₁
@@ -478,6 +512,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
                   omega
         · rw [padicValNat.eq_zero_of_not_dvd hpT]; exact Nat.zero_le _
     · simp [Nat.factorization_eq_zero_of_not_prime _ hp_pr]
+  -- Helper for prime valuation in u_i1, u_i2
   have h_val_part : ∀ (p : ℕ), p.Prime → 3 ≤ p → 2 ∣ padicValNat p (P_ratio n₁ n₂) →
       ∀ (n_a m_a : ℕ), 4 ≤ n_a → Nat.factorial n_a + 1 = m_a ^ 2 →
       (p ∣ (m_a - 1) / 2 →
@@ -559,6 +594,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       · intro hp_even
         rw [hval, padicValNat.mul (B_part_pos _ _).ne' (pow_ne_zero 2 (Z_star_pos _ _).ne'),
           padicValNat.eq_zero_of_not_dvd (hp_nB _ hp_even), zero_add]
+  -- Apply hdvd_universal to the 4 combinations!
   have hPodd_iff : ∀ p : ℕ, p.Prime → 3 ≤ p → 2 ∣ padicValNat p (P_ratio n₁ n₂) →
       (p ∈ Podd n₁ ↔ p ∈ Podd n₂) := by
     intro p hp_pr _ h2dvd
@@ -584,6 +620,8 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         by_contra hnd; exact hfac_n1 (padicValNat.eq_zero_of_not_dvd hnd)
       refine ⟨⟨hp2, hp_pr.dvd_factorial.mp hp_dvd_n1⟩, hp_pr, ?_⟩
       intro h2; exact hp_odd (by rw [hv_eq]; exact dvd_add h2dvd h2)
+  -- Now define M₁₁ = B(n₁, u₁₁) * Z*(n₁, u₂₁)^2, M₂₁ = B(n₁, u₂₁) * Z*(n₁, u₁₁)^2,
+  -- M₁₂ = B(n₂, u₁₂) * Z*(n₂, u₂₂)^2, M₂₂ = B(n₂, u₂₂) * Z*(n₂, u₁₂)^2.
   let M₁₁ := B_part n₁ u₁₁ * Z_star n₁ u₂₁ ^ 2
   let M₂₁ := B_part n₁ u₂₁ * Z_star n₁ u₁₁ ^ 2
   let M₁₂ := B_part n₂ u₁₂ * Z_star n₂ u₂₂ ^ 2
@@ -592,6 +630,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
     rw [← hprod]; exact ⟨4 * X_gcd m₁ m₂ * Y_gcd m₁ m₂, by ring⟩
   have hXY_dvd_fac : X_gcd m₁ m₂ * Y_gcd m₁ m₂ ∣ Nat.factorial n₁ := by
     rw [← hprod]; exact ⟨4 * Z_gcd m₁ m₂ * W_gcd m₁ m₂, by ring⟩
+  -- For any T ∈ {ZW, XY} and any p ≥ 3 with 2 ∣ v_p(P), v_p(T) ≤ v_p(n₁!) ≤ v_p(n₂!) and p divides one of A_i, B_i!
   have h_log_bound_from_M : ∀ (T Ma Mb : ℕ), 0 < T → 0 < Ma → 0 < Mb →
       T ∣ 2 ^ padicValNat 2 (Nat.factorial n₁) * (Ma * Mb) * FlipProd →
       Real.log (T : ℝ) ≤ (n₁ : ℝ) * Real.log 2 + Real.log (Ma : ℝ) + Real.log (Mb : ℝ) + parityFlipWeight n₁ n₂ := by
@@ -825,6 +864,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         have hle_prod : padicValNat p M₁₂ ≤ padicValNat p (M₂₁ * M₁₂) := by
           rw [padicValNat.mul hM21_pos.ne' hM12_pos.ne']; exact Nat.le_add_left _ _
         omega
+  -- Now relate log(M₂ᵢ) to θ(nᵢ) * n₁ log n₁ and log(M₁ᵢ) to (1 - θ(nᵢ)) * n₁ log n₁!
   have hlog_M_rel : ∀ (n_a m_a : ℕ), N₀ ≤ n_a → n₁ ≤ n_a → n_a ≤ n₂ → Nat.factorial n_a + 1 = m_a ^ 2 →
       let u₁a := (m_a - 1) / 2; let u₂a := (m_a + 1) / 2
       |Real.log ((B_part n_a u₂a * Z_star n_a u₁a ^ 2 : ℕ) : ℝ) -
@@ -850,6 +890,19 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       linarith
     have hθ_eq : Real.log (B_part n_a ((m_a + 1) / 2) : ℝ) = theta_weight n_a m_a * S_odd n_a := by
       unfold theta_weight; rw [if_pos hSodd_pos, div_mul_cancel₀ _ hSodd_pos.ne']
+    -- Also log(B₁ * B₂) = log(B_star5 n_a) = S_odd n_a - ...? Actually:
+    -- B_part n_a u₁a * B_part n_a u₂a = B_star5 n_a, and log(B_star5 n_a) + log(B_star5 n_a) = ...
+    -- Wait: from hcs, log(B_part n_a u₂a) - log(Z_star n_a u₁a ^ 2) = O(n_a + |Delta_parity_odd n_a|),
+    -- so log(B_part n_a u₂a * Z_star n_a u₁a ^ 2) = 2 * log(B_part n_a u₂a) + O(n_a + |Delta_parity_odd n_a|)
+    -- = 2 * theta_weight n_a m_a * S_odd n_a + O(...) = theta_weight n_a m_a * n_a * log n_a + O(...)!
+    -- And log(B_part n_a u₁a) = log(B_star5 n_a) - log(B_part n_a u₂a), where 2 * log(B_star5 n_a) = S_odd n_a?
+    -- Wait: B_star5 n_a = ∏_{p ∈ Podd n_a, p ≥ 3} p^{(v_p(n_a!) + 1)/2} or p^{v_p(n_a!)}?
+    -- Let's check B_star5 in Thm5_2EffectiveCores: A_part * B_part = B_star5, and
+    -- in thm_5_2_part1_cross_symmetry, hlog_Bstar = (1/2) * (log(n_a!) - Delta_parity_odd n_a - v_2(n_a!) log 2) = S_odd n_a!
+    --Wait: S_odd n_a = (1/2)(log(n_a!) - v_2(n_a!) log 2 - Delta_parity_odd n_a)!!
+    --Wait: B_star5 n_a = ∏ p^{v_p(n_a!)} so log(B_star5 n_a) = S_odd n_a!
+    -- So log(B_part n_a u₁a) + log(B_part n_a u₂a) = S_odd n_a!
+    -- Hence log(B_part n_a u₁a) = (1 - theta_weight n_a m_a) * S_odd n_a!!
     have hB_prod : B_part n_a ((m_a - 1) / 2) * B_part n_a ((m_a + 1) / 2) = B_star5 n_a :=
       (oddPartNat_u_eq_B_mul_Z_sq (by omega) hma).2.2
     have hlog_Bstar : Real.log (B_star5 n_a : ℝ) = S_odd n_a := by
@@ -874,6 +927,8 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       rw [Nat.cast_mul, Real.log_mul (by exact_mod_cast (B_part_pos _ _).ne')
         (by exact_mod_cast (pow_pos (Z_star_pos _ _) 2).ne'), Nat.cast_pow]
       ring
+    -- Bound |Delta_parity_odd n_a|, |w₂₁ - w₂₂| log 2, C_cs exp(...), and |n_a log n_a - n₁ log n₁|
+    -- All are ≤ (ε / 16) n₁ log n₁!
     have h_il := hN_il n₁ (by omega)
     rw [Real.dist_eq, sub_zero, abs_of_nonneg (div_nonneg zero_le_one hlog_n₁_pos.le)] at h_il
     have hna_ub : (n_a : ℝ) ≤ (1 + min (ε / 256) (1 / 4)) * (n₁ : ℝ) := by
@@ -918,7 +973,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
             nlinarith [show 0 ≤ (n₁ : ℝ) * Real.log (n₁ : ℝ) by positivity]
     have hna_log_lb : (1 - ε / 64) * (n₁ : ℝ) * Real.log (n₁ : ℝ) ≤ (n_a : ℝ) * Real.log (n_a : ℝ) := by
       have h1 : (n₁ : ℝ) * Real.log (n₁ : ℝ) ≤ (n_a : ℝ) * Real.log (n_a : ℝ) := by
-        gcongr <;> exact_mod_cast hna_ge
+        gcongr <;> exact_mod_cast (by omega : n₁ ≤ n_a)
       nlinarith [show 0 ≤ (n₁ : ℝ) * Real.log (n₁ : ℝ) by positivity]
     have h_cs_err : C_cs * Real.exp (-(1 / 3 : ℝ) * (n_a : ℝ) * Real.log (n_a : ℝ)) +
         |(padicValNat 2 ((m_a - 1) / 2) : ℝ) - (padicValNat 2 ((m_a + 1) / 2) : ℝ)| * Real.log 2 / 2 +
@@ -1057,6 +1112,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         exact le_trans (mul_le_of_le_one_left (abs_nonneg _) (by linarith [hθ_01.1])) h_diff_S
       rw [abs_le] at h_t h_abs2 ⊢
       constructor <;> linarith
+  -- Bound (1/2) log(n₁!) - (6 log P + 4) ≥ (1/2 - ε/16) n₁ log n₁, and n₁ log 2 ≤ (ε/16) n₁ log n₁
   have h_fac_lb : (1 / 2 - ε / 16) * (n₁ : ℝ) * Real.log (n₁ : ℝ) ≤
       (1 / 2 : ℝ) * Real.log (Nat.factorial n₁ : ℝ) - (6 * Real.log (P_ratio n₁ n₂ : ℝ) + 4) := by
     have hfac := n_log_n_sub_n_le_log_factorial n₁ (by omega)
@@ -1277,10 +1333,20 @@ theorem thm_1_3_part1_k2_gap_and_counting (ε : ℝ) (hε : 0 < ε) :
         (by linarith [min_le_left ε (1 / 2 : ℝ)])
     exact lt_of_le_of_lt hpow_le h1
   refine ⟨⟨N₀, by omega, hgap⟩, ?_⟩
+  -- Counting bound: any two elements in S ∩ [M, 2M] (M ≥ N₀) are separated by > M^{1 - ε'}
+  -- Let's use the full Finset spacing lemma:
   let P_k2 : ℕ → Prop := fun n => ∃ m X₁ Y₁ : ℕ,
     Nat.factorial n + 1 = m ^ 2 ∧ IsFundamentalPell (q_n n) X₁ Y₁ ∧
     (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ 2
   classical
+  -- On any interval [M, 2M] with M ≥ N₀, # (S ∩ [M, 2M]) ≤ M^{ε'} + 1 ≤ 2 M^{ε'}
+  -- Summing over dyadic blocks M = 2^k ≤ N gives ≤ 2 * (log₂ N + 2) * N^{ε'} ≤ C_ε * N^ε (Wait: log₂ N * N^{ε'} ≤ C * N^{2ε'}, so use ε'/2 in hCD!)
+  -- Actually, if we don't want log₂ N, notice: if we use ε'' := min (ε / 2) (1 / 2) in hgap, then ∑_{k ≤ log₂ N} (2^k)^{ε''} is a geometric series ≤ C' * N^{ε''} ≤ C' * N^ε!!
+  -- Even simpler: for any N ≥ 1, count S ∩ [1, N₀) ≤ N₀, and for S ∩ [N₀, N]:
+  -- Wait: on [1, N], we can just bound `(Finset.Icc 1 N).filter P_k2` by `N₀ + ...`!
+  -- Let's check: geometric series ∑_{k=0}^{K} (2^{ε''})^k = ((2^{ε''})^{K+1} - 1)/(2^{ε''} - 1) ≤ C * N^{ε''} ≤ C * N^ε (NO log₂ N factor!!)!
+  -- Even simpler without geometric series: we ALREADY proved hgap for ε! If we just use `ε / 2`? No, we only proved hgap for `ε`, wait: we can call `thm_6_4_capacity_diamond` with `1 - min (ε / 2) (1 / 2)`!
+  -- Let's do that!
   let ε₂ := min (ε / 2) (1 / 2)
   have hε₂ : 0 < ε₂ := by positivity
   obtain ⟨N₁, hN₁_ge, hCD₂⟩ := thm_6_4_capacity_diamond (1 - ε₂) (by linarith [min_le_right (ε / 2) (1 / 2 : ℝ)])
@@ -1303,6 +1369,7 @@ theorem thm_1_3_part1_k2_gap_and_counting (ε : ℝ) (hε : 0 < ε) :
       have : 0 ≤ ((b : ℝ) - (a : ℝ)) / d := div_nonneg (by exact_mod_cast (by omega : (0 : ℤ) ≤ (b : ℤ) - a)) hd.le
       linarith
     · push Not at hS1
+      -- Sort S as an order embedding Fin S.card ↪o ℕ
       let f := S.orderEmbOfFin rfl
       have hf_mono : StrictMono f := f.strictMono
       have h_step : ∀ i : ℕ, (hi : i + 1 < S.card) →
@@ -1348,6 +1415,11 @@ theorem thm_1_3_part1_k2_gap_and_counting (ε : ℝ) (hε : 0 < ε) :
           rw [Nat.cast_sub (by omega : 1 ≤ S.card)]; push_cast; ring
         rw [hsub]; linarith
       linarith [(le_div_iff₀ hd).mpr h1]
+  -- Now use dyadic partition on [N₁, N] with ratio 2 (actually backward dyadic M = N / 2^k!)
+  -- Even simpler: partition [1, N] into [1, N₁ - 1] and ∪_{k = 0}^{K} [max N₁ (2^k), min N (2^(k+1) - 1)]!
+  -- On [2^k, 2^(k+1) - 1] ∩ [N₁, N], gap ≥ (2^k)^{1 - ε₂}, length ≤ 2^k, so count ≤ (2^k)^{ε₂} + 1 ≤ 2 * (2^k)^{ε₂}!
+  -- Sum over k ≤ Nat.log 2 N gives ≤ 2 * ∑_{k=0}^{Nat.log 2 N} (2^{ε₂})^k ≤ 2 * (2^{ε₂})^{Nat.log 2 N + 1} / (2^{ε₂} - 1)
+  -- ≤ (4 / (2^{ε₂} - 1)) * N^{ε₂} ≤ (4 / (2^{ε₂} - 1)) * N^ε!
   let C_cnt : ℝ := (N₁ : ℝ) + 4 * (2 : ℝ) ^ ε₂ / ((2 : ℝ) ^ ε₂ - 1)
   have h2e_gt : 1 < (2 : ℝ) ^ ε₂ := Real.one_lt_rpow (by norm_num) hε₂
   refine ⟨C_cnt, by positivity, fun N hN => ?_⟩
@@ -1470,5 +1542,6 @@ theorem prop_6_2_part3_consecutive_squares_k2_exclusion :
       norm_num; nlinarith
     nlinarith [Real.rpow_nonneg (by positivity : (0 : ℝ) ≤ j) (3 / 2)]
   push_cast at h1; linarith
+
 
 end GrasGreenbergBrocard

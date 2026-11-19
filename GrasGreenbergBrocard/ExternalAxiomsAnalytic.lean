@@ -69,9 +69,55 @@ axiom vaaler_extremal_polynomials :
          ((B 0).re = 1 / 2) ∧
          (∀ m : ℤ, Psi (m : ℝ) = 0))
 
+/-- `I` is the exact finite set of all primes in a real subinterval `(a, b] ⊆ (P, 2P]`.
+This prevents adversarial cherry-picking of arbitrary prime subsets. -/
+def IsPrimeSubinterval (P : ℝ) (I : Finset ℕ) : Prop :=
+  ∃ a b : ℝ, P ≤ a ∧ a ≤ b ∧ b ≤ 2 * P ∧
+    ∀ p : ℕ, p ∈ I ↔ p.Prime ∧ a < (p : ℝ) ∧ (p : ℝ) ≤ b
+
+theorem isPrimeSubinterval_of_bounds {P a b : ℝ} (hP : 0 ≤ P) (I : Finset ℕ)
+    (hI : ∀ p : ℕ, p ∈ I ↔ p.Prime ∧ a < (p : ℝ) ∧ (p : ℝ) ≤ b)
+    (hsub : ∀ p ∈ I, P < (p : ℝ) ∧ (p : ℝ) ≤ 2 * P) :
+    IsPrimeSubinterval P I := by
+  let a' := max P (min (2 * P) a)
+  let b' := max a' (min (2 * P) b)
+  refine ⟨a', b', le_max_left _ _, le_max_left _ _,
+    max_le (max_le (by linarith) (min_le_left _ _)) (min_le_left _ _), ?_⟩
+  intro p
+  rw [hI]
+  constructor
+  · intro hp
+    have hpb := hsub p ((hI p).mpr hp)
+    have ha_lt_2P : a < 2 * P := lt_of_lt_of_le hp.2.1 hpb.2
+    refine ⟨hp.1, ?_, ?_⟩
+    · dsimp only [a']
+      rw [min_eq_right ha_lt_2P.le]
+      exact max_lt hpb.1 hp.2.1
+    · exact le_trans (le_min hpb.2 hp.2.2) (le_max_right _ _)
+  · intro ⟨hpr, ha', hb'⟩
+    have ha_lt : a < (p : ℝ) := by
+      have h1 : min (2 * P) a < (p : ℝ) := lt_of_le_of_lt (le_max_right _ _) ha'
+      have h2 : (p : ℝ) ≤ 2 * P :=
+        le_trans hb' (max_le (max_le (by linarith) (min_le_left _ _)) (min_le_left _ _))
+      by_contra hle; push Not at hle
+      linarith [le_min h2 hle]
+    have hb_le : (p : ℝ) ≤ b := by
+      have h1 : ¬ (p : ℝ) ≤ a' := not_le.mpr ha'
+      have h2 : b' = min (2 * P) b := by
+        by_contra hne
+        have : b' = a' := (max_choice a' (min (2 * P) b)).resolve_right hne
+        rw [this] at hb'; exact h1 hb'
+      rw [h2] at hb'
+      exact le_trans hb' (min_le_right _ _)
+    exact ⟨hpr, ha_lt, hb_le⟩
+
 /-- **Vaughan–van der Corput–Kusmin–Landau–Weyl Prime Exponential Sum Engine**
 (Iwaniec & Kowalski, *Analytic Number Theory*, AMS Colloq. Publ. 53, 2004:
-Proposition 13.4, Corollary 8.11, Corollary 8.13, Theorem 8.25). -/
+Proposition 13.4, Corollary 8.11, Corollary 8.13, Theorem 8.25).
+Strictly requires:
+- `I` is an exact prime subinterval `(a, b] ⊆ (P, 2P]` (`IsPrimeSubinterval P I`),
+- `w` is bounded (`|w t| ≤ W₀`) and monotone (`AntitoneOn w (Set.Icc P (2 * P))`, hence
+  total variation `≤ 2 W₀` on `[P, 2P]`, enabling Abel partial summation without oscillation). -/
 axiom vaughan_van_der_corput_prime_sum :
   ∀ (δ : ℝ), 0 < δ → δ ≤ 1 / 3 →
     ∃ (η' η : ℝ), 0 < η' ∧ 0 < η ∧
@@ -82,9 +128,10 @@ axiom vaughan_van_der_corput_prime_sum :
       4 ≤ n →
       (n : ℝ) ^ δ ≤ P →
       P ≤ (n : ℝ) / (Real.log (n : ℝ)) ^ 12 →
-      (∀ p ∈ I, p.Prime ∧ P < (p : ℝ) ∧ (p : ℝ) ≤ 2 * P) →
+      IsPrimeSubinterval P I →
       (2 : ℝ) ^ (- (R : ℤ)) * (Real.log (n : ℝ)) ^ A_R ≤ T₀ →
       (∀ t ∈ Set.Icc P (2 * P), |w t| ≤ W₀) →
+      AntitoneOn w (Set.Icc P (2 * P)) →
       (∀ (j : ℕ), 1 ≤ j → j ≤ 5 * R + 2 →
         ∃ c₁ c₂ : ℝ, 0 < c₁ ∧ c₁ ≤ c₂ ∧
           ∀ t ∈ Set.Icc P (2 * P),

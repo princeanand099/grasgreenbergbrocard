@@ -32,11 +32,12 @@ theorem prime_exp_sum_bounds_mod (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
         (hA_nz : ∃ r ∈ A, h r ≠ 0),
         (n : ℝ) ^ δ ≤ P →
         P ≤ (n : ℝ) / (Real.log (n : ℝ)) ^ 12 →
-        (∀ p ∈ I, p.Prime ∧ P < (p : ℝ) ∧ (p : ℝ) ≤ 2 * P) →
+        IsPrimeSubinterval P I →
         (∀ r ∈ A, 1 ≤ r ∧ r ≤ R) →
         (∀ r ∈ A, |(h r : ℤ)| ≤ (H : ℤ)) →
         (∀ r ∈ A, (2 : ℝ) ^ (- (R : ℤ)) * (Real.log (n : ℝ)) ^ A_R ≤ (n : ℝ) / P ^ r) →
         (∀ t ∈ Set.Icc P (2 * P), |w t| ≤ W₀) →
+        AntitoneOn w (Set.Icc P (2 * P)) →
         0 ≤ W₀ →
         let r₀ := (A.filter (fun r => h r ≠ 0)).min' (by
           obtain ⟨r, hrA, hr0⟩ := hA_nz
@@ -85,7 +86,7 @@ theorem prime_exp_sum_bounds_mod (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
     (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 2)
   filter_upwards [Filter.eventually_ge_atTop 4, hev1, hev2, hev_log] with n hn hsmall1 hsmall2 hlog2
   dsimp only
-  intro P I A h w W₀ hA_nz hP_lo hP_hi hI_prime hA_range hh_bound hPhase hW_bound hW₀
+  intro P I A h w W₀ hA_nz hP_lo hP_hi hI_prime hA_range hh_bound hPhase hW_bound hW_anti hW₀
   have hne_flt : (A.filter (fun r => h r ≠ 0)).Nonempty := by
     obtain ⟨r, hrA, hr0⟩ := hA_nz
     exact ⟨r, Finset.mem_filter.mpr ⟨hrA, hr0⟩⟩
@@ -350,7 +351,7 @@ theorem prime_exp_sum_bounds_mod (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
         have h2m : c₂_high * T₀ / P ^ j = (1 / (h_mod : ℝ)) * Mmax * T₀ / P ^ j + ((1 / (h_mod : ℝ)) * Mmax) * T₀ / P ^ j := by
           unfold c₂_high; ring
         linarith
-  have hMain := hVaughan n P I F w W₀ T₀ hn hP_lo hP_hi hI_prime hT₀_ge hW_bound hDeriv
+  have hMain := hVaughan n P I F w W₀ T₀ hn hP_lo hP_hi hI_prime hT₀_ge hW_bound hW_anti hDeriv
   constructor
   · refine ⟨hMain.1, ?_⟩
     have hlogP_le : Real.log P ≤ Real.log (n : ℝ) := by

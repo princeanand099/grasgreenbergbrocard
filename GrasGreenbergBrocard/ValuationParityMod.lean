@@ -539,10 +539,28 @@ theorem upper_band_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         have ht_pos : 0 < t := lt_of_lt_of_le hP_pos ht.1
         rw [abs_of_nonneg (by positivity)]
         exact one_div_le_one_div_of_le hP_pos ht.1
+      have hI_sub : IsPrimeSubinterval P (B_k k) := by
+        refine isPrimeSubinterval_of_bounds
+          (a := max (max (Nat.sqrt n : ℝ) ((n : ℝ) ^ a)) (L * (2 : ℝ) ^ k))
+          (b := min (min (n : ℝ) (min ((n : ℝ) ^ b) ((n : ℝ) ^ (1 - δ)))) (L * (2 : ℝ) ^ (k + 1)))
+          hP_pos.le (B_k k) ?_ (fun p hp => (hI_prime p hp).2)
+        intro p
+        simp only [B_k, U, Finset.mem_filter, Finset.mem_Icc, max_lt_iff, le_min_iff]
+        constructor
+        · rintro ⟨⟨⟨hpsq, hpn⟩, hpr, hpa, hpb, hp1d⟩, hpL, hp2L⟩
+          exact ⟨hpr, ⟨⟨by exact_mod_cast (by omega : Nat.sqrt n < p), hpa⟩, hpL⟩,
+            ⟨⟨by exact_mod_cast hpn, hpb, hp1d⟩, hp2L⟩⟩
+        · rintro ⟨hpr, ⟨⟨hpsq, hpa⟩, hpL⟩, ⟨⟨hpn, hpb, hp1d⟩, hp2L⟩⟩
+          have hsq1 : Nat.sqrt n + 1 ≤ p := by
+            have : Nat.sqrt n < p := by exact_mod_cast hpsq
+            omega
+          exact ⟨⟨⟨hsq1, by exact_mod_cast hpn⟩, hpr, hpa, hpb, hp1d⟩, hpL, hp2L⟩
       let w : ℝ → ℝ := fun t => 1 / t
+      have hW_anti : AntitoneOn w (Set.Icc P (2 * P)) :=
+        fun s hs t _ hst => one_div_le_one_div_of_le (lt_of_lt_of_le hP_pos hs.1) hst
       have h_res := (hexp_n P (B_k k) {1} (fun _ => m) w (1 / P)
-        ⟨1, Finset.mem_singleton_self 1, hm0⟩ hP_lo hP_hi hI_prime hA_range
-        (fun _ _ => hmH) hPhase hW_bound (by positivity)).1.2
+        ⟨1, Finset.mem_singleton_self 1, hm0⟩ hP_lo hP_hi hI_sub hA_range
+        (fun _ _ => hmH) hPhase hW_bound hW_anti (by positivity)).1.2
       have h_eq_sum : ∑ p ∈ B_k k, ((Real.log (p : ℝ) / (p : ℝ) : ℝ) : ℂ) *
             eExp ((m : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ))) =
           ∑ p ∈ B_k k, (w (p : ℝ) * Real.log (p : ℝ) : ℂ) *
@@ -916,6 +934,7 @@ theorem multi_modulus_power_band_equidistribution (h_mod c : ℕ) (hh_mod : 2 �
             rw [Real.sqrt_lt' (by positivity)]; exact_mod_cast h_lt
           have : (p : ℝ) ≤ (Nat.sqrt n : ℝ) + 1 := by linarith
           have hp_lt : p ≤ Nat.sqrt n + 1 := by exact_mod_cast this
+          -- Actually (n : ℝ)^δ ≤ (n : ℝ)^{1/3} ≤ Nat.sqrt n for n ≥ 16
           have h_n13' : (n : ℝ) ^ δ ≤ (n : ℝ) ^ (1 / 3 : ℝ) :=
             Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast (by omega : 1 ≤ n)) hδ1
           have h_cube : (n : ℝ) ^ (1 / 3 : ℝ) < (Nat.sqrt n : ℝ) := by

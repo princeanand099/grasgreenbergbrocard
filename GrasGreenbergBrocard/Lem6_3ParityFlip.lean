@@ -251,15 +251,17 @@ For any `δ ∈ (0, 1/4]` and any `ε > 0`, there exists `N₀` such that for al
 - if `(n₁ : ℝ) ^ δ < (h : ℝ)`, then `|parityFlipWeight n₁ n₂ - (1/2) * n₁ * log h| ≤ (δ + ε) * n₁ * log n₁`. -/
 theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 4)
     (ε : ℝ) (hε : 0 < ε) :
-    ∃ N₀ : ℕ, 1000 ≤ N₀ ∧ ∀ n₁ n₂ : ℕ, N₀ ≤ n₁ → n₁ < n₂ → n₂ - n₁ < n₁ →
+    ∃ N₀ : ℕ, 1000 ≤ N₀ ∧ ∀ n₁ n₂ : ℕ, N₀ ≤ n₁ → n₁ < n₂ →
+      ((n₂ - n₁ : ℕ) : ℝ) ≤ (n₁ : ℝ) / (Real.log (n₁ : ℝ)) ^ (6 * Nat.floor (1 / δ) + 34) →
       let h := n₂ - n₁
       ((h : ℝ) ≤ (n₁ : ℝ) ^ δ →
         parityFlipWeight n₁ n₂ ≤ (δ + ε) * (n₁ : ℝ) * Real.log (n₁ : ℝ)) ∧
       ((n₁ : ℝ) ^ δ < (h : ℝ) →
         |parityFlipWeight n₁ n₂ - (1 / 2 : ℝ) * (n₁ : ℝ) * Real.log (h : ℝ)| ≤
           (δ + ε) * (n₁ : ℝ) * Real.log (n₁ : ℝ)) := by
-  obtain ⟨_, _, _, _, C₁, C₂, _, _, hC₂, _, hExpBound⟩ := prime_exp_sum_bounds δ hδ0 (by linarith)
-  obtain ⟨N_exp, hN_exp⟩ := Filter.eventually_atTop.mp hExpBound
+  obtain ⟨N_osc, hN_osc_ge, hOscHonest⟩ := lem_6_3_osc_bound_honest δ hδ0 hδ1 ε hε
+  let C₂ : ℝ := 1
+  have hC₂ : 0 < C₂ := by norm_num
   obtain ⟨C_mert, hC_mert_pos, hMert⟩ := Mertens_div_p_band_le
   -- Choose N₀ large enough for all asymptotic error terms
   let R := Nat.floor (1 / δ)
@@ -307,28 +309,20 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
   obtain ⟨C_mert1, hC_mert1_pos, hMert1⟩ := mertens_first_theorem
   obtain ⟨N₇, hN₇⟩ := Filter.eventually_atTop.mp
     (h_err2.eventually (Metric.ball_mem_nhds 0 (show (0 : ℝ) < ε / (100 * (C_mert1 + C_mert + C₂ + 10)) by positivity)))
-  obtain ⟨N_exp_d, hN_exp_d⟩ := Filter.eventually_atTop.mp
-    ((tendsto_rpow_atTop hδ0 |>.comp tendsto_natCast_atTop_atTop).eventually
-      (Filter.eventually_ge_atTop (max (N_exp : ℝ) 100)))
-  let C_osc_const : ℝ := 1000 * (((R : ℝ) + 4) ^ 2 + 1) * (C₂ + 1) * ((δ / 2) ^ (-(R : ℤ) - 2) + 1)
-  have h_err_osc : Filter.Tendsto
-      (fun n : ℕ => C_osc_const * (Real.log (Real.log (n : ℝ)) + 1) ^ 2 / (Real.log (n : ℝ)) ^ 2)
-      Filter.atTop (nhds 0) := by
-    have h1 : Filter.Tendsto (fun t : ℝ => (Real.log t + 1) ^ 2 / t ^ 2) Filter.atTop (nhds 0) := by
-      have ht : Filter.Tendsto (fun t : ℝ => (Real.log t + 1) / t) Filter.atTop (nhds 0) := by
-        have ha : Filter.Tendsto (fun t : ℝ => Real.log t / t) Filter.atTop (nhds 0) := by
-          simpa using Real.tendsto_pow_log_div_mul_add_atTop 1 0 1 (by norm_num)
-        have hb : Filter.Tendsto (fun t : ℝ => 1 / t) Filter.atTop (nhds 0) :=
-          tendsto_const_nhds.div_atTop Filter.tendsto_id
-        simpa [add_div] using ha.add hb
-      simpa [div_pow] using ht.pow 2
-    have h2 := (h1.comp Real.tendsto_log_atTop).comp tendsto_natCast_atTop_atTop
-    simpa [Function.comp_def, mul_div_assoc] using h2.const_mul C_osc_const
-  obtain ⟨N_osc_fin, hN_osc_fin⟩ := Filter.eventually_atTop.mp
-    (h_err_osc.eventually (Metric.ball_mem_nhds 0 (show (0 : ℝ) < ε / 100 by positivity)))
-  let N₀ := max (max (max N_exp N₁) (max N₂ N₃)) (max (max N₄ N₅) (max N₆ (max N₇ (max N_exp_d (max N_osc_fin 1000)))))
+  let N₀ := max (max (max N_osc N₁) (max N₂ N₃)) (max (max N₄ N₅) (max N₆ (max N₇ 1000)))
   refine ⟨N₀, by omega, ?_⟩
-  intro n₁ n₂ hn₁ hlt h_lt_n₁
+  intro n₁ n₂ hn₁ hlt hh_ub_log
+  have h_lt_n₁ : n₂ - n₁ < n₁ := by
+    have hlog2 : (2 : ℝ) ≤ Real.log (n₁ : ℝ) := by
+      have h5 := hN₅ n₁ (by omega)
+      rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at h5
+      have hlog_pos : 0 < Real.log (n₁ : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n₁))
+      have := (div_lt_iff₀ hlog_pos).mp h5
+      nlinarith only [this, hδ0, hδ1, hlog_pos]
+    have hpow1 : (1 : ℝ) < (Real.log (n₁ : ℝ)) ^ (6 * Nat.floor (1 / δ) + 34) := one_lt_pow₀ (by linarith) (by omega)
+    have hn1_pos : (0 : ℝ) < (n₁ : ℝ) := by exact_mod_cast (by omega : 0 < n₁)
+    have hltR : ((n₂ - n₁ : ℕ) : ℝ) < (n₁ : ℝ) := lt_of_le_of_lt hh_ub_log (by rw [div_lt_iff₀ (by positivity)]; nlinarith)
+    exact_mod_cast hltR
   set h := n₂ - n₁
   have hn₁_pos : (0 : ℝ) < n₁ := by exact_mod_cast (by omega : 0 < n₁)
   have hlog_n₁_pos : 0 < Real.log (n₁ : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n₁))
@@ -1379,16 +1373,7 @@ theorem lem_6_3_parity_flip_uniform (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 
           ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
             ((padicValNat p (Nat.factorial n₁) : ℝ) * Real.log (p : ℝ))| ≤
           (ε / 4) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
-        refine lem_6_3_osc_bound δ hδ0 hδ1 ε hε C₂ hC₂ N_exp ?_ hR_ge4 N₅ N_exp_d N_osc_fin
-          hN₅ hN_exp_d hN_osc_fin n₁ n₂ (by omega) (by omega) (by omega) (by omega) (by omega) hlog_ge3 hlt h_lt_n₁
-          hn₁_pos hlog_n₁_pos hh_gt hy₁_gt hy₁_le_n₁ hn₁_delta_ge3
-        intro b hb P I hm1 w W₀ hPb hPb2 hIb hm1_nz hm1_bd hTb hw hW₀
-        simpa using ((hN_exp b hb) P I {1} (fun _ => hm1) w W₀ ⟨1, Finset.mem_singleton_self 1, hm1_nz⟩
-          hPb hPb2 hIb
-          (fun r hr => by rw [Finset.mem_singleton] at hr; subst hr; exact ⟨le_refl 1, by omega⟩)
-          (fun r hr => by rw [Finset.mem_singleton] at hr; subst hr; exact hm1_bd)
-          (fun r hr => by rw [Finset.mem_singleton] at hr; subst hr; simpa using hTb)
-          hw hW₀).1.2
+        exact hOscHonest n₁ n₂ (by omega) hlt hh_ub_log hh_gt hy₁_gt
       rw [hS_osc_eq]
       have h_osc_lo : (1 / 2 : ℝ) * (n₁ : ℝ) * Real.log (h : ℝ) - (δ / 2) * (n₁ : ℝ) * Real.log (n₁ : ℝ) -
           (ε / 4) * (n₁ : ℝ) * Real.log (n₁ : ℝ) ≤

@@ -258,8 +258,26 @@ theorem interCollar_band_isBigO (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3)
           have ht1 : 0 < t - 1 := by linarith [ht.1]
           rw [abs_of_pos (one_div_pos.mpr ht1)]
           rw [div_le_div_iff₀ (by positivity) (by positivity)]; linarith [ht.1, hP_ge2]
+        have hIk_sub : IsPrimeSubinterval P Ik := by
+          refine isPrimeSubinterval_of_bounds
+            (a := max (max (2 : ℝ) ((n : ℝ) ^ δ)) (max ((n : ℝ) ^ (1 / ((r : ℝ) + 1))) P))
+            (b := min (min (Nat.sqrt n : ℝ) ((n : ℝ) ^ (1 / (r : ℝ)) / (Real.log (n : ℝ)) ^ ((A_R : ℝ) / (r : ℝ)))) (2 * P))
+            hP_pos.le Ik ?_ (fun p hp => (hIk_pr p hp).2)
+          intro p
+          simp only [Ik, D_r, Finset.mem_filter, Finset.mem_Icc, interCollar, Set.mem_Ioc, max_lt_iff, le_min_iff]
+          constructor
+          · rintro ⟨⟨⟨hp3, hpsq⟩, hpr, hpnd, hlo, hhi⟩, hpP, hp2P⟩
+            exact ⟨hpr, ⟨⟨by exact_mod_cast (by omega : 2 < p), hpnd⟩, hlo, hpP⟩,
+              ⟨⟨by exact_mod_cast hpsq, hhi⟩, hp2P⟩⟩
+          · rintro ⟨hpr, ⟨⟨hp2, hpnd⟩, hlo, hpP⟩, ⟨⟨hpsq, hhi⟩, hp2P⟩⟩
+            have hp3 : 3 ≤ p := by
+              have : 2 < p := by exact_mod_cast hp2
+              omega
+            exact ⟨⟨⟨hp3, by exact_mod_cast hpsq⟩, hpr, hpnd, hlo, hhi⟩, hpP, hp2P⟩
+        have hW_anti : AntitoneOn (fun t : ℝ => 1 / (t - 1)) (Set.Icc P (2 * P)) :=
+          fun s hs t _ hst => one_div_le_one_div_of_le (by linarith [hs.1, hP_ge2]) (by linarith)
         have hexp_app := hexp_n P Ik A h_fn (fun t => 1 / (t - 1)) (2 / P)
-          hA_nz hP_lo hP_hi hIk_pr hA_range hh_le hPhase hW_b (by positivity)
+          hA_nz hP_lo hP_hi hIk_sub hA_range hh_le hPhase hW_b hW_anti (by positivity)
         dsimp only at hexp_app
         have hP_cancel : C₂e * (2 / P) * P * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) ≤
             4 * C₂e * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := by
