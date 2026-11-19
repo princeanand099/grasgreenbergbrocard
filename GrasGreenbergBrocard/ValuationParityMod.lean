@@ -1374,10 +1374,10 @@ theorem multi_modulus_power_band_equidistribution (h_mod c : ℕ) (hh_mod : 2 �
           show eExp 0 = 1 from by unfold eExp; simp, mul_add, mul_one, add_mul, Finset.mul_sum, Finset.sum_mul]
         congr 1
         refine Finset.sum_congr rfl (fun z _ => ?_)
-          have harg : (z : ℝ) * ((padicValNat p (Nat.factorial n) : ℝ) - (c : ℝ)) / (h_mod : ℝ) =
-              -((z : ℝ) * (c : ℝ) / (h_mod : ℝ)) +
-              (z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ) := by ring
-          rw [harg, ← eExp_add]; ring
+        have harg : (z : ℝ) * ((padicValNat p (Nat.factorial n) : ℝ) - (c : ℝ)) / (h_mod : ℝ) =
+            -((z : ℝ) * (c : ℝ) / (h_mod : ℝ)) +
+            (z : ℝ) * (padicValNat p (Nat.factorial n) : ℝ) / (h_mod : ℝ) := by ring
+        rw [harg, ← eExp_add]; ring
       rw [Finset.sum_congr rfl h_each, Finset.sum_add_distrib, ← Finset.mul_sum, Finset.sum_comm]
       congr 1
       refine Finset.sum_congr rfl (fun z _ => ?_)
