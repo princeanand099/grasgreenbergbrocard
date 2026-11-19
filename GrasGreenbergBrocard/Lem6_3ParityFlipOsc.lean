@@ -46,7 +46,7 @@ lemma val_factorial_sub_div_abs_le {n p : ℕ} (hp : p.Prime) (hp3 : 3 ≤ p) :
           (Finset.mem_Ico.mpr ⟨le_refl 1, (Nat.add_lt_add_right hpos 1 : 1 < Nat.log p n + 1)⟩)
         rwa [pow_one] at hs
     have hdiv_lt : (n : ℝ) / (p : ℝ) - 1 < ((n / p : ℕ) : ℝ) := by
-      have hlt : n < (n / p + 1) * p := Nat.lt_div_mul_add hp.pos
+      have hlt : n < (n / p + 1) * p := by rw [add_mul, one_mul]; exact Nat.lt_div_mul_add hp.pos
       have hltr : (n : ℝ) < (((n / p : ℕ) : ℝ) + 1) * (p : ℝ) := by exact_mod_cast hlt
       have hdiv : (n : ℝ) / (p : ℝ) < ((n / p : ℕ) : ℝ) + 1 := (div_lt_iff₀ hp_pos).mpr hltr
       linarith
@@ -83,7 +83,7 @@ private lemma norm_prod_sub_prod_le {ι : Type*} [DecidableEq ι] (S : Finset ι
     have hgs : ∀ i ∈ s, ‖g i‖ ≤ M := fun i hi => hg i (Finset.mem_insert_of_mem hi)
     have hprod_f : ‖∏ i ∈ s, f i‖ ≤ 1 := by
       rw [norm_prod]
-      exact Finset.prod_le_one (fun _ _ => norm_nonneg _) hfs
+      exact Finset.prod_le_one (fun i _ => norm_nonneg (f i)) (fun i hi => hfs i hi)
     have hid : f a * ∏ i ∈ s, f i - g a * ∏ i ∈ s, g i =
         (f a - g a) * ∏ i ∈ s, f i + g a * (∏ i ∈ s, f i - ∏ i ∈ s, g i) := by ring
     rw [hid]
@@ -154,6 +154,7 @@ private lemma removeIocs_props (ex cur : List (ℝ × ℝ))
       · intro x hx1 hx2; linarith [le_trans hx1.2 (min_le_right _ _), hx2.1]
       · intro x hx1 hx2; linarith [lt_of_le_of_lt (le_max_right _ _) hx1.1, hx2.2]
     have hpw1 : cur'.Pairwise (fun u v => Disjoint (Set.Ioc u.1 u.2) (Set.Ioc v.1 v.2)) := by
+      clear hsub1 hdisj1
       dsimp only [cur']
       induction cur with
       | nil => simp
@@ -169,7 +170,7 @@ private lemma removeIocs_props (ex cur : List (ℝ × ℝ))
           · rw [List.mem_flatMap] at hu
             obtain ⟨b, hb, hub⟩ := hu
             have hda := hpw.1 b hb
-            refine Set.Disjoint.mono ?_ ?_ hda
+            refine Disjoint.mono ?_ ?_ hda
             · intro x hx; exact ⟨hx.1, le_trans hx.2 (min_le_left _ _)⟩
             · simp only [removeOneIoc, List.mem_cons, List.not_mem_nil, or_false] at hub
               rcases hub with rfl | rfl
@@ -179,7 +180,7 @@ private lemma removeIocs_props (ex cur : List (ℝ × ℝ))
           rw [List.mem_flatMap] at hu
           obtain ⟨b, hb, hub⟩ := hu
           have hda := hpw.1 b hb
-          refine Set.Disjoint.mono ?_ ?_ hda
+          refine Disjoint.mono ?_ ?_ hda
           · intro x hx; exact ⟨lt_of_le_of_lt (le_max_left _ _) hx.1, hx.2⟩
           · simp only [removeOneIoc, List.mem_cons, List.not_mem_nil, or_false] at hub
             rcases hub with rfl | rfl
@@ -195,7 +196,7 @@ private lemma removeIocs_props (ex cur : List (ℝ × ℝ))
       simp only [List.mem_cons] at he
       rcases he with rfl | he
       · obtain ⟨w, hw, huw⟩ := hsub_out u hu
-        exact Set.Disjoint.mono_left huw (hdisj1 w hw)
+        exact Disjoint.mono_left huw (hdisj1 w hw)
       · exact hdisj_out u hu e he
     · intro x ⟨v, hv, hxv⟩ hnot
       have hnot_cd : x ∉ Set.Ioc cd.1 cd.2 := hnot cd (by simp)
@@ -211,17 +212,39 @@ private lemma removeIocs_props (ex cur : List (ℝ × ℝ))
             ⟨max_lt hxv.1 hxd, hxv.2⟩⟩
       exact hcov_out x hmem_cur' (fun e he => hnot e (by simp [he]))
 
-private lemma disjoint_Ioc_cases {a b c d : ℝ} (hab : a < b) (hcd : c ≤ d)
+private lemma disjoint_Ioc_cases {a b c d : ℝ} (hab : a < b) (hcd : c < d)
     (hdisj : Disjoint (Set.Ioc a b) (Set.Ioc c d)) : b ≤ c ∨ d ≤ a := by
   by_contra h
   push_neg at h
-  have hlt : max a c < min b d := max_lt (lt_min hab h.2) (lt_min h.1 (lt_of_le_of_lt hcd (by linarith)))
+  have hlt : max a c < min b d := max_lt (lt_min hab h.2) (lt_min h.1 hcd)
   let x := (max a c + min b d) / 2
-  have hx1 : x ∈ Set.Ioc a b := ⟨lt_of_le_of_lt (le_max_left a c) (by linarith),
-    le_trans (by linarith : x ≤ min b d) (min_le_left b d)⟩
-  have hx2 : x ∈ Set.Ioc c d := ⟨lt_of_le_of_lt (le_max_right a c) (by linarith),
-    le_trans (by linarith : x ≤ min b d) (min_le_right b d)⟩
+  have hx_gt : max a c < x := by dsimp [x]; linarith
+  have hx_le : x ≤ min b d := by dsimp [x]; linarith
+  have hx1 : x ∈ Set.Ioc a b := ⟨lt_of_le_of_lt (le_max_left a c) hx_gt, le_trans hx_le (min_le_left b d)⟩
+  have hx2 : x ∈ Set.Ioc c d := ⟨lt_of_le_of_lt (le_max_right a c) hx_gt, le_trans hx_le (min_le_right b d)⟩
   exact Set.disjoint_left.mp hdisj hx1 hx2
+
+private lemma sum_union_le_of_nonneg {α : Type*} [DecidableEq α] {s t : Finset α} {f : α → ℝ}
+    (hf : ∀ x ∈ s ∪ t, 0 ≤ f x) :
+    ∑ x ∈ s ∪ t, f x ≤ (∑ x ∈ s, f x) + (∑ x ∈ t, f x) := by
+  have h1 := Finset.sum_union_inter (s₁ := s) (s₂ := t) (f := f)
+  have hnn : 0 ≤ ∑ x ∈ s ∩ t, f x :=
+    Finset.sum_nonneg fun x hx => hf x (Finset.mem_union_left _ (Finset.mem_inter.mp hx).1)
+  linarith
+
+private lemma sum_biUnion_le_of_nonneg {ι α : Type*} [DecidableEq α] {s : Finset ι} {t : ι → Finset α}
+    {f : α → ℝ} (hf : ∀ x ∈ s.biUnion t, 0 ≤ f x) :
+    ∑ x ∈ s.biUnion t, f x ≤ ∑ i ∈ s, ∑ x ∈ t i, f x := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => simp
+  | @insert a s ha ih =>
+    rw [Finset.biUnion_insert, Finset.sum_insert ha]
+    have hnn_u : ∀ x ∈ t a ∪ s.biUnion t, 0 ≤ f x := fun x hx =>
+      hf x (by rwa [Finset.biUnion_insert])
+    have h1 := sum_union_le_of_nonneg hnn_u
+    have h2 := ih (fun x hx => hnn_u x (Finset.mem_union_right _ hx))
+    linarith
 
 private lemma vaaler_btilde_dyadic_sum_bound_inv
     (H : ℕ) (hH : 1 ≤ H) (b_tilde : ℤ → ℂ)
@@ -252,11 +275,10 @@ private lemma vaaler_btilde_dyadic_sum_bound_inv
         (Real.log (2 * P) / P) * (2 / ((H : ℝ) + 1)) := by
       intro p hp
       have hp_mem := hI p hp
-      have hlogp_nn : 0 ≤ Real.log (p : ℝ) := Real.log_nonneg (by exact_mod_cast hp_mem.1.one_lt.le)
-      gcongr
-      · exact_mod_cast hp_mem.1.pos
-      · exact hp_mem.2.2
-      · exact hp_mem.2.1.le
+      have h1 : Real.log (p : ℝ) ≤ Real.log (2 * P) := Real.log_le_log (by exact_mod_cast hp_mem.1.pos) hp_mem.2.2
+      have h2 : Real.log (p : ℝ) / (p : ℝ) ≤ Real.log (2 * P) / P :=
+        div_le_div₀ (Real.log_nonneg hP_ge1) h1 hP_pos hp_mem.2.1.le
+      exact mul_le_mul_of_nonneg_right h2 (by positivity)
     refine le_trans (Finset.sum_le_sum hterm) ?_
     rw [Finset.sum_const, nsmul_eq_mul]
     have hlog2P : 0 ≤ Real.log (2 * P) := Real.log_nonneg hP_ge1
@@ -284,10 +306,10 @@ private lemma vaaler_btilde_dyadic_sum_bound_inv
             apply Finset.sum_congr rfl; intro h _
             rw [Finset.mul_sum, Complex.re_sum]
             apply Finset.sum_congr rfl; intro p _
-            rw [← Complex.ofReal_re (Real.log (p : ℝ) / (p : ℝ)), ← Complex.re_ofReal_mul]
-            congr 1
             have hdiv : (h : ℝ) * ((m : ℝ) / (p : ℝ) ^ j) / 2 = (h : ℝ) * (m : ℝ) / (2 * (p : ℝ) ^ j) := by ring
-            rw [hdiv]; push_cast; ring
+            rw [hdiv, ← Complex.re_ofReal_mul]
+            congr 1
+            push_cast; ring
     rw [hre_eq]
     calc (∑ h ∈ S_h, b_tilde h * _).re
         ≤ ‖∑ h ∈ S_h, b_tilde h * _‖ := (Complex.abs_re_le_norm _).trans' (le_abs_self _)
@@ -321,7 +343,7 @@ private lemma vaaler_btilde_dyadic_sum_bound_inv
   rw [hsplit]
   exact add_le_add hsum_main hsum_err
 
-private lemma padicValNat_factorial_eq_sum_Icc {p n r : ℕ} (hp : p.Prime) (hlt : n < p ^ (r + 1)) :
+private lemma lem63_padicValNat_factorial_eq_sum_Icc {p n r : ℕ} (hp : p.Prime) (hlt : n < p ^ (r + 1)) :
     padicValNat p (Nat.factorial n) = ∑ j ∈ Finset.Icc 1 r, n / p ^ j := by
   haveI : Fact p.Prime := ⟨hp⟩
   rw [padicValNat_factorial hlt]
@@ -359,7 +381,9 @@ theorem lem_6_3_osc_bound_honest
     exact Finset.prod_pos (fun k _ => by exact_mod_cast (by omega : 0 < R + k))
   have hc₁_pos : 0 < c₁_low := mul_pos (by norm_num) (zpow_pos (by norm_num) _)
   obtain ⟨C₂, hC₂_pos, hGenExp⟩ := prime_exp_sum_bounds_general_phase δ hδ0 (by linarith)
-  obtain ⟨C_mert, hC_mert_pos, hMert⟩ := Mertens_div_p_band_le
+  obtain ⟨C_mert0, hC_mert0_pos, hMert⟩ := Mertens_div_p_band_le
+  let C_mert : ℝ := C_mert0 + 1
+  have hC_mert_pos : 0 < C_mert := by dsimp [C_mert]; linarith
   -- Asymptotic thresholds
   have hlog_inf : Tendsto (fun n : ℕ => Real.log (n : ℝ)) atTop atTop :=
     tendsto_log_atTop.comp tendsto_natCast_atTop_atTop
@@ -367,8 +391,8 @@ theorem lem_6_3_osc_bound_honest
     have h1 := log_pow_div_rpow_tendsto_zero 1 hδ0
     have h0 := log_pow_div_rpow_tendsto_zero 0 hδ0
     have heq : (fun n : ℕ => 2 * C_mert * (Real.log (n : ℝ) + 1) / (n : ℝ) ^ δ) =
-        fun n => 2 * C_mert * ((Real.log (n : ℝ)) ^ 1 / (n : ℝ) ^ δ + (Real.log (n : ℝ)) ^ 0 / (n : ℝ) ^ δ) := by
-      ext n; simp; ring
+        fun n : ℕ => 2 * C_mert * ((Real.log (n : ℝ)) ^ 1 / (n : ℝ) ^ δ + (Real.log (n : ℝ)) ^ 0 / (n : ℝ) ^ δ) := by
+      ext n; rw [pow_one, pow_zero]; ring
     rw [heq]; simpa using (h1.add h0).const_mul (2 * C_mert)
   have h_loglog : Tendsto (fun n : ℕ => Real.log (Real.log (n : ℝ)) / Real.log (n : ℝ)) atTop (nhds 0) := by
     have h1 : Tendsto (fun x : ℝ => Real.log x / x) atTop (nhds 0) := by
@@ -381,7 +405,9 @@ theorem lem_6_3_osc_bound_honest
     -- Numerator is O((log n) * (log log n)^{2R}), denominator is (log n)^{R+2}, ratio ≤ O((log log n)^{2R} / (log n)^{R+1}) → 0
     have hbase : Tendsto (fun x : ℝ => (Real.log x) ^ (2 * R) / x ^ (R + 1)) atTop (nhds 0) := by
       have h1 : Tendsto (fun x : ℝ => (Real.log x) ^ (2 * R) / x ^ (1 : ℝ)) atTop (nhds 0) := by
-        simpa using Real.tendsto_pow_log_div_pow_atTop (2 * R)
+        have ht : Tendsto (fun x : ℝ => (Real.log x) ^ (2 * R) / x) atTop (nhds 0) := by
+          simpa using Real.tendsto_pow_log_div_mul_add_atTop 1 0 (2 * R) (by norm_num)
+        simpa only [Real.rpow_one] using ht
       have hev : ∀ᶠ x : ℝ in atTop, 0 ≤ (Real.log x) ^ (2 * R) / x ^ (R + 1) ∧
           (Real.log x) ^ (2 * R) / x ^ (R + 1) ≤ (Real.log x) ^ (2 * R) / x ^ (1 : ℝ) := by
         filter_upwards [eventually_ge_atTop (1 : ℝ)] with x hx
@@ -455,21 +481,18 @@ theorem lem_6_3_osc_bound_honest
   have h2_ev : ∀ᶠ n : ℕ in atTop,
       (10 * (Real.log (n : ℝ)) ^ (R + 3)) / (Real.log (n : ℝ)) ^ (A_R + 6) ≤ c₁_low / ((R : ℝ) * Mmax + 1) := by
     have h0 : Tendsto (fun x : ℝ => (10 * x ^ (R + 3)) / x ^ (A_R + 6)) atTop (nhds 0) := by
-      have hev : ∀ᶠ x : ℝ in atTop, (10 * x ^ (R + 3)) / x ^ (A_R + 6) = 10 * x ^ (-(A_R + 6 - (R + 3) : ℤ)) := by
+      let d_exp : ℕ := A_R + 6 - (R + 3)
+      have hev : ∀ᶠ x : ℝ in atTop, (10 * x ^ (R + 3)) / x ^ (A_R + 6) = 10 * x ^ (-(d_exp : ℝ)) := by
         filter_upwards [eventually_ge_atTop (1 : ℝ)] with x hx
         have hx0 : x ≠ 0 := by linarith
-        rw [zpow_neg, zpow_natCast, div_eq_mul_inv, mul_assoc]
+        rw [Real.rpow_neg (by linarith), Real.rpow_natCast, div_eq_mul_inv, mul_assoc]
         congr 1
-        have hsub : A_R + 6 = (R + 3) + (A_R + 6 - (R + 3)) := by unfold A_R; omega
+        have hsub : A_R + 6 = (R + 3) + d_exp := by dsimp [d_exp, A_R]; omega
         conv_lhs => rw [hsub, pow_add]
         field_simp [hx0]
-      have hz : Tendsto (fun x : ℝ => 10 * x ^ (-(A_R + 6 - (R + 3) : ℤ))) atTop (nhds 0) := by
-        have hpos : (0 : ℝ) < ((A_R + 6 - (R + 3) : ℕ) : ℝ) := by exact_mod_cast (by unfold A_R; omega : 0 < A_R + 6 - (R + 3))
-        have htr := tendsto_rpow_neg_atTop hpos
-        have heq : (fun x : ℝ => 10 * x ^ (-(A_R + 6 - (R + 3) : ℤ))) =
-            fun x => 10 * x ^ (-((A_R + 6 - (R + 3) : ℕ) : ℝ)) := by
-          ext x; rw [← Real.rpow_intCast]; congr 2; push_cast; ring
-        rw [heq]; simpa using htr.const_mul 10
+      have hz : Tendsto (fun x : ℝ => 10 * x ^ (-(d_exp : ℝ))) atTop (nhds 0) := by
+        have hpos : (0 : ℝ) < (d_exp : ℝ) := by exact_mod_cast (by dsimp [d_exp, A_R]; omega : 0 < d_exp)
+        simpa using (tendsto_rpow_neg_atTop hpos).const_mul 10
       exact hz.congr' (hev.mono fun _ h => h.symm)
     exact ((h0.comp hlog_inf).eventually (Iio_mem_nhds (by positivity))).mono fun _ h => h.le
   have h3_ev : ∀ᶠ n : ℕ in atTop,
@@ -481,6 +504,7 @@ theorem lem_6_3_osc_bound_honest
     have hdiff : 0 < δ - 1 / ((R : ℝ) + 1) := by linarith
     have htr := (tendsto_rpow_atTop hdiff).comp tendsto_natCast_atTop_atTop
     filter_upwards [Filter.eventually_ge_atTop 1, htr.eventually (eventually_ge_atTop ((2 : ℝ) ^ (1 / ((R : ℝ) + 1))))] with n hn hge
+    dsimp only [Function.comp_apply] at hge
     have hn_pos : (0 : ℝ) < (n : ℝ) := by exact_mod_cast (by omega : 0 < n)
     calc (2 : ℝ) ^ (1 / ((R : ℝ) + 1)) * (n : ℝ) ^ (1 / ((R : ℝ) + 1))
         ≤ (n : ℝ) ^ (δ - 1 / ((R : ℝ) + 1)) * (n : ℝ) ^ (1 / ((R : ℝ) + 1)) := by gcongr
@@ -491,7 +515,7 @@ theorem lem_6_3_osc_bound_honest
     h_inv_delta.eventually (Iio_mem_nhds (by positivity))
   have h5_ev : ∀ᶠ n : ℕ in atTop,
       Real.log (Real.log (n : ℝ)) / Real.log (n : ℝ) <
-        (ε / 32) / (2 * (R : ℝ) * C_mert * (2 * (A_R : ℝ) + 14) + 1) :=
+        (ε / 32) / (2 * (R : ℝ) * C_mert * (3 * (A_R : ℝ) + 14) + 1) :=
     h_loglog.eventually (Iio_mem_nhds (by positivity))
   have h6_ev : ∀ᶠ n : ℕ in atTop,
       ((R : ℝ) * (2 : ℝ) ^ R * (Real.log (n : ℝ) / Real.log 2 + 2) *
@@ -530,7 +554,7 @@ theorem lem_6_3_osc_bound_honest
       (2 : ℝ) ^ (1 / ((R : ℝ) + 1)) * (n : ℝ) ^ (1 / ((R : ℝ) + 1)) ≤ (n : ℝ) ^ δ ∧
       2 * C_mert * (Real.log (n : ℝ) + 1) / (n : ℝ) ^ δ < ε / 32 ∧
       Real.log (Real.log (n : ℝ)) / Real.log (n : ℝ) <
-        (ε / 32) / (2 * (R : ℝ) * C_mert * (2 * (A_R : ℝ) + 14) + 1) ∧
+        (ε / 32) / (2 * (R : ℝ) * C_mert * (3 * (A_R : ℝ) + 14) + 1) ∧
       ((R : ℝ) * (2 : ℝ) ^ R * (Real.log (n : ℝ) / Real.log 2 + 2) *
         (((4 / Real.pi) * (((R : ℝ) + 4) * Real.log (Real.log (n : ℝ)) + 4)) ^ (2 * R) *
           (C₂ + 2 * (R : ℝ) * (4 + 12 * C₂)))) / (Real.log (n : ℝ)) ^ (R + 2) < ε / 16 ∧
@@ -543,7 +567,9 @@ theorem lem_6_3_osc_bound_honest
     exact ⟨hn, hG, h1, h2, h3, h4, h5, h6, h7, h8.1, h8.2.1, h8.2.2⟩
   obtain ⟨N₀, hN₀⟩ := Filter.eventually_atTop.mp hAll
   refine ⟨max N₀ 1000, le_max_right _ _, ?_⟩
-  intro n₁ n₂ hn₁ hlt hh_ub hh_gt hy₁_gt
+  intro n₁ n₂ hn₁ hlt
+  dsimp only
+  intro hh_ub hh_gt hy₁_gt
   obtain ⟨hn₁_1000, hGen, hsmall_d, hsmall_res, h2n_le_nd, herr_val, herr_ll, herr_clean, hnd_ge3,
     hlog_ge_e4, herr_y1, herr_const⟩ := hN₀ n₁ (le_trans (le_max_left _ _) hn₁)
   let h := n₂ - n₁
@@ -608,19 +634,23 @@ theorem lem_6_3_osc_bound_honest
       _ ≤ (2 * (n₁ : ℝ) / (n₁ : ℝ) ^ δ) * (C_mert * (Real.log (n₁ : ℝ) + 1)) +
             y₁ * Real.log (n₁ : ℝ) := by
           have hm1 : ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ) ≤ C_mert * (Real.log (n₁ : ℝ) + 1) := by
-            have hsub : I_osc ⊆ (Finset.Icc 3 n₁).filter (fun p => p.Prime ∧ (1 : ℝ) < (p : ℝ) ∧ (p : ℝ) ≤ (n₁ : ℝ)) := by
+            have hsub : I_osc ⊆ ((Finset.Icc 3 (Nat.floor (n₁ : ℝ))).filter Nat.Prime).filter (fun p : ℕ => (3 : ℝ) < (p : ℝ)) := by
               intro p hp
               have h1 := Finset.mem_filter.mp hp
               have h2 := Finset.mem_filter.mp h1.1
               have h3 := Finset.mem_Icc.mp h2.1
-              exact Finset.mem_filter.mpr ⟨h2.1, h2.2, by exact_mod_cast (by omega : 1 < p), by exact_mod_cast h3.2⟩
+              rw [Nat.floor_natCast]
+              exact Finset.mem_filter.mpr ⟨h1.1, lt_of_le_of_lt hnd_ge3 h1.2.1⟩
             calc ∑ p ∈ I_osc, Real.log (p : ℝ) / (p : ℝ)
-                ≤ ∑ p ∈ (Finset.Icc 3 n₁).filter (fun p => p.Prime ∧ (1 : ℝ) < (p : ℝ) ∧ (p : ℝ) ≤ (n₁ : ℝ)),
+                ≤ ∑ p ∈ ((Finset.Icc 3 (Nat.floor (n₁ : ℝ))).filter Nat.Prime).filter (fun p : ℕ => (3 : ℝ) < (p : ℝ)),
                     Real.log (p : ℝ) / (p : ℝ) :=
                   Finset.sum_le_sum_of_subset_of_nonneg hsub (fun p hp _ =>
-                    div_nonneg (Real.log_nonneg (by exact_mod_cast (Finset.mem_filter.mp hp).2.1.one_lt.le)) (Nat.cast_nonneg p))
-              _ ≤ C_mert * (Real.log ((n₁ : ℝ) / 1) + 1) := hMert 1 (n₁ : ℝ) le_rfl (by exact_mod_cast (by omega : 1 ≤ n₁))
-              _ = C_mert * (Real.log (n₁ : ℝ) + 1) := by rw [div_one]
+                    div_nonneg (Real.log_nonneg (by exact_mod_cast (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2.one_lt.le)) (Nat.cast_nonneg p))
+              _ ≤ Real.log ((n₁ : ℝ) / 3) + C_mert0 := hMert 3 (n₁ : ℝ) le_rfl (by exact_mod_cast (by omega : 3 ≤ n₁))
+              _ ≤ Real.log (n₁ : ℝ) + C_mert0 := by
+                  gcongr; exact div_le_self hn₁_pos.le (by norm_num)
+              _ ≤ C_mert * (Real.log (n₁ : ℝ) + 1) := by
+                  dsimp [C_mert]; nlinarith [hC_mert0_pos, hlog_pos]
           have hcard : (I_osc.card : ℝ) ≤ y₁ := by
             have hsub : I_osc ⊆ Finset.Icc 1 (Nat.floor y₁) := fun p hp =>
               Finset.mem_Icc.mpr ⟨(Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2.pos,
@@ -663,51 +693,56 @@ theorem lem_6_3_osc_bound_honest
       ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
         (((n₁ : ℝ) / (p : ℝ)) * Real.log (p : ℝ))| ≤ (ε / 16) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
     have hband : ∀ (a b : ℝ) (K_ratio : ℝ), 1 ≤ K_ratio → 0 < a → b ≤ K_ratio * a →
-        ∑ p ∈ I_osc.filter (fun p => (p : ℝ) ∈ Set.Ioc a b), Real.log (p : ℝ) / (p : ℝ) ≤
+        ∑ p ∈ I_osc.filter (fun p : ℕ => (p : ℝ) ∈ Set.Ioc a b), Real.log (p : ℝ) / (p : ℝ) ≤
           C_mert * (Real.log K_ratio + 1) := by
       intro a b K_ratio hK ha hba
       by_cases hab : a < b
-      · let a' := max a 1
-        have hsub : I_osc.filter (fun p => (p : ℝ) ∈ Set.Ioc a b) ⊆
-            (Finset.Icc 3 n₁).filter (fun p => p.Prime ∧ a' < (p : ℝ) ∧ (p : ℝ) ≤ b) := by
+      · let a' := max a 3
+        have hsub : I_osc.filter (fun p : ℕ => (p : ℝ) ∈ Set.Ioc a b) ⊆
+            ((Finset.Icc 3 (Nat.floor b)).filter Nat.Prime).filter (fun p : ℕ => a' < (p : ℝ)) := by
           intro p hp
           have h1 := Finset.mem_filter.mp hp
           have h2 := Finset.mem_filter.mp h1.1
           have h3 := Finset.mem_filter.mp h2.1
           have hp3 : 3 ≤ p := (Finset.mem_Icc.mp h3.1).1
-          exact Finset.mem_filter.mpr ⟨h3.1, h3.2, max_lt h1.2.1 (by exact_mod_cast (by omega : 1 < p)), h1.2.2⟩
+          exact Finset.mem_filter.mpr ⟨Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp3, Nat.le_floor h1.2.2⟩, h3.2⟩,
+            max_lt h1.2.1 (lt_of_le_of_lt hnd_ge3 h2.2.1)⟩
         by_cases ha'b : a' ≤ b
-        · calc ∑ p ∈ I_osc.filter (fun p => (p : ℝ) ∈ Set.Ioc a b), Real.log (p : ℝ) / (p : ℝ)
-              ≤ ∑ p ∈ (Finset.Icc 3 n₁).filter (fun p => p.Prime ∧ a' < (p : ℝ) ∧ (p : ℝ) ≤ b),
+        · calc ∑ p ∈ I_osc.filter (fun p : ℕ => (p : ℝ) ∈ Set.Ioc a b), Real.log (p : ℝ) / (p : ℝ)
+              ≤ ∑ p ∈ ((Finset.Icc 3 (Nat.floor b)).filter Nat.Prime).filter (fun p : ℕ => a' < (p : ℝ)),
                   Real.log (p : ℝ) / (p : ℝ) :=
                 Finset.sum_le_sum_of_subset_of_nonneg hsub (fun p hp _ =>
-                  div_nonneg (Real.log_nonneg (by exact_mod_cast (Finset.mem_filter.mp hp).2.1.one_lt.le)) (Nat.cast_nonneg p))
-            _ ≤ C_mert * (Real.log (b / a') + 1) := hMert a' b (le_max_right a 1) ha'b
-            _ ≤ C_mert * (Real.log K_ratio + 1) := by
+                  div_nonneg (Real.log_nonneg (by exact_mod_cast (Finset.mem_filter.mp (Finset.mem_filter.mp hp).1).2.one_lt.le)) (Nat.cast_nonneg p))
+            _ ≤ Real.log (b / a') + C_mert0 := hMert a' b (le_max_right a 3) ha'b
+            _ ≤ Real.log K_ratio + C_mert0 := by
                 have hdiv : b / a' ≤ K_ratio := by
-                  calc b / a' ≤ b / a := div_le_div_of_nonneg_left (by linarith) ha (le_max_left a 1)
+                  calc b / a' ≤ b / a := div_le_div_of_nonneg_left (by linarith) ha (le_max_left a 3)
                     _ ≤ (K_ratio * a) / a := div_le_div_of_nonneg_right hba ha.le
                     _ = K_ratio := mul_div_cancel_right₀ K_ratio ha.ne'
                 gcongr
-                exact div_pos (by linarith) (lt_of_lt_of_le ha (le_max_left a 1))
+                exact div_pos (by linarith) (lt_of_lt_of_le ha (le_max_left a 3))
+            _ ≤ C_mert * (Real.log K_ratio + 1) := by
+                have : 0 ≤ Real.log K_ratio := Real.log_nonneg hK
+                dsimp [C_mert]; nlinarith [hC_mert0_pos]
         · push_neg at ha'b
-          have hemp : I_osc.filter (fun p => (p : ℝ) ∈ Set.Ioc a b) = ∅ := by
+          have hemp : I_osc.filter (fun p : ℕ => (p : ℝ) ∈ Set.Ioc a b) = ∅ := by
             ext p; simp only [Finset.notMem_empty, iff_false]
             intro hp
-            have h1 := Finset.mem_filter.mp (hsub hp)
-            linarith [h1.2.2.1, h1.2.2.2]
+            have h1 := Finset.mem_filter.mp hp
+            have h2 := Finset.mem_filter.mp (hsub hp)
+            linarith [h1.2.2, h2.2]
           rw [hemp, Finset.sum_empty]
           have : 0 ≤ Real.log K_ratio := Real.log_nonneg hK
           positivity
       · push_neg at hab
-        have hemp : I_osc.filter (fun p => (p : ℝ) ∈ Set.Ioc a b) = ∅ := by
+        have hemp : I_osc.filter (fun p : ℕ => (p : ℝ) ∈ Set.Ioc a b) = ∅ := by
           ext p; simp only [Finset.notMem_empty, iff_false, Finset.mem_filter, Set.mem_Ioc]
           intro hp; linarith [hp.2.1, hp.2.2]
         rw [hemp, Finset.sum_empty]
         have : 0 ≤ Real.log K_ratio := Real.log_nonneg hK
         positivity
     have hpow_bd : ∀ r ∈ Finset.Icc 2 R,
-        ∑ p ∈ I_osc.filter (fun p => (p : ℝ) ∈ Set.Ioc (powCollar r).1 (powCollar r).2), Real.log (p : ℝ) / (p : ℝ) ≤
+        ∑ p ∈ I_osc.filter (fun p : ℕ => (p : ℝ) ∈ Set.Ioc (powCollar r).1 (powCollar r).2), Real.log (p : ℝ) / (p : ℝ) ≤
           C_mert * ((A_R : ℝ) * Real.log (Real.log (n₁ : ℝ)) + 2) := by
       intro r hr
       have hr2 : 2 ≤ r := (Finset.mem_Icc.mp hr).1
@@ -734,9 +769,10 @@ theorem lem_6_3_osc_bound_honest
         have : Real.log 2 ≤ 1 := by linarith [Real.log_le_sub_one_of_pos (by norm_num : (0 : ℝ) < 2)]
         linarith
       calc _ ≤ C_mert * (Real.log (2 * (Real.log (n₁ : ℝ)) ^ A_R) + 1) := h1
-        _ ≤ C_mert * ((A_R : ℝ) * Real.log (Real.log (n₁ : ℝ)) + 2) := by gcongr; linarith
+        _ ≤ C_mert * ((A_R : ℝ) * Real.log (Real.log (n₁ : ℝ)) + 2) :=
+          mul_le_mul_of_nonneg_left (by linarith) hC_mert_pos.le
     have hres_bd : ∀ j₀ ∈ Finset.Icc 2 R,
-        ∑ p ∈ I_osc.filter (fun p => (p : ℝ) ∈ Set.Ioc (resCollar j₀).1 (resCollar j₀).2), Real.log (p : ℝ) / (p : ℝ) ≤
+        ∑ p ∈ I_osc.filter (fun p : ℕ => (p : ℝ) ∈ Set.Ioc (resCollar j₀).1 (resCollar j₀).2), Real.log (p : ℝ) / (p : ℝ) ≤
           C_mert * ((2 * (A_R : ℝ) + 12) * Real.log (Real.log (n₁ : ℝ)) + 1) := by
       intro j₀ hj₀
       have h1 := hband (resCollar j₀).1 (resCollar j₀).2 ((Real.log (n₁ : ℝ)) ^ (2 * A_R + 12))
@@ -751,8 +787,8 @@ theorem lem_6_3_osc_bound_honest
       rw [Real.log_pow] at h1
       convert h1 using 2; push_cast; ring
     have hsub_exc : I_exc ⊆
-        ((Finset.Icc 2 R).biUnion (fun r => I_osc.filter (fun p => (p : ℝ) ∈ Set.Ioc (powCollar r).1 (powCollar r).2))) ∪
-        ((Finset.Icc 2 R).biUnion (fun j₀ => I_osc.filter (fun p => (p : ℝ) ∈ Set.Ioc (resCollar j₀).1 (resCollar j₀).2))) := by
+        ((Finset.Icc 2 R).biUnion (fun r => I_osc.filter (fun p : ℕ => (p : ℝ) ∈ Set.Ioc (powCollar r).1 (powCollar r).2))) ∪
+        ((Finset.Icc 2 R).biUnion (fun j₀ => I_osc.filter (fun p : ℕ => (p : ℝ) ∈ Set.Ioc (resCollar j₀).1 (resCollar j₀).2))) := by
       intro p hp
       have h1 := Finset.mem_filter.mp hp
       simp only [Finset.mem_union, Finset.mem_biUnion, Finset.mem_filter]
@@ -760,9 +796,9 @@ theorem lem_6_3_osc_bound_honest
       · exact Or.inl ⟨r, hr, h1.1, hpr⟩
       · exact Or.inr ⟨j₀, hj₀, h1.1, hpj⟩
     have hsum_exc_inv : ∑ p ∈ I_exc, Real.log (p : ℝ) / (p : ℝ) ≤
-        (R : ℝ) * C_mert * ((2 * (A_R : ℝ) + 14) * Real.log (Real.log (n₁ : ℝ)) + 4) := by
-      have hnn : ∀ p ∈ ((Finset.Icc 2 R).biUnion (fun r => I_osc.filter (fun p => (p : ℝ) ∈ Set.Ioc (powCollar r).1 (powCollar r).2))) ∪
-          ((Finset.Icc 2 R).biUnion (fun j₀ => I_osc.filter (fun p => (p : ℝ) ∈ Set.Ioc (resCollar j₀).1 (resCollar j₀).2))),
+        (R : ℝ) * C_mert * ((3 * (A_R : ℝ) + 14) * Real.log (Real.log (n₁ : ℝ)) + 4) := by
+      have hnn : ∀ p ∈ ((Finset.Icc 2 R).biUnion (fun r => I_osc.filter (fun p : ℕ => (p : ℝ) ∈ Set.Ioc (powCollar r).1 (powCollar r).2))) ∪
+          ((Finset.Icc 2 R).biUnion (fun j₀ => I_osc.filter (fun p : ℕ => (p : ℝ) ∈ Set.Ioc (resCollar j₀).1 (resCollar j₀).2))),
           0 ≤ Real.log (p : ℝ) / (p : ℝ) := by
         intro p hp
         have hp_osc : p ∈ I_osc := by
@@ -771,27 +807,38 @@ theorem lem_6_3_osc_bound_honest
         exact div_nonneg (Real.log_nonneg (by exact_mod_cast (Finset.mem_filter.mp (Finset.mem_filter.mp hp_osc).1).2.one_lt.le)) (Nat.cast_nonneg p)
       calc ∑ p ∈ I_exc, Real.log (p : ℝ) / (p : ℝ)
           ≤ ∑ p ∈ _, Real.log (p : ℝ) / (p : ℝ) := Finset.sum_le_sum_of_subset_of_nonneg hsub_exc (fun p hp _ => hnn p hp)
-        _ ≤ (∑ p ∈ (Finset.Icc 2 R).biUnion (fun r => I_osc.filter (fun p => (p : ℝ) ∈ Set.Ioc (powCollar r).1 (powCollar r).2)),
+        _ ≤ (∑ p ∈ (Finset.Icc 2 R).biUnion (fun r => I_osc.filter (fun p : ℕ => (p : ℝ) ∈ Set.Ioc (powCollar r).1 (powCollar r).2)),
               Real.log (p : ℝ) / (p : ℝ)) +
-            (∑ p ∈ (Finset.Icc 2 R).biUnion (fun j₀ => I_osc.filter (fun p => (p : ℝ) ∈ Set.Ioc (resCollar j₀).1 (resCollar j₀).2)),
+            (∑ p ∈ (Finset.Icc 2 R).biUnion (fun j₀ => I_osc.filter (fun p : ℕ => (p : ℝ) ∈ Set.Ioc (resCollar j₀).1 (resCollar j₀).2)),
               Real.log (p : ℝ) / (p : ℝ)) :=
-            Finset.sum_union_le (fun p hp => hnn p (Finset.mem_union_left _ hp))
-              (fun p hp => hnn p (Finset.mem_union_right _ hp))
-        _ ≤ (∑ r ∈ Finset.Icc 2 R, ∑ p ∈ I_osc.filter (fun p => (p : ℝ) ∈ Set.Ioc (powCollar r).1 (powCollar r).2),
+            sum_union_le_of_nonneg hnn
+        _ ≤ (∑ r ∈ Finset.Icc 2 R, ∑ p ∈ I_osc.filter (fun p : ℕ => (p : ℝ) ∈ Set.Ioc (powCollar r).1 (powCollar r).2),
               Real.log (p : ℝ) / (p : ℝ)) +
-            (∑ j₀ ∈ Finset.Icc 2 R, ∑ p ∈ I_osc.filter (fun p => (p : ℝ) ∈ Set.Ioc (resCollar j₀).1 (resCollar j₀).2),
+            (∑ j₀ ∈ Finset.Icc 2 R, ∑ p ∈ I_osc.filter (fun p : ℕ => (p : ℝ) ∈ Set.Ioc (resCollar j₀).1 (resCollar j₀).2),
               Real.log (p : ℝ) / (p : ℝ)) :=
-            add_le_add (Finset.sum_biUnion_le_sum_of_nonneg (fun p hp => hnn p (Finset.mem_union_left _ hp)))
-              (Finset.sum_biUnion_le_sum_of_nonneg (fun p hp => hnn p (Finset.mem_union_right _ hp)))
+            add_le_add (sum_biUnion_le_of_nonneg (fun p hp => hnn p (Finset.mem_union_left _ hp)))
+              (sum_biUnion_le_of_nonneg (fun p hp => hnn p (Finset.mem_union_right _ hp)))
         _ ≤ (∑ _r ∈ Finset.Icc 2 R, C_mert * ((A_R : ℝ) * Real.log (Real.log (n₁ : ℝ)) + 2)) +
             (∑ _j₀ ∈ Finset.Icc 2 R, C_mert * ((2 * (A_R : ℝ) + 12) * Real.log (Real.log (n₁ : ℝ)) + 1)) :=
             add_le_add (Finset.sum_le_sum hpow_bd) (Finset.sum_le_sum hres_bd)
-        _ ≤ (R : ℝ) * C_mert * ((2 * (A_R : ℝ) + 14) * Real.log (Real.log (n₁ : ℝ)) + 4) := by
+        _ ≤ (R : ℝ) * C_mert * ((3 * (A_R : ℝ) + 14) * Real.log (Real.log (n₁ : ℝ)) + 4) := by
             rw [Finset.sum_const, Finset.sum_const, nsmul_eq_mul, nsmul_eq_mul]
             have hcard : ((Finset.Icc 2 R).card : ℝ) ≤ (R : ℝ) := by
               have : (Finset.Icc 2 R).card ≤ R := by simp; omega
               exact_mod_cast this
-            nlinarith [hC_mert_pos, hll_pos]
+            have hterm_nn : 0 ≤ C_mert * ((3 * (A_R : ℝ) + 12) * Real.log (Real.log (n₁ : ℝ)) + 3) := by positivity
+            have hsum_eq : ((Finset.Icc 2 R).card : ℝ) * (C_mert * ((A_R : ℝ) * Real.log (Real.log (n₁ : ℝ)) + 2)) +
+                ((Finset.Icc 2 R).card : ℝ) * (C_mert * ((2 * (A_R : ℝ) + 12) * Real.log (Real.log (n₁ : ℝ)) + 1)) =
+                ((Finset.Icc 2 R).card : ℝ) * (C_mert * ((3 * (A_R : ℝ) + 12) * Real.log (Real.log (n₁ : ℝ)) + 3)) := by ring
+            rw [hsum_eq]
+            have h1 : ((Finset.Icc 2 R).card : ℝ) * (C_mert * ((3 * (A_R : ℝ) + 12) * Real.log (Real.log (n₁ : ℝ)) + 3)) ≤
+                (R : ℝ) * (C_mert * ((3 * (A_R : ℝ) + 12) * Real.log (Real.log (n₁ : ℝ)) + 3)) :=
+              mul_le_mul_of_nonneg_right hcard hterm_nn
+            have h2 : (R : ℝ) * (C_mert * ((3 * (A_R : ℝ) + 12) * Real.log (Real.log (n₁ : ℝ)) + 3)) ≤
+                (R : ℝ) * C_mert * ((3 * (A_R : ℝ) + 14) * Real.log (Real.log (n₁ : ℝ)) + 4) := by
+              have hR_nn : (0 : ℝ) ≤ (R : ℝ) := Nat.cast_nonneg R
+              nlinarith [hC_mert_pos, hll_pos]
+            exact le_trans h1 h2
     calc |∑ p ∈ I_exc, _|
         ≤ ∑ p ∈ I_exc, |((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
             (((n₁ : ℝ) / (p : ℝ)) * Real.log (p : ℝ))| := Finset.abs_sum_le_sum_abs _ _
@@ -801,25 +848,17 @@ theorem lem_6_3_osc_bound_honest
           rw [abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul,
             abs_of_nonneg (mul_nonneg (by positivity) (Real.log_nonneg (by exact_mod_cast hp_pr.one_lt.le)))]
           ring
-      _ ≤ (n₁ : ℝ) * ((R : ℝ) * C_mert * ((2 * (A_R : ℝ) + 14) * Real.log (Real.log (n₁ : ℝ)) + 4)) := by gcongr
+      _ ≤ (n₁ : ℝ) * ((R : ℝ) * C_mert * ((3 * (A_R : ℝ) + 14) * Real.log (Real.log (n₁ : ℝ)) + 4)) := by gcongr
       _ ≤ (ε / 16) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
-          have h1 : (R : ℝ) * C_mert * (2 * (A_R : ℝ) + 14) * Real.log (Real.log (n₁ : ℝ)) ≤
+          have h1 : (R : ℝ) * C_mert * (3 * (A_R : ℝ) + 14) * Real.log (Real.log (n₁ : ℝ)) ≤
               (ε / 32) * Real.log (n₁ : ℝ) := by
-            have hd : 0 < 2 * (R : ℝ) * C_mert * (2 * (A_R : ℝ) + 14) + 1 := by positivity
-            have hlt1 := (div_lt_iff₀ hlog_pos).mp herr_ll
-            have hlt2 := (lt_div_iff₀ hd).mp (lt_of_le_of_lt (le_of_eq rfl) herr_ll)
-            have hmul : Real.log (Real.log (n₁ : ℝ)) * (2 * (R : ℝ) * C_mert * (2 * (A_R : ℝ) + 14) + 1) ≤
-                (ε / 32) * Real.log (n₁ : ℝ) := by
-              rw [div_lt_iff₀ hlog_pos] at hlt2
-              have := mul_lt_mul_of_pos_right herr_ll hd
-              rw [div_mul_cancel₀ _ hd.ne'] at this
-              have := (div_lt_iff₀ hlog_pos).mp (by
-                calc Real.log (Real.log (n₁ : ℝ)) / Real.log (n₁ : ℝ) < (ε / 32) / (2 * (R : ℝ) * C_mert * (2 * (A_R : ℝ) + 14) + 1) := herr_ll)
-              have h3 : Real.log (Real.log (n₁ : ℝ)) * (2 * (R : ℝ) * C_mert * (2 * (A_R : ℝ) + 14) + 1) < (ε / 32) * Real.log (n₁ : ℝ) := by
-                have := (div_lt_div_iff₀ hlog_pos hd).mp herr_ll
-                linarith
-              exact h3.le
-            nlinarith [hll_pos, hC_mert_pos]
+            have hd : 0 < 2 * (R : ℝ) * C_mert * (3 * (A_R : ℝ) + 14) + 1 := by positivity
+            have hmul : Real.log (Real.log (n₁ : ℝ)) * (2 * (R : ℝ) * C_mert * (3 * (A_R : ℝ) + 14) + 1) <
+                (ε / 32) * Real.log (n₁ : ℝ) := (div_lt_div_iff₀ hlog_pos hd).mp herr_ll
+            have hR_nn : (0 : ℝ) ≤ (R : ℝ) := Nat.cast_nonneg R
+            have hAR_nn : (0 : ℝ) ≤ (A_R : ℝ) := Nat.cast_nonneg A_R
+            have hprod_nn : 0 ≤ (R : ℝ) * C_mert * (3 * (A_R : ℝ) + 14) * Real.log (Real.log (n₁ : ℝ)) := by positivity
+            nlinarith [hll_pos]
           have h2 : (R : ℝ) * C_mert * 4 ≤ (ε / 32) * Real.log (n₁ : ℝ) := by
             have := (div_lt_iff₀ hlog_pos).mp herr_const
             nlinarith [hC_mert_pos]
@@ -872,7 +911,7 @@ theorem lem_6_3_osc_bound_honest
     let D_lo : ℕ → ℝ := fun r => max ((n₁ : ℝ) ^ δ) ((n₂ : ℝ) ^ (1 / ((r : ℝ) + 1)))
     let D_hi : ℕ → ℝ := fun r => min y₁ ((n₁ : ℝ) ^ (1 / (r : ℝ)) / (Real.log (n₁ : ℝ)) ^ A_R)
     let D_clean : ℕ → Finset ℕ := fun r =>
-      I_clean.filter (fun p => D_lo r < (p : ℝ) ∧ (p : ℝ) ≤ D_hi r)
+      I_clean.filter (fun p : ℕ => D_lo r < (p : ℝ) ∧ (p : ℝ) ≤ D_hi r)
     have hI_clean_eq : I_clean = (Finset.Icc 1 R).biUnion D_clean := by
       ext p
       simp only [Finset.mem_biUnion, Finset.mem_Icc, D_clean, Finset.mem_filter]
@@ -889,7 +928,7 @@ theorem lem_6_3_osc_bound_honest
         -- Find smallest r ∈ [1, R] such that (n₂ : ℝ)^(1/(r+1)) < p
         have hex : ∃ r ∈ Finset.Icc 1 R, (n₂ : ℝ) ^ (1 / ((r : ℝ) + 1)) < (p : ℝ) :=
           ⟨R, Finset.mem_Icc.mpr ⟨by omega, le_rfl⟩, lt_of_le_of_lt h_n2_le_nd hp_m.1⟩
-        let S_r := (Finset.Icc 1 R).filter (fun r => (n₂ : ℝ) ^ (1 / ((r : ℝ) + 1)) < (p : ℝ))
+        let S_r := (Finset.Icc 1 R).filter (fun r : ℕ => (n₂ : ℝ) ^ (1 / ((r : ℝ) + 1)) < (p : ℝ))
         have hSr_ne : S_r.Nonempty := by obtain ⟨r, hr, hpr⟩ := hex; exact ⟨r, Finset.mem_filter.mpr ⟨hr, hpr⟩⟩
         let r := S_r.min' hSr_ne
         have hr_mem := Finset.mem_filter.mp (Finset.min'_mem S_r hSr_ne)
@@ -916,6 +955,7 @@ theorem lem_6_3_osc_bound_honest
       · rintro ⟨_, _, hp, _⟩; exact hp
     have hD_disj : Set.PairwiseDisjoint (Finset.Icc 1 R : Set ℕ) D_clean := by
       intro r₁ hr₁ r₂ hr₂ hne
+      dsimp only [Function.onFun]
       rw [Finset.disjoint_left]
       intro p hp₁ hp₂
       have h1 := (Finset.mem_filter.mp hp₁).2
@@ -946,13 +986,20 @@ theorem lem_6_3_osc_bound_honest
       have h1 := Finset.mem_Icc.mp hj₀
       rw [List.mem_map]
       exact ⟨j₀ - 2, List.mem_range.mpr (by omega), by congr 1; omega⟩
-    have hresList_le : ∀ cd ∈ resList, cd.1 ≤ cd.2 := by
+    have hresList_lt : ∀ cd ∈ resList, cd.1 < cd.2 := by
       intro cd hcd
       rw [List.mem_map] at hcd
       obtain ⟨k, _, rfl⟩ := hcd
       dsimp [resCollar]
-      have h1 : (1 : ℝ) ≤ (Real.log (n₁ : ℝ)) ^ (A_R + 6) := one_le_pow₀ (by linarith)
-      exact le_trans (div_le_self (by positivity) h1) (le_mul_of_one_le_right (by positivity) h1)
+      have h1 : (1 : ℝ) < (Real.log (n₁ : ℝ)) ^ (A_R + 6) := one_lt_pow₀ (by linarith) (by omega)
+      have hbase_pos : (0 : ℝ) < ((n₁ : ℝ) / (h : ℝ)) ^ (1 / (((k + 2 : ℕ) : ℝ) - 1)) := by positivity
+      calc ((n₁ : ℝ) / (h : ℝ)) ^ (1 / (((k + 2 : ℕ) : ℝ) - 1)) / (Real.log (n₁ : ℝ)) ^ (A_R + 6)
+          < ((n₁ : ℝ) / (h : ℝ)) ^ (1 / (((k + 2 : ℕ) : ℝ) - 1)) / 1 :=
+            div_lt_div_of_pos_left hbase_pos (by norm_num) h1
+        _ = ((n₁ : ℝ) / (h : ℝ)) ^ (1 / (((k + 2 : ℕ) : ℝ) - 1)) := div_one _
+        _ < ((n₁ : ℝ) / (h : ℝ)) ^ (1 / (((k + 2 : ℕ) : ℝ) - 1)) * (Real.log (n₁ : ℝ)) ^ (A_R + 6) :=
+            lt_mul_of_one_lt_right hbase_pos h1
+    have hresList_le : ∀ cd ∈ resList, cd.1 ≤ cd.2 := fun cd hcd => (hresList_lt cd hcd).le
     have hDr_bound : ∀ r ∈ Finset.Icc 1 R,
         |∑ p ∈ D_clean r,
           ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
@@ -968,7 +1015,7 @@ theorem lem_6_3_osc_bound_honest
       obtain ⟨hL_pw, hL_sub, hL_disj, hL_cov⟩ := removeIocs_props resList [(D_lo r, D_hi r)] hresList_le (by simp)
       -- Split D_clean r across the disjoint subintervals in L_ivs
       let subFin : Fin L_ivs.length → Finset ℕ := fun idx =>
-        D_clean r |>.filter (fun p => (p : ℝ) ∈ Set.Ioc (L_ivs.get idx).1 (L_ivs.get idx).2)
+        D_clean r |>.filter (fun p : ℕ => (p : ℝ) ∈ Set.Ioc (L_ivs.get idx).1 (L_ivs.get idx).2)
       have hDr_eq : D_clean r = Finset.univ.biUnion subFin := by
         ext p; simp only [Finset.mem_biUnion, Finset.mem_univ, true_and, subFin, Finset.mem_filter]
         constructor
@@ -986,6 +1033,7 @@ theorem lem_6_3_osc_bound_honest
         · rintro ⟨_, hp, _⟩; exact hp
       have hsub_disj : Set.PairwiseDisjoint (Finset.univ : Finset (Fin L_ivs.length)) subFin := by
         intro i _ j _ hij
+        dsimp only [Function.onFun]
         rw [Finset.disjoint_left]
         intro p hpi hpj
         have h1 := (Finset.mem_filter.mp hpi).2
@@ -1016,34 +1064,34 @@ theorem lem_6_3_osc_bound_honest
           subst hv
           have ha_ge_nd : (n₁ : ℝ) ^ δ ≤ a_m := by
             by_contra hlt'; push_neg at hlt'
-            have hmid : (max a_m 0 + min b_m ((n₁ : ℝ) ^ δ)) / 2 ∈ Set.Ioc a_m b_m := by
-              have h1 : a_m < min b_m ((n₁ : ℝ) ^ δ) := lt_min hlt_ab hlt'
-              constructor
-              · linarith [le_max_left a_m 0]
-              · linarith [min_le_left b_m ((n₁ : ℝ) ^ δ), le_max_left a_m 0, h1]
-            -- Wait: simpler! If a_m < (n₁ : ℝ)^δ, take x = (a_m + min b_m ((n₁ : ℝ)^δ)) / 2
             have h1 : a_m < min b_m ((n₁ : ℝ) ^ δ) := lt_min hlt_ab hlt'
+            have hx_gt : a_m < (a_m + min b_m ((n₁ : ℝ) ^ δ)) / 2 := by linarith
+            have hx_le : (a_m + min b_m ((n₁ : ℝ) ^ δ)) / 2 ≤ min b_m ((n₁ : ℝ) ^ δ) := by linarith
             have hx : (a_m + min b_m ((n₁ : ℝ) ^ δ)) / 2 ∈ Set.Ioc a_m b_m :=
-              ⟨by linarith, le_trans (by linarith : (a_m + min b_m ((n₁ : ℝ) ^ δ)) / 2 ≤ min b_m ((n₁ : ℝ) ^ δ)) (min_le_left _ _)⟩
+              ⟨hx_gt, le_trans hx_le (min_le_left _ _)⟩
             have hxD := huv_sub hx
             have hlo_ge : (n₁ : ℝ) ^ δ ≤ D_lo r := le_max_left _ _
-            linarith [hxD.1, min_le_right b_m ((n₁ : ℝ) ^ δ)]
+            linarith [hxD.1, hx_le, min_le_right b_m ((n₁ : ℝ) ^ δ)]
           have ha_ge1 : 1 ≤ a_m := by linarith [hnd_ge3]
           have hb_le_y₁ : b_m ≤ y₁ := by
             by_contra hgt'; push_neg at hgt'
             have h1 : max a_m y₁ < b_m := max_lt hlt_ab hgt'
+            have hx_gt : max a_m y₁ < (max a_m y₁ + b_m) / 2 := by linarith
+            have hx_le : (max a_m y₁ + b_m) / 2 ≤ b_m := by linarith
             have hx : (max a_m y₁ + b_m) / 2 ∈ Set.Ioc a_m b_m :=
-              ⟨lt_of_le_of_lt (le_max_left _ _) (by linarith), by linarith⟩
+              ⟨lt_of_le_of_lt (le_max_left _ _) hx_gt, hx_le⟩
             have hxD := huv_sub hx
             have hhi_le : D_hi r ≤ y₁ := min_le_left _ _
-            linarith [hxD.2, le_max_right a_m y₁]
+            linarith [hxD.2, hx_gt, le_max_right a_m y₁]
           have hb_le_Dhi : b_m ≤ D_hi r := by
             by_contra hgt'; push_neg at hgt'
             have h1 : max a_m (D_hi r) < b_m := max_lt hlt_ab hgt'
+            have hx_gt : max a_m (D_hi r) < (max a_m (D_hi r) + b_m) / 2 := by linarith
+            have hx_le : (max a_m (D_hi r) + b_m) / 2 ≤ b_m := by linarith
             have hx : (max a_m (D_hi r) + b_m) / 2 ∈ Set.Ioc a_m b_m :=
-              ⟨lt_of_le_of_lt (le_max_left _ _) (by linarith), by linarith⟩
+              ⟨lt_of_le_of_lt (le_max_left _ _) hx_gt, hx_le⟩
             have hxD := huv_sub hx
-            linarith [hxD.2, le_max_right a_m (D_hi r)]
+            linarith [hxD.2, hx_gt, le_max_right a_m (D_hi r)]
           -- Key: subFin idx is the EXACT set of primes in (a_m, b_m]!
           have hsub_exact : ∀ p : ℕ, p ∈ subFin idx ↔ p.Prime ∧ a_m < (p : ℝ) ∧ (p : ℝ) ≤ b_m := by
             intro p
@@ -1074,9 +1122,9 @@ theorem lem_6_3_osc_bound_honest
                   · -- r' < r ⇒ r' + 1 ≤ r ⇒ (p : ℝ) ≤ D_hi r ≤ n₁^(1/r) / (log n₁)^A_R ≤ n₁^(1/r') / (log n₁)^A_R = (powCollar r').1
                     have hle : (n₁ : ℝ) ^ (1 / (r : ℝ)) / (Real.log (n₁ : ℝ)) ^ A_R ≤
                         (n₁ : ℝ) ^ (1 / (r' : ℝ)) / (Real.log (n₁ : ℝ)) ^ A_R := by
-                      gcongr
-                      · exact_mod_cast (by omega : 1 ≤ n₁)
-                      · exact_mod_cast le_of_lt hlt'
+                      apply div_le_div_of_nonneg_right _ (by positivity)
+                      apply Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast (by omega : 1 ≤ n₁))
+                      exact one_div_le_one_div_of_le (by exact_mod_cast (by omega : 0 < r')) (by exact_mod_cast le_of_lt hlt')
                     linarith [le_trans hpD.2 (min_le_right _ _), hpr'.1]
                   · -- r ≤ r' ⇒ r' ≥ r. If r' = r: p ≤ D_hi r = (powCollar r).1, contradicting hpr'.1!
                     -- If r' > r: r' ≥ r + 1 ⇒ (powCollar r').2 = n₂^(1/r') ≤ n₂^(1/(r+1)) ≤ D_lo r < p, contradicting hpr'.2!
@@ -1095,13 +1143,13 @@ theorem lem_6_3_osc_bound_honest
           rw [hpart_dy, Finset.sum_biUnion hdisj_dy]
           -- Bound each dyadic block I_k
           have hdy_bd : ∀ k ∈ dyadicBlocks a_m b_m,
-              |∑ p ∈ (subFin idx).filter (fun p => a_m * (2 : ℝ) ^ k < (p : ℝ) ∧ (p : ℝ) ≤ 2 * (a_m * (2 : ℝ) ^ k)),
+              |∑ p ∈ (subFin idx).filter (fun p : ℕ => a_m * (2 : ℝ) ^ k < (p : ℝ) ∧ (p : ℝ) ≤ 2 * (a_m * (2 : ℝ) ^ k)),
                 ((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂))) *
                   (((n₁ : ℝ) / (p : ℝ)) * Real.log (p : ℝ))| ≤
                 (n₁ : ℝ) * (L₁ ^ (2 * R) * (C₂ + 2 * (R : ℝ) * (4 + 12 * C₂)) / (Real.log (n₁ : ℝ)) ^ (R + 2)) := by
             intro k hk
             let P : ℝ := a_m * (2 : ℝ) ^ k
-            let I_k := (subFin idx).filter (fun p => P < (p : ℝ) ∧ (p : ℝ) ≤ 2 * P)
+            let I_k := (subFin idx).filter (fun p : ℕ => P < (p : ℝ) ∧ (p : ℝ) ≤ 2 * P)
             have hP_ge_am : a_m ≤ P := le_mul_of_one_le_right (by linarith) (one_le_pow₀ (by norm_num))
             have hP_lt_bm : P < b_m := (Finset.mem_filter.mp hk).2
             have hP_lo : (n₁ : ℝ) ^ δ ≤ P := le_trans ha_ge_nd hP_ge_am
@@ -1124,8 +1172,8 @@ theorem lem_6_3_osc_bound_honest
             -- Exact multi-digit identity on I_k: v_p(n_i!) = ∑ j ∈ Icc 1 r, ⌊n_i / p^j⌋
             have hprod_id : ∀ p ∈ I_k,
                 (((-1 : ℝ) ^ (padicValNat p (Nat.factorial n₁) + padicValNat p (Nat.factorial n₂)) : ℝ) : ℂ) =
-                (∏ j ∈ Finset.Icc 1 r, (((-1 : ℝ) ^ Int.floor ((n₁ : ℝ) / (p : ℝ) ^ j) : ℝ) : ℂ)) *
-                (∏ j ∈ Finset.Icc 1 r, (((-1 : ℝ) ^ Int.floor ((n₂ : ℝ) / (p : ℝ) ^ j) : ℝ) : ℂ)) := by
+                (∏ j ∈ Finset.Icc 1 r, ((-1 : ℂ) ^ Int.floor ((n₁ : ℝ) / (p : ℝ) ^ j))) *
+                (∏ j ∈ Finset.Icc 1 r, ((-1 : ℂ) ^ Int.floor ((n₂ : ℝ) / (p : ℝ) ^ j))) := by
               intro p hp
               have hp_pr := (hIk_pr p hp).1
               have hp_sub := (Finset.mem_filter.mp hp).1
@@ -1138,25 +1186,22 @@ theorem lem_6_3_osc_bound_honest
                         push_cast; rw [one_div_mul_cancel (by positivity), Real.rpow_one]
                     _ < (p : ℝ) ^ (r + 1) := pow_lt_pow_left₀ hp_gt_n2 (by positivity) (by omega)
                 exact_mod_cast h1
-              have hv1 := padicValNat_factorial_eq_sum_Icc hp_pr (lt_trans hlt hn₂_lt_p)
-              have hv2 := padicValNat_factorial_eq_sum_Icc hp_pr hn₂_lt_p
+              have hv1 := lem63_padicValNat_factorial_eq_sum_Icc hp_pr (lt_trans hlt hn₂_lt_p)
+              have hv2 := lem63_padicValNat_factorial_eq_sum_Icc hp_pr hn₂_lt_p
               have hfl : ∀ (m j : ℕ), Int.floor ((m : ℝ) / (p : ℝ) ^ j) = ((m / p ^ j : ℕ) : ℤ) := fun m j => by
                 rw [Int.floor_eq_iff]; constructor
                 · rw [Int.cast_natCast, le_div_iff₀ (by positivity)]
                   exact_mod_cast Nat.div_mul_le_self m (p ^ j)
                 · rw [Int.cast_natCast, div_lt_iff₀ (by positivity)]
-                  exact_mod_cast Nat.lt_div_mul_add (a := m) (pow_pos hp_pr.pos j)
-              rw [hv1, hv2, pow_add, Complex.ofReal_mul]
-              congr 1 <;>
-              · rw [← Complex.ofReal_pow, Finset.prod_pow_eq_pow_sum]
-                push_cast
-                refine congrArg (fun x : ℂ => (-1 : ℂ) ^ _) rfl |> fun _ => ?_
-                have : ∀ m : ℕ, (((-1 : ℝ) ^ (∑ j ∈ Finset.Icc 1 r, m / p ^ j) : ℝ) : ℂ) =
-                    ∏ j ∈ Finset.Icc 1 r, (((-1 : ℝ) ^ Int.floor ((m : ℝ) / (p : ℝ) ^ j) : ℝ) : ℂ) := fun m => by
-                  rw [← Finset.prod_pow_eq_pow_sum, Complex.ofReal_prod]
-                  refine Finset.prod_congr rfl fun j _ => ?_
-                  rw [hfl m j, zpow_natCast]
-                exact this _
+                  have hlt_nat : m < (m / p ^ j + 1) * p ^ j := by
+                    rw [add_mul, one_mul]; exact Nat.lt_div_mul_add (a := m) (pow_pos hp_pr.pos j)
+                  exact_mod_cast hlt_nat
+              have hsub_prod : ∀ m : ℕ, (((-1 : ℝ) ^ (∑ j ∈ Finset.Icc 1 r, m / p ^ j) : ℝ) : ℂ) =
+                  ∏ j ∈ Finset.Icc 1 r, ((-1 : ℂ) ^ Int.floor ((m : ℝ) / (p : ℝ) ^ j)) := fun m => by
+                rw [← Finset.prod_pow_eq_pow_sum, Complex.ofReal_prod]
+                refine Finset.prod_congr rfl fun j _ => ?_
+                rw [hfl m j, zpow_natCast]; push_cast; rfl
+              rw [hv1, hv2, pow_add, Complex.ofReal_mul, hsub_prod n₁, hsub_prod n₂]
             -- Split into mainC (product of Psi_tilde) + errC (telescoping error)
             let mainC : ℂ := ∑ p ∈ I_k, ((Real.log (p : ℝ) / (p : ℝ) : ℝ) : ℂ) *
               ((∏ j ∈ Finset.Icc 1 r, Psi_tilde ((n₁ : ℝ) / (p : ℝ) ^ j)) *
@@ -1184,14 +1229,14 @@ theorem lem_6_3_osc_bound_honest
                 rw [hprod_id p hp]
                 let idxS := (Finset.Icc 1 r).disjSum (Finset.Icc 1 r)
                 let f : ℕ ⊕ ℕ → ℂ := Sum.elim
-                  (fun j => (((-1 : ℝ) ^ Int.floor ((n₁ : ℝ) / (p : ℝ) ^ j) : ℝ) : ℂ))
-                  (fun j => (((-1 : ℝ) ^ Int.floor ((n₂ : ℝ) / (p : ℝ) ^ j) : ℝ) : ℂ))
+                  (fun j => ((-1 : ℂ) ^ Int.floor ((n₁ : ℝ) / (p : ℝ) ^ j)))
+                  (fun j => ((-1 : ℂ) ^ Int.floor ((n₂ : ℝ) / (p : ℝ) ^ j)))
                 let g : ℕ ⊕ ℕ → ℂ := Sum.elim
                   (fun j => Psi_tilde ((n₁ : ℝ) / (p : ℝ) ^ j))
                   (fun j => Psi_tilde ((n₂ : ℝ) / (p : ℝ) ^ j))
                 have hpf : ∏ x ∈ idxS, f x =
-                    (∏ j ∈ Finset.Icc 1 r, (((-1 : ℝ) ^ Int.floor ((n₁ : ℝ) / (p : ℝ) ^ j) : ℝ) : ℂ)) *
-                    (∏ j ∈ Finset.Icc 1 r, (((-1 : ℝ) ^ Int.floor ((n₂ : ℝ) / (p : ℝ) ^ j) : ℝ) : ℂ)) := by
+                    (∏ j ∈ Finset.Icc 1 r, ((-1 : ℂ) ^ Int.floor ((n₁ : ℝ) / (p : ℝ) ^ j))) *
+                    (∏ j ∈ Finset.Icc 1 r, ((-1 : ℂ) ^ Int.floor ((n₂ : ℝ) / (p : ℝ) ^ j))) := by
                   simp [idxS, f, Finset.prod_disjSum]
                 have hpg : ∏ x ∈ idxS, g x =
                     (∏ j ∈ Finset.Icc 1 r, Psi_tilde ((n₁ : ℝ) / (p : ℝ) ^ j)) *
@@ -1202,14 +1247,19 @@ theorem lem_6_3_osc_bound_honest
                 rw [← hpf, ← hpg]
                 have h1 := norm_prod_sub_prod_le idxS f g L₁ hL₁_ge1
                   (fun x _ => by
-                    cases x <;> simp [f, Complex.norm_real, abs_zpow])
+                    cases x <;> simp [f])
                   (fun x _ => by
                     cases x <;> simp [g, hPsi_bd])
                 rw [hcard] at h1
                 refine le_trans h1 (mul_le_mul_of_nonneg_left ?_ (by positivity))
                 simp only [idxS, Finset.sum_disjSum, f, g, Sum.elim_inl, Sum.elim_inr]
-                exact add_le_add (Finset.sum_le_sum fun j _ => h_vaaler_pw _)
-                  (Finset.sum_le_sum fun j _ => h_vaaler_pw _)
+                have hvaal : ∀ x : ℝ, ‖((-1 : ℂ) ^ Int.floor x) - Psi_tilde x‖ ≤ (B_tilde x).re := fun x => by
+                  have hp := h_vaaler_pw x
+                  dsimp only [Psi_tilde, B_tilde, S_H]
+                  convert hp using 2 <;>
+                    simp only [mul_div_assoc, Complex.ofReal_zpow, Complex.ofReal_neg, Complex.ofReal_one]
+                exact add_le_add (Finset.sum_le_sum fun j _ => hvaal _)
+                  (Finset.sum_le_sum fun j _ => hvaal _)
               have hB_single : ∀ (m : ℕ), n₁ ≤ m → ∀ j ∈ Finset.Icc 1 r,
                   ∑ p ∈ I_k, (Real.log (p : ℝ) / (p : ℝ)) * (B_tilde ((m : ℝ) / (p : ℝ) ^ j)).re ≤
                     (4 + 12 * C₂) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by
@@ -1225,7 +1275,8 @@ theorem lem_6_3_osc_bound_honest
                   congr 1
                   · simp [eExp]
                   · congr 1; ext x; simp [Finset.mem_erase, Finset.mem_filter, and_comm]
-                simp_rw [hBt_eq]
+                have hBt_re : ∀ p : ℕ, (B_tilde ((m : ℝ) / (p : ℝ) ^ j)).re = (b_tilde 0 + ∑ h' ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (· ≠ 0), b_tilde h' * eExp ((h' : ℝ) * ((m : ℝ) / (p : ℝ) ^ j) / 2)).re := fun p => congrArg Complex.re (hBt_eq p)
+                simp_rw [hBt_re]
                 have hvb := vaaler_btilde_dyadic_sum_bound_inv H hH_ge1 b_tilde h_btilde0 h_btilde_b
                   n₁ m j P hP_pos (by linarith) I_k hIk_pr C₂ hC₂_pos.le R (fun h' hh' _ => by
                     have hT₀ : (2 : ℝ) ^ (-(R : ℤ)) * (Real.log (n₁ : ℝ)) ^ A_R ≤ |(h' : ℝ) * (m : ℝ)| / P ^ j := by
@@ -1293,7 +1344,6 @@ theorem lem_6_3_osc_bound_honest
                     exact mul_le_mul_of_nonneg_left (hpw p hp) (by positivity)
                 _ = L₁ ^ (2 * r) * ((∑ j ∈ Finset.Icc 1 r, ∑ p ∈ I_k, (Real.log (p : ℝ) / (p : ℝ)) * (B_tilde ((n₁ : ℝ) / (p : ℝ) ^ j)).re) +
                     (∑ j ∈ Finset.Icc 1 r, ∑ p ∈ I_k, (Real.log (p : ℝ) / (p : ℝ)) * (B_tilde ((n₂ : ℝ) / (p : ℝ) ^ j)).re)) := by
-                    rw [← Finset.mul_sum]; congr 1
                     simp_rw [← mul_assoc, mul_comm (Real.log _ / _) (L₁ ^ (2 * r)), mul_assoc]
                     rw [← Finset.mul_sum]
                     congr 1
@@ -1311,8 +1361,8 @@ theorem lem_6_3_osc_bound_honest
             have hmainC_bd : ‖mainC‖ ≤ L₁ ^ (2 * r) * (C₂ * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) := by
               -- Expand product of Psi_tilde over Finset.Icc 1 r
               let A := Finset.Icc 1 r
-              let Π := Fintype.piFinset (fun _ : A => S_H)
-              have hexp_main : mainC = ∑ f₁ ∈ Π, ∑ f₂ ∈ Π,
+              let PiSet := Fintype.piFinset (fun _ : A => S_H)
+              have hexp_main : mainC = ∑ f₁ ∈ PiSet, ∑ f₂ ∈ PiSet,
                   ((∏ j : A, c_tilde (f₁ j)) * (∏ j : A, c_tilde (f₂ j))) *
                   ∑ p ∈ I_k, ((1 / (p : ℝ)) * Real.log (p : ℝ) : ℂ) *
                     eExp (∑ j ∈ A, (if hj : j ∈ A then (((f₁ ⟨j, hj⟩ : ℝ) + (f₂ ⟨j, hj⟩ : ℝ)) * (n₁ : ℝ) + (f₂ ⟨j, hj⟩ : ℝ) * (h : ℝ)) else 0) / (2 * (p : ℝ) ^ j)) := by
@@ -1320,17 +1370,17 @@ theorem lem_6_3_osc_bound_honest
                 calc ∑ p ∈ I_k, ((Real.log (p : ℝ) / (p : ℝ) : ℝ) : ℂ) *
                       ((∏ j ∈ A, ∑ m ∈ S_H, c_tilde m * eExp ((m : ℝ) * ((n₁ : ℝ) / (p : ℝ) ^ j) / 2)) *
                        (∏ j ∈ A, ∑ m ∈ S_H, c_tilde m * eExp ((m : ℝ) * ((n₂ : ℝ) / (p : ℝ) ^ j) / 2)))
-                    = ∑ p ∈ I_k, ∑ f₁ ∈ Π, ∑ f₂ ∈ Π,
+                    = ∑ p ∈ I_k, ∑ f₁ ∈ PiSet, ∑ f₂ ∈ PiSet,
                         ((1 / (p : ℝ)) * Real.log (p : ℝ) : ℂ) *
                         (((∏ j : A, c_tilde (f₁ j)) * (∏ j : A, c_tilde (f₂ j))) *
                           eExp (∑ j ∈ A, (if hj : j ∈ A then (((f₁ ⟨j, hj⟩ : ℝ) + (f₂ ⟨j, hj⟩ : ℝ)) * (n₁ : ℝ) + (f₂ ⟨j, hj⟩ : ℝ) * (h : ℝ)) else 0) / (2 * (p : ℝ) ^ j))) := by
                       refine Finset.sum_congr rfl fun p _ => ?_
                       have hp1 : (∏ j ∈ A, ∑ m ∈ S_H, c_tilde m * eExp ((m : ℝ) * ((n₁ : ℝ) / (p : ℝ) ^ j) / 2)) =
-                          ∑ f₁ ∈ Π, ∏ j : A, (c_tilde (f₁ j) * eExp ((f₁ j : ℝ) * ((n₁ : ℝ) / (p : ℝ) ^ (j : ℕ)) / 2)) := by
+                          ∑ f₁ ∈ PiSet, ∏ j : A, (c_tilde (f₁ j) * eExp ((f₁ j : ℝ) * ((n₁ : ℝ) / (p : ℝ) ^ (j : ℕ)) / 2)) := by
                         rw [← Finset.prod_attach A, Fintype.prod_sum]
                         rfl
                       have hp2 : (∏ j ∈ A, ∑ m ∈ S_H, c_tilde m * eExp ((m : ℝ) * ((n₂ : ℝ) / (p : ℝ) ^ j) / 2)) =
-                          ∑ f₂ ∈ Π, ∏ j : A, (c_tilde (f₂ j) * eExp ((f₂ j : ℝ) * ((n₂ : ℝ) / (p : ℝ) ^ (j : ℕ)) / 2)) := by
+                          ∑ f₂ ∈ PiSet, ∏ j : A, (c_tilde (f₂ j) * eExp ((f₂ j : ℝ) * ((n₂ : ℝ) / (p : ℝ) ^ (j : ℕ)) / 2)) := by
                         rw [← Finset.prod_attach A, Fintype.prod_sum]
                         rfl
                       rw [hp1, hp2, Finset.sum_mul, Finset.mul_sum]
@@ -1353,7 +1403,7 @@ theorem lem_6_3_osc_bound_honest
                       have hw_eq : ((Real.log (p : ℝ) / (p : ℝ) : ℝ) : ℂ) = ((1 / (p : ℝ)) * Real.log (p : ℝ) : ℂ) := by
                         push_cast; ring
                       rw [hw_eq, ← he_eq]; ring
-                  _ = ∑ f₁ ∈ Π, ∑ f₂ ∈ Π,
+                  _ = ∑ f₁ ∈ PiSet, ∑ f₂ ∈ PiSet,
                         ((∏ j : A, c_tilde (f₁ j)) * (∏ j : A, c_tilde (f₂ j))) *
                         ∑ p ∈ I_k, ((1 / (p : ℝ)) * Real.log (p : ℝ) : ℂ) *
                           eExp (∑ j ∈ A, (if hj : j ∈ A then (((f₁ ⟨j, hj⟩ : ℝ) + (f₂ ⟨j, hj⟩ : ℝ)) * (n₁ : ℝ) + (f₂ ⟨j, hj⟩ : ℝ) * (h : ℝ)) else 0) / (2 * (p : ℝ) ^ j)) := by
@@ -1365,14 +1415,14 @@ theorem lem_6_3_osc_bound_honest
                       refine Finset.sum_congr rfl fun p _ => by ring
               rw [hexp_main]
               -- Bound each (f₁, f₂) inner sum by C₂ * (log n₁)^(-(R+2))
-              have hinner : ∀ f₁ ∈ Π, ∀ f₂ ∈ Π,
+              have hinner : ∀ f₁ ∈ PiSet, ∀ f₂ ∈ PiSet,
                   ‖∑ p ∈ I_k, ((1 / (p : ℝ)) * Real.log (p : ℝ) : ℂ) *
                     eExp (∑ j ∈ A, (if hj : j ∈ A then (((f₁ ⟨j, hj⟩ : ℝ) + (f₂ ⟨j, hj⟩ : ℝ)) * (n₁ : ℝ) + (f₂ ⟨j, hj⟩ : ℝ) * (h : ℝ)) else 0) / (2 * (p : ℝ) ^ j))‖ ≤
                     C₂ * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by
                 intro f₁ hf₁ f₂ hf₂
                 let M : ℕ → ℝ := fun j =>
                   if hj : j ∈ A then (((f₁ ⟨j, hj⟩ : ℝ) + (f₂ ⟨j, hj⟩ : ℝ)) * (n₁ : ℝ) + (f₂ ⟨j, hj⟩ : ℝ) * (h : ℝ)) else 0
-                have hf_bd : ∀ (f : A → ℤ), f ∈ Π → ∀ j : A, |((f j : ℤ) : ℝ)| ≤ 2 * (H : ℝ) + 1 ∧ f j ≠ 0 ∧ Odd (f j) := by
+                have hf_bd : ∀ (f : A → ℤ), f ∈ PiSet → ∀ j : A, |((f j : ℤ) : ℝ)| ≤ 2 * (H : ℝ) + 1 ∧ f j ≠ 0 ∧ Odd (f j) := by
                   intro f hf j
                   have hm := Finset.mem_filter.mp (Fintype.mem_piFinset.mp hf j)
                   have hicc := Finset.mem_Icc.mp hm.1
@@ -1467,6 +1517,10 @@ theorem lem_6_3_osc_bound_honest
                   nlinarith
                 have h1A : 1 ∈ A := Finset.mem_Icc.mpr ⟨le_rfl, hr_icc.1⟩
                 have h2le : (2 : ℝ) ^ (-(R : ℤ)) ≤ 1 := zpow_le_one_of_nonpos₀ (by norm_num) (by omega)
+                have hsmall_d10 : 10 * ((Real.log (n₁ : ℝ)) ^ (R + 3) / (n₁ : ℝ) ^ δ) ≤ c₁_low / ((R : ℝ) * Mmax + 1) := by
+                  have hmul := mul_le_mul_of_nonneg_left hsmall_d (by norm_num : (0 : ℝ) ≤ 10)
+                  have h10 : 10 * (c₁_low / (10 * ((R : ℝ) * Mmax + 1))) = c₁_low / ((R : ℝ) * Mmax + 1) := by ring
+                  linarith
                 -- Choose dominant index r₀ ∈ A
                 have hDom_exists : ∃ r₀ ∈ A,
                     (2 : ℝ) ^ (-(R : ℤ)) * (Real.log (n₁ : ℝ)) ^ A_R ≤ |M r₀| / P ^ r₀ ∧
@@ -1488,9 +1542,9 @@ theorem lem_6_3_osc_bound_honest
                             gcongr
                             exact hM_nz_lb ⟨1, h1A⟩ h1_nz
                         _ ≤ (c₁_low / ((R : ℝ) * Mmax + 1)) * (|M 1| / P ^ 1) := by
-                            gcongr; linarith
+                            gcongr
                   · push_neg at h1_nz
-                    let S_nz := (Finset.Icc 2 r).filter (fun j => ∃ hj : j ∈ A, f₁ ⟨j, hj⟩ + f₂ ⟨j, hj⟩ ≠ 0)
+                    let S_nz := (Finset.Icc 2 r).filter (fun j : ℕ => ∃ hj : j ∈ A, f₁ ⟨j, hj⟩ + f₂ ⟨j, hj⟩ ≠ 0)
                     by_cases hSnz : S_nz.Nonempty
                     · let j_star := S_nz.min' hSnz
                       have hj_mem := Finset.mem_filter.mp (Finset.min'_mem S_nz hSnz)
@@ -1498,7 +1552,7 @@ theorem lem_6_3_osc_bound_honest
                       obtain ⟨hjA, hj_nz⟩ := hj_mem.2
                       have hj_in_2R : j_star ∈ Finset.Icc 2 R := Finset.mem_Icc.mpr ⟨hj_icc.1, le_trans hj_icc.2 hr_icc.2⟩
                       have hdisj_j := hL_disj (a_m, b_m) hu_mem (resCollar j_star) (hresList_mem j_star hj_in_2R)
-                      have hcases := disjoint_Ioc_cases hlt_ab (hresList_le _ (hresList_mem j_star hj_in_2R)) hdisj_j
+                      have hcases := disjoint_Ioc_cases hlt_ab (hresList_lt _ (hresList_mem j_star hj_in_2R)) hdisj_j
                       have hj1_pos : (0 : ℝ) < (j_star : ℝ) - 1 := by exact_mod_cast (by omega : 0 < j_star - 1)
                       have hj1_ge1 : 1 ≤ j_star - 1 := by omega
                       rcases hcases with hb_le_c | hd_le_a
@@ -1563,7 +1617,7 @@ theorem lem_6_3_osc_bound_honest
                               _ = (10 * ((Real.log (n₁ : ℝ)) ^ (R + 3) / P)) * ((n₁ : ℝ) / P ^ j_star) := by ring
                               _ ≤ (10 * ((Real.log (n₁ : ℝ)) ^ (R + 3) / (n₁ : ℝ) ^ δ)) * (|M j_star| / P ^ j_star) := by
                                   gcongr; exact hM_nz_lb ⟨j_star, hjA⟩ hj_nz
-                              _ ≤ (c₁_low / ((R : ℝ) * Mmax + 1)) * (|M j_star| / P ^ j_star) := by gcongr; linarith
+                              _ ≤ (c₁_low / ((R : ℝ) * Mmax + 1)) * (|M j_star| / P ^ j_star) := by gcongr
                       · -- d_{j_star} ≤ a_m ≤ P ⇒ j = 1 dominates!
                         have hd_le_P : (resCollar j_star).2 ≤ P := le_trans hd_le_a hP_ge_am
                         have hratio : (n₁ : ℝ) / P ^ j_star ≤ ((h : ℝ) / P) / (Real.log (n₁ : ℝ)) ^ (A_R + 6) := by
@@ -1609,7 +1663,7 @@ theorem lem_6_3_osc_bound_honest
                                   gcongr
                                   · linarith [show (0 : ℝ) ≤ (Real.log (n₁ : ℝ)) ^ (R + 3) / P by positivity]
                                   · exact hM_z_lb ⟨1, h1A⟩ h1_nz
-                              _ ≤ (c₁_low / ((R : ℝ) * Mmax + 1)) * (|M 1| / P ^ 1) := by gcongr; linarith
+                              _ ≤ (c₁_low / ((R : ℝ) * Mmax + 1)) * (|M 1| / P ^ 1) := by gcongr
                           · have hPs : P ^ j_star ≤ P ^ s := pow_le_pow_right₀ hP_ge1 hs_ge
                             calc |M s| / P ^ s ≤ (10 * (Real.log (n₁ : ℝ)) ^ (R + 3) * (n₁ : ℝ)) / P ^ j_star :=
                                   div_le_div₀ (by positivity) (hM_ub ⟨s, hsA⟩) (by positivity) hPs
@@ -1639,7 +1693,7 @@ theorem lem_6_3_osc_bound_honest
                               gcongr
                               · linarith [show (0 : ℝ) ≤ (Real.log (n₁ : ℝ)) ^ (R + 3) / P by positivity]
                               · exact hM_z_lb ⟨1, h1A⟩ h1_nz
-                          _ ≤ (c₁_low / ((R : ℝ) * Mmax + 1)) * (|M 1| / P ^ 1) := by gcongr; linarith
+                          _ ≤ (c₁_low / ((R : ℝ) * Mmax + 1)) * (|M 1| / P ^ 1) := by gcongr
                 obtain ⟨r₀, hr₀A, hT₀, hDom⟩ := hDom_exists
                 have hres := hGen P I_k A M r₀ (fun t => 1 / t) (1 / P)
                   hP_lo hP_hi hIk_sub (fun s hs => by have := Finset.mem_Icc.mp hs; omega)
@@ -1647,21 +1701,21 @@ theorem lem_6_3_osc_bound_honest
                 have hcancel : C₂ * (1 / P) * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) =
                     C₂ * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by field_simp [hP_pos.ne']
                 simpa [M, hcancel] using hres
-              calc ‖∑ f₁ ∈ Π, ∑ f₂ ∈ Π, _‖
-                  ≤ ∑ f₁ ∈ Π, ‖∑ f₂ ∈ Π, _‖ := norm_sum_le _ _
-                _ ≤ ∑ f₁ ∈ Π, ∑ f₂ ∈ Π, ‖((∏ j : A, c_tilde (f₁ j)) * (∏ j : A, c_tilde (f₂ j))) * _‖ :=
+              calc ‖∑ f₁ ∈ PiSet, ∑ f₂ ∈ PiSet, _‖
+                  ≤ ∑ f₁ ∈ PiSet, ‖∑ f₂ ∈ PiSet, _‖ := norm_sum_le _ _
+                _ ≤ ∑ f₁ ∈ PiSet, ∑ f₂ ∈ PiSet, ‖((∏ j : A, c_tilde (f₁ j)) * (∏ j : A, c_tilde (f₂ j))) * _‖ :=
                     Finset.sum_le_sum fun f₁ _ => norm_sum_le _ _
-                _ ≤ ∑ f₁ ∈ Π, ∑ f₂ ∈ Π, ((∏ j : A, ‖c_tilde (f₁ j)‖) * (∏ j : A, ‖c_tilde (f₂ j)‖)) *
+                _ ≤ ∑ f₁ ∈ PiSet, ∑ f₂ ∈ PiSet, ((∏ j : A, ‖c_tilde (f₁ j)‖) * (∏ j : A, ‖c_tilde (f₂ j)‖)) *
                       (C₂ * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) := by
                     apply Finset.sum_le_sum; intro f₁ hf₁
                     apply Finset.sum_le_sum; intro f₂ hf₂
                     rw [norm_mul, norm_mul, norm_prod, norm_prod]
                     exact mul_le_mul_of_nonneg_left (hinner f₁ hf₁ f₂ hf₂) (by positivity)
-                _ = (∑ f₁ ∈ Π, ∏ j : A, ‖c_tilde (f₁ j)‖) * (∑ f₂ ∈ Π, ∏ j : A, ‖c_tilde (f₂ j)‖) *
+                _ = (∑ f₁ ∈ PiSet, ∏ j : A, ‖c_tilde (f₁ j)‖) * (∑ f₂ ∈ PiSet, ∏ j : A, ‖c_tilde (f₂ j)‖) *
                       (C₂ * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) := by
-                    simp only [Finset.sum_mul, Finset.mul_sum]; rw [Finset.sum_comm]
+                    simp only [Finset.sum_mul, Finset.mul_sum, mul_assoc]
                 _ ≤ L₁ ^ (2 * r) * (C₂ * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) := by
-                    have hsum_pi : ∑ f ∈ Π, ∏ j : A, ‖c_tilde (f j)‖ ≤ L₁ ^ r := by
+                    have hsum_pi : ∑ f ∈ PiSet, ∏ j : A, ‖c_tilde (f j)‖ ≤ L₁ ^ r := by
                       rw [← Fintype.prod_sum]
                       have hcardA : Fintype.card A = r := by simp [A]
                       calc ∏ _j : A, ∑ m ∈ S_H, ‖c_tilde m‖
@@ -1669,7 +1723,7 @@ theorem lem_6_3_osc_bound_honest
                               (fun _ _ => le_trans h_L1 hL₁_ge)
                         _ = L₁ ^ Fintype.card A := by simp
                         _ = L₁ ^ r := by rw [hcardA]
-                    have hsq : (∑ f₁ ∈ Π, ∏ j : A, ‖c_tilde (f₁ j)‖) * (∑ f₂ ∈ Π, ∏ j : A, ‖c_tilde (f₂ j)‖) ≤ L₁ ^ (2 * r) := by
+                    have hsq : (∑ f₁ ∈ PiSet, ∏ j : A, ‖c_tilde (f₁ j)‖) * (∑ f₂ ∈ PiSet, ∏ j : A, ‖c_tilde (f₂ j)‖) ≤ L₁ ^ (2 * r) := by
                       calc _ ≤ L₁ ^ r * L₁ ^ r := mul_le_mul hsum_pi hsum_pi (Finset.sum_nonneg fun _ _ => Finset.prod_nonneg fun _ _ => norm_nonneg _) (by positivity)
                         _ = L₁ ^ (2 * r) := by rw [← pow_add, two_mul]
                     gcongr
@@ -1678,8 +1732,7 @@ theorem lem_6_3_osc_bound_honest
             have hL_mono : L₁ ^ (2 * r) ≤ L₁ ^ (2 * R) := pow_le_pow_right₀ hL₁_ge1 (by omega)
             have hr_le : (r : ℝ) ≤ (R : ℝ) := by exact_mod_cast hr_icc.2
             have hpow_neg : (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) = 1 / (Real.log (n₁ : ℝ)) ^ (R + 2) := by
-              rw [Real.rpow_neg hlog_pos.le, one_div]
-              norm_cast
+              rw [Real.rpow_neg hlog_pos.le, one_div, show ((R : ℝ) + 2) = ((R + 2 : ℕ) : ℝ) by push_cast; ring, Real.rpow_natCast]
             calc (n₁ : ℝ) * |(mainC + errC).re|
                 ≤ (n₁ : ℝ) * ‖mainC + errC‖ := mul_le_mul_of_nonneg_left (Complex.abs_re_le_norm _) hn₁_pos.le
               _ ≤ (n₁ : ℝ) * (‖mainC‖ + ‖errC‖) := mul_le_mul_of_nonneg_left (norm_add_le _ _) hn₁_pos.le
@@ -1740,7 +1793,7 @@ theorem lem_6_3_osc_bound_honest
           rw [Finset.sum_const, nsmul_eq_mul, Nat.card_Icc]; simp
       _ = (n₁ : ℝ) * (((R : ℝ) * (2 : ℝ) ^ R * (Real.log (n₁ : ℝ) / Real.log 2 + 2) *
             (L₁ ^ (2 * R) * (C₂ + 2 * (R : ℝ) * (4 + 12 * C₂)))) / (Real.log (n₁ : ℝ)) ^ (R + 2)) := by ring
-      _ ≤ (n₁ : ℝ) * (ε / 16) := by gcongr
+      _ ≤ (n₁ : ℝ) * (ε / 16) := mul_le_mul_of_nonneg_left herr_clean.le hn₁_pos.le
       _ ≤ (ε / 8) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
           have : 0 ≤ (n₁ : ℝ) * (ε / 16) := by positivity
           nlinarith
