@@ -1777,8 +1777,11 @@ theorem lem_6_3_osc_bound_honest
               (n₁ : ℝ) * ((Real.log (n₁ : ℝ) / Real.log 2 + 2) *
                 (L₁ ^ (2 * R) * (C₂ + 2 * (R : ℝ) * (4 + 12 * C₂))) / (Real.log (n₁ : ℝ)) ^ (R + 2)) :=
             Finset.sum_le_sum (fun idx _ => hidx_bd idx)
-        _ = (L_ivs.length : ℝ) * _ := by simp [Finset.sum_const, nsmul_eq_mul]
-        _ ≤ (2 : ℝ) ^ R * _ := by
+        _ = (L_ivs.length : ℝ) * ((n₁ : ℝ) * ((Real.log (n₁ : ℝ) / Real.log 2 + 2) *
+              (L₁ ^ (2 * R) * (C₂ + 2 * (R : ℝ) * (4 + 12 * C₂))) / (Real.log (n₁ : ℝ)) ^ (R + 2))) := by
+            rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+        _ ≤ (2 : ℝ) ^ R * ((n₁ : ℝ) * ((Real.log (n₁ : ℝ) / Real.log 2 + 2) *
+              (L₁ ^ (2 * R) * (C₂ + 2 * (R : ℝ) * (4 + 12 * C₂))) / (Real.log (n₁ : ℝ)) ^ (R + 2))) := by
             gcongr; exact_mod_cast hL_len
         _ = (n₁ : ℝ) * ((2 : ℝ) ^ R * (Real.log (n₁ : ℝ) / Real.log 2 + 2) *
               (L₁ ^ (2 * R) * (C₂ + 2 * (R : ℝ) * (4 + 12 * C₂))) / (Real.log (n₁ : ℝ)) ^ (R + 2)) := by ring
