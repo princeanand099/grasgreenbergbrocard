@@ -1076,10 +1076,17 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         have h1' : (n₁ : ℝ) ^ α = (n₁ : ℝ) * (n₁ : ℝ) ^ (α - 1) := by
           rw [show α = 1 + (α - 1) by ring, Real.rpow_add hn₁_pos, Real.rpow_one]
         have hmin : min (ε / 256) (1 / 4) ≤ ε / 256 := min_le_left _ _
-        calc ((n₂ - n₁ : ℕ) : ℝ) ≤ (n₁ : ℝ) ^ α := h_gap
+        calc ((n₂ - n₁ : ℕ) : ℝ) = (n₂ : ℝ) - (n₁ : ℝ) := Nat.cast_sub hlt.le
+          _ ≤ (n₁ : ℝ) ^ α := h_gap
           _ = (n₁ : ℝ) * (n₁ : ℝ) ^ (α - 1) := h1'
-          _ ≤ (n₁ : ℝ) * min (ε / 256) (1 / 4) := by gcongr; exact h_al.le
+          _ ≤ (n₁ : ℝ) * min (ε / 256) (1 / 4) := by gcongr
           _ ≤ (ε / 256) * (n₁ : ℝ) := by nlinarith
+      have hlogP1 : Real.log (P_ratio n₁ n₂ : ℝ) ≤ ((ε / 256) * (n₁ : ℝ)) * (2 * Real.log (n₁ : ℝ)) := by
+        calc Real.log (P_ratio n₁ n₂ : ℝ)
+            ≤ ((n₂ - n₁ : ℕ) : ℝ) * Real.log (2 * (n₁ : ℝ)) := h1
+          _ ≤ ((ε / 256) * (n₁ : ℝ)) * (2 * Real.log (n₁ : ℝ)) := by
+              gcongr
+              exact Real.log_nonneg (by linarith : (1 : ℝ) ≤ 2 * (n₁ : ℝ))
       calc 6 * Real.log (P_ratio n₁ n₂ : ℝ)
           ≤ 6 * (((ε / 256) * (n₁ : ℝ)) * (2 * Real.log (n₁ : ℝ))) := by gcongr
         _ = (3 * ε / 64) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by ring
@@ -1088,8 +1095,10 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
     have h_il := hN_il n₁ (by omega)
     rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at h_il
     have h1 : Real.log 2 ≤ (ε / 16) * Real.log (n₁ : ℝ) := by
-      have := (div_lt_iff₀ hlog_n₁_pos).mp h_il
+      have hdiv := (div_lt_iff₀ hlog_n₁_pos).mp h_il
       have hmin : min (ε / 256) (1 / 100) ≤ ε / 256 := min_le_left _ _
+      have hmul : 1 < (ε / 256) * Real.log (n₁ : ℝ) :=
+        lt_of_lt_of_le hdiv (mul_le_mul_of_nonneg_right hmin hlog_n₁_pos.le)
       linarith [Real.log_two_lt_d9]
     nlinarith [show (0 : ℝ) ≤ n₁ by positivity]
   have ⟨hX_pos, hY_pos, hZ_pos, hW_pos, _⟩ := prop_6_1_coprime_and_factorization (by omega) hlt hm₁ hm₂
@@ -1155,37 +1164,45 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
   have h1 : (1 - α) / 2 - ε ≤ theta_weight n₁ m₁ + theta_weight n₂ m₂ := by
     have hcomb : (1 / 2 - ε / 16) * Lnl ≤
         (theta_weight n₁ m₁ + theta_weight n₂ m₂ + α / 2 + δ + 4 * (ε / 16)) * Lnl := by
-      have hr : (theta_weight n₁ m₁ + theta_weight n₂ m₂ + α / 2 + δ + 4 * (ε / 16)) * Lnl =
-          (ε / 16) * Lnl + (theta_weight n₁ m₁ + ε / 16) * Lnl + (theta_weight n₂ m₂ + ε / 16) * Lnl +
-          (α / 2 + δ + ε / 16) * Lnl := by ring
-      linarith [hZW_lb_e, h_log_ZW_22, hn1_log2_e, hM21_e, hM22_e, hflip_ub_e, hr]
+      calc (1 / 2 - ε / 16) * Lnl
+          ≤ Real.log ((Z_gcd m₁ m₂ * W_gcd m₁ m₂ : ℕ) : ℝ) := hZW_lb_e
+        _ ≤ (n₁ : ℝ) * Real.log 2 + Real.log (M₂₁ : ℝ) + Real.log (M₂₂ : ℝ) + parityFlipWeight n₁ n₂ := h_log_ZW_22
+        _ ≤ (ε / 16) * Lnl + (theta_weight n₁ m₁ + ε / 16) * Lnl + (theta_weight n₂ m₂ + ε / 16) * Lnl +
+            (α / 2 + δ + ε / 16) * Lnl := by gcongr
+        _ = (theta_weight n₁ m₁ + theta_weight n₂ m₂ + α / 2 + δ + 4 * (ε / 16)) * Lnl := by ring
     have hcoeff := le_of_mul_le_mul_right hcomb hnlog_pos
     linarith
   have h2 : theta_weight n₁ m₁ + theta_weight n₂ m₂ ≤ (3 + α) / 2 + ε := by
     have hcomb : (1 / 2 - ε / 16) * Lnl ≤
         (2 - (theta_weight n₁ m₁ + theta_weight n₂ m₂) + α / 2 + δ + 4 * (ε / 16)) * Lnl := by
-      have hr : (2 - (theta_weight n₁ m₁ + theta_weight n₂ m₂) + α / 2 + δ + 4 * (ε / 16)) * Lnl =
-          (ε / 16) * Lnl + (1 - theta_weight n₁ m₁ + ε / 16) * Lnl + (1 - theta_weight n₂ m₂ + ε / 16) * Lnl +
-          (α / 2 + δ + ε / 16) * Lnl := by ring
-      linarith [hZW_lb_e, h_log_ZW_11, hn1_log2_e, hM11_e, hM12_e, hflip_ub_e, hr]
+      calc (1 / 2 - ε / 16) * Lnl
+          ≤ Real.log ((Z_gcd m₁ m₂ * W_gcd m₁ m₂ : ℕ) : ℝ) := hZW_lb_e
+        _ ≤ (n₁ : ℝ) * Real.log 2 + Real.log (M₁₁ : ℝ) + Real.log (M₁₂ : ℝ) + parityFlipWeight n₁ n₂ := h_log_ZW_11
+        _ ≤ (ε / 16) * Lnl + (1 - theta_weight n₁ m₁ + ε / 16) * Lnl + (1 - theta_weight n₂ m₂ + ε / 16) * Lnl +
+            (α / 2 + δ + ε / 16) * Lnl := by gcongr
+        _ = (2 - (theta_weight n₁ m₁ + theta_weight n₂ m₂) + α / 2 + δ + 4 * (ε / 16)) * Lnl := by ring
     have hcoeff := le_of_mul_le_mul_right hcomb hnlog_pos
     linarith
   have h3b : theta_weight n₁ m₁ - theta_weight n₂ m₂ ≤ (1 + α) / 2 + ε := by
     have hcomb : (1 / 2 - ε / 16) * Lnl ≤
         (1 + (theta_weight n₂ m₂ - theta_weight n₁ m₁) + α / 2 + δ + 4 * (ε / 16)) * Lnl := by
-      have hr : (1 + (theta_weight n₂ m₂ - theta_weight n₁ m₁) + α / 2 + δ + 4 * (ε / 16)) * Lnl =
-          (ε / 16) * Lnl + (1 - theta_weight n₁ m₁ + ε / 16) * Lnl + (theta_weight n₂ m₂ + ε / 16) * Lnl +
-          (α / 2 + δ + ε / 16) * Lnl := by ring
-      linarith [hXY_lb_e, h_log_XY_12, hn1_log2_e, hM11_e, hM22_e, hflip_ub_e, hr]
+      calc (1 / 2 - ε / 16) * Lnl
+          ≤ Real.log ((X_gcd m₁ m₂ * Y_gcd m₁ m₂ : ℕ) : ℝ) := hXY_lb_e
+        _ ≤ (n₁ : ℝ) * Real.log 2 + Real.log (M₁₁ : ℝ) + Real.log (M₂₂ : ℝ) + parityFlipWeight n₁ n₂ := h_log_XY_12
+        _ ≤ (ε / 16) * Lnl + (1 - theta_weight n₁ m₁ + ε / 16) * Lnl + (theta_weight n₂ m₂ + ε / 16) * Lnl +
+            (α / 2 + δ + ε / 16) * Lnl := by gcongr
+        _ = (1 + (theta_weight n₂ m₂ - theta_weight n₁ m₁) + α / 2 + δ + 4 * (ε / 16)) * Lnl := by ring
     have hcoeff := le_of_mul_le_mul_right hcomb hnlog_pos
     linarith
   have h3a : theta_weight n₂ m₂ - theta_weight n₁ m₁ ≤ (1 + α) / 2 + ε := by
     have hcomb : (1 / 2 - ε / 16) * Lnl ≤
         (1 + (theta_weight n₁ m₁ - theta_weight n₂ m₂) + α / 2 + δ + 4 * (ε / 16)) * Lnl := by
-      have hr : (1 + (theta_weight n₁ m₁ - theta_weight n₂ m₂) + α / 2 + δ + 4 * (ε / 16)) * Lnl =
-          (ε / 16) * Lnl + (theta_weight n₁ m₁ + ε / 16) * Lnl + (1 - theta_weight n₂ m₂ + ε / 16) * Lnl +
-          (α / 2 + δ + ε / 16) * Lnl := by ring
-      linarith [hXY_lb_e, h_log_XY_21, hn1_log2_e, hM21_e, hM12_e, hflip_ub_e, hr]
+      calc (1 / 2 - ε / 16) * Lnl
+          ≤ Real.log ((X_gcd m₁ m₂ * Y_gcd m₁ m₂ : ℕ) : ℝ) := hXY_lb_e
+        _ ≤ (n₁ : ℝ) * Real.log 2 + Real.log (M₂₁ : ℝ) + Real.log (M₁₂ : ℝ) + parityFlipWeight n₁ n₂ := h_log_XY_21
+        _ ≤ (ε / 16) * Lnl + (theta_weight n₁ m₁ + ε / 16) * Lnl + (1 - theta_weight n₂ m₂ + ε / 16) * Lnl +
+            (α / 2 + δ + ε / 16) * Lnl := by gcongr
+        _ = (1 + (theta_weight n₁ m₁ - theta_weight n₂ m₂) + α / 2 + δ + 4 * (ε / 16)) * Lnl := by ring
     have hcoeff := le_of_mul_le_mul_right hcomb hnlog_pos
     linarith
   exact ⟨h1, h2, abs_le.mpr ⟨by linarith, h3b⟩⟩
@@ -1325,8 +1342,9 @@ theorem thm_1_3_part1_k2_gap_and_counting (ε : ℝ) (hε : 0 < ε) :
       intro n hn
       simp only [Finset.mem_biUnion, Finset.mem_range, Finset.mem_filter]
       have hn_mem := Finset.mem_filter.mp hn
-      have hn_icc := Finset.mem_Icc.mp (Finset.mem_filter.mp hn_mem.1).1
-      refine ⟨Nat.log 2 n, Nat.lt_succ_of_le (Nat.log_mono_right hn_icc.2), hn_mem, ?_, ?_⟩
+      have hn1 : 1 ≤ n := (Finset.mem_Icc.mp (Finset.mem_filter.mp hn_mem.1).1).1
+      have hnN : n ≤ N := (Finset.mem_Icc.mp (Finset.mem_filter.mp hn_mem.1).1).2
+      refine ⟨Nat.log 2 n, Nat.lt_succ_of_le (Nat.log_mono_right hnN), hn, ?_, ?_⟩
       · exact Nat.pow_log_le_self 2 (by omega)
       · exact Nat.le_sub_one_of_lt (Nat.lt_pow_succ_log_self (by norm_num : 1 < 2) n)
     have hcard_hi : S_hi.card ≤ ∑ k ∈ Finset.range (K + 1),
