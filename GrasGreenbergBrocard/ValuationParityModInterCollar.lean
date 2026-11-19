@@ -377,9 +377,29 @@ theorem interCollar_mod_isBigO (h_mod z : ℕ) (hh_mod : 2 ≤ h_mod)
         have ht_sub_pos : 0 < t - 1 := by linarith [ht.1, hP2]
         rw [abs_of_nonneg (one_div_nonneg.mpr ht_sub_pos.le), one_div, inv_le_comm₀ ht_sub_pos (div_pos (by norm_num) hP_pos), inv_div]
         linarith
+      have hI_sub : IsPrimeSubinterval P (B_k k) := by
+        refine isPrimeSubinterval_of_bounds
+          (a := max (max (max (2 : ℝ) ((n : ℝ) ^ δ)) ((n : ℝ) ^ a))
+            (max ((n : ℝ) ^ (1 / ((r : ℝ) + 1))) (L * (2 : ℝ) ^ k)))
+          (b := min (min (min (Nat.sqrt n : ℝ) ((n : ℝ) ^ b))
+            ((n : ℝ) ^ (1 / (r : ℝ)) / (Real.log (n : ℝ)) ^ ((A_R : ℝ) / (r : ℝ)))) (L * (2 : ℝ) ^ (k + 1)))
+          hP_pos.le (B_k k) ?_ (fun p hp => (hI_prime p hp).2)
+        intro p
+        simp only [B_k, D_r, Finset.mem_filter, Finset.mem_Icc, interCollar, Set.mem_Ioc, max_lt_iff, le_min_iff]
+        constructor
+        · rintro ⟨⟨⟨hp3, hpsq⟩, hpr, hpnd, hpa, hpb, hlo, hhi⟩, hpL, hp2L⟩
+          exact ⟨hpr, ⟨⟨⟨by exact_mod_cast (by omega : 2 < p), hpnd⟩, hpa⟩, hlo, hpL⟩,
+            ⟨⟨⟨by exact_mod_cast hpsq, hpb⟩, hhi⟩, hp2L⟩⟩
+        · rintro ⟨hpr, ⟨⟨⟨hp2, hpnd⟩, hpa⟩, hlo, hpL⟩, ⟨⟨⟨hpsq, hpb⟩, hhi⟩, hp2L⟩⟩
+          have hp3 : 3 ≤ p := by
+            have : 2 < p := by exact_mod_cast hp2
+            omega
+          exact ⟨⟨⟨hp3, by exact_mod_cast hpsq⟩, hpr, hpnd, hpa, hpb, hlo, hhi⟩, hpL, hp2L⟩
       let w : ℝ → ℝ := fun t => 1 / (t - 1)
+      have hW_anti : AntitoneOn w (Set.Icc P (2 * P)) :=
+        fun s hs t _ hst => one_div_le_one_div_of_le (by linarith [hs.1, le_trans hnd2 hP_lo]) (by linarith)
       have h_res := (hexp_n P (B_k k) A h_fn w (2 / P) hA_nz
-        hP_lo hP_hi hI_prime hA_range hh_le hPhase hW_bound (by positivity)).1.2
+        hP_lo hP_hi hI_sub hA_range hh_le hPhase hW_bound hW_anti (by positivity)).1.2
       have h_eq_sum : ∑ p ∈ B_k k, ((Real.log (p : ℝ) / ((p : ℝ) - 1) : ℝ) : ℂ) *
             eExp (∑ s ∈ A, (h_fn s : ℝ) * (n : ℝ) / ((h_mod : ℝ) * (p : ℝ) ^ s)) =
           ∑ p ∈ B_k k, (w (p : ℝ) * Real.log (p : ℝ) : ℂ) *
