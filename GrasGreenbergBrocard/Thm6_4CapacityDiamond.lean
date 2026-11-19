@@ -518,7 +518,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         exact (Nat.ordProj_mul_ordCompl_eq_self u 2).symm
       conv_lhs => rw [h2p]
       rw [padicValNat.mul (by positivity) (oddPartNat_pos hu_pos).ne',
-        padicValNat.eq_zero_of_not_dvd (fun h => hp_pr.not_dvd_one (hcop4 ▸ Nat.dvd_gcd (hp_pr.dvd_of_dvd_pow h) (by norm_num))),
+        padicValNat.eq_zero_of_not_dvd (fun h => hp_pr.not_dvd_one (hcop4 ▸ Nat.dvd_gcd (dvd_refl p) (dvd_trans (hp_pr.dvd_of_dvd_pow h) (by norm_num : 2 ∣ 4)))),
         zero_add]
     have hp_nZ : ∀ u_val : ℕ, p ∈ Podd n_a → ¬ p ∣ Z_star n_a u_val := by
       intro u_val hp_odd hpZ
@@ -526,8 +526,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       rw [hp_pr.prime.dvd_finset_prod_iff] at hpZ
       obtain ⟨q, hq, hqd⟩ := hpZ
       have hq1 := (Finset.mem_filter.mp hq).1
-      have hq2 := (Finset.mem_filter.mp hq1).1
-      have hq_mem := Finset.mem_filter.mp hq2
+      have hq_mem := Finset.mem_filter.mp hq1
       have hq_pr := hq_mem.2.1
       have hq_even := hq_mem.2.2
       have hpq : p = q := (Nat.prime_dvd_prime_iff_eq hp_pr hq_pr).mp (hp_pr.dvd_of_dvd_pow hqd)
@@ -539,11 +538,10 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       rw [hp_pr.prime.dvd_finset_prod_iff] at hpB
       obtain ⟨q, hq, hqd⟩ := hpB
       have hq1 := (Finset.mem_filter.mp hq).1
-      have hq2 := (Finset.mem_filter.mp hq1).1
-      have hq_pr := (Finset.mem_filter.mp hq2).2.1
+      have hq_pr := (Finset.mem_filter.mp hq1).2.1
       have hpq : p = q := (Nat.prime_dvd_prime_iff_eq hp_pr hq_pr).mp (hp_pr.dvd_of_dvd_pow hqd)
       subst hpq
-      exact hp_even hq2
+      exact hp_even hq1
     constructor
     · intro hp_u1
       have hval := h_eq_u ((m_a - 1) / 2) ((m_a + 1) / 2) h4mul hcop hdec1 hp_u1
@@ -607,11 +605,11 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       (by exact_mod_cast Nat.le_of_dvd (by positivity) hdvd : (T : ℝ) ≤ ((2 ^ padicValNat 2 (Nat.factorial n₁) * (Ma * Mb) * FlipProd : ℕ) : ℝ))
     rw [Nat.cast_mul, Nat.cast_mul, Nat.cast_mul, Real.log_mul (by positivity) (by exact_mod_cast hFlip_pos.ne'),
       Real.log_mul (by positivity) (by positivity), Real.log_mul (by positivity) (by positivity),
-      Nat.cast_pow, Real.log_pow] at hle
+      Nat.cast_pow, Real.log_pow, Nat.cast_ofNat] at hle
     have hv2_le : (padicValNat 2 (Nat.factorial n₁) : ℝ) ≤ (n₁ : ℝ) := by
       haveI : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
       have := sub_one_mul_padicValNat_factorial (p := 2) n₁
-      exact_mod_cast (by linarith : padicValNat 2 (Nat.factorial n₁) ≤ n₁)
+      exact_mod_cast (by omega : padicValNat 2 (Nat.factorial n₁) ≤ n₁)
     have hlog_flip : Real.log (FlipProd : ℝ) = parityFlipWeight n₁ n₂ := by
       dsimp [FlipProd, parityFlipWeight]
       rw [Nat.cast_prod, Real.log_prod (fun p hp => Nat.cast_ne_zero.mpr (pow_ne_zero _ (Finset.mem_filter.mp hp).2.1.ne_zero))]
