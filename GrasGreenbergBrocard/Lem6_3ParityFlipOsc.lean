@@ -1715,10 +1715,12 @@ theorem lem_6_3_osc_bound_honest
                     exact mul_le_mul_of_nonneg_left (hinner f₁ hf₁ f₂ hf₂) (by positivity)
                 _ = (∑ f₁ ∈ PiSet, ∏ j : A, ‖c_tilde (f₁ j)‖) * (∑ f₂ ∈ PiSet, ∏ j : A, ‖c_tilde (f₂ j)‖) *
                       (C₂ * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) := by
-                    simp only [Finset.sum_mul, Finset.mul_sum, mul_assoc]
+                    simp only [Finset.sum_mul, Finset.mul_sum, mul_assoc]; exact Finset.sum_comm
                 _ ≤ L₁ ^ (2 * r) * (C₂ * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) := by
                     have hsum_pi : ∑ f ∈ PiSet, ∏ j : A, ‖c_tilde (f j)‖ ≤ L₁ ^ r := by
-                      rw [← Fintype.prod_sum]
+                      have heq_pi : (∏ _j : A, ∑ m ∈ S_H, ‖c_tilde m‖) = ∑ f ∈ PiSet, ∏ j : A, ‖c_tilde (f j)‖ := by
+                        dsimp only [PiSet]; rw [Fintype.prod_sum]
+                      rw [← heq_pi]
                       have hcardA : Fintype.card A = r := by simp [A]
                       calc ∏ _j : A, ∑ m ∈ S_H, ‖c_tilde m‖
                           ≤ ∏ _j : A, L₁ := Finset.prod_le_prod (fun _ _ => Finset.sum_nonneg fun _ _ => norm_nonneg _)
@@ -1750,7 +1752,7 @@ theorem lem_6_3_osc_bound_honest
           have hcard_dy : ((dyadicBlocks a_m b_m).card : ℝ) ≤ Real.log (n₁ : ℝ) / Real.log 2 + 2 := by
             have h1 := dyadicBlocks_card_le ha_ge1 hlt_ab.le
             have hlog_ba : Real.log (b_m / a_m) ≤ Real.log (n₁ : ℝ) := by
-              apply Real.log_le_log (by positivity)
+              apply Real.log_le_log (div_pos (by linarith) (by linarith))
               calc b_m / a_m ≤ b_m / 1 := div_le_div_of_nonneg_left (by linarith) (by norm_num) ha_ge1
                 _ = b_m := div_one _
                 _ ≤ y₁ := hb_le_y₁
