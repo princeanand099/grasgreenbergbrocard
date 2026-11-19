@@ -65,7 +65,7 @@ lemma theta_weight_le_one {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 =
       (by exact_mod_cast B_part_pos n ((m + 1) / 2) : (0 : ℝ) < (B_part n ((m + 1) / 2) : ℝ))
       (by exact_mod_cast Nat.le_of_dvd hpos_prod hB_dvd_prod :
         (B_part n ((m + 1) / 2) : ℝ) ≤ ((∏ p ∈ (Podd n).filter (fun p => 3 ≤ p), p ^ padicValNat p (Nat.factorial n) : ℕ) : ℝ))
-    rw [Nat.cast_prod, Real.log_prod _ _ (fun p hp => by
+    rw [Nat.cast_prod, Real.log_prod (fun p hp => by
       simp only [Podd, Finset.mem_filter, Finset.mem_Icc] at hp
       exact pow_ne_zero _ (by exact_mod_cast (by omega : p ≠ 0)))] at hle_prod
     refine le_trans hle_prod (le_of_eq ?_)
@@ -596,7 +596,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       exact_mod_cast (by linarith : padicValNat 2 (Nat.factorial n₁) ≤ n₁)
     have hlog_flip : Real.log (FlipProd : ℝ) = parityFlipWeight n₁ n₂ := by
       dsimp [FlipProd, parityFlipWeight]
-      rw [Nat.cast_prod, Real.log_prod _ _ (fun p hp => by
+      rw [Nat.cast_prod, Real.log_prod (fun p hp => by
         exact pow_ne_zero _ (by exact_mod_cast (Finset.mem_filter.mp hp).2.1.ne_zero))]
       apply Finset.sum_congr rfl; intro p _; rw [Nat.cast_pow, Real.log_pow]
     nlinarith [Real.log_nonneg (by norm_num : (1 : ℝ) ≤ 2)]
@@ -833,8 +833,8 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       (oddPartNat_u_eq_B_mul_Z_sq (by omega) hma).2.2
     have hlog_Bstar : Real.log (B_star5 n_a : ℝ) = S_odd n_a := by
       unfold B_star5 S_odd
-      rw [Nat.cast_prod, Real.log_prod _ _ (fun p hp => by
-        exact pow_ne_zero _ (by exact_mod_cast (Finset.mem_filter.mp hp).1.ne_zero))]
+      rw [Nat.cast_prod, Real.log_prod (fun p hp => by
+        exact pow_ne_zero _ (by exact_mod_cast (by have := (Finset.mem_filter.mp hp).2; omega : p ≠ 0)))]
       apply Finset.sum_congr rfl; intro p _; rw [Nat.cast_pow, Real.log_pow]
     have hlog_B1_eq : Real.log (B_part n_a ((m_a - 1) / 2) : ℝ) = (1 - theta_weight n_a m_a) * S_odd n_a := by
       have h1 := congrArg (fun k : ℕ => Real.log (k : ℝ)) hB_prod
@@ -895,20 +895,6 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       have h1 : (n₁ : ℝ) * Real.log (n₁ : ℝ) ≤ (n_a : ℝ) * Real.log (n_a : ℝ) := by
         gcongr <;> exact_mod_cast (by omega : n₁ ≤ n_a)
       nlinarith [show 0 ≤ (n₁ : ℝ) * Real.log (n₁ : ℝ) by positivity]
-    have h_na_13 : (n_a : ℝ) * Real.log (n_a : ℝ) ≤ (4 / 3 : ℝ) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
-      have hm1 : min (ε / 256) (1 / 4) ≤ 1 / 4 := min_le_right _ _
-      have hlog_a_101 : Real.log (n_a : ℝ) ≤ (101 / 100 : ℝ) * Real.log (n₁ : ℝ) := by
-        have h1' : (n_a : ℝ) ≤ 2 * (n₁ : ℝ) := by nlinarith
-        have h2' := Real.log_le_log hna_pos h1'
-        rw [Real.log_mul (by norm_num) hn₁_pos.ne'] at h2'
-        have hlog2 : Real.log 2 ≤ (1 / 100) * Real.log (n₁ : ℝ) := by
-          have := (div_lt_iff₀ hlog_n₁_pos).mp h_il
-          have hmin : min (ε / 256) (1 / 100) ≤ 1 / 100 := min_le_right _ _
-          linarith [Real.log_two_lt_d9]
-        linarith
-      calc (n_a : ℝ) * Real.log (n_a : ℝ)
-          ≤ ((5 / 4 : ℝ) * (n₁ : ℝ)) * ((101 / 100 : ℝ) * Real.log (n₁ : ℝ)) := by gcongr; linarith
-        _ ≤ (4 / 3 : ℝ) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by gcongr; norm_num
     have h_cs_err : C_cs * Real.exp (-(1 / 3 : ℝ) * (n_a : ℝ) * Real.log (n_a : ℝ)) +
         |(padicValNat 2 ((m_a - 1) / 2) : ℝ) - (padicValNat 2 ((m_a + 1) / 2) : ℝ)| * Real.log 2 / 2 +
         |Delta_parity_odd n_a| / 2 ≤ (ε / 32) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
@@ -961,7 +947,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
       have hdp_le : |Delta_parity_odd n_a| / 2 ≤ (ε / 64) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
         have hlog_Astar : Real.log (A_star5 n_a : ℝ) = S_even n_a := by
           unfold A_star5 S_even
-          rw [Nat.cast_prod, Real.log_prod _ _ (fun p hp => by
+          rw [Nat.cast_prod, Real.log_prod (fun p hp => by
             exact pow_ne_zero _ (by exact_mod_cast (by
               have := (Finset.mem_filter.mp hp).2; omega : p ≠ 0)))]
           apply Finset.sum_congr rfl; intro p _; rw [Nat.cast_pow, Real.log_pow]
