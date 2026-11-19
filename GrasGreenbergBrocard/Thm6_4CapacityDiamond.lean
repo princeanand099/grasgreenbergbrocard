@@ -117,12 +117,10 @@ lemma theta_weight_eq_zero_of_k2 {n m X₁ Y₁ : ℕ} (hn : 4 ≤ n) (hn6 : n �
   have hB_eq1 : B_part n ((m + 1) / 2) = 1 := by
     unfold B_part
     apply Finset.prod_eq_one; intro p hp
-    simp only [Podd, Finset.mem_filter, Finset.mem_Icc] at hp
-    have hp_pr := hp.1.1.2.1
-    have hp_odd : ¬ 2 ∣ padicValNat p (Nat.factorial n) := hp.1.1.2.2
-    have hp_dvd_B : p ∣ B_sol m := by
-      have : p ∣ (m + 1) / 2 := hp.2
-      exact this
+    have hp1 := (Finset.mem_filter.mp hp).1
+    have hp_pr := (Finset.mem_filter.mp hp1).2.1
+    have hp_odd : ¬ 2 ∣ padicValNat p (Nat.factorial n) := (Finset.mem_filter.mp hp1).2.2
+    have hp_dvd_B : p ∣ B_sol m := (Finset.mem_filter.mp hp).2.2
     have hp_dvd_X1 : p ∣ X₁ := by
       rw [hB_val] at hp_dvd_B
       exact hp_pr.dvd_of_dvd_pow hp_dvd_B
@@ -187,7 +185,7 @@ lemma log_ZW_and_XY_bounds {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hlt
         nlinarith only [hfac, hm1r, hm2r]
       have hP1 : (1 : ℝ) ≤ P := by exact_mod_cast (by omega : 1 ≤ P)
       linarith only [h1, hP1]
-    nlinarith only [hsq, Real.sqrt_nonneg (P : ℝ), show (0 : ℝ) ≤ m₁ by positivity, show (0 : ℝ) ≤ m₂ by positivity]
+    exact le_of_pow_le_pow_left₀ (by norm_num) (by positivity) hsq
   have hfac24 : 24 ≤ Nat.factorial n₁ := by
     calc 24 = Nat.factorial 4 := by norm_num [Nat.factorial]
       _ ≤ Nat.factorial n₁ := Nat.factorial_le hn₁
@@ -242,7 +240,7 @@ lemma log_ZW_and_XY_bounds {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hlt
       have hsq : (Real.sqrt (Nat.factorial n₁ : ℝ) / (40 * (P : ℝ))) ^ 2 ≤ ((U : ℝ) * V) ^ 2 := by
         calc (Real.sqrt (Nat.factorial n₁ : ℝ) / (40 * (P : ℝ))) ^ 2
             = ((1 / 20 : ℝ) * (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ)) ^ 2 / (4 * (P : ℝ) ^ 4) := by
-              field_simp
+              field_simp; norm_num
           _ ≤ ((1 / 20 : ℝ) * (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ)) ^ 2 / (k : ℝ) := by
               gcongr
           _ ≤ ((U : ℝ) * V) ^ 2 := (div_le_iff₀ (by positivity)).mpr (by linarith)
@@ -250,7 +248,7 @@ lemma log_ZW_and_XY_bounds {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hlt
       nlinarith only [hsq, hUV_pos, hL_nn]
     have hlog_sqrt : Real.log (Real.sqrt (Nat.factorial n₁ : ℝ)) =
         (1 / 2 : ℝ) * Real.log (Nat.factorial n₁ : ℝ) := by
-      rw [Real.sqrt_eq_rpow, Real.log_rpow hfac_pos]; ring
+      rw [Real.sqrt_eq_rpow, Real.log_rpow hfac_pos]
     have h1 := Real.log_le_log hUV_pos hUV_ub
     rw [Real.log_mul (by positivity) hsqrt_pos.ne', Real.log_mul (by norm_num) hP_pos.ne', hlog_sqrt] at h1
     have h2 := Real.log_le_log (by positivity) hUV_lb
@@ -279,6 +277,8 @@ lemma log_ZW_and_XY_bounds {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hlt
     calc 4 * a ^ 2 * c * d = 4 * (a ^ 2 * (c * d)) := by ring
       _ ≤ 4 * (P ^ 2 * (P * P)) := by gcongr
       _ = 4 * P ^ 4 := by ring
+  have hP1 : (1 : ℝ) ≤ P := by exact_mod_cast (by omega : 1 ≤ P)
+  have hlo_nn : 0 ≤ (1 / 20 : ℝ) * (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ) := by positivity
   constructor
   · refine hbound_pair Z W (4 * b ^ 2 * c * d) (Nat.succ_le_of_lt (by positivity)) h4bcd_le hZ_pos hW_pos ?_ ?_
     · have hZW_eq : ((4 * b ^ 2 * c * d : ℕ) : ℝ) * ((Z : ℝ) * W) ^ 2 =
@@ -290,10 +290,10 @@ lemma log_ZW_and_XY_bounds {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hlt
           _ = _ := by rw [hZ', hW']
       rw [hZW_eq]
       have h1 : (1 / 20 : ℝ) * (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ) ≤
-          (P : ℝ) * m₁ + m₂ - ((P : ℝ) - 1) := by linarith
+          (P : ℝ) * m₁ + m₂ - ((P : ℝ) - 1) := by linarith [h_lo', show (0 : ℝ) ≤ m₂ by positivity]
       have h2 : (1 / 20 : ℝ) * (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ) ≤
-          (P : ℝ) * m₁ + m₂ + ((P : ℝ) - 1) := by linarith
-      rw [sq]; exact mul_le_mul h1 h2 (by positivity) (by positivity)
+          (P : ℝ) * m₁ + m₂ + ((P : ℝ) - 1) := by linarith [h1, hP1]
+      rw [sq]; exact mul_le_mul h1 h2 hlo_nn (by linarith [h1, hlo_nn])
     · have hZW_eq : ((4 * b ^ 2 * c * d : ℕ) : ℝ) * ((Z : ℝ) * W) ^ 2 =
           ((P : ℝ) * m₁ + m₂ - ((P : ℝ) - 1)) * ((P : ℝ) * m₁ + m₂ + ((P : ℝ) - 1)) := by
         have hZ' : 2 * (b : ℝ) * d * (Z : ℝ) ^ 2 = (P : ℝ) * m₁ + m₂ - ((P : ℝ) - 1) := by exact_mod_cast hZsq
@@ -303,9 +303,8 @@ lemma log_ZW_and_XY_bounds {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hlt
           _ = _ := by rw [hZ', hW']
       rw [hZW_eq]
       have h1 : (P : ℝ) * m₁ + m₂ - ((P : ℝ) - 1) ≤ 5 * (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ) := by
-        have hP1 : (1 : ℝ) ≤ P := by exact_mod_cast (by omega : 1 ≤ P)
-        linarith
-      rw [sq]; exact mul_le_mul h1 h_hi' (by linarith [h_lo']) (by positivity)
+        linarith [h_hi', hP1]
+      rw [sq]; exact mul_le_mul h1 h_hi' (by linarith [h_lo', hP1, hlo_nn, show (0 : ℝ) ≤ m₂ by positivity]) (by positivity)
   · refine hbound_pair X Y (4 * a ^ 2 * c * d) (Nat.succ_le_of_lt (by positivity)) h4acd_le hX_pos hY_pos ?_ ?_
     · have hXY_eq : ((4 * a ^ 2 * c * d : ℕ) : ℝ) * ((X : ℝ) * Y) ^ 2 =
           ((P : ℝ) * m₁ - m₂ - ((P : ℝ) - 1)) * ((P : ℝ) * m₁ - m₂ + ((P : ℝ) - 1)) := by
@@ -316,10 +315,8 @@ lemma log_ZW_and_XY_bounds {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hlt
           _ = _ := by rw [hX', hY']
       rw [hXY_eq]
       have h2 : (1 / 20 : ℝ) * (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ) ≤
-          (P : ℝ) * m₁ - m₂ + ((P : ℝ) - 1) := by
-        have hP1 : (1 : ℝ) ≤ P := by exact_mod_cast (by omega : 1 ≤ P)
-        linarith
-      rw [sq]; exact mul_le_mul h_lo' h2 (by positivity) (by positivity)
+          (P : ℝ) * m₁ - m₂ + ((P : ℝ) - 1) := by linarith [h_lo', hP1]
+      rw [sq]; exact mul_le_mul h_lo' h2 hlo_nn (by linarith [h_lo', hlo_nn])
     · have hXY_eq : ((4 * a ^ 2 * c * d : ℕ) : ℝ) * ((X : ℝ) * Y) ^ 2 =
           ((P : ℝ) * m₁ - m₂ - ((P : ℝ) - 1)) * ((P : ℝ) * m₁ - m₂ + ((P : ℝ) - 1)) := by
         have hX' : 2 * (a : ℝ) * c * (X : ℝ) ^ 2 = (P : ℝ) * m₁ - m₂ - ((P : ℝ) - 1) := by exact_mod_cast hXsq
@@ -329,11 +326,10 @@ lemma log_ZW_and_XY_bounds {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hlt
           _ = _ := by rw [hX', hY']
       rw [hXY_eq]
       have h1 : (P : ℝ) * m₁ - m₂ - ((P : ℝ) - 1) ≤ 5 * (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ) := by
-        have hP1 : (1 : ℝ) ≤ P := by exact_mod_cast (by omega : 1 ≤ P)
-        linarith
+        linarith [h_hi', hP1, show (0 : ℝ) ≤ m₂ by positivity]
       have h2 : (P : ℝ) * m₁ - m₂ + ((P : ℝ) - 1) ≤ 5 * (P : ℝ) * Real.sqrt (Nat.factorial n₁ : ℝ) := by
-        linarith
-      rw [sq]; exact mul_le_mul h1 h2 (by linarith [h_lo']) (by positivity)
+        linarith [h_hi', show (0 : ℝ) ≤ m₂ by positivity]
+      rw [sq]; exact mul_le_mul h1 h2 (by linarith [h_lo', hP1, hlo_nn]) (by positivity)
 
 /-- **Theorem 6.4(a) (Universal Capacity Diamond, eq. 6.8)**:
 For any `α ∈ [0, 1)` and `ε > 0`, there exists `N₀` such that for any two Brocard solutions
