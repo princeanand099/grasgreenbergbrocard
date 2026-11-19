@@ -948,8 +948,10 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
         gcongr
       have hw2_sm : (n_a : ℝ) * Real.log 2 / 2 ≤ (ε / 128) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
         have h2 : Real.log 2 / 2 ≤ (ε / 256) * Real.log (n₁ : ℝ) := by
-          have := (div_lt_iff₀ hlog_n₁_pos).mp h_il
+          have hdiv := (div_lt_iff₀ hlog_n₁_pos).mp h_il
           have hmin : min (ε / 256) (1 / 100) ≤ ε / 256 := min_le_left _ _
+          have hmul : 1 < (ε / 256) * Real.log (n₁ : ℝ) :=
+            lt_of_lt_of_le hdiv (mul_le_mul_of_nonneg_right hmin hlog_n₁_pos.le)
           linarith [Real.log_two_lt_d9]
         calc (n_a : ℝ) * Real.log 2 / 2 = (n_a : ℝ) * (Real.log 2 / 2) := by ring
           _ ≤ (2 * (n₁ : ℝ)) * ((ε / 256) * Real.log (n₁ : ℝ)) := by
@@ -957,11 +959,17 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
               have : min (ε / 256) (1 / 4) ≤ 1 := le_trans (min_le_right _ _) (by norm_num); nlinarith
           _ = (ε / 128) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by ring
       have hdp_le : |Delta_parity_odd n_a| / 2 ≤ (ε / 64) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
+        have hlog_Astar : Real.log (A_star5 n_a : ℝ) = S_even n_a := by
+          unfold A_star5 S_even
+          rw [Nat.cast_prod, Real.log_prod _ _ (fun p hp => by
+            exact pow_ne_zero _ (by exact_mod_cast (by
+              have := (Finset.mem_filter.mp hp).2; omega : p ≠ 0)))]
+          apply Finset.sum_congr rfl; intro p _; rw [Nat.cast_pow, Real.log_pow]
         have hdp_eq : Delta_parity_odd n_a = Delta_parity n_a := by
-          unfold Delta_parity_odd Delta_parity S_even S_odd; rfl
+          unfold Delta_parity_odd Delta_parity; rw [hlog_Astar, hlog_Bstar]
         rw [hdp_eq]
         have h1 := hN_dp n_a (by omega)
-        rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (by positivity)] at h1
+        rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (mul_nonneg hna_pos.le hlog_a_pos.le)] at h1
         have h2 : |Delta_parity n_a| / 2 ≤ (ε / 512) * ((n_a : ℝ) * Real.log (n_a : ℝ)) := by linarith
         have h3 : (n_a : ℝ) * Real.log (n_a : ℝ) ≤ 2 * ((n₁ : ℝ) * Real.log (n₁ : ℝ)) := by
           nlinarith only [hna_log_ub, hε_le1, show (0 : ℝ) ≤ (n₁ : ℝ) * Real.log (n₁ : ℝ) by positivity]
@@ -994,7 +1002,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
           |Real.log (B_part n_a ((m_a + 1) / 2) : ℝ) - Real.log ((Z_star n_a ((m_a - 1) / 2) : ℝ) ^ 2) -
             (1 / 2 : ℝ) * (((padicValNat 2 ((m_a - 1) / 2) : ℝ) - (padicValNat 2 ((m_a + 1) / 2) : ℝ)) * Real.log 2 - Delta_parity_odd n_a)| +
           |(1 / 2 : ℝ) * (((padicValNat 2 ((m_a - 1) / 2) : ℝ) - (padicValNat 2 ((m_a + 1) / 2) : ℝ)) * Real.log 2 - Delta_parity_odd n_a)| := by
-        simpa using abs_add_le
+        simpa only [sub_add_cancel] using abs_add_le
           (Real.log (B_part n_a ((m_a + 1) / 2) : ℝ) - Real.log ((Z_star n_a ((m_a - 1) / 2) : ℝ) ^ 2) -
             (1 / 2 : ℝ) * (((padicValNat 2 ((m_a - 1) / 2) : ℝ) - (padicValNat 2 ((m_a + 1) / 2) : ℝ)) * Real.log 2 - Delta_parity_odd n_a))
           ((1 / 2 : ℝ) * (((padicValNat 2 ((m_a - 1) / 2) : ℝ) - (padicValNat 2 ((m_a + 1) / 2) : ℝ)) * Real.log 2 - Delta_parity_odd n_a))
@@ -1011,7 +1019,7 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
           |Real.log (B_part n_a ((m_a - 1) / 2) : ℝ) - Real.log ((Z_star n_a ((m_a + 1) / 2) : ℝ) ^ 2) -
             (1 / 2 : ℝ) * (((padicValNat 2 ((m_a + 1) / 2) : ℝ) - (padicValNat 2 ((m_a - 1) / 2) : ℝ)) * Real.log 2 - Delta_parity_odd n_a)| +
           |(1 / 2 : ℝ) * (((padicValNat 2 ((m_a + 1) / 2) : ℝ) - (padicValNat 2 ((m_a - 1) / 2) : ℝ)) * Real.log 2 - Delta_parity_odd n_a)| := by
-        simpa using abs_add_le
+        simpa only [sub_add_cancel] using abs_add_le
           (Real.log (B_part n_a ((m_a - 1) / 2) : ℝ) - Real.log ((Z_star n_a ((m_a + 1) / 2) : ℝ) ^ 2) -
             (1 / 2 : ℝ) * (((padicValNat 2 ((m_a + 1) / 2) : ℝ) - (padicValNat 2 ((m_a - 1) / 2) : ℝ)) * Real.log 2 - Delta_parity_odd n_a))
           ((1 / 2 : ℝ) * (((padicValNat 2 ((m_a + 1) / 2) : ℝ) - (padicValNat 2 ((m_a - 1) / 2) : ℝ)) * Real.log 2 - Delta_parity_odd n_a))
