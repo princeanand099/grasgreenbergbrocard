@@ -156,6 +156,7 @@ lemma dyadic_sum_counting {α C : ℝ} (hα : 0 < α) (hC : 0 < C)
   have hr_pos : 0 < 1 - (2 : ℝ) ^ (-α) := by linarith
   refine ⟨C / (1 - (2 : ℝ) ^ (-α)) + 1, by positivity, ?_⟩
   intro N hN
+  -- Cover [1, N] by dyadic intervals [2^k, 2^(k+1)] for 0 ≤ k ≤ Nat.log 2 N
   let K := Nat.log 2 N
   have hcov : (Finset.Icc 1 N).filter isSol ⊆
       (Finset.range (K + 1)).biUnion (fun k => (Finset.Icc (2 ^ k) (2 * 2 ^ k)).filter isSol) := by
@@ -166,6 +167,7 @@ lemma dyadic_sum_counting {α C : ℝ} (hα : 0 < α) (hC : 0 < C)
     refine ⟨k, Finset.mem_range.mpr (Nat.lt_succ_of_le (Nat.log_mono_right hn.1.2)), ?_⟩
     rw [Finset.mem_filter, Finset.mem_Icc]
     refine ⟨⟨Nat.pow_log_le_self 2 (by omega), ?_⟩, hn.2⟩
+    dsimp only [k]
     have := Nat.lt_pow_succ_log_self (by norm_num : 1 < 2) n
     rw [pow_succ'] at this; omega
   have hcard : (((Finset.Icc 1 N).filter isSol).card : ℝ) ≤
@@ -177,6 +179,7 @@ lemma dyadic_sum_counting {α C : ℝ} (hα : 0 < α) (hC : 0 < C)
         ∑ k ∈ Finset.range (K + 1), (((Finset.Icc (2 ^ k) (2 * 2 ^ k)).filter isSol).card : ℝ) := by
       exact_mod_cast h1
     refine le_trans h1r (Finset.sum_le_sum fun k _ => hdyad (2 ^ k) (Nat.one_le_pow k 2 (by norm_num)))
+  -- Bound ∑_{k=0}^K (2^k)^α ≤ (2^K)^α / (1 - 2^(-α)) ≤ N^α / (1 - 2^(-α))
   have hgeom : ∑ k ∈ Finset.range (K + 1), ((2 ^ k : ℕ) : ℝ) ^ α ≤
       ((2 ^ K : ℕ) : ℝ) ^ α / (1 - (2 : ℝ) ^ (-α)) := by
     have hrew : ∀ k ∈ Finset.range (K + 1),
@@ -194,11 +197,8 @@ lemma dyadic_sum_counting {α C : ℝ} (hα : 0 < α) (hC : 0 < C)
     have hsub : ∑ k ∈ Finset.range (K + 1), ((2 : ℝ) ^ (-α)) ^ (K - k) =
         ∑ j ∈ Finset.range (K + 1), ((2 : ℝ) ^ (-α)) ^ j := by
       rw [← Finset.sum_range_reflect (fun j => ((2 : ℝ) ^ (-α)) ^ j) (K + 1)]
-      apply Finset.sum_congr rfl; intro k hk
-      have hk_le : k ≤ K := Nat.lt_succ_iff.mp (Finset.mem_range.mp hk)
-      congr 1; omega
     rw [hsub, geom_sum_eq hr_lt.ne]
-    rw [mul_div_assoc]
+    rw [div_eq_mul_one_div (((2 ^ K : ℕ) : ℝ) ^ α)]
     have hle : (((2 : ℝ) ^ (-α)) ^ (K + 1) - 1) / ((2 : ℝ) ^ (-α) - 1) ≤ 1 / (1 - (2 : ℝ) ^ (-α)) := by
       rw [show (((2 : ℝ) ^ (-α)) ^ (K + 1) - 1) / ((2 : ℝ) ^ (-α) - 1) =
           (1 - ((2 : ℝ) ^ (-α)) ^ (K + 1)) / (1 - (2 : ℝ) ^ (-α)) by field_simp; ring]
@@ -207,7 +207,7 @@ lemma dyadic_sum_counting {α C : ℝ} (hα : 0 < α) (hC : 0 < C)
   have h2K_le : ((2 ^ K : ℕ) : ℝ) ^ α ≤ (N : ℝ) ^ α :=
     Real.rpow_le_rpow (by positivity) (by exact_mod_cast Nat.pow_log_le_self 2 (by omega)) hα.le
   calc (((Finset.Icc 1 N).filter isSol).card : ℝ)
-      ≤ C * ∑ k ∈ Finset.range (K + 1), ((2 ^ k : ℕ) : ℝ) ^ α := by rw [← Finset.mul_sum]; exact hcard
+      ≤ C * ∑ k ∈ Finset.range (K + 1), ((2 ^ k : ℕ) : ℝ) ^ α := by rw [Finset.mul_sum]; exact hcard
     _ ≤ C * (((2 ^ K : ℕ) : ℝ) ^ α / (1 - (2 : ℝ) ^ (-α))) := mul_le_mul_of_nonneg_left hgeom hC.le
     _ = (C / (1 - (2 : ℝ) ^ (-α))) * ((2 ^ K : ℕ) : ℝ) ^ α := by ring
     _ ≤ (C / (1 - (2 : ℝ) ^ (-α)) + 1) * (N : ℝ) ^ α := by
@@ -251,11 +251,11 @@ theorem thm_1_3_part2_global_6_7 (P_deg : ℕ) (hP : 2 ≤ P_deg)
 
 /-- **Theorem 1.3(ii) (Brocard–Ramanujan Specialization)**:
 $\mathcal{N}_{\mathrm{Brocard}}(N) \ll_\varepsilon N^{6/7 + \varepsilon}$. -/
+open Classical in
 theorem thm_1_3_part2_brocard_6_7 :
     ∀ ε : ℝ, 0 < ε → ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
       (((Finset.Icc 1 N).filter (fun n => ∃ m : ℕ, Nat.factorial n + 1 = m ^ 2)).card : ℝ) ≤
         C * (N : ℝ) ^ ((6 / 7 : ℝ) + ε) := by
-  classical
   exact thm_1_3_part2_global_6_7 2 (by norm_num) (fun n => ∃ m : ℕ, Nat.factorial n + 1 = m ^ 2)
 
 /-- **Theorem 1.3(ii) (Decoupled Monomial-Product Degree-Gap Counting Bounds, Table 2)**:
@@ -307,6 +307,7 @@ theorem thm_1_3_part2_degree_gap_bounds (P_deg ν : ℕ)
     refine ⟨C', hC', fun N hN => le_trans (hsum N hN) ?_⟩
     exact mul_le_mul_of_nonneg_left (Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast hN) (by linarith [min_le_left (ε / 2) (1 / 10)])) hC'.le
   · rintro ⟨hP, rfl⟩
+    -- 0.210615 < theta_monomial 2 2 5 (76/25) = 7372 / 35002 = 0.2106165...
     have hθ5 : (0.210615 : ℝ) < theta_monomial 2 2 5 (76 / 25) := by
       unfold theta_monomial
       have hch : Nat.choose (2 + 2) 2 - 1 = 5 := by decide

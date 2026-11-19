@@ -84,6 +84,7 @@ private lemma pellUnit_log_le_half_n_log_n {n m k X₁ Y₁ : ℕ} (hn : 8 ≤ n
     have hlt : (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) < (m : ℝ) :=
       lt_of_pow_lt_pow_left₀ 2 (Nat.cast_nonneg m) hsq
     linarith
+  -- Show 4 * (n! + 1) ≤ n^n for n ≥ 8
   have h4fac : 4 * (Nat.factorial n + 1) ≤ n ^ n := by
     have hfac_le : Nat.factorial n ≤ n ^ (n - 2) * 2 := by
       have hgen : ∀ j : ℕ, 2 ≤ j → Nat.factorial j ≤ j ^ (j - 2) * 2 := by
@@ -153,6 +154,7 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
            (n : ℝ) ^ (1 / 4 - ε) ≤ (G.exp_A2 : ℝ)))) := by
   classical
   obtain ⟨D_star, hTat⟩ := tatuzawa_effective_siegel ε hε0 hε1
+  -- By q_n_ne_of_solutions, at most one Brocard solution n ≥ 8 has fundDisc n = D_star
   let n_star : ℕ :=
     if h : ∃ n : ℕ, 8 ≤ n ∧ (∃ m : ℕ, Nat.factorial n + 1 = m ^ 2) ∧ fundDisc n = D_star
     then Classical.choose h else 0
@@ -168,6 +170,7 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
     rcases lt_or_gt_of_ne hne with hlt | hgt
     · exact q_n_ne_of_solutions (by omega) hlt hm (hns_eq ▸ hm') hq_eq
     · exact q_n_ne_of_solutions (by omega) hgt (hns_eq ▸ hm') hm hq_eq.symm
+  -- Helper: eq. (8.4) for any n ≥ 8, n ≠ n_star
   have h84 : ∀ (n m k X₁ Y₁ : ℕ) (G : RealQuadClassGroupData n X₁ Y₁),
       8 ≤ n → n ≠ n_star →
       Nat.factorial n + 1 = m ^ 2 → 1 ≤ k →
@@ -229,6 +232,7 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
       _ < (G.h : ℝ) / (2 : ℝ) ^ (piPrime (n : ℝ)) := by gcongr
       _ ≤ (G.h : ℝ) / (2 : ℝ) ^ (omegaNat (fundDisc n) - 2) :=
           div_le_div_of_nonneg_left (Nat.cast_nonneg _) (by positivity) hpow_le
+  -- Now establish N₀ for the asymptotic consequences
   have hlog2_pos : 0 < Real.log 2 := Real.log_pos (by norm_num)
   have hlog2_lt1 : Real.log 2 < 1 := by
     have := Real.exp_one_gt_d9
@@ -331,6 +335,7 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
     have hpi_le : piPrime (n : ℝ) ≤ (ε / 50) * (n : ℝ) := by nlinarith only [h2, h3, hn_pos]
     have hpi_nn : 0 ≤ piPrime (n : ℝ) := Nat.cast_nonneg _
     nlinarith only [hpi_le, hlog2_lt1, hlog2_pos, hpi_nn, hn_pos, hε0]
+  -- 1. hNonGen ≥ q_n^{1/2 - 2ε}
   have h_ng_lb : (q_n n : ℝ) ^ (1 / 2 - 2 * ε) ≤ hNonGen n X₁ Y₁ G := by
     have h1 : (q_n n : ℝ) ^ (1 / 2 - 2 * ε) ≤
         (0.655 : ℝ) * ε * (k : ℝ) * (q_n n : ℝ) ^ (1 / 2 - ε) /
@@ -360,6 +365,7 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
             linarith only [this]
     exact le_trans h1 h84_n.le
   refine ⟨h_ng_lb, ?_⟩
+  -- 2. Narrow class group dichotomy
   by_cases hodd : (q_n n : ℝ) ^ (1 / 4 - ε) ≤ (G.card_Cl_odd : ℝ)
   · exact Or.inl hodd
   · right
@@ -384,13 +390,15 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
       have h2 : (1 / 4 - ε) * ((Real.log 2 - ε / 100) * (n : ℝ)) ≤ (1 / 4 - ε) * Real.log (q_n n : ℝ) :=
         mul_le_mul_of_nonneg_left hlogq_lb (by linarith only [hε1])
       linarith only [h1, h2]
+    have hlog2_lt_34 : Real.log 2 < 3 / 4 := by linarith [Real.log_two_lt_d9]
     have hA2_pow2 : (2 : ℝ) ^ ((Real.log 2 / 4 - ε) * (n : ℝ)) ≤ (G.card_A2 : ℝ) := by
       rw [← Real.log_le_log_iff (by positivity) (by exact_mod_cast G.card_A2_pos), Real.log_rpow (by norm_num)]
       have hsc : (Real.log 2 / 4 - ε) * Real.log 2 ≤ (1 / 4 - ε) * (Real.log 2 - ε / 100) := by
-        nlinarith only [hlog2_pos, hlog2_lt1, hlog2_gt_half, hε0, hε1]
+        nlinarith only [hlog2_pos, hlog2_lt_34, hlog2_gt_half, hε0, hε1]
       have hscn : ((Real.log 2 / 4 - ε) * Real.log 2) * (n : ℝ) ≤ ((1 / 4 - ε) * (Real.log 2 - ε / 100)) * (n : ℝ) :=
         mul_le_mul_of_nonneg_right hsc hn_pos.le
       linarith only [hscn, hlogA2_lb]
+    -- Bound rank2_A2 = omegaNat (fundDisc n) - 1 ≤ (Podd n).card + 1 ≤ (log 2 + ε/50) * n / log n
     have hrank_ub : (G.rank2_A2 : ℝ) ≤ (Real.log 2 + ε / 20) * ((n : ℝ) / Real.log (n : ℝ)) := by
       have hsub_podd : (fundDisc n).primeFactors ⊆ insert 2 (Podd n) := by
         intro p hp
@@ -499,9 +507,15 @@ theorem thm_8_2_tatuzawa_and_narrow_2J_rank (ε : ℝ) (hε0 : 0 < ε) (hε1 : �
               mul_le_mul_of_nonneg_right hrank_ub (mul_nonneg (by nlinarith only [hlog2_lt1, hε0, hε1]) hlogn_pos.le)
           _ = (Real.log 2 + ε / 20) * (1 / 4 - ε * Real.log 2) * (n : ℝ) := by field_simp [hlogn_pos.ne']
           _ ≤ (1 / 4 - (1 / 10 : ℝ) * ε) * (Real.log 2 - ε / 100) * (n : ℝ) := by
+              have hsq : (1 / 4 : ℝ) < Real.log 2 * Real.log 2 := by nlinarith only [hlog2_gt_half]
+              have hcoeff : 0 ≤ Real.log 2 * Real.log 2 - (1 / 10 : ℝ) * Real.log 2 - 3 / 200 := by
+                nlinarith only [hsq, hlog2_lt_34]
+              have hεc_pos : 0 ≤ ε * (Real.log 2 * Real.log 2 - (1 / 10 : ℝ) * Real.log 2 - 3 / 200) :=
+                mul_nonneg hε0.le hcoeff
+              have hε2_pos : 0 ≤ ε ^ 2 * ((1 / 20 : ℝ) * Real.log 2 + 1 / 1000) := by positivity
               have hsc : (Real.log 2 + ε / 20) * (1 / 4 - ε * Real.log 2) ≤
                   (1 / 4 - (1 / 10 : ℝ) * ε) * (Real.log 2 - ε / 100) := by
-                nlinarith only [hlog2_gt_half, hlog2_lt1, hε0, hε1]
+                linarith only [hεc_pos, hε2_pos]
               exact mul_le_mul_of_nonneg_right hsc hn_pos.le
           _ ≤ Real.log (G.card_A2 : ℝ) := hlogA2_tight
       exact le_of_mul_le_mul_left (le_trans hmul_le h1_rank) hrank_pos

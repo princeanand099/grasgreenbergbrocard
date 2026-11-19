@@ -61,16 +61,19 @@ theorem thm_8_1_part1_frey_E {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n) (hm : Nat.fact
     (∀ p : ℕ, p.Prime → 3 ≤ p → p ≤ n →
       ¬ ((p : ℤ) ∣ freyE_c4 m) ∧
       padicValNat p (64 * Nat.factorial n) = padicValNat p (Nat.factorial n)) ∧
+    -- 2-isogenous curve \widehat{\mathcal{E}}_n : y^2 = x(x - 2(m-1))(x - 2(m+1)) discriminant
     (16 : ℤ) * (2 * ((m : ℤ) - 1)) ^ 2 * (2 * ((m : ℤ) + 1)) ^ 2 * 4 ^ 2 =
       2 ^ 12 * (Nat.factorial n : ℤ) ^ 2 ∧
+    -- Quadratic base-change unit factorization in Zsqrtd (q_n n) (eq. 8.1):
     (∀ X : Zsqrtd (q_n n : ℤ),
       let εk : Zsqrtd (q_n n : ℤ) := ⟨(m : ℤ), (s_n n : ℤ)⟩
       let εk_inv : Zsqrtd (q_n n : ℤ) := ⟨(m : ℤ), -(s_n n : ℤ)⟩
       εk * εk_inv = 1 ∧
       X * (X + εk) * (X + εk_inv) = X ^ 3 + (2 * (m : ℤ) : Zsqrtd (q_n n : ℤ)) * X ^ 2 + X) ∧
+    -- Modularity, conductor, and Frobenius traces
     (∃ D : FreyCurveArithmeticData n m X₁ Y₁,
       D.isModular_E ∧ D.conductor_E = 2 ^ D.alpha_E * ∏ p ∈ (Finset.Icc 3 n).filter Nat.Prime, p ∧
-      D.alpha_E ≤ 3 ∧ ∀ p : ℕ, (hp : p.Prime) → 3 ≤ p → p ≤ n → D.ap_E p = @legendreSym p ⟨hp⟩ (-(m : ℤ))) := by
+      D.alpha_E ≤ 3 ∧ ∀ p : ℕ, p.Prime → 3 ≤ p → p ≤ n → D.ap_E p = legendreSym p (-(m : ℤ))) := by
   have hm_z : (Nat.factorial n : ℤ) + 1 = (m : ℤ) ^ 2 := by exact_mod_cast hm
   have hc4 : freyE_c4 m = 16 * (4 * (Nat.factorial n : ℤ) + 1) := by
     unfold freyE_c4 freyE_b2 freyE_b4; linarith
@@ -134,19 +137,25 @@ theorem thm_8_1_part2_level2_cm_reduction {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     (hm : Nat.factorial n + 1 = m ^ 2)
     (hfund : IsFundamentalPell (q_n n) X₁ Y₁)
     (hk2 : (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ 2) :
+    -- Shifted model (eq. 8.2)
     (∀ V : ℤ, (V - 2) * ((V - 2) - 2 * ((X₁ : ℤ) - 1)) * ((V - 2) + 4) =
       (V ^ 2 - 4) * (V - 2 * (X₁ : ℤ)) ∧
       (V ^ 2 - 4) * (V - 2 * (X₁ : ℤ)) = V ^ 3 - 2 * (X₁ : ℤ) * V ^ 2 - 4 * V + 8 * (X₁ : ℤ)) ∧
+    -- Discriminant Δ(F_n^{(2)}) = 2^{12} q_n^2 Y_1^4
     freyF2_Delta X₁ = 2 ^ 12 * (q_n n : ℤ) ^ 2 * (Y₁ : ℤ) ^ 4 ∧
+    -- Good CM reduction at odd primes p | X_1
     (∀ p : ℕ, p.Prime → 3 ≤ p → p ∣ X₁ →
       ¬ ((p : ℤ) ∣ freyF2_Delta X₁) ∧
       ∀ V : ℤ, (p : ℤ) ∣ (V ^ 3 - 2 * (X₁ : ℤ) * V ^ 2 - 4 * V + 8 * (X₁ : ℤ)) - (V ^ 3 - 4 * V)) ∧
+    -- Exact j-invariant identity (eq. 8.3): j(F_n^{(2)}) - 1728 = 64 X_1^2 (X_1^2 - 9)^2 / (X_1^2 - 1)^2
     ((freyF2_c4 X₁ : ℚ) ^ 3 / (freyF2_Delta X₁ : ℚ) - 1728 =
       64 * (X₁ : ℚ) ^ 2 * ((X₁ : ℚ) ^ 2 - 9) ^ 2 / ((X₁ : ℚ) ^ 2 - 1) ^ 2) ∧
+    -- v_p(j(F_n^{(2)})) = -2 for all primes p ∈ (n/2, n] (i.e. p^2 ∥ Δ and p ∤ c_4)
     (∀ p : ℕ, p.Prime → n / 2 < p → p ≤ n →
       padicValNat p (2 ^ 12 * (q_n n) ^ 2 * Y₁ ^ 4) = 2 ∧ ¬ ((p : ℤ) ∣ freyF2_c4 X₁)) ∧
+    -- Modularity and surjectivity of mod-ℓ Galois representation for ℓ ≥ 5
     (∃ D : FreyCurveArithmeticData n m X₁ Y₁,
-      D.isModular_F2 ∧ ∀ ℓ : ℕ, ℓ.Prime → 5 ≤ ℓ → D.surj_mod_ell_F2 ℓ) := by
+      D.isModular_F2 ∧ ∀ ℓ : ℕ, ℓ.Prime → 5 ≤ ℓ → D.surj_mod_ell_F2 ℓ ‹_› ‹_›) := by
   have hX1_pos : 0 < X₁ := by have := hfund.1; omega
   have hY1_pos : 0 < Y₁ := hfund.2.1
   have hpell_z : (X₁ : ℤ) ^ 2 - 1 = (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 := by linarith [hfund.2.2.1]
@@ -273,6 +282,7 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
           let y_n := m * v_n
           y_n ^ 2 - x_n ^ 3 = v_n ^ 2 ∧ 0 < v_n ^ 2 ∧
           Real.log ((v_n ^ 2 : ℕ) : ℝ) / Real.log (x_n : ℝ) ≤ (12 + ε) / Real.log (n : ℝ)) := by
+  -- Use de_la_vallee_poussin_theta: |thetaPrime n - n| ≤ (ε/2) * n for large n
   obtain ⟨c₁, hc₁, hdlvp⟩ := de_la_vallee_poussin_theta
   have hθ_o : (fun n : ℕ => thetaPrime (n : ℝ) - (n : ℝ)) =o[atTop] (fun n : ℕ => (n : ℝ)) := by
     rw [Asymptotics.isLittleO_iff]
@@ -336,6 +346,7 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
     have hcopAC : Nat.Coprime A_n C_n := by rw [← hsum]; exact Nat.coprime_self_add_right.mpr hcopAB
     have hcopBC : Nat.Coprime B_n C_n := by rw [← hsum, add_comm]; exact Nat.coprime_self_add_right.mpr hcopAB.symm
     refine ⟨hsum, hcopAB, hcopAC, hcopBC, ?_⟩
+    -- Bound log(rad(A_n B_n C_n)) ≤ thetaPrime n ≤ (1 + ε/100) * n
     have hlogn_pos : 0 < Real.log (n : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n))
     have hrad_dvd_fac : radNat (A_n * B_n * C_n) ∣ ∏ p ∈ (Finset.Icc 2 n).filter Nat.Prime, p := by
       unfold radNat
@@ -411,6 +422,7 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
       have habs_n : |(n : ℝ)| = (n : ℝ) := abs_of_nonneg (Nat.cast_nonneg n)
       rw [Real.norm_eq_abs, Real.norm_eq_abs, habs_n] at h
       linarith [(abs_le.mp h).2]
+    -- Lower bound log C_n ≥ (1/4) (n log n - n) - log 4
     have hlog_Cn_lb : (1 / 4 : ℝ) * ((n : ℝ) * Real.log (n : ℝ) - (n : ℝ)) - Real.log 4 ≤ Real.log (C_n : ℝ) := by
       have hC_ge : ((X₁ : ℝ) + 1) / 2 ≤ (C_n : ℝ) := by
         have hc0_le2 : (c₀ : ℝ) ≤ 2 := by exact_mod_cast Nat.le_of_dvd (by norm_num) hc0_dvd2
@@ -463,7 +475,8 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
             rw [this]; exact mul_le_mul_of_nonneg_right hcoef (by positivity)
           nlinarith only [hstep1, h1_lt, hn_ge100, hlog4_lt, hlogn_pos, hε0, hε1]
       _ ≤ Real.log (C_n : ℝ) := hlog_Cn_lb
-  · intro n m hn hm
+  · -- Hall-type cubic-square bound: n! = u_n^3 v_n, x_n = u_n v_n, y_n = m v_n
+    intro n m hn hm
     let u_n : ℕ := ∏ p ∈ (Finset.Icc 2 n).filter Nat.Prime, p ^ (padicValNat p (Nat.factorial n) / 3)
     let v_n : ℕ := ∏ p ∈ (Finset.Icc 2 n).filter Nat.Prime, p ^ (padicValNat p (Nat.factorial n) % 3)
     have hu_pos : 0 < u_n := Finset.prod_pos (fun p hp => pow_pos (Finset.mem_filter.mp hp).2.pos _)
@@ -562,8 +575,11 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
         linarith [(abs_le.mp h).2]
       have hlog_x_lb : (1 / 3 : ℝ) * ((n : ℝ) * Real.log (n : ℝ) - (n : ℝ)) ≤ Real.log ((u_n * v_n : ℕ) : ℝ) := by
         have hfac_le_x3 : Nat.factorial n ≤ (u_n * v_n) ^ 3 := by
-          rw [hfac_uv]; nlinarith [pow_pos hu_pos 3, hv_pos]
-        have h1 := Real.log_le_log (by exact_mod_cast Nat.factorial_pos n) (by exact_mod_cast hfac_le_x3)
+          rw [hfac_uv, mul_pow]
+          exact Nat.mul_le_mul_left (u_n ^ 3) (Nat.le_self_pow (by norm_num) v_n)
+        have hfac_pos_r : (0 : ℝ) < (Nat.factorial n : ℝ) := by exact_mod_cast Nat.factorial_pos n
+        have hfac_le_r : (Nat.factorial n : ℝ) ≤ (((u_n * v_n) ^ 3 : ℕ) : ℝ) := by exact_mod_cast hfac_le_x3
+        have h1 := Real.log_le_log hfac_pos_r hfac_le_r
         rw [Nat.cast_pow, Real.log_pow] at h1
         have h2 := (n_log_n_sub_n_le_log_factorial n (by omega : 1 ≤ n)).1
         linarith
