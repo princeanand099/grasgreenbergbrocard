@@ -99,9 +99,8 @@ theorem isPrimeSubinterval_of_bounds {P a b : ℝ} (hP : 0 ≤ P) (I : Finset �
       have h1 : min (2 * P) a < (p : ℝ) := lt_of_le_of_lt (le_max_right _ _) ha'
       have h2 : (p : ℝ) ≤ 2 * P :=
         le_trans hb' (max_le (max_le (by linarith) (min_le_left _ _)) (min_le_left _ _))
-      by_contra hle; push_neg at hle
-      have hmin : min (2 * P) a = 2 * P := min_eq_left (le_trans h2 hle)
-      linarith
+      by_contra hle; push Not at hle
+      linarith [le_min h2 hle]
     have hb_le : (p : ℝ) ≤ b := by
       have h1 : ¬ (p : ℝ) ≤ a' := not_le.mpr ha'
       have h2 : b' = min (2 * P) b := by
