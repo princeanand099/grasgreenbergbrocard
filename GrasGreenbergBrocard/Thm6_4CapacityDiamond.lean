@@ -1019,7 +1019,9 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
           |(padicValNat 2 ((m_a - 1) / 2) : ℝ) - (padicValNat 2 ((m_a + 1) / 2) : ℝ)| * Real.log 2 / 2 + |Delta_parity_odd n_a| / 2 := by
         rw [abs_mul, abs_of_nonneg (by norm_num : (0 : ℝ) ≤ 1 / 2)]
         have h_sub := abs_sub (((padicValNat 2 ((m_a + 1) / 2) : ℝ) - (padicValNat 2 ((m_a - 1) / 2) : ℝ)) * Real.log 2) (Delta_parity_odd n_a)
-        rw [abs_mul, abs_of_nonneg (Real.log_nonneg (by norm_num)), abs_sub_comm] at h_sub
+        have hcomm : |(padicValNat 2 ((m_a + 1) / 2) : ℝ) - (padicValNat 2 ((m_a - 1) / 2) : ℝ)| =
+            |(padicValNat 2 ((m_a - 1) / 2) : ℝ) - (padicValNat 2 ((m_a + 1) / 2) : ℝ)| := abs_sub_comm _ _
+        rw [abs_mul, abs_of_nonneg (Real.log_nonneg (by norm_num)), hcomm] at h_sub
         linarith
       linarith
     constructor
@@ -1043,10 +1045,14 @@ theorem thm_6_4_capacity_diamond (α : ℝ) (hα0 : 0 ≤ α) (hα1 : α < 1)
     have h_il := hN_il n₁ (by omega)
     rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity)] at h_il
     have hn1_le : (n₁ : ℝ) ≤ (ε / 256) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
-      have := (div_lt_iff₀ hlog_n₁_pos).mp h_il
+      have hdiv := (div_lt_iff₀ hlog_n₁_pos).mp h_il
       have hmin : min (ε / 256) (1 / 100) ≤ ε / 256 := min_le_left _ _
-      nlinarith [show (0 : ℝ) ≤ n₁ by positivity]
-    have h4_le : (4 : ℝ) ≤ (ε / 256) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by nlinarith [show (1 : ℝ) ≤ n₁ by exact_mod_cast (by omega : 1 ≤ n₁)]
+      have hmul : 1 < (ε / 256) * Real.log (n₁ : ℝ) :=
+        lt_of_lt_of_le hdiv (mul_le_mul_of_nonneg_right hmin hlog_n₁_pos.le)
+      nlinarith only [hmul, hn₁_pos]
+    have h4_le : (4 : ℝ) ≤ (ε / 256) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
+      have hn1_4 : (4 : ℝ) ≤ (n₁ : ℝ) := by exact_mod_cast (by omega : 4 ≤ n₁)
+      linarith only [hn1_le, hn1_4]
     have hlogP_le : 6 * Real.log (P_ratio n₁ n₂ : ℝ) ≤ (3 * ε / 64) * (n₁ : ℝ) * Real.log (n₁ : ℝ) := by
       have hP_le : (P_ratio n₁ n₂ : ℝ) ≤ (2 * (n₁ : ℝ)) ^ (n₂ - n₁) := by
         have hprod_eq : P_ratio n₁ n₂ = ∏ j ∈ Finset.Ioc n₁ n₂, j := by
