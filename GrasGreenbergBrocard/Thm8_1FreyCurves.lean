@@ -126,7 +126,7 @@ theorem thm_8_1_part1_frey_E {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n) (hm : Nat.fact
           (⟨(m : ℤ), (s_n n : ℤ)⟩ * ⟨(m : ℤ), -(s_n n : ℤ)⟩) * X := by ring
       _ = X ^ 3 + (2 * (m : ℤ) : Zsqrtd (q_n n : ℤ)) * X ^ 2 + X := by rw [hadd, hmul1, one_mul]
   · obtain ⟨D, hmodE, _, _⟩ := frey_curve_modularity_and_galois (X₁ := X₁) (Y₁ := Y₁) hn hm
-    exact ⟨D, hmodE, D.conductor_E_eq, D.alpha_E_le, D.ap_E_eq⟩
+    exact ⟨D, hmodE, D.conductor_E_eq, D.alpha_E_le, fun p hp => D.ap_E_eq p hp.out⟩
 
 /-- **Theorem 8.1(ii) (Algebraic, CM-Reduction, and Valuation Structure of $F_n^{(2)}$)**:
 In the $k = 2$ regime ($m = 2X_1^2 - 1$, $s_n = 2 X_1 Y_1$, $X_1^2 - q_n Y_1^2 = 1$), the Level-2
@@ -581,7 +581,7 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
         have hfac_le_r : (Nat.factorial n : ℝ) ≤ (((u_n * v_n) ^ 3 : ℕ) : ℝ) := by exact_mod_cast hfac_le_x3
         have h1 := Real.log_le_log hfac_pos_r hfac_le_r
         rw [Nat.cast_pow, Real.log_pow] at h1
-        push_cast at h1
+        push_cast at h1 ⊢
         have h2 := (n_log_n_sub_n_le_log_factorial n (by omega : 1 ≤ n)).1
         linarith
       have hil := hN_lg n (by omega)
