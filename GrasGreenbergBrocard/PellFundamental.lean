@@ -727,7 +727,7 @@ private lemma q_n_ten_eq_seven : q_n 10 = 7 := by
     · rintro ⟨⟨hp2, hp10⟩, hp_pr, hodd⟩
       rw [padicValNat_factorial_eq_legendreSum6 (by norm_num) hp_pr] at hodd
       interval_cases p
-      all_goals first | rfl | norm_num at hp_pr | norm_num [legendreSum6] at hodd
+      all_goals first | rfl | exact absurd hp_pr (by decide) | exact absurd (by decide) hodd
     · rintro rfl
       refine ⟨⟨by norm_num, by norm_num⟩, by norm_num, ?_⟩
       rw [padicValNat_factorial_eq_legendreSum6 (by norm_num) (by norm_num)]
