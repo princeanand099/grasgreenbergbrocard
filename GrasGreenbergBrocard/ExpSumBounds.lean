@@ -584,7 +584,10 @@ theorem prime_exp_sum_bounds_general_phase (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ
   have hev_log : ∀ᶠ n : ℕ in atTop, (2 : ℝ) ≤ Real.log (n : ℝ) :=
     (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 2)
   filter_upwards [Filter.eventually_ge_atTop 4, hev2, hev_log] with n hn hsmall2 hlog2
-  intro P I A M r₀ w W₀ hP_lo hP_hi hI_sub hA_range hr₀_mem hT₀_ge hDom hW_bound hW_anti hW₀
+  intro P I A M r₀ w W₀ hP_lo hP_hi hI_sub hA_range hr₀_mem
+  dsimp only
+  intro hT₀_ge hDom hW_bound hW_anti hW₀
+  dsimp only
   set T₀ := |M r₀| / P ^ r₀
   set F : ℝ → ℝ := fun t => ∑ s ∈ A, M s / (2 * t ^ s)
   have hr₀_range : 1 ≤ r₀ ∧ r₀ ≤ R := hA_range r₀ hr₀_mem
@@ -660,7 +663,9 @@ theorem prime_exp_sum_bounds_general_phase (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ
           rw [zpow_neg, zpow_natCast]
           have h1 : (t ^ (r₀ + j))⁻¹ ≤ (P ^ (r₀ + j))⁻¹ :=
             inv_anti₀ (pow_pos hP_pos _) (pow_le_pow_left₀ hP_pos.le ht.1 _)
-          rw [pow_add] at h1; convert h1 using 1; field_simp [hP_pos.ne']
+          have h2 : (P ^ (r₀ + j))⁻¹ = (1 / P ^ r₀) / P ^ j := by
+            rw [pow_add]; field_simp [hP_pos.ne']
+          linarith
         calc (|M r₀| / 2) * |negPowDerivCoeff r₀ j| * t ^ (-((r₀ + j : ℕ) : ℤ))
             ≤ (|M r₀| / 2) * Mmax * ((1 / P ^ r₀) / P ^ j) := by
               apply mul_le_mul (mul_le_mul_of_nonneg_left hcoeff_le (by positivity)) ht_ge
@@ -691,7 +696,9 @@ theorem prime_exp_sum_bounds_general_phase (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ
             rw [zpow_neg, zpow_natCast]
             have h1 : (t ^ (s + j))⁻¹ ≤ (P ^ (s + j))⁻¹ :=
               inv_anti₀ (pow_pos hP_pos _) (pow_le_pow_left₀ hP_pos.le ht.1 _)
-            rw [pow_add] at h1; convert h1 using 1; field_simp [hP_pos.ne']
+            have h2 : (P ^ (s + j))⁻¹ = (1 / P ^ s) / P ^ j := by
+              rw [pow_add]; field_simp [hP_pos.ne']
+            linarith
           calc (|M s| / 2) * |negPowDerivCoeff s j| * t ^ (-((s + j : ℕ) : ℤ))
               ≤ (|M s| / 2) * Mmax * ((1 / P ^ s) / P ^ j) := by
                 apply mul_le_mul (mul_le_mul_of_nonneg_left hcoeff_le (by positivity)) ht_ge

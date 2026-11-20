@@ -11,13 +11,9 @@ Formalizes Section 3.3 (Theorem 1.2(i)–(iii), eqs. 1.8 and 3.6–3.7) of the m
   with `v_p(n!) = 4`
 - `prime_in_band_val_and_coprime_k`: `v_p(n!) ∈ {3, 4}` and `p ∤ k` on `(n/5, n/3]`
 - `val_s_n_ge_one_on_half`: `v_p(s_n) = ⌊v_p(n!)/2⌋ ≥ 1` on `[5, n/2]` (eq. 3.6)
-- `thm_1_2_eq_3_6_regulator_valuation`: proves `v_p(R̃_p(K_n)) = ⌊v_p(n!)/2⌋` directly from
-  `n! + 1 = m^2`, `p ∤ k`, and the ultrametric `p`-adic logarithm valuation law
-- `brocard_small_solutions_lt_116`: pure kernel-verified finite check for `1 ≤ n < 116`
 - `thm_1_2_part1_valuation_law`: eq. 1.8 and `λ_p^*(K_n) = λ_p(χ_{D_n}) ≥ 1`
 - `thm_1_2_part2_split_primes`: split-prime unramified Iwasawa module and Taya criterion
-- `thm_1_2_part3_conditional_finiteness` & `thm_1_2_part3_complete_finiteness`:
-  conditional finiteness under (a), (b), or (c)
+- `thm_1_2_part3_conditional_finiteness`: conditional finiteness under (a), (b), or (c)
 -/
 
 noncomputable section
@@ -29,20 +25,9 @@ namespace GrasGreenbergBrocard
 private lemma padicValNat_factorial_ge_div {n p : ℕ} (hp : p.Prime) (hn : 1 ≤ n) :
     n / p ≤ padicValNat p (Nat.factorial n) := by
   haveI : Fact p.Prime := ⟨hp⟩
-  have hlog_lt : Nat.log p n < n + 1 := by
-    have hself : ∀ m : ℕ, m < p ^ m := by
-      intro m
-      induction m with
-      | zero => norm_num
-      | succ m ihm =>
-        calc m + 1 ≤ p ^ m + 1 := by omega
-          _ < p ^ m * p := by
-            have h1 : 1 ≤ p ^ m := Nat.one_le_pow m p hp.pos
-            have hp2 : 2 ≤ p := hp.two_le
-            nlinarith
-          _ = p ^ (m + 1) := (pow_succ p m).symm
-    exact Nat.log_lt_of_lt_pow (by omega)
-      (lt_trans (hself n) (Nat.pow_lt_pow_right hp.one_lt (Nat.lt_succ_self n)))
+  have hlog_lt : Nat.log p n < n + 1 :=
+    Nat.log_lt_of_lt_pow (by omega)
+      (lt_trans (Nat.lt_pow_self hp.one_lt) (Nat.pow_lt_pow_right hp.one_lt (Nat.lt_succ_self n)))
   rw [padicValNat_factorial hlog_lt]
   have h1_mem : 1 ∈ Finset.Ico 1 (n + 1) := Finset.mem_Ico.mpr ⟨le_rfl, by omega⟩
   simpa using Finset.single_le_sum (f := fun i => n / p ^ i) (fun _ _ => Nat.zero_le _) h1_mem
@@ -117,7 +102,7 @@ theorem prime_in_band_val_and_coprime_k {n p k : ℕ} (hn : 116 ≤ n) (hp : p.P
   have h3p : 3 * p ≤ n := by exact_mod_cast (by linarith : 3 * (p : ℝ) ≤ (n : ℝ))
   have hn5p : n < 5 * p := by exact_mod_cast (by linarith : (n : ℝ) < 5 * (p : ℝ))
   have hdiv_ge : 3 ≤ n / p := (Nat.le_div_iff_mul_le hp.pos).mpr h3p
-  have hdiv_lt : n / p < 5 := Nat.div_lt_of_lt_mul hn5p
+  have hdiv_lt : n / p < 5 := Nat.div_lt_of_lt_mul (by omega : n < p * 5)
   have hval_or : padicValNat p (Nat.factorial n) = 3 ∨ padicValNat p (Nat.factorial n) = 4 := by
     rw [hv_div]; omega
   have hk_lt_p : k < p := by
@@ -130,7 +115,7 @@ theorem prime_in_band_val_and_coprime_k {n p k : ℕ} (hn : 116 ≤ n) (hp : p.P
         rw [Real.log_lt_iff_lt_exp (by norm_num)]
         have he1 : (2.718 : ℝ) < Real.exp 1 := by have := Real.exp_one_gt_d9; linarith
         have he3 : (2.718 : ℝ) ^ 3 < Real.exp 3 := by
-          rw [show (3 : ℝ) = ((3 : ℕ) : ℝ) by norm_num, Real.exp_nat_mul, mul_one]
+          rw [show (3 : ℝ) = ((3 : ℕ) : ℝ) * 1 by norm_num, Real.exp_nat_mul]
           exact pow_lt_pow_left₀ he1 (by norm_num) (by norm_num)
         norm_num at he3
         linarith
@@ -178,19 +163,28 @@ private lemma p_dvd_q_n_iff {n p : ℕ} (hp : p.Prime) (hpn : p ≤ n) :
       have hcop : Nat.Coprime p (∏ q ∈ Podd n, q) := by
         apply Nat.Coprime.prod_right
         intro q hq
-        have hq_pr : q.Prime := (Finset.mem_filter.mp hq).2.1
+        have hq_pr : q.Prime := by
+          unfold Podd at hq
+          exact (Finset.mem_filter.mp hq).2.1
         exact (Nat.coprime_primes hp hq_pr).mpr (fun h => hnot (h ▸ hq))
-      exact hp.not_dvd_one (hcop.dvd_of_dvd_mul_left (dvd_mul_of_dvd_right hdvd 1))
-    exact (Finset.mem_filter.mp hmem).2.2
+      have h1 : p ∣ Nat.gcd p (∏ q ∈ Podd n, q) := Nat.dvd_gcd dvd_rfl hdvd
+      rw [hcop.gcd_eq_one] at h1
+      exact hp.not_dvd_one h1
+    unfold Podd at hmem
+    have hodd := (Finset.mem_filter.mp hmem).2.2
+    omega
   · intro hodd
     unfold q_n
     apply Finset.dvd_prod_of_mem
-    exact Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hpn⟩, hp, hodd⟩
+    unfold Podd
+    exact Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hpn⟩, hp, by omega⟩
 
 private lemma two_le_q_n {n : ℕ} (hn : 2 ≤ n) : 2 ≤ q_n n := by
   have hpos : 1 ≤ q_n n := by
     unfold q_n
-    exact Finset.prod_pos (fun q hq => (Finset.mem_filter.mp hq).2.1.pos)
+    exact Nat.succ_le_of_lt (Finset.prod_pos (fun q hq => by
+      unfold Podd at hq
+      exact (Finset.mem_filter.mp hq).2.1.pos))
   by_contra hlt
   have hq1 : q_n n = 1 := by omega
   have hfac : Nat.factorial n = s_n n * s_n n := by
@@ -198,12 +192,14 @@ private lemma two_le_q_n {n : ℕ} (hn : 2 ≤ n) : 2 ≤ q_n n := by
     rw [hq1, one_mul, sq] at h
     exact h
   have hprod : ∏ j ∈ Finset.range n, (1 + j) = Nat.factorial n := by
-    clear hfac hq1 hpos hlt
-    induction n with
-    | zero => simp
-    | succ k ih =>
-      rw [Finset.prod_range_succ, ih, Nat.factorial_succ]
-      ring
+    have hall : ∀ k : ℕ, ∏ j ∈ Finset.range k, (1 + j) = Nat.factorial k := by
+      intro k
+      induction k with
+      | zero => simp
+      | succ k ih =>
+        rw [Finset.prod_range_succ, ih, Nat.factorial_succ]
+        ring
+    exact hall n
   exact erdos_selfridge_consecutive_product_not_square 1 n le_rfl hn ⟨s_n n, by rw [hprod, hfac]⟩
 
 /-- If `n! + 1 = m^2` and `p` is a prime with `p ≤ n`, then `p ∤ m`. -/
@@ -230,8 +226,8 @@ theorem padicValNat_odd_series_strict_dom {p j v : ℕ} (hp : p.Prime) (hp5 : 5 
         | zero => norm_num
         | succ k' =>
           have ih' := ih (by omega)
-          have hpow_step : 5 ^ (2 * (k' + 2)) = 25 * 5 ^ (2 * (k' + 1)) := by
-            rw [show 2 * (k' + 2) = 2 * (k' + 1) + 2 by omega, pow_add]; ring
+          have hpow_step : 5 ^ (2 * (k' + 1 + 1)) = 25 * 5 ^ (2 * (k' + 1)) := by
+            rw [show 2 * (k' + 1 + 1) = 2 * (k' + 1) + 2 by omega, pow_add]; ring
           omega
     exact lt_of_lt_of_le h5 (Nat.pow_le_pow_left hp5 (2 * j))
   have hdv : p ^ padicValNat p (2 * j + 1) ≤ 2 * j + 1 :=
@@ -290,15 +286,16 @@ theorem thm_1_2_part1_valuation_law {n m p X₁ Y₁ k : ℕ}
       1 ≤ inv.v_T ∧ inv.is_p_rational = false ∧
       inv.lambda_star = inv.lambda_chi ∧ 1 ≤ inv.lambda_star) := by
   dsimp only
-  set inv := canonicalRealQuadIwasawa (q_n n) p
-  have h_reg : inv.v_reg = padicValNat p (Nat.factorial n) / 2 :=
+  have h_reg : (canonicalRealQuadIwasawa (q_n n) p).v_reg = padicValNat p (Nat.factorial n) / 2 :=
     thm_1_2_eq_3_6_regulator_valuation hm hp hp5 hp_half hfund hk_eq hpk
   obtain ⟨hv2, _, _⟩ := val_s_n_ge_one_on_half hp hp5 hp_half
-  have hreg_ge1 : 1 ≤ inv.v_reg := by omega
+  have hreg_ge1 : 1 ≤ (canonicalRealQuadIwasawa (q_n n) p).v_reg := by omega
   obtain ⟨h_unram, h_ram⟩ := leopoldt_coates_valuation_law (q := q_n n) (p := p) hp hp5 hreg_ge1
   have hpn : p ≤ n := by omega
   have hp_dvd_q_iff := p_dvd_q_n_iff hp hpn
-  have hLp_eq : inv.v_Lp = padicValNat p inv.classNumber + (padicValNat p (Nat.factorial n) + 1) / 2 - 1 := by
+  have hLp_eq : (canonicalRealQuadIwasawa (q_n n) p).v_Lp =
+      padicValNat p (canonicalRealQuadIwasawa (q_n n) p).classNumber +
+      (padicValNat p (Nat.factorial n) + 1) / 2 - 1 := by
     by_cases hpd : p ∣ q_n n
     · have hodd := hp_dvd_q_iff.mp hpd
       rw [(h_ram hpd).1, h_reg]
@@ -308,7 +305,9 @@ theorem thm_1_2_part1_valuation_law {n m p X₁ Y₁ k : ℕ}
         exact hpd (hp_dvd_q_iff.mpr (by omega))
       rw [(h_unram hpd).1, h_reg]
       omega
-  have hT_eq : inv.v_T = padicValNat p inv.classNumber + (padicValNat p (Nat.factorial n) + 1) / 2 - 1 := by
+  have hT_eq : (canonicalRealQuadIwasawa (q_n n) p).v_T =
+      padicValNat p (canonicalRealQuadIwasawa (q_n n) p).classNumber +
+      (padicValNat p (Nat.factorial n) + 1) / 2 - 1 := by
     by_cases hpd : p ∣ q_n n
     · have hodd := hp_dvd_q_iff.mp hpd
       rw [(h_ram hpd).2, h_reg]
@@ -322,12 +321,12 @@ theorem thm_1_2_part1_valuation_law {n m p X₁ Y₁ k : ℕ}
   have h3p : 3 * p ≤ n := by omega
   have hv3 : 3 ≤ padicValNat p (Nat.factorial n) :=
     le_trans ((Nat.le_div_iff_mul_le hp.pos).mpr h3p) (padicValNat_factorial_ge_div hp (by omega))
-  have hT_ge1 : 1 ≤ inv.v_T := by omega
-  have h_not_prat : inv.is_p_rational = false := by
+  have hT_ge1 : 1 ≤ (canonicalRealQuadIwasawa (q_n n) p).v_T := by omega
+  have h_not_prat : (canonicalRealQuadIwasawa (q_n n) p).is_p_rational = false := by
     by_contra htrue
-    have hbool : inv.is_p_rational = true := by
-      cases h : inv.is_p_rational <;> simp_all
-    have h0 := inv.h_prat_iff.mp hbool
+    have hbool : (canonicalRealQuadIwasawa (q_n n) p).is_p_rational = true := by
+      cases h : (canonicalRealQuadIwasawa (q_n n) p).is_p_rational <;> simp_all
+    have h0 := (canonicalRealQuadIwasawa (q_n n) p).h_prat_iff.mp hbool
     omega
   obtain ⟨hlam_eq, hlam_ge1⟩ := iwasawa_main_conjecture_free_rank (q := q_n n) (p := p) hp hp5 hT_ge1
   exact ⟨hT_ge1, h_not_prat, hlam_eq, hlam_ge1⟩
@@ -353,16 +352,16 @@ theorem thm_1_2_part2_split_primes {n m p X₁ Y₁ k : ℕ}
     inv.X_trivial = false ∧
     ((∀ r : ℕ, r + 1 < inv.n0_r r) → 1 ≤ inv.lambda_p) := by
   dsimp only
-  set inv := canonicalRealQuadIwasawa (q_n n) p
   have hp_half : p ≤ n / 2 := by omega
-  have h_reg : inv.v_reg = padicValNat p (Nat.factorial n) / 2 :=
+  have h_reg : (canonicalRealQuadIwasawa (q_n n) p).v_reg = padicValNat p (Nat.factorial n) / 2 :=
     thm_1_2_eq_3_6_regulator_valuation hm hp hp5 hp_half hfund hk_eq hpk
   have h4p : 4 * p ≤ n := by omega
   have hv4 : 4 ≤ padicValNat p (Nat.factorial n) :=
     le_trans ((Nat.le_div_iff_mul_le hp.pos).mpr h4p) (padicValNat_factorial_ge_div hp (by omega))
-  have hreg_ge2 : 2 ≤ inv.v_reg := by omega
+  have hreg_ge2 : 2 ≤ (canonicalRealQuadIwasawa (q_n n) p).v_reg := by omega
   have hp_ndvd_q : ¬ p ∣ q_n n := by
     have hev : padicValNat p (Nat.factorial n) % 2 = 0 := by
+      unfold Peven at hp_even
       have := (Finset.mem_filter.mp hp_even).2.2
       omega
     intro hdvd
@@ -370,11 +369,13 @@ theorem thm_1_2_part2_split_primes {n m p X₁ Y₁ k : ℕ}
     omega
   obtain ⟨h_eqs, h_lam_nu, h_taya⟩ :=
     ozaki_taya_split_prime_iwasawa (q := q_n n) (p := p) hp hp5 hp_ndvd_q h_splits hreg_ge2
-  have h_lam_nu_ge1 : 1 ≤ inv.lambda_p + inv.nu_p := by omega
-  have h_X_not_triv : inv.X_trivial = false := by
+  have h_lam_nu_ge1 : 1 ≤ (canonicalRealQuadIwasawa (q_n n) p).lambda_p +
+      (canonicalRealQuadIwasawa (q_n n) p).nu_p := by omega
+  have h_X_not_triv : (canonicalRealQuadIwasawa (q_n n) p).X_trivial = false := by
     by_contra htrue
-    have hbool : inv.X_trivial = true := by cases h : inv.X_trivial <;> simp_all
-    obtain ⟨hl0, hn0⟩ := inv.h_X_triv.mp hbool
+    have hbool : (canonicalRealQuadIwasawa (q_n n) p).X_trivial = true := by
+      cases h : (canonicalRealQuadIwasawa (q_n n) p).X_trivial <;> simp_all
+    obtain ⟨hl0, hn0⟩ := (canonicalRealQuadIwasawa (q_n n) p).h_X_triv.mp hbool
     omega
   refine ⟨hreg_ge2, ?_, h_lam_nu_ge1, h_X_not_triv, h_taya⟩
   intro m' hm'
@@ -414,10 +415,12 @@ private def brocardSmallWitnesses : List (ℕ × ℕ) :=
   (108, 127), (109, 113), (110, 137), (111, 131), (112, 127), (113, 127), (114, 139), (115, 151)
 ]
 
+set_option maxRecDepth 8000 in
 private lemma brocardSmallWitnesses_valid :
     brocardSmallWitnesses.all (fun p => decide (0 < p.2) && isNotSqMod p.1 p.2) = true := by
   decide
 
+set_option maxRecDepth 8000 in
 private lemma brocardSmallWitnesses_cover :
     (List.range 116).all (fun n =>
       decide (n = 0 ∨ n = 4 ∨ n = 5 ∨ n = 7) ||
@@ -443,7 +446,8 @@ theorem brocard_small_solutions_lt_116 {n m : ℕ} (hn1 : 1 ≤ n) (hn116 : n < 
   unfold isNotSqMod at hnsq
   have hx := List.all_eq_true.mp hnsq (m % M) (List.mem_range.mpr (Nat.mod_lt m hM_pos))
   have hsq_mod : (m % M * (m % M)) % M = (factMod n' M + 1) % M := by
-    rw [factMod_eq, Nat.mod_add_mod, hm, sq, Nat.mul_mod]
+    rw [factMod_eq, Nat.mod_add_mod, hm, sq]
+    simp only [Nat.mod_mod, Nat.mul_mod]
   rw [hsq_mod] at hx; simp at hx
 
 /-- **Theorem 1.2(iii) (Conditional Finiteness for `n ≥ 116`)**:
@@ -475,7 +479,7 @@ theorem thm_1_2_part3_conditional_finiteness {n m p X₁ Y₁ k : ℕ}
       have : (p : ℝ) ≤ 4 := by exact_mod_cast (by omega : p ≤ 4)
       linarith
     have hp_third : p ≤ n / 3 := by
-      have h3p : 3 * p ≤ n := by exact_mod_cast (by linarith : 3 * (p : ℝ) ≤ (n : ℝ))
+      have h3p : p * 3 ≤ n := by exact_mod_cast (by linarith : (p : ℝ) * 3 ≤ (n : ℝ))
       exact (Nat.le_div_iff_mul_le (by norm_num)).mpr h3p
     have hp_half : p ≤ n / 2 := by omega
     have hq_log := log_q_n_gt_point4 hn

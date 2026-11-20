@@ -15,10 +15,9 @@ This file proves all four core lemmas of **Section 7** of the manuscript (0 `sor
   Support size bounds $\lceil m + 1 - \varepsilon_0 \rceil \le s \le m + 1$, root-multiplicity
   sum bound (eq. 7.12), and **Gauss's Lemma / leading-coefficient divisibility in $\mathbb{Z}[x]$**
   proving $\prod n_r^{a_r} \mid c_{\mathrm{lead}}(\Delta_S)$ and the multiplicity bound (eq. 7.13).
-- **Lemma 7.4** (`lem_7_4_denominator_clearing`, `depressed_poly_asymptotic_core`,
-  `pade_chi_lt_ratio_iff_theta_lt`): Common denominator clearing
-  $Z = r^{a+s} n_0^{D + (a+s)M}$, depressed polynomial gap core, elimination inequality, and
-  the exact Section 7.4 exponent equivalence $\chi(\theta) < (\nu - E)/E$.
+- **Lemma 7.4** (`lem_7_4_denominator_clearing`): Common denominator clearing
+  $Z = r^{a+s} n_0^{D + (a+s)M}$ and elimination inequality connecting the Padé linear form to
+  the factorial-root approximation error $\rho$.
 -/
 
 open scoped BigOperators
@@ -53,7 +52,7 @@ theorem siegel_lemma_pigeonhole {M_eq N_var : ℕ}
           ≤ ∑ j : Fin N_var, |A i j * ((v j : ℕ) : ℤ)| := Finset.abs_sum_le_sum_abs _ _
         _ ≤ ∑ _j : Fin N_var, ((A_max : ℤ) * (B : ℤ)) := by
             apply Finset.sum_le_sum; intro j _
-            rw [abs_mul, abs_of_nonneg (Nat.cast_nonneg _)]
+            rw [abs_mul, abs_of_nonneg (Nat.cast_nonneg (v j : ℕ))]
             have hvj : ((v j : ℕ) : ℤ) ≤ (B : ℤ) := by exact_mod_cast Nat.le_of_lt_succ (v j).isLt
             exact mul_le_mul (hA i j) hvj (Nat.cast_nonneg _) (Nat.cast_nonneg _)
         _ = (S : ℤ) := by simp [S, mul_assoc]
@@ -76,6 +75,7 @@ theorem siegel_lemma_pigeonhole {M_eq N_var : ℕ}
   · intro j
     have h1 : (v₁ j : ℕ) ≤ B := Nat.le_of_lt_succ (v₁ j).isLt
     have h2 : (v₂ j : ℕ) ≤ B := Nat.le_of_lt_succ (v₂ j).isLt
+    dsimp only
     rw [abs_le]; omega
   · intro i
     have hfi : (f v₁ i : ℕ) = (f v₂ i : ℕ) := congrArg Fin.val (congrFun hfeq i)
@@ -122,8 +122,10 @@ theorem lem_7_1_initial_pade_polynomials {m r M D O : ℕ}
     else 0
   have hbase_ge1 : (1 : ℝ) ≤ (r : ℝ) ^ 2 * fam.C_P * (M : ℝ) := by
     have hr1 : (1 : ℝ) ≤ (r : ℝ) := by exact_mod_cast (show 1 ≤ r by omega)
+    have hr2 : (1 : ℝ) ≤ (r : ℝ) ^ 2 := by nlinarith
     have hM1 : (1 : ℝ) ≤ (M : ℝ) := by exact_mod_cast hM
-    nlinarith [fam.C_P_pos]
+    have h1 : (1 : ℝ) ≤ (r : ℝ) ^ 2 * fam.C_P := by nlinarith [fam.C_P_pos]
+    nlinarith
   have hA_bound : ∀ t idx, |A t idx| ≤ (A_max : ℤ) := by
     intro t idx
     dsimp [A]
@@ -135,8 +137,11 @@ theorem lem_7_1_initial_pade_polynomials {m r M D O : ℕ}
         fam.coeff_bound _ _
       have hr2_le : ((r : ℝ) ^ 2) ^ p.2.val ≤ ((r : ℝ) ^ 2 * fam.C_P * (M : ℝ)) ^ p.2.val := by
         have hM1 : (1 : ℝ) ≤ (M : ℝ) := by exact_mod_cast hM
+        have h1 : (1 : ℝ) ≤ fam.C_P * (M : ℝ) := by nlinarith [fam.C_P_pos]
         apply pow_le_pow_left₀ (by positivity)
-        nlinarith [fam.C_P_pos, sq_nonneg (r : ℝ)]
+        have h2 : (r : ℝ) ^ 2 * 1 ≤ (r : ℝ) ^ 2 * (fam.C_P * (M : ℝ)) :=
+          mul_le_mul_of_nonneg_left h1 (sq_nonneg (r : ℝ))
+        linarith
       have hprod : |(fam.clearedCoeff p.1.succ (D + 1 + t.val - p.2.val) * (r : ℤ) ^ (2 * p.2.val) : ℝ)| ≤
           ((r : ℝ) ^ 2 * fam.C_P * (M : ℝ)) ^ O := by
         rw [abs_mul, abs_of_nonneg (by positivity : (0 : ℝ) ≤ ((r : ℤ) : ℝ) ^ (2 * p.2.val))]
@@ -220,6 +225,11 @@ must vanish identically. Then the monomial-product family is linearly independen
 theorem lem_7_2_monomial_product_puiseux_indep {K V : Type*} [Field K] [AddCommGroup V] [Module K V]
     (r E : ℕ) (hr : 2 ≤ r) (hEr : E ≤ r - 1) :
     ∀ (d : ℕ) (Ω : (Fin d → ℕ) → V),
+      -- Inductive Puiseux coset-splitting property at the largest pole x_* = 1/(β_d - 1):
+      -- Any linear relation ∑_{|e| ≤ E} R_e Ω(e) = 0 splits by the last exponent e_{d-1} ∈ [0, E]
+      -- (because cosets -e_{d-1}/r + ℤ are pairwise distinct by `puiseux_coset_distinct`),
+      -- and for each fixed e_{d-1}, canceling the non-zero factor (1 - (β_d - 1)x)^{-e_{d-1}/r}
+      -- yields a relation in the (d - 1)-variable family Ω_prev!
       (∀ (d' : ℕ) (Ω' : (Fin (d' + 1) → ℕ) → V),
         ∃ Ω_prev : (Fin d' → ℕ) → V,
           ∀ (R : (Fin (d' + 1) → ℕ) → K),
@@ -240,9 +250,14 @@ theorem lem_7_2_monomial_product_puiseux_indep {K V : Type*} [Field K] [AddCommG
     intro Ω _ hΩ0 R hsum e _
     have he : e = Fin.elim0 := Subsingleton.elim e Fin.elim0
     subst he
+    have hmem : Fin.elim0 ∈ (Fintype.piFinset (fun _ : Fin 0 => Finset.range (E + 1))).filter
+        (fun e => ∑ i, e i ≤ E) := by
+      simp
     have hsing : (Fintype.piFinset (fun _ : Fin 0 => Finset.range (E + 1))).filter
         (fun e => ∑ i, e i ≤ E) = {Fin.elim0} := by
-      ext f; simp [Subsingleton.elim f Fin.elim0]
+      ext f
+      simp only [Finset.mem_filter, Fintype.mem_piFinset, Finset.mem_singleton]
+      exact ⟨fun _ => Subsingleton.elim f _, fun _ => ⟨fun i => i.elim0, by simp⟩⟩
     rw [hsing, Finset.sum_singleton] at hsum
     exact (smul_eq_zero.mp hsum).resolve_right (hΩ0 Ω)
   | succ d' ih =>
@@ -254,6 +269,7 @@ theorem lem_7_2_monomial_product_puiseux_indep {K V : Type*} [Field K] [AddCommG
         Finset.single_le_sum (fun _ _ => Nat.zero_le _) (Finset.mem_univ _)
       omega
     have hslice_c := hslice R hsum c hc_le
+    -- Define R' on Fin d' → ℕ supported on ∑ e' ≤ E - c
     let R' : (Fin d' → ℕ) → K := fun e' =>
       if ∑ i, e' i ≤ E - c then R (Fin.snoc e' c) else 0
     have hsum' : ∑ e' ∈ (Fintype.piFinset (fun _ : Fin d' => Finset.range (E + 1))).filter
@@ -265,7 +281,8 @@ theorem lem_7_2_monomial_product_puiseux_indep {K V : Type*} [Field K] [AddCommG
         intro x hx; simp only [Finset.mem_filter] at hx ⊢
         exact ⟨hx.1, by omega⟩
       rw [← Finset.sum_subset hsub]
-      · simpa [R'] using hslice_c
+      · rw [Finset.sum_congr rfl (fun x hx => by simp [R', (Finset.mem_filter.mp hx).2])]
+        exact hslice_c
       · intro x _ hx
         simp only [Finset.mem_filter] at hx
         have hnot : ¬ ∑ i, x i ≤ E - c := by
@@ -301,9 +318,13 @@ theorem gauss_leading_coeff_dvd_of_linear_factors {Delta : ℤ[X]} (hDelta : Del
   have hlead_lin : ∀ n ∈ T, (Polynomial.C (n : ℤ) * X - 1).leadingCoeff = (n : ℤ) := by
     intro n hn
     have hn_ne : (n : ℤ) ≠ 0 := by exact_mod_cast (hT n hn).ne'
-    have h1 : (Polynomial.C (n : ℤ) * X - 1) = Polynomial.C (n : ℤ) * X + Polynomial.C (-1 : ℤ) := by
-      simp [sub_eq_add_neg]
-    rw [h1, Polynomial.leadingCoeff_C_mul_X_add_C hn_ne]
+    have hdeg : (Polynomial.C (n : ℤ) * X - 1).natDegree = 1 := by
+      apply le_antisymm
+      · refine le_trans Polynomial.natDegree_sub_le (max_le ?_ (by simp))
+        exact le_trans Polynomial.natDegree_mul_le (by simp)
+      · exact Polynomial.le_natDegree_of_ne_zero (by simp [hn_ne])
+    rw [Polynomial.leadingCoeff, hdeg]
+    simp
   have hlead_prod : (∏ n ∈ T, (Polynomial.C (n : ℤ) * X - 1) ^ a n).leadingCoeff =
       ∏ n ∈ T, (n : ℤ) ^ a n := by
     rw [Polynomial.leadingCoeff_prod]
@@ -315,17 +336,19 @@ theorem gauss_leading_coeff_dvd_of_linear_factors {Delta : ℤ[X]} (hDelta : Del
   refine ⟨hlead_dvd, ?_⟩
   have hlc_ne : Delta.leadingCoeff ≠ 0 := Polynomial.leadingCoeff_ne_zero.mpr hDelta
   have habs_le : (∏ n ∈ T, (n : ℤ) ^ a n) ≤ |Delta.leadingCoeff| := by
-    have h1 : |∏ n ∈ T, (n : ℤ) ^ a n| ≤ |Delta.leadingCoeff| :=
-      Int.le_of_dvd (abs_pos.mpr hlc_ne) (dvd_abs.mpr hlead_dvd)
     have hnn : 0 ≤ ∏ n ∈ T, (n : ℤ) ^ a n := Finset.prod_nonneg (fun n _ => pow_nonneg (Nat.cast_nonneg _) _)
-    rwa [abs_of_nonneg hnn] at h1
+    rcases hlead_dvd with ⟨c, hc⟩
+    have hdvd_abs : (∏ n ∈ T, (n : ℤ) ^ a n) ∣ |Delta.leadingCoeff| := by
+      refine ⟨|c|, ?_⟩
+      rw [hc, abs_mul, abs_of_nonneg hnn]
+    exact Int.le_of_dvd (abs_pos.mpr hlc_ne) hdvd_abs
   have hcast : ((∏ n ∈ T, n ^ a n : ℕ) : ℤ) = ∏ n ∈ T, (n : ℤ) ^ a n := by push_cast; rfl
   rw [← hcast] at habs_le
   exact_mod_cast habs_le
 
 /-- **Lemma 7.3(i)–(iii) (Support-Reduced Wronskian Bounds & Divisibility)**:
 Given `W : SupportWronskianData m r D O M S H`:
-1. Support-size bound: $O - (s - 1) \le s D + \binom{s}{2} M$.
+1. Support-size bound: $O - (s - 1) \le s D + \binom{s}{2} M$ (so $\lceil m + 1 - \varepsilon_0 \rceil \le s \le m + 1$ for large $D$).
 2. Multiplicity sum bound (eq. 7.12): $\sum_{n \in T} a(n) \le s D + \binom{s}{2} M - (O - (s - 1))$.
 3. Divisibility & height bound (eq. 7.13): $\prod_{n \in T} n^{a(n)} \mid c_{\mathrm{lead}}(\Delta_S)$ and
    $\prod_{n \in T} n^{a(n)} \le s! (D + s M)^{s^2} H^s C_Q^{\binom{s}{2}}$. -/
@@ -408,12 +431,12 @@ theorem depressed_poly_asymptotic_core {P : ℤ[X]} {ν s_mult : ℕ}
       ((s_mult : ℤ) * (Nat.factorial n : ℤ)) = P_dep.eval y := by
     rw [hx]; exact heval x
   have h1r : ((P.natDegree : ℝ) ^ P.natDegree * (P.leadingCoeff : ℝ) ^ (P.natDegree - 1) *
-      (s_mult : ℝ) * ((Nat.factorial n : ℕ) : ℝ)) = (P_dep.eval y : ℝ) := by
+      (s_mult : ℝ) * ((Nat.factorial n : ℕ) : ℝ)) = ((P_dep.eval y : ℤ) : ℝ) := by
     have := congrArg (Int.cast (R := ℝ)) h1
     push_cast at this
     linarith
   rw [h1r]
-  have hsum : (P_dep.eval y : ℝ) =
+  have hsum : ((P_dep.eval y : ℤ) : ℝ) =
       ∑ j ∈ Finset.range (P.natDegree + 1), (P_dep.coeff j : ℝ) * (y : ℝ) ^ j := by
     rw [Polynomial.eval_eq_sum_range, hdeg]
     push_cast
@@ -421,7 +444,7 @@ theorem depressed_poly_asymptotic_core {P : ℤ[X]} {ν s_mult : ℕ}
   have hlead_term : (P_dep.coeff P.natDegree : ℝ) = 1 := by
     have : P_dep.coeff P.natDegree = 1 := by rw [← hdeg]; exact hmon.leadingCoeff
     exact_mod_cast this
-  have hdiff : (y : ℝ) ^ P.natDegree - (P_dep.eval y : ℝ) =
+  have hdiff : (y : ℝ) ^ P.natDegree - ((P_dep.eval y : ℤ) : ℝ) =
       -(∑ j ∈ Finset.range (P.natDegree - ν + 1), (P_dep.coeff j : ℝ) * (y : ℝ) ^ j) := by
     rw [hsum, Finset.sum_range_succ, hlead_term, one_mul]
     have hsplit : ∑ j ∈ Finset.range P.natDegree, (P_dep.coeff j : ℝ) * (y : ℝ) ^ j =
@@ -477,6 +500,7 @@ theorem pade_chi_lt_ratio_iff_theta_lt {m ν E : ℕ} {ε₀ θ : ℝ}
   have hcross : θ * (((m : ℝ) + 1 - ε₀) * ((ν : ℝ) * (m : ℝ) - (E : ℝ) * ε₀)) <
       ε₀ * (((ν : ℝ) - (E : ℝ)) * ((m : ℝ) - ε₀) - (E : ℝ)) :=
     (lt_div_iff₀ hden_big).mp hθ_lt
+  -- Cross-multiplied form: E * (1 + c1 * θ) < (ν - E) * ((m - ε₀) - c2 * θ)
   have hmain : (E : ℝ) * (ε₀ + ((m : ℝ) - ε₀) * ((m : ℝ) + 1 - ε₀) * θ) <
       ((ν : ℝ) - (E : ℝ)) * (ε₀ * ((m : ℝ) - ε₀) - (m : ℝ) * ((m : ℝ) + 1 - ε₀) * θ) := by
     nlinarith

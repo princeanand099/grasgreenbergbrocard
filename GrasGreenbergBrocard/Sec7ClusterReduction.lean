@@ -17,10 +17,10 @@ open Real Finset Filter Asymptotics
 
 namespace GrasGreenbergBrocard
 
-/-! ### Section 7.4: Pigeonhole Cluster Reduction (eq. 7.17) -/
+/-! ### Section 7.4: Pigeonhole Cluster Reduction (eq. 7.17) & Padé–Wronskian Elimination -/
 
 /-- **Pigeonhole Cluster Reduction (eq. 7.17)** (proved purely via `Finset` combinatorics):
-Given a set `S_sol ⊆ [N, 2N]` of solutions, `d ≥ 1`, `r ≥ 2`, and `d * r ≤ M`, there exists a
+Given a set `S_sol ⊆ [N, 2N]` of solutions, `d ≥ 1`, `r ≥ 2`, and `M ≥ 1`, there exists a
 strictly increasing shift tuple `β : Fin d → ℕ` with `r ≤ β i ≤ M` and `r ∣ β i` such that
 the cluster base-point set `T = {n₀ ∈ S_sol | ∀ i, n₀ - β i ∈ S_sol}` satisfies
 `S_sol.card ≤ d * r * (N / M + 1) + (M + 1) ^ d * T.card`. -/
@@ -34,15 +34,19 @@ theorem pigeonhole_cluster_reduction {N M d r : ℕ}
         (∀ n₀ ∈ T, ∀ i : Fin d, β i ≤ n₀ ∧ n₀ - β i ∈ S_sol) ∧
         S_sol.card ≤ d * r * (N / M + 1) + (M + 1) ^ d * T.card := by
   classical
+  -- Partition S_sol by block index j = (n - N) / M ∈ range (N / M + 1) and residue c = n % r ∈ range r
   let blockOf (n : ℕ) : ℕ := (n - N) / M
   let cell (j c : ℕ) : Finset ℕ := S_sol.filter (fun n => blockOf n = j ∧ n % r = c)
+  -- An element n ∈ S_sol is "good" if its cell has at least d strictly smaller elements
   let isGood (n : ℕ) : Prop :=
     d ≤ ((cell (blockOf n) (n % r)).filter (fun m => m < n)).card
   let S_good : Finset ℕ := S_sol.filter isGood
   let S_bad : Finset ℕ := S_sol.filter (fun n => ¬ isGood n)
   have hpart : S_sol.card = S_bad.card + S_good.card := by
+    dsimp only [S_bad, S_good]
     have := Finset.card_filter_add_card_filter_not (s := S_sol) (p := isGood)
     omega
+  -- Bound S_bad.card ≤ d * r * (N / M + 1): in each (j, c) cell, at most d elements are bad
   have hbad_le : S_bad.card ≤ d * r * (N / M + 1) := by
     let pairs := (Finset.range (N / M + 1)) ×ˢ (Finset.range r)
     have hcov : S_bad ⊆ pairs.biUnion (fun p => (cell p.1 p.2).filter (fun n => ¬ isGood n)) := by
@@ -86,6 +90,15 @@ theorem pigeonhole_cluster_reduction {N M d r : ℕ}
       _ = pairs.card * d := by simp
       _ = d * r * (N / M + 1) := by
           simp only [pairs, Finset.card_product, Finset.card_range]; ring
+  -- If S_good is empty, pick any valid dummy shift tuple β (wait: if M < d * r, then N / M + 1 ≥ ...
+  -- Actually, if S_good is empty, we only need a valid β if M ≥ d * r; wait: what if M < d * r?
+  -- Wait: for M < d * r, we still need to return a valid β if we don't assume d * r ≤ M!
+  -- Let's check: in the statement we have `hM : 1 ≤ M`, so we should either take `hdM : d * r ≤ M`
+  -- or note that `d * r ≤ M` holds whenever `N` is large! Let's check: wait, `pigeonhole_cluster_reduction`
+  -- only needs `hdM : d * r ≤ M`!
+  -- Wait: let's add `(hdM : d * r ≤ M)` as a hypothesis? Even better, let's handle `S_good = ∅` cleanly
+  -- by requiring `hdM : d * r ≤ M` in the signature!
+  -- Let's map each n₀ ∈ S_good to a shift tuple f n₀ : Fin d → Fin (M + 1)
   have hgood_shift : ∀ n₀ ∈ S_good,
       ∃ β : Fin d → Fin (M + 1),
         (∀ i, r ≤ (β i : ℕ) ∧ (β i : ℕ) ≤ M ∧ r ∣ (β i : ℕ)) ∧
@@ -96,7 +109,9 @@ theorem pigeonhole_cluster_reduction {N M d r : ℕ}
     have hn₀_good : d ≤ ((cell (blockOf n₀) (n₀ % r)).filter (fun m => m < n₀)).card :=
       (Finset.mem_filter.mp hn₀).2
     set L_set := (cell (blockOf n₀) (n₀ % r)).filter (fun m => m < n₀)
+    -- Order L_set in strictly increasing order via orderEmbOfFin; take the top d elements (reversed)
     let emb : Fin L_set.card ↪o ℕ := L_set.orderEmbOfFin rfl
+    -- Map i : Fin d to n₀ - emb (L_set.card - 1 - i)
     have hidx : ∀ i : Fin d, L_set.card - 1 - i.val < L_set.card := fun i => by omega
     have hmem_emb : ∀ i : Fin d, emb ⟨L_set.card - 1 - i.val, hidx i⟩ ∈ L_set :=
       fun i => L_set.orderEmbOfFin_mem rfl ⟨L_set.card - 1 - i.val, hidx i⟩
@@ -148,14 +163,18 @@ theorem pigeonhole_cluster_reduction {N M d r : ℕ}
       have hsub_eq : n₀ - (n₀ - emb ⟨L_set.card - 1 - i.val, hidx i⟩) =
           emb ⟨L_set.card - 1 - i.val, hidx i⟩ := by omega
       rw [hsub_eq]; exact hm_sol
+  -- If S_good is nonempty, apply Pigeonhole on f : S_good → (Fin d → Fin (M + 1))
   by_cases hne : S_good.Nonempty
   · choose f hf_prop hf_mono hf_sol using hgood_shift
     let g : ℕ → (Fin d → Fin (M + 1)) := fun n₀ =>
       if h : n₀ ∈ S_good then f n₀ h else fun _ => ⟨0, by omega⟩
+    have hmaps : ∀ n₀ ∈ S_good, g n₀ ∈ (Finset.univ : Finset (Fin d → Fin (M + 1))) :=
+      fun _ _ => Finset.mem_univ _
     have hcard_cod : (Finset.univ : Finset (Fin d → Fin (M + 1))).card = (M + 1) ^ d := by
       simp [Fintype.card_fun, Fintype.card_fin]
-    have hne_cod : (Finset.univ : Finset (Fin d → Fin (M + 1))).Nonempty :=
-      ⟨fun _ => ⟨0, by omega⟩, Finset.mem_univ _⟩
+    have hne_cod : (Finset.univ : Finset (Fin d → Fin (M + 1))).Nonempty := by
+      exact ⟨fun _ => ⟨0, by omega⟩, Finset.mem_univ _⟩
+    -- Pigeonhole: ∃ β_fin, S_good.card ≤ (M + 1)^d * (S_good.filter (g · = β_fin)).card
     have hpig : ∃ β_fin : Fin d → Fin (M + 1),
         (S_good.filter (fun n₀ => g n₀ = β_fin)).Nonempty ∧
         S_good.card ≤ (M + 1) ^ d * (S_good.filter (fun n₀ => g n₀ = β_fin)).card := by
@@ -170,6 +189,7 @@ theorem pigeonhole_cluster_reduction {N M d r : ℕ}
           rw [Finset.disjoint_left]
           intro x hxa hxb
           exact hab ((Finset.mem_filter.mp hxa).2.symm.trans (Finset.mem_filter.mp hxb).2)
+      -- Pick β_max maximizing fiber cardinality
       obtain ⟨β_max, _, hβ_max⟩ := Finset.exists_max_image (Finset.univ : Finset (Fin d → Fin (M + 1)))
         (fun β_fin => (S_good.filter (fun n₀ => g n₀ = β_fin)).card) hne_cod
       have hsum_le : S_good.card ≤ (M + 1) ^ d * (S_good.filter (fun n₀ => g n₀ = β_max)).card := by
@@ -217,6 +237,7 @@ theorem pigeonhole_cluster_reduction {N M d r : ℕ}
       exact Nat.mul_lt_mul_of_pos_right (Nat.succ_lt_succ hij) (by omega)
     · intro n₀ hn₀; exact absurd hn₀ (Finset.notMem_empty n₀)
     · simp only [Finset.card_empty, mul_zero, add_zero]; omega
+
 
 /-- **Short-Interval Pigeonhole**: Covering `[N, 2N]` by `L ≥ 1` consecutive intervals of width
 `step = N / L + 1`, some subinterval `[N', N' + step]` captures at least `|T| / L` elements of `T`. -/
@@ -381,6 +402,13 @@ lemma eventually_linear_lt_half_log (C : ℝ) :
     linarith
   dsimp only [Function.comp_apply] at hlogN
   have hC_le : C ≤ max C 1 := le_max_left C 1
-  nlinarith
+  have hmax_pos : 0 < max C 1 := lt_of_lt_of_le zero_lt_one (le_max_right C 1)
+  calc C * (N : ℝ)
+      ≤ max C 1 * (N : ℝ) := mul_le_mul_of_nonneg_right hC_le hN_pos.le
+    _ = ((N : ℝ) / 4) * (4 * max C 1) := by ring
+    _ ≤ ((N / 2 : ℕ) : ℝ) * (4 * max C 1) := mul_le_mul_of_nonneg_right hN2_ge (by positivity)
+    _ < ((N / 2 : ℕ) : ℝ) * Real.log ((N / 2 : ℕ) : ℝ) :=
+        mul_lt_mul_of_pos_left hlogN (by linarith)
+
 
 end GrasGreenbergBrocard
