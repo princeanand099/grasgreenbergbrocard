@@ -619,13 +619,7 @@ private def legendreSum6 (n p : ℕ) : ℕ :=
 private def q_n_lb (n : ℕ) : ℕ :=
   (primes115.filter (fun p => decide (p ≤ n ∧ legendreSum6 n p % 2 = 1))).prod
 
-private lemma primes115_prime : ∀ p ∈ primes115, p.Prime := by
-  intro p hp
-  simp only [primes115, List.mem_cons] at hp
-  rcases hp with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
-    rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
-    rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | h
-  all_goals first | norm_num | simp at h
+private lemma primes115_prime : ∀ p ∈ primes115, p.Prime := by decide
 
 private lemma primes115_nodup : primes115.Nodup := by decide
 
@@ -733,7 +727,7 @@ private lemma q_n_ten_eq_seven : q_n 10 = 7 := by
     · rintro ⟨⟨hp2, hp10⟩, hp_pr, hodd⟩
       rw [padicValNat_factorial_eq_legendreSum6 (by norm_num) hp_pr] at hodd
       interval_cases p
-      all_goals first | rfl | norm_num [legendreSum6] at hp_pr hodd
+      all_goals first | rfl | norm_num at hp_pr | norm_num [legendreSum6] at hodd
     · rintro rfl
       refine ⟨⟨by norm_num, by norm_num⟩, by norm_num, ?_⟩
       rw [padicValNat_factorial_eq_legendreSum6 (by norm_num) (by norm_num)]
