@@ -221,7 +221,7 @@ lemma dyadic_sum_counting {α C : ℝ} (hα : 0 < α) (hC : 0 < C)
     _ ≤ (C / (1 - (2 : ℝ) ^ (-α)) + 1) * (N : ℝ) ^ α := by
         nlinarith [h2K_le, Real.rpow_pos_of_pos (show (0 : ℝ) < (N : ℝ) by exact_mod_cast hN) α, div_pos hC hr_pos]
 
-set_option maxHeartbeats 2000000 in
+set_option maxHeartbeats 8000000 in
 /-- **Theorem 7.4 (Dyadic Cluster Elimination via Support-Reduced Padé–Wronskian)**:
 Proved directly in Lean by wiring:
 1. `pigeonhole_cluster_reduction` (eq. 7.17) + `short_interval_pigeonhole`,
@@ -393,7 +393,7 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
       have hdP_nn : (0 : ℝ) ≤ ((d * P_deg : ℕ) : ℝ) := by positivity
       have h1 : ((d * P_deg * (N / M + 1) : ℕ) : ℝ) ≤
           ((d * P_deg : ℕ) : ℝ) * (3 * (N : ℝ) ^ (1 - θ)) := by
-        push_cast; exact mul_le_mul_of_nonneg_left hNM1 hdP_nn
+        push_cast; exact mul_le_mul_of_nonneg_left hNM1 (by positivity)
       have h2 : 3 * ((d * P_deg : ℕ) : ℝ) ≤ (1 / 2 : ℝ) * (N : ℝ) ^ δ := by linarith
       calc ((d * P_deg * (N / M + 1) : ℕ) : ℝ)
           ≤ (3 * ((d * P_deg : ℕ) : ℝ)) * (N : ℝ) ^ (1 - θ) := by linarith
@@ -430,12 +430,17 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
         have ha : 8 * (2 : ℝ) ^ d * Real.log (N : ℝ) < (N : ℝ) ^ (1 - ((d : ℝ) + 2) * θ + δ) := by
           have : 0 ≤ (1024 * (2 : ℝ) ^ d * ((m + 1 : ℕ) : ℝ) / η) * Real.log (N : ℝ) := by positivity
           linarith
-        nlinarith
+        have hlog_pos : 0 < Real.log (N : ℝ) := by linarith
+        have h2d_log_pos : 0 < (2 : ℝ) ^ d * Real.log (N : ℝ) := by positivity
+        have hb : (2 : ℝ) ^ d * (L : ℝ) < (1 / 2 : ℝ) * (N : ℝ) ^ (1 - ((d : ℝ) + 2) * θ + δ) := by linarith
+        have hc : (1 / 2 : ℝ) * (N : ℝ) ^ (1 - ((d : ℝ) + 2) * θ + δ) ≤
+            (1 / 2 : ℝ) * (N : ℝ) ^ (1 - ((d : ℝ) + 2) * θ + δ) * (N : ℝ) ^ θ :=
+          le_mul_of_one_le_right (by positivity) hrθ_ge1
+        linarith
       have h3 : (1 : ℝ) ≤ (T'.card : ℝ) := by
         by_contra hlt; push_neg at hlt
-        have h0 : (T'.card : ℝ) = 0 := by
-          have : T'.card = 0 := by exact_mod_cast (show (T'.card : ℝ) < 1 from hlt) |> Nat.lt_one_iff.mp
-          exact_mod_cast this
+        have hlt_nat : T'.card < 1 := by exact_mod_cast hlt
+        have h0 : (T'.card : ℝ) = 0 := by exact_mod_cast Nat.lt_one_iff.mp hlt_nat
         rw [h0, mul_zero] at hT'_lower; linarith [show (0 : ℝ) < (2 : ℝ) ^ d * (L : ℝ) by positivity]
       exact_mod_cast h3
     have hT'_M_small : (((m + 1 : ℕ) : ℝ) * (M : ℝ)) / (T'.card : ℝ) ≤ η / 256 := by
@@ -499,7 +504,8 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
       exact_mod_cast (show (D : ℝ) < (O : ℝ) by linarith)
     have hO_lt : O - D < m * (D + 1) := by
       have hO_le : (O : ℝ) ≤ ((m : ℝ) + 1 - ε₀) * (D : ℝ) := Nat.floor_le (by
-        have : 0 < (m : ℝ) + 1 - ε₀ := by linarith; positivity)
+        have : 0 < (m : ℝ) + 1 - ε₀ := by linarith
+        positivity)
       have h1 : (O : ℝ) < (D : ℝ) + (m : ℝ) * ((D : ℝ) + 1) := by nlinarith
       have h2 : O < D + m * (D + 1) := by exact_mod_cast h1
       omega
@@ -542,9 +548,16 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
       exact (div_le_iff₀ (by positivity)).mp h1
     have hQN_le_Dlog : Q_N / (B_den + 1) ≤ (D : ℝ) * Real.log (N : ℝ) := by
       have hE1 : (1 : ℝ) ≤ (E : ℝ) := by exact_mod_cast hE
-      have h1 : Q_N ≤ (D : ℝ) * Real.log (N : ℝ) * (B_den - η) := by nlinarith
+      have h1pη : (1 : ℝ) ≤ 1 + η := by linarith only [hη_pos]
+      have hEL : L_base ≤ (E : ℝ) * (1 + η) * L_base := by
+        calc L_base = 1 * 1 * L_base := by ring
+          _ ≤ (E : ℝ) * (1 + η) * L_base :=
+            mul_le_mul_of_nonneg_right (mul_le_mul hE1 h1pη (by positivity) (by positivity)) hLbase_pos.le
+      have h1 : Q_N ≤ (D : ℝ) * Real.log (N : ℝ) * (B_den - η) := by
+        have hD_comm : (D : ℝ) * ((B_den - η) * Real.log (N : ℝ)) = (D : ℝ) * Real.log (N : ℝ) * (B_den - η) := by ring
+        linarith only [hQ_le_Lbase, hEL, hD_lo_main, hD_comm]
       have h2 : Q_N / (B_den - η) ≤ (D : ℝ) * Real.log (N : ℝ) := (div_le_iff₀ hBη_pos).mpr h1
-      exact le_trans (div_le_div_of_nonneg_left hQN_pos.le hBη_pos (by linarith)) h2
+      exact le_trans (div_le_div_of_nonneg_left hQN_pos.le hBη_pos (by linarith only [hη_pos])) h2
     have hM_le_D : ((m + 1 : ℕ) : ℝ) * (M : ℝ) ≤ (η / 256) * (D : ℝ) := by
       have hN2_ge : (N : ℝ) / 4 ≤ ((N / 2 : ℕ) : ℝ) := by
         have : N ≤ 4 * (N / 2) := by omega
@@ -555,9 +568,13 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
         linarith [log_four_lt_two]
       have hQN_ge_Nlog : (N : ℝ) * Real.log (N : ℝ) / (8 * (P_deg : ℝ)) ≤ Q_N := by
         dsimp only [Q_N]
-        rw [div_le_div_iff₀ (by positivity) hP_rpos]; nlinarith
+        rw [div_le_div_iff₀ (by positivity) hP_rpos]
+        have hlog2_nn : 0 ≤ Real.log ((N / 2 : ℕ) : ℝ) := Real.log_nonneg (by
+          have : (2 : ℝ) ≤ ((N / 2 : ℕ) : ℝ) := by exact_mod_cast (show 2 ≤ N / 2 by omega)
+          linarith only [this])
+        nlinarith only [hN2_ge, hlog_comp, hP_rpos, hN_pos, hlog2_nn]
       have h1 : (2048 * ((m + 1 : ℕ) : ℝ) * (P_deg : ℝ) * (B_den - η) / (η * (E : ℝ))) * Real.log (N : ℝ) <
-          (N : ℝ) ^ (1 - θ) := by nlinarith
+          (N : ℝ) ^ (1 - θ) := by linarith only [hM_D_log, hlogN_ge4]
       have h2 : ((m + 1 : ℕ) : ℝ) * (M : ℝ) * ((B_den - η) * Real.log (N : ℝ)) ≤
           (η / 256) * (E : ℝ) * ((N : ℝ) / (8 * (P_deg : ℝ))) := by
         have hmul : (N : ℝ) ^ θ * (N : ℝ) ^ (1 - θ) = (N : ℝ) := by rw [← Real.rpow_add hN_pos]; simp
@@ -568,7 +585,8 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
           field_simp [hη_pos.ne', hE_pos.ne', hP_rpos.ne']
         rw [hsimp] at h3
         have h4 := mul_le_mul_of_nonneg_left h3.le (show (0 : ℝ) ≤ (M : ℝ) by positivity)
-        have h5 : (M : ℝ) * (N : ℝ) ^ (1 - θ) ≤ (N : ℝ) := by nlinarith [Real.rpow_pos_of_pos hN_pos (1 - θ)]
+        have h5 : (M : ℝ) * (N : ℝ) ^ (1 - θ) ≤ (N : ℝ) := by
+          nlinarith only [hM_le_rpow, hmul, Real.rpow_pos_of_pos hN_pos (1 - θ)]
         have h6 : (M : ℝ) * (η * (E : ℝ) / (2048 * (P_deg : ℝ)) * (N : ℝ) ^ (1 - θ)) ≤
             (η / 256) * (E : ℝ) * ((N : ℝ) / (8 * (P_deg : ℝ))) := by
           have : (M : ℝ) * (η * (E : ℝ) / (2048 * (P_deg : ℝ)) * (N : ℝ) ^ (1 - θ)) =
@@ -579,11 +597,22 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
       have h3 : ((m + 1 : ℕ) : ℝ) * (M : ℝ) * ((B_den - η) * Real.log (N : ℝ)) ≤
           (η / 256) * ((D : ℝ) * ((B_den - η) * Real.log (N : ℝ))) := by
         have hQ_N : (N : ℝ) / (8 * (P_deg : ℝ)) ≤ Q_N := by
-          have : (1 : ℝ) ≤ Real.log (N : ℝ) := by linarith
-          have : (N : ℝ) / (8 * (P_deg : ℝ)) ≤ (N : ℝ) * Real.log (N : ℝ) / (8 * (P_deg : ℝ)) := by
-            apply div_le_div_of_nonneg_right _ (by positivity); nlinarith
-          exact le_trans this hQN_ge_Nlog
-        nlinarith [hD_lo_main, hQ_le_Lbase]
+          have hlog1 : (1 : ℝ) ≤ Real.log (N : ℝ) := by linarith only [hlogN_ge4]
+          have hle1 : (N : ℝ) / (8 * (P_deg : ℝ)) ≤ (N : ℝ) * Real.log (N : ℝ) / (8 * (P_deg : ℝ)) :=
+            div_le_div_of_nonneg_right (le_mul_of_one_le_right hN_pos.le hlog1) (by positivity)
+          exact le_trans hle1 hQN_ge_Nlog
+        have hstep1 : (E : ℝ) * ((N : ℝ) / (8 * (P_deg : ℝ))) ≤ (E : ℝ) * (1 + η) * L_base := by
+          have h1pη : (1 : ℝ) ≤ 1 + η := by linarith only [hη_pos]
+          calc (E : ℝ) * ((N : ℝ) / (8 * (P_deg : ℝ)))
+              ≤ (E : ℝ) * L_base := mul_le_mul_of_nonneg_left (le_trans hQ_N hQ_le_Lbase) hE_pos.le
+            _ = (E : ℝ) * 1 * L_base := by ring
+            _ ≤ (E : ℝ) * (1 + η) * L_base :=
+                mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left h1pη hE_pos.le) hLbase_pos.le
+        have hstep2 : (η / 256) * (E : ℝ) * ((N : ℝ) / (8 * (P_deg : ℝ))) ≤
+            (η / 256) * ((D : ℝ) * ((B_den - η) * Real.log (N : ℝ))) := by
+          rw [mul_assoc]
+          exact mul_le_mul_of_nonneg_left (le_trans hstep1 hD_lo_main) (by positivity)
+        linarith only [h2, hstep2]
       exact le_of_mul_le_mul_right (by linarith : ((m + 1 : ℕ) : ℝ) * (M : ℝ) * ((B_den - η) * Real.log (N : ℝ)) ≤
         ((η / 256) * (D : ℝ)) * ((B_den - η) * Real.log (N : ℝ))) (by positivity)
     have haM_small : (((a + S.card) * M + a + S.card : ℕ) : ℝ) ≤ (η / 32) * (D : ℝ) := by
@@ -597,7 +626,9 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
         push_cast at h1
         have hS_r : (S.card : ℝ) ≤ ((m + 1 : ℕ) : ℝ) := by exact_mod_cast hS_le
         have hch_r : (Nat.choose S.card 2 : ℝ) ≤ ((m + 1 : ℕ) : ℝ) ^ 2 := by rw [sq]; exact_mod_cast hch_le
-        nlinarith
+        have hD_nn : (0 : ℝ) ≤ (D : ℝ) := by positivity
+        have hM_nn : (0 : ℝ) ≤ (M : ℝ) := by positivity
+        nlinarith only [h1, hS_r, hch_r, hD_nn, hM_nn]
       have hS_r : (S.card : ℝ) ≤ ((m + 1 : ℕ) : ℝ) := by exact_mod_cast hS_le
       have haM_1 : (a : ℝ) * (M : ℝ) ≤ (η / 128) * (D : ℝ) := by
         calc (a : ℝ) * (M : ℝ)
@@ -609,10 +640,14 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
               have h1 := mul_le_mul_of_nonneg_right hT'_M_small (show (0 : ℝ) ≤ (D : ℝ) by positivity)
               have h2 := mul_le_mul_of_nonneg_right hT'_M_small (show (0 : ℝ) ≤ ((m + 1 : ℕ) : ℝ) * (M : ℝ) by positivity)
               linarith
-          _ ≤ (η / 128) * (D : ℝ) := by nlinarith [hM_le_D, hη_le_16]
-      have hSM_1 : (S.card : ℝ) * (M : ℝ) ≤ (η / 256) * (D : ℝ) := by nlinarith
+          _ ≤ (η / 128) * (D : ℝ) := by nlinarith only [hM_le_D, hη_le_16, hη_pos]
+      have hSM_1 : (S.card : ℝ) * (M : ℝ) ≤ (η / 256) * (D : ℝ) := by
+        have hM_nn : (0 : ℝ) ≤ (M : ℝ) := by positivity
+        nlinarith only [hS_r, hM_le_D, hM_nn]
       have hM_ge1 : (1 : ℝ) ≤ (M : ℝ) := by exact_mod_cast hM1
-      push_cast; nlinarith
+      have ha_nn : (0 : ℝ) ≤ (a : ℝ) := by positivity
+      have hS_nn : (0 : ℝ) ≤ (S.card : ℝ) := by positivity
+      push_cast; nlinarith only [haM_1, hSM_1, hM_ge1, ha_nn, hS_nn]
     -- Step 8: Call `bpz_cauchy_leibniz_pade_eval` at n₀ ∈ T'
     have hn₀_T : n₀ ∈ T := hT'_sub hn₀_mem
     have hn₀_S : n₀ ∈ S_sol := hT_sub hn₀_T
@@ -777,7 +812,10 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
           exact_mod_cast (show (a + S.card) * M ≤ (a + S.card) * M + a + S.card by omega)
         linarith
       push_cast at h1 ha_le_D haM_le_D
-      nlinarith [hη_le_16, hlogN_ge4]
+      have hD_nn : (0 : ℝ) ≤ (D : ℝ) := by positivity
+      have haS_nn : (0 : ℝ) ≤ (a : ℝ) + (S.card : ℝ) := by positivity
+      have hM_nn : (0 : ℝ) ≤ (M : ℝ) := by positivity
+      nlinarith only [h1, hlogP, hlog2, ha_le_D, haM_le_D, hη_le_16, hη_pos, hlogN_ge4, hD_nn, haS_nn, hM_nn]
     have hlogU_le : Real.log E_dat.U ≤ (α₁ * θ + η / 4) * Real.log (N : ℝ) := by
       have h1 := Real.log_le_log E_dat.U_pos hU_le
       rw [Real.log_rpow (by positivity), Real.log_mul (by linarith) (by positivity)] at h1
@@ -786,7 +824,7 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
       have hlogC1 : α₁ * Real.log C_1 ≤ (η / 8) * Real.log (N : ℝ) := by
         have : 0 ≤ Real.log 2 := Real.log_nonneg (by norm_num)
         have : 0 ≤ Real.log (P_deg : ℝ) := Real.log_nonneg (by exact_mod_cast (show 1 ≤ P_deg by omega)); linarith
-      nlinarith
+      nlinarith only [h1, hlogM, hlogC1, hα₁_pos, hη_pos, hlogN_ge4]
     have hlogW_ge : (B_den + 1 - η / 4) * Real.log (N : ℝ) ≤ Real.log E_dat.W := by
       have h1 := Real.log_le_log (by positivity) hW_ge
       rw [Real.log_mul (Real.rpow_pos_of_pos hN_pos _).ne' (Real.rpow_pos_of_pos (by positivity) _).ne',
@@ -798,7 +836,8 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
         have : 0 ≤ Real.log 2 := Real.log_nonneg (by norm_num)
         have : 0 ≤ (η / 16) * Real.log (C_3 * (N : ℝ)) := mul_nonneg (by positivity) (Real.log_nonneg (by nlinarith))
         linarith
-      dsimp only [B_den, α₂] at h1 ⊢; nlinarith
+      dsimp only [B_den, α₂] at h1 hlogC2 ⊢
+      nlinarith only [h1, hlogM, hlogC2, hα₂_pos, hη_pos, hlogN_ge4]
     have hlog2w_le : Real.log (2 * E_dat.w) ≤ (η / 2) * (D : ℝ) * Real.log (N : ℝ) := by
       have h1 := Real.log_le_log (by positivity) (mul_le_mul_of_nonneg_left hw_le (by norm_num : (0 : ℝ) ≤ 2))
       have hlog_expand : Real.log (2 * (((m + 1 : ℕ) : ℝ) * ((D + 1 : ℕ) : ℝ) *
@@ -889,7 +928,9 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
         Real.log_mul (by norm_num) hZ_pos.ne']
       have hlog2w_split : Real.log 2 + Real.log E_dat.w = Real.log (2 * E_dat.w) :=
         (Real.log_mul (by norm_num) E_dat.w_pos.ne').symm
-      nlinarith [hx₀_hi, hD_lo_main, hlogW_ge, hlogZ_clean, hlog2w_le]
+      have hD_nn : (0 : ℝ) ≤ (D : ℝ) := by positivity
+      have hE_nn : (0 : ℝ) ≤ (E : ℝ) := by positivity
+      nlinarith only [hx₀_hi, hD_lo_main, hlogW_ge, hlogZ_clean, hlog2w_le, hlog2w_split, hD_nn, hE_nn, hη_pos, hlogN_ge4]
     have h74 := (lem_7_4_denominator_clearing hx₀_pos hS_ge1 hZ_pos_nat E_dat hD_choice).2
     -- Step 12: Take log of h74 and derive strict contradiction with `γ > 0`!
     have hlog74 := Real.log_le_log (by positivity) h74
@@ -973,7 +1014,9 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
       have h2 : (Real.log 2 + Real.log ((S.card : ℝ) * E_dat.C_P * (M : ℝ) ^ E * E_dat.u)) +
           Real.log (E_dat.Z : ℝ) + (D : ℝ) * Real.log E_dat.U ≤
           (A_num + η) * ((D : ℝ) * Real.log (N : ℝ)) := by
-        dsimp only [A_num]; nlinarith [hlog_pre, hlogZ_clean, hlogU_le]
+        have hD_nn : (0 : ℝ) ≤ (D : ℝ) := by positivity
+        dsimp only [A_num]
+        nlinarith only [hlog_pre, hlogZ_clean, hlogU_le, hD_nn, hη_pos, hlogN_ge4]
       have h3 : ((ν : ℝ) - (E : ℝ)) * (1 - η) * L_base ≤ ((ν : ℝ) - (E : ℝ)) * Real.log x₀ := by nlinarith [hx₀_lo]
       exact le_trans h3 (le_trans h1 (le_trans h2 (mul_le_mul_of_nonneg_left hD_up_log (by positivity))))
     have hcancel : ((ν : ℝ) - (E : ℝ)) * (1 - η) ≤ (A_num + η) * ((E : ℝ) * (1 + η) / (B_den - η) + η) :=
@@ -987,7 +1030,8 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
       have hγ_bd : η * (16 * ((ν : ℝ) + 1) * (B_den + A_num + 1)) ≤ γ :=
         (le_div_iff₀ (by positivity)).mp hη_le_γ
       have hE_lt_ν : (E : ℝ) < (ν : ℝ) := by exact_mod_cast hEν
-      nlinarith [hη_le_16, hη_le_B, hA_pos, hB_pos, hE_pos, hνE_pos]
+      dsimp only [γ] at hγ_bd
+      nlinarith only [hγ_bd, hE_lt_ν, hη_pos, hη_le_16, hη_le_B, hA_pos, hB_pos, hE_pos, hνE_pos]
     linarith
 
 /-- **Theorem 1.3(ii) (Global $O_{P, s, \varepsilon}(N^{6/7 + \varepsilon})$ Bound, eq. 1.10)**:
