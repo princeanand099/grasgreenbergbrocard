@@ -525,14 +525,16 @@ theorem thm_1_2_wieferich_congruence {n m p : ℕ}
     rw [hs0] at hfac_eq; simp at hfac_eq; exact (Nat.factorial_pos n).ne' hfac_eq
   have hv_split : padicValNat p (Nat.factorial n) =
       padicValNat p (q_n n) + 2 * padicValNat p (s_n n) := by
-    rw [hfac_eq, padicValNat.mul hq_pos.ne' (pow_ne_zero 2 hs_pos.ne'), padicValNat.pow 2 hs_pos.ne']
+    rw [hfac_eq, sq, padicValNat.mul hq_pos.ne' (mul_ne_zero hs_pos.ne' hs_pos.ne'),
+        padicValNat.mul hs_pos.ne' hs_pos.ne']
+    omega
   have hv_q : padicValNat p (q_n n) ≤ 1 := by
     by_contra hgt; push_neg at hgt
     have hp2_dvd : p ^ 2 ∣ q_n n := by
       have := pow_padicValNat_dvd (p := p) (n := q_n n)
       exact dvd_trans (pow_dvd_pow p (by omega : 2 ≤ padicValNat p (q_n n))) this
     have hunit := (q_n_squarefree n) p (by simpa [sq] using hp2_dvd)
-    exact hp.not_unit hunit
+    rw [Nat.isUnit_iff] at hunit; exact hp.ne_one hunit
   have hv_s : 2 ≤ padicValNat p (s_n n) := by omega
   have hp2_s : p ^ 2 ∣ s_n n :=
     dvd_trans (pow_dvd_pow p hv_s) pow_padicValNat_dvd
@@ -545,10 +547,10 @@ theorem thm_1_2_wieferich_congruence {n m p : ℕ}
       have hm_z : (m : ℤ) ^ 2 = (q_n n : ℤ) * (s_n n : ℤ) ^ 2 + 1 := by
         have : Nat.factorial n = q_n n * (s_n n) ^ 2 := hfac_eq
         zify at hm this; linarith
-      change (m : ℤ) * (m : ℤ) + (q_n n : ℤ) * (s_n n : ℤ) * (s_n n : ℤ) - 1 = _
+      simp [u, sq, Zsqrtd.sub_re, Zsqrtd.mul_re, Zsqrtd.one_re]
       linarith
     have him : (u ^ 2 - 1).im = 2 * (m : ℤ) * (s_n n : ℤ) := by
-      change (m : ℤ) * (s_n n : ℤ) + (s_n n : ℤ) * (m : ℤ) - 0 = _
+      simp [u, sq, Zsqrtd.sub_im, Zsqrtd.mul_im, Zsqrtd.one_im]
       ring
     rw [hre, him]
     exact ⟨dvd_mul_of_dvd_right (dvd_pow hp2_sz (by norm_num)) _, dvd_mul_of_dvd_right hp2_sz _⟩

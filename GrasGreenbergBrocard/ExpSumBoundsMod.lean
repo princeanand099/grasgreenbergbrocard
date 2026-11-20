@@ -355,8 +355,10 @@ theorem prime_exp_sum_bounds_mod (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
         linarith
   have hT₀_le : T₀ ≤ (n : ℝ) ^ 2 := by
     have hh_r : |(h r₀ : ℝ)| ≤ (Real.log (n : ℝ)) ^ (R + 2) := by
-      have h1 : |(h r₀ : ℝ)| ≤ (H : ℝ) := by exact_mod_cast hh_bound r₀ hr₀_mem
-      have hH_le : (H : ℝ) ≤ (Real.log (n : ℝ)) ^ (R + 2) := Nat.floor_le (by positivity)
+      have h1 : |(h r₀ : ℝ)| ≤ (Nat.floor ((Real.log (n : ℝ)) ^ (R + 2)) : ℝ) := by
+        exact_mod_cast hh_bound r₀ hr₀_mem
+      have hH_le : (Nat.floor ((Real.log (n : ℝ)) ^ (R + 2)) : ℝ) ≤ (Real.log (n : ℝ)) ^ (R + 2) :=
+        Nat.floor_le (by positivity)
       linarith
     have hc1_le1 : c₁_low ≤ 1 := by
       unfold c₁_low
@@ -367,7 +369,9 @@ theorem prime_exp_sum_bounds_mod (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
         linarith
       have hdiv : (1 : ℝ) / (2 * (h_mod : ℝ)) ≤ 1 := div_le_one_of_le₀ (by linarith) (by positivity)
       exact le_trans (mul_le_of_le_one_right (by positivity) hpow_le) hdiv
-    have hRM_ge1 : (1 : ℝ) ≤ (R : ℝ) * Mmax / (h_mod : ℝ) + 1 := by positivity
+    have hRM_ge1 : (1 : ℝ) ≤ (R : ℝ) * Mmax / (h_mod : ℝ) + 1 := by
+      have : (0 : ℝ) ≤ (R : ℝ) * Mmax / (h_mod : ℝ) := by positivity
+      linarith
     have hdiv_le1 : (Real.log (n : ℝ)) ^ (R + 2) / (n : ℝ) ^ δ ≤ 1 := by
       have h1 : (Real.log (n : ℝ)) ^ (R + 2) / (n : ℝ) ^ δ ≤
           ((Real.log (n : ℝ)) ^ (R + 2) / (n : ℝ) ^ δ) * ((R : ℝ) * Mmax / (h_mod : ℝ) + 1) :=
