@@ -52,7 +52,7 @@ theorem siegel_lemma_pigeonhole {M_eq N_var : ℕ}
           ≤ ∑ j : Fin N_var, |A i j * ((v j : ℕ) : ℤ)| := Finset.abs_sum_le_sum_abs _ _
         _ ≤ ∑ _j : Fin N_var, ((A_max : ℤ) * (B : ℤ)) := by
             apply Finset.sum_le_sum; intro j _
-            rw [abs_mul, abs_of_nonneg (Nat.cast_nonneg (v j : ℕ))]
+            rw [abs_mul, abs_of_nonneg (a := ((v j : ℕ) : ℤ)) (Nat.cast_nonneg _)]
             have hvj : ((v j : ℕ) : ℤ) ≤ (B : ℤ) := by exact_mod_cast Nat.le_of_lt_succ (v j).isLt
             exact mul_le_mul (hA i j) hvj (Nat.cast_nonneg _) (Nat.cast_nonneg _)
         _ = (S : ℤ) := by simp [S, mul_assoc]
@@ -254,10 +254,8 @@ theorem lem_7_2_monomial_product_puiseux_indep {K V : Type*} [Field K] [AddCommG
         (fun e => ∑ i, e i ≤ E) := by
       simp
     have hsing : (Fintype.piFinset (fun _ : Fin 0 => Finset.range (E + 1))).filter
-        (fun e => ∑ i, e i ≤ E) = {Fin.elim0} := by
-      ext f
-      simp only [Finset.mem_filter, Fintype.mem_piFinset, Finset.mem_singleton]
-      exact ⟨fun _ => Subsingleton.elim f _, fun _ => ⟨fun i => i.elim0, by simp⟩⟩
+        (fun e => ∑ i, e i ≤ E) = {Fin.elim0} :=
+      Finset.eq_singleton_iff_unique_mem.mpr ⟨hmem, fun f _ => Subsingleton.elim f Fin.elim0⟩
     rw [hsing, Finset.sum_singleton] at hsum
     exact (smul_eq_zero.mp hsum).resolve_right (hΩ0 Ω)
   | succ d' ih =>
@@ -281,8 +279,13 @@ theorem lem_7_2_monomial_product_puiseux_indep {K V : Type*} [Field K] [AddCommG
         intro x hx; simp only [Finset.mem_filter] at hx ⊢
         exact ⟨hx.1, by omega⟩
       rw [← Finset.sum_subset hsub]
-      · rw [Finset.sum_congr rfl (fun x hx => by simp [R', (Finset.mem_filter.mp hx).2])]
-        exact hslice_c
+      · have hcongr :
+            ∑ e' ∈ (Fintype.piFinset (fun _ : Fin d' => Finset.range (E + 1))).filter
+                (fun e' => ∑ i, e' i ≤ E - c), R' e' • Ω_prev e' =
+            ∑ e' ∈ (Fintype.piFinset (fun _ : Fin d' => Finset.range (E + 1))).filter
+                (fun e' => ∑ i, e' i ≤ E - c), R (Fin.snoc e' c) • Ω_prev e' :=
+          Finset.sum_congr rfl (fun x hx => by dsimp [R']; rw [if_pos (Finset.mem_filter.mp hx).2])
+        rw [hcongr]; exact hslice_c
       · intro x _ hx
         simp only [Finset.mem_filter] at hx
         have hnot : ¬ ∑ i, x i ≤ E - c := by
@@ -320,10 +323,15 @@ theorem gauss_leading_coeff_dvd_of_linear_factors {Delta : ℤ[X]} (hDelta : Del
     have hn_ne : (n : ℤ) ≠ 0 := by exact_mod_cast (hT n hn).ne'
     have hdeg : (Polynomial.C (n : ℤ) * X - 1).natDegree = 1 := by
       apply le_antisymm
-      · refine le_trans Polynomial.natDegree_sub_le (max_le ?_ (by simp))
-        exact le_trans Polynomial.natDegree_mul_le (by simp)
-      · exact Polynomial.le_natDegree_of_ne_zero (by simp [hn_ne])
-    rw [Polynomial.leadingCoeff, hdeg]
+      · refine le_trans (Polynomial.natDegree_sub_le _ _)
+          (max_le ?_ (by rw [Polynomial.natDegree_one]; omega))
+        exact le_trans Polynomial.natDegree_mul_le
+          (by rw [Polynomial.natDegree_C, Polynomial.natDegree_X]; omega)
+      · apply Polynomial.le_natDegree_of_ne_zero
+        rw [Polynomial.coeff_sub, Polynomial.coeff_C_mul, Polynomial.coeff_X, Polynomial.coeff_one]
+        simpa using hn_ne
+    rw [Polynomial.leadingCoeff, hdeg, Polynomial.coeff_sub, Polynomial.coeff_C_mul,
+      Polynomial.coeff_X, Polynomial.coeff_one]
     simp
   have hlead_prod : (∏ n ∈ T, (Polynomial.C (n : ℤ) * X - 1) ^ a n).leadingCoeff =
       ∏ n ∈ T, (n : ℤ) ^ a n := by

@@ -587,7 +587,6 @@ theorem prime_exp_sum_bounds_general_phase (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ
   intro P I A M r₀ w W₀ hP_lo hP_hi hI_sub hA_range hr₀_mem
   dsimp only
   intro hT₀_ge hDom hW_bound hW_anti hW₀
-  dsimp only
   set T₀ := |M r₀| / P ^ r₀
   set F : ℝ → ℝ := fun t => ∑ s ∈ A, M s / (2 * t ^ s)
   have hr₀_range : 1 ≤ r₀ ∧ r₀ ≤ R := hA_range r₀ hr₀_mem
