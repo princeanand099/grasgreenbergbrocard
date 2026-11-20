@@ -50,9 +50,12 @@ verifying:
 #print axioms GrasGreenbergBrocard.q_n_ne_of_solutions
 #print axioms GrasGreenbergBrocard.J_n_principal_iff_k_eq_2
 #print axioms GrasGreenbergBrocard.nagura_prime_in_band
+#print axioms GrasGreenbergBrocard.thm_1_2_eq_3_6_regulator_valuation
+#print axioms GrasGreenbergBrocard.brocard_small_solutions_lt_116
 #print axioms GrasGreenbergBrocard.thm_1_2_part1_valuation_law
 #print axioms GrasGreenbergBrocard.thm_1_2_part2_split_primes
 #print axioms GrasGreenbergBrocard.thm_1_2_part3_conditional_finiteness
+#print axioms GrasGreenbergBrocard.thm_1_2_part3_complete_finiteness
 
 -- Section 4
 #print axioms GrasGreenbergBrocard.prop_4_1_part1
