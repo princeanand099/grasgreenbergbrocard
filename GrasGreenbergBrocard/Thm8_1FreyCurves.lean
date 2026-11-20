@@ -587,6 +587,7 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
         rw [Nat.cast_pow, Real.log_pow] at h1
         norm_num at h1
         have h2 := (n_log_n_sub_n_le_log_factorial n (by omega : 1 ≤ n)).1
+        rw [Nat.cast_mul]
         linarith
       have hil := hN_lg n (by omega)
       rw [Real.dist_eq, sub_zero, abs_of_nonneg (div_nonneg zero_le_one hlogn_pos.le)] at hil
