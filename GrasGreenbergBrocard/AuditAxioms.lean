@@ -42,10 +42,14 @@ verifying:
 #print axioms GrasGreenbergBrocard.multi_modulus_power_band_equidistribution
 
 -- Section 3 & Theorems 1.1–1.2
+#print axioms GrasGreenbergBrocard.known_k4
+#print axioms GrasGreenbergBrocard.known_k5
+#print axioms GrasGreenbergBrocard.known_k7
 #print axioms GrasGreenbergBrocard.pell_index_collapse_large
 #print axioms GrasGreenbergBrocard.fundamental_regulator_quantization
 #print axioms GrasGreenbergBrocard.q_n_ne_of_solutions
 #print axioms GrasGreenbergBrocard.J_n_principal_iff_k_eq_2
+#print axioms GrasGreenbergBrocard.nagura_prime_in_band
 #print axioms GrasGreenbergBrocard.thm_1_2_part1_valuation_law
 #print axioms GrasGreenbergBrocard.thm_1_2_part2_split_primes
 #print axioms GrasGreenbergBrocard.thm_1_2_part3_conditional_finiteness
@@ -56,17 +60,23 @@ verifying:
 #print axioms GrasGreenbergBrocard.thm_4_2_part1_euclidean_lock
 #print axioms GrasGreenbergBrocard.thm_4_2_part2_dual_quartic
 #print axioms GrasGreenbergBrocard.thm_4_2_part3_midpoint_core_bounds
+#print axioms GrasGreenbergBrocard.thm_4_2_part3_mertens_bound
 
 -- Section 5
 #print axioms GrasGreenbergBrocard.prop_5_1_part1
 #print axioms GrasGreenbergBrocard.prop_5_1_part2_bias
 #print axioms GrasGreenbergBrocard.thm_5_2_part1_cross_symmetry
+#print axioms GrasGreenbergBrocard.thm_5_2_part1_radical_bounds
 #print axioms GrasGreenbergBrocard.thm_5_2_part2_effective_cores
+#print axioms GrasGreenbergBrocard.thm_5_2_part2_pell_pm2_insoluble
 #print axioms GrasGreenbergBrocard.thm_5_3_part1_cohomology_4rank
+#print axioms GrasGreenbergBrocard.thm_5_3_part2_inert_absorption
 #print axioms GrasGreenbergBrocard.thm_5_3_part2_dual_quartic
 
 -- Section 6 & Theorem 1.3(i)
 #print axioms GrasGreenbergBrocard.prop_6_1_part1_sl2_and_four_squares
+#print axioms GrasGreenbergBrocard.prop_6_2_part1_n4_boundary
+#print axioms GrasGreenbergBrocard.prop_6_2_part2_consecutive_equipartition
 #print axioms GrasGreenbergBrocard.prop_6_2_part3_square_shift_exclusions
 #print axioms GrasGreenbergBrocard.lem_6_3_parity_flip_uniform
 #print axioms GrasGreenbergBrocard.thm_6_4_capacity_diamond

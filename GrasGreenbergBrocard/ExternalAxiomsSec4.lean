@@ -28,11 +28,4 @@ axiom mertens_first_theorem_odd_primes :
           (Real.log (x : ℝ) - γ - Real.log 2))
         =o[atTop] (fun _ : ℕ => (1 : ℝ))
 
-/-- **Prime Number Theorem (`n`-th Prime Asymptotic)** (Hadamard / de la Vallée Poussin 1896;
-Davenport, *Multiplicative Number Theory*, Ch. 18):
-The `k`-th prime `p_k` (`Nat.nth Nat.Prime k`, 0-indexed so `p_0 = 2, p_1 = 3, ...`) satisfies
-`p_k / (k * log k) → 1` as `k → ∞`. -/
-axiom nth_prime_asymptotic :
-    Tendsto (fun k : ℕ => (Nat.nth Nat.Prime k : ℝ) / ((k : ℝ) * Real.log (k : ℝ))) atTop (nhds 1)
-
 end GrasGreenbergBrocard
