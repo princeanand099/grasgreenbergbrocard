@@ -279,11 +279,11 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
   have hγ_pos : 0 < γ := by
     have h1 := (div_lt_div_iff₀ hB_pos hE_pos).mp hchi_lt
     dsimp [γ]; linarith
-  set η : ℝ := min (B_den / 8) (min (γ / (16 * ((ν : ℝ) + 1) * (B_den + A_num + 1))) (1 / 16))
+  set η : ℝ := min (B_den / 8) (min (γ / (16 * ((ν : ℝ) + 1) * (B_den + 1) * (A_num + 1))) (1 / 16))
   have hη_pos : 0 < η := by positivity
   have hη_le_B : η ≤ B_den / 8 := min_le_left _ _
   have hη_le_16 : η ≤ 1 / 16 := le_trans (min_le_right _ _) (min_le_right _ _)
-  have hη_le_γ : η ≤ γ / (16 * ((ν : ℝ) + 1) * (B_den + A_num + 1)) :=
+  have hη_le_γ : η ≤ γ / (16 * ((ν : ℝ) + 1) * (B_den + 1) * (A_num + 1)) :=
     le_trans (min_le_right _ _) (min_le_left _ _)
   have hBη_pos : 0 < B_den - η := by linarith
   obtain ⟨C_1, C_2, C_3, C_0, hC1, hC2, hC3, hC0, h_bpz_eval⟩ :=
@@ -754,7 +754,7 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
       have hprod_le : ((N / L + 1 : ℕ) : ℝ) * Real.log ((N' + (N / L + 1) : ℕ) : ℝ) ≤ 4 * (N : ℝ) := by
         calc ((N / L + 1 : ℕ) : ℝ) * Real.log ((N' + (N / L + 1) : ℕ) : ℝ)
             ≤ (2 * (N : ℝ) / Real.log (N : ℝ)) * (2 * Real.log (N : ℝ)) :=
-              mul_le_mul hstep_le hlog_arg (Real.log_nonneg (by exact_mod_cast (show 1 ≤ N' + (N / L + 1) by omega))) (by positivity)
+              mul_le_mul hstep_le hlog_arg (Real.log_nonneg (by exact_mod_cast Nat.succ_le_succ (Nat.zero_le (N' + N / L)))) (by positivity)
           _ = 4 * (N : ℝ) := by field_simp [(by linarith : Real.log (N : ℝ) ≠ 0)]; ring
       have hdiff_le : Real.log ((Nat.factorial n₀ : ℕ) : ℝ) / (P_deg : ℝ) ≤ L_base + 4 * (N : ℝ) := by
         have hP1 : (1 : ℝ) ≤ (P_deg : ℝ) := by exact_mod_cast (show 1 ≤ P_deg by omega)
@@ -1100,11 +1100,44 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
     rw [hsimp_B] at hmul_B
     have hcontra : (A_num + η) * ((E : ℝ) * (1 + η) + η * (B_den - η)) <
         ((ν : ℝ) - (E : ℝ)) * (1 - η) * (B_den - η) := by
-      have hγ_bd : η * (16 * ((ν : ℝ) + 1) * (B_den + A_num + 1)) ≤ γ :=
+      have hγ_bd : η * (16 * ((ν : ℝ) + 1) * (B_den + 1) * (A_num + 1)) ≤ γ :=
         (le_div_iff₀ (by positivity)).mp hη_le_γ
       have hE_lt_ν : (E : ℝ) < (ν : ℝ) := by exact_mod_cast hEν
-      dsimp only [γ] at hγ_bd
-      nlinarith only [hγ_bd, hE_lt_ν, hη_pos, hη_le_16, hη_le_B, hA_pos, hB_pos, hE_pos, hνE_pos]
+      have hM_pos : 0 < ((ν : ℝ) + 1) * (B_den + 1) * (A_num + 1) := by positivity
+      have ht1 : ((ν : ℝ) - (E : ℝ)) * (B_den + 1 - η) ≤ ((ν : ℝ) + 1) * (B_den + 1) * (A_num + 1) := by
+        have h1 : ((ν : ℝ) - (E : ℝ)) * (B_den + 1 - η) ≤ ((ν : ℝ) + 1) * (B_den + 1) :=
+          mul_le_mul (by linarith only [hE_pos]) (by linarith only [hη_pos]) (by linarith only [hBη_pos]) (by positivity)
+        exact le_trans h1 (le_mul_of_one_le_right (by positivity) (by linarith only [hA_pos]))
+      have ht2 : (E : ℝ) * (A_num + 1 + η) ≤ 2 * (((ν : ℝ) + 1) * (B_den + 1) * (A_num + 1)) := by
+        have h1 : (E : ℝ) * (A_num + 1 + η) ≤ ((ν : ℝ) + 1) * (2 * (A_num + 1)) :=
+          mul_le_mul (by linarith only [hE_lt_ν]) (by linarith only [hη_le_16, hA_pos]) (by positivity) (by positivity)
+        have h1' : ((ν : ℝ) + 1) * (2 * (A_num + 1)) = 2 * (((ν : ℝ) + 1) * (A_num + 1)) := by ring
+        have h2 : ((ν : ℝ) + 1) * (A_num + 1) ≤ ((ν : ℝ) + 1) * (B_den + 1) * (A_num + 1) := by
+          have := le_mul_of_one_le_right (show 0 ≤ ((ν : ℝ) + 1) by positivity) (show (1 : ℝ) ≤ B_den + 1 by linarith only [hB_pos])
+          exact mul_le_mul_of_nonneg_right this (by positivity)
+        linarith only [h1, h1', h2]
+      have ht3 : (A_num + η) * (B_den - η) ≤ ((ν : ℝ) + 1) * (B_den + 1) * (A_num + 1) := by
+        have h1 : (A_num + η) * (B_den - η) ≤ (A_num + 1) * (B_den + 1) :=
+          mul_le_mul (by linarith only [hη_le_16]) (by linarith only [hη_pos]) (by linarith only [hBη_pos]) (by positivity)
+        have h2 : (A_num + 1) * (B_den + 1) = 1 * (B_den + 1) * (A_num + 1) := by ring
+        have h3 : 1 * (B_den + 1) * (A_num + 1) ≤ ((ν : ℝ) + 1) * (B_den + 1) * (A_num + 1) :=
+          mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_right (by linarith only [hE_pos, hE_lt_ν]) (by positivity)) (by positivity)
+        linarith only [h1, h2, h3]
+      have hsum_err : ((ν : ℝ) - (E : ℝ)) * (B_den + 1 - η) + (E : ℝ) * (A_num + 1 + η) +
+          (A_num + η) * (B_den - η) ≤ 4 * (((ν : ℝ) + 1) * (B_den + 1) * (A_num + 1)) := by
+        linarith only [ht1, ht2, ht3]
+      have hη_err : η * (((ν : ℝ) - (E : ℝ)) * (B_den + 1 - η) + (E : ℝ) * (A_num + 1 + η) +
+          (A_num + η) * (B_den - η)) < γ := by
+        have h1 := mul_le_mul_of_nonneg_left hsum_err hη_pos.le
+        have hpos : 0 < η * (((ν : ℝ) + 1) * (B_den + 1) * (A_num + 1)) := mul_pos hη_pos hM_pos
+        have h4 : η * (4 * (((ν : ℝ) + 1) * (B_den + 1) * (A_num + 1))) = 4 * (η * (((ν : ℝ) + 1) * (B_den + 1) * (A_num + 1))) := by ring
+        have h16 : η * (16 * ((ν : ℝ) + 1) * (B_den + 1) * (A_num + 1)) = 16 * (η * (((ν : ℝ) + 1) * (B_den + 1) * (A_num + 1))) := by ring
+        linarith only [h1, hpos, h4, h16, hγ_bd]
+      have hdiff : ((ν : ℝ) - (E : ℝ)) * (1 - η) * (B_den - η) -
+          (A_num + η) * ((E : ℝ) * (1 + η) + η * (B_den - η)) =
+          γ - η * (((ν : ℝ) - (E : ℝ)) * (B_den + 1 - η) + (E : ℝ) * (A_num + 1 + η) +
+            (A_num + η) * (B_den - η)) := by dsimp only [γ]; ring
+      linarith only [hdiff, hη_err]
     linarith
 
 /-- **Theorem 1.3(ii) (Global $O_{P, s, \varepsilon}(N^{6/7 + \varepsilon})$ Bound, eq. 1.10)**:
