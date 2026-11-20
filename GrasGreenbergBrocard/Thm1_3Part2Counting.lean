@@ -225,8 +225,8 @@ set_option maxHeartbeats 8000000 in
 /-- **Theorem 7.4 (Dyadic Cluster Elimination via Support-Reduced Padé–Wronskian)**:
 Proved directly in Lean by wiring:
 1. `pigeonhole_cluster_reduction` (eq. 7.17) + `short_interval_pigeonhole`,
-2. `bpz_lemma_4_2_taylor_family` + `lem_7_1_initial_pade_polynomials` (Siegel's Lemma),
-3. Support extraction `S = {0} ∪ {i.succ | P_i ≠ 0}` + `siegel_ode_wronskian_on_support`,
+2. `canonicalMonomialTaylorFamily` + `lem_7_1_initial_pade_polynomials` (Siegel's Lemma),
+3. Support extraction `S = {0} ∪ {i.succ | P_i ≠ 0}` + `canonicalSupportWronskian`,
 4. `lem_7_3_support_reduced_wronskian` (Gauss's Lemma divisibility & multiplicity sum bound),
 5. `bpz_cauchy_leibniz_pade_eval` + `lem_7_4_denominator_clearing`,
 6. `pade_chi_lt_ratio_iff_theta_lt` (strict exponent contradiction $\chi(\theta) < (\nu - E)/E$). -/
@@ -478,7 +478,7 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
         linarith
       exact le_of_mul_le_mul_left hc (by positivity)
     -- Step 3 & 4: BPZ Lemma 4.2 + Uniform choice of D
-    obtain ⟨fam⟩ := bpz_lemma_4_2_taylor_family hd hE hP hEr hM1 β
+    let fam := canonicalMonomialTaylorFamily hd hE hP hEr hM1 β
       (fun i => (hβ_prop i).1) (fun i => (hβ_prop i).2.1) (fun i => (hβ_prop i).2.2) hβ_mono
     set L_base : ℝ := Real.log ((Nat.factorial N' : ℕ) : ℝ) / (P_deg : ℝ)
     set Q_N : ℝ := ((N / 2 : ℕ) : ℝ) * Real.log ((N / 2 : ℕ) : ℝ) / (P_deg : ℝ)
@@ -509,7 +509,7 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
       have h1 : (O : ℝ) < (D : ℝ) + (m : ℝ) * ((D : ℝ) + 1) := by nlinarith
       have h2 : O < D + m * (D + 1) := by exact_mod_cast h1
       omega
-    -- Step 5 & 6: `lem_7_1_initial_pade_polynomials` + support extraction + `siegel_ode_wronskian_on_support`
+    -- Step 5 & 6: `lem_7_1_initial_pade_polynomials` + support extraction + `canonicalSupportWronskian`
     obtain ⟨P_coeff, hP_nz, hP_bd, hP_van⟩ :=
       lem_7_1_initial_pade_polynomials fam hP hM1 hm1 hD1 hO_gt hO_lt
     let S : Finset (Fin (m + 1)) :=
@@ -526,8 +526,9 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
     have hS_le : S.card ≤ m + 1 := by
       calc S.card ≤ (Finset.univ : Finset (Fin (m + 1))).card := Finset.card_le_univ S
         _ = m + 1 := Fintype.card_fin (m + 1)
-    obtain ⟨W⟩ := siegel_ode_wronskian_on_support fam P_coeff S hP hM1 hm1 hD1 hO_gt
-      hP_nz hP_bd hP_van hS_eq
+    let W := canonicalSupportWronskian hd hE hP hEr hM1 β
+      (fun i => (hβ_prop i).1) (fun i => (hβ_prop i).2.1) (fun i => (hβ_prop i).2.2) hβ_mono
+      P_coeff S hD1 hO_gt hP_nz hP_bd hP_van hS_eq
     -- Step 7: `lem_7_3_support_reduced_wronskian` on T' and minimal-multiplicity n₀ ∈ T'
     have hT'_gtM : ∀ n ∈ T', M < n := fun n hn => by have := (hT'_int n hn).1; omega
     obtain ⟨_, hsum_mult, _⟩ := lem_7_3_support_reduced_wronskian W T' hT'_gtM
@@ -666,7 +667,9 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
     have hn₀_clust : ∀ i : Fin d, IsPolyFactSol s_mult P (n₀ - β i) :=
       fun i => (Finset.mem_filter.mp (hT_sol n₀ hn₀_T i).2).2
     obtain ⟨x₀, E_dat, hx₀_gt1, hx₀_log, hCP_le, hU_le, hW_ge, hu_le, hw_le⟩ :=
-      h_bpz_eval N M D β S _ W n₀ hM1 h8M hD_ge hβ_prop hβ_mono hn₀_Icc.1 hn₀_Icc.2 hn₀_sol hn₀_clust
+      h_bpz_eval N M D _ β P_coeff S n₀ hM1 h8M hD_ge hD1 hO_gt
+        (fun i => (hβ_prop i).1) (fun i => (hβ_prop i).2.1) (fun i => (hβ_prop i).2.2) hβ_mono
+        hP_nz hP_bd hP_van hS_eq hn₀_Icc.1 hn₀_Icc.2 hn₀_sol hn₀_clust
     have hx₀_pos : 0 < x₀ := by linarith
     -- Helper: any c_part * N ≤ (η / (32 * (B_den + 1))) * Q_N from hKlin_QN
     have hlogC_nn : 0 ≤ Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) := by

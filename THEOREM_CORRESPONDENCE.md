@@ -85,8 +85,8 @@ Every declaration listed below is checked by `GrasGreenbergBrocard/AuditAxioms.l
 | Lemma 7.4(ii) (Depressed polynomial asymptotic core) | `depressed_poly_asymptotic_core` | `Sec7PadeWronskian.lean` | **Standard Lean axioms only** (`0` external) |
 | Sec. 7.4 exponent equivalence ($\chi <$ ratio $\iff \theta <$) | `pade_chi_lt_ratio_iff_theta_lt` | `Sec7PadeWronskian.lean` | **Standard Lean axioms only** (`0` external) |
 | Eq. (7.17) (Pigeonhole cluster reduction) | `pigeonhole_cluster_reduction` | `Sec7ClusterReduction.lean` | **Standard Lean axioms only** (`0` external) |
-| Sec. 7.4 Dyadic cluster elimination (wiring Lemmas 7.1, 7.3, 7.4, eq. 7.17) | `dyadic_cluster_elimination_proved` | `Thm1_3Part2Counting.lean` | `bpz_cauchy_leibniz_pade_eval`, `bpz_lemma_4_2_taylor_family`, `siegel_ode_wronskian_on_support` |
-| Theorem 1.3(ii) (Global $O(N^{6/7+\varepsilon})$, Brocard $O(N^{6/7+\varepsilon})$, Table 2 degree-gap bounds) | `thm_1_3_part2_global_6_7`, `thm_1_3_part2_brocard_6_7`, `thm_1_3_part2_degree_gap_bounds` | `Thm1_3Part2Counting.lean` | `bpz_cauchy_leibniz_pade_eval`, `bpz_lemma_4_2_taylor_family`, `siegel_ode_wronskian_on_support` |
+| Sec. 7.4 Dyadic cluster elimination (wiring Lemmas 7.1, 7.3, 7.4, eq. 7.17) | `dyadic_cluster_elimination_proved` | `Thm1_3Part2Counting.lean` | `bpz_cauchy_leibniz_pade_eval`, `canonicalMonomialTaylorFamily`, `canonicalSupportWronskian` |
+| Theorem 1.3(ii) (Global $O(N^{6/7+\varepsilon})$, Brocard $O(N^{6/7+\varepsilon})$, Table 2 degree-gap bounds) | `thm_1_3_part2_global_6_7`, `thm_1_3_part2_brocard_6_7`, `thm_1_3_part2_degree_gap_bounds` | `Thm1_3Part2Counting.lean` | `bpz_cauchy_leibniz_pade_eval`, `canonicalMonomialTaylorFamily`, `canonicalSupportWronskian` |
 
 ## Section 8 — Frey Curves & Tatuzawa Class Group Bounds
 

@@ -5,21 +5,31 @@ import Mathlib
 
 All axioms in this file represent **established, peer-reviewed mathematical theorems** external to
 the manuscript's own contributions, where Mathlib v4.35.0 does not yet provide a formalization,
-and every axiom is tightly parameterized by the actual Padé polynomials, support set, and
-Wronskian polynomial constructed in `Sec7PadeWronskian.lean`:
-1. **Bui–Pratt–Zaharescu (2023), Lemma 4.2** (`bpz_lemma_4_2_taylor_family`): Power-series Taylor
-   expansion and cleared-denominator integer coefficient bounds for the monomial-product family
+and every axiom is **canonically scoped** to the actual monomial-product family, Padé polynomials,
+support set, and Wronskian polynomial constructed in `Sec7PadeWronskian.lean` (preventing
+adversarial dummy `AlgebraicTaylorFamily` or dummy `SupportWronskianData` instances):
+1. **Bui–Pratt–Zaharescu (2023), Lemma 4.2** (`canonicalMonomialTaylorFamily`): Canonical
+   power-series Taylor expansion and cleared-denominator integer coefficient bounds for the
+   monomial-product family
    $\Omega_{\mathbf{e}}(x) = \prod_{i=1}^d \prod_{j=1}^{\beta_i-1} (1 - j x)^{-e_i / r}$.
 2. **Siegel (1949), Ch. 2, Lemma 4; Bui–Pratt–Zaharescu (2023), Lemmas 5.4, 5.6, 6.3**
-   (`siegel_ode_wronskian_on_support`): Given the actual non-trivial Padé polynomials `P_coeff`
-   constructed by `lem_7_1_initial_pade_polynomials` and their non-zero support `S`, the
-   support-reduced differential Wronskian polynomial $\Delta_S(x) \in \mathbb{Z}[x]$ is non-zero
-   and satisfies the degree, order-of-vanishing, root-multiplicity divisibility, and leading-
-   coefficient height bounds.
+   (`canonicalSupportWronskian`): Scoped strictly to `canonicalMonomialTaylorFamily` and the
+   actual non-trivial Padé polynomials `P_coeff` constructed by `lem_7_1_initial_pade_polynomials`
+   with non-zero support `S`; yields the canonical support-reduced differential Wronskian
+   polynomial $\Delta_S(x) \in \mathbb{Z}[x]$ satisfying all degree, order-of-vanishing,
+   root-multiplicity divisibility, and leading-coefficient height bounds.
 3. **Bui–Pratt–Zaharescu (2023), Proposition 3.4 & Lemmas 5.6, 6.3**
-   (`bpz_cauchy_leibniz_pade_eval`): Cauchy integral and Leibniz derivative estimates on the
-   cleared Padé linear forms at a cluster base point $n_0$ together with the factorial-root
-   approximation from $s_{\mathrm{mult}} \cdot n_0! = P(x_0)$.
+   (`bpz_cauchy_leibniz_pade_eval`): Scoped strictly to `canonicalSupportWronskian` attached to
+   `P_coeff` and `S`; provides the Cauchy integral and Leibniz derivative estimates on the cleared
+   Padé linear forms at a cluster base point $n_0$ together with the factorial-root approximation
+   from $s_{\mathrm{mult}} \cdot n_0! = P(x_0)$.
+
+Notice that the manuscript's novel Section 7 contributions — Siegel's Lemma, Lemma 7.1,
+Lemma 7.2 (Puiseux coset separation), Lemma 7.3 (Gauss's Lemma divisibility and multiplicity
+bounds), Lemma 7.4 (denominator clearing and elimination inequality), the Pigeonhole cluster
+reduction (eq. 7.17), the choice of $D$, the exponent contradiction $\chi(\theta) < (\nu - E)/E$,
+and all Table 1/2 counting bounds in Theorem 1.3(ii) — are **proved in Lean** in
+`Sec7PadeWronskian.lean`, `Sec7ClusterReduction.lean`, and `Thm1_3Part2Counting.lean`.
 -/
 
 open scoped BigOperators
@@ -56,16 +66,19 @@ structure AlgebraicTaylorFamily (m r M : ℕ) where
   coeff_bound : ∀ (i : Fin (m + 1)) (k : ℕ),
     |(clearedCoeff i k : ℝ)| ≤ ((r : ℝ) ^ 2 * C_P * (M : ℝ)) ^ k
 
-/-- **Bui–Pratt–Zaharescu (2023), Lemma 4.2**: Any monomial-product family
+/-- **Bui–Pratt–Zaharescu (2023), Lemma 4.2 (Canonical Monomial-Product Taylor Family)**:
+Canonical `AlgebraicTaylorFamily` attached to the monomial-product family
 $\Omega_{\mathbf{e}}(x) = \prod_{i=1}^d \prod_{j=1}^{\beta_i - 1} (1 - j x)^{-e_i / r}$
 ($|\mathbf{e}| \le E \le r - 1$, cardinality $m + 1 = \binom{d+E}{d}$) with strictly increasing
-shifts $r \le \beta_1 < \dots < \beta_d \le M$ ($r \mid \beta_i$) admits `AlgebraicTaylorFamily m r M`. -/
-axiom bpz_lemma_4_2_taylor_family {d E r M : ℕ}
+shifts $r \le \beta_1 < \dots < \beta_d \le M$ ($r \mid \beta_i$). Scoping downstream Wronskian
+and evaluation axioms strictly to this canonical object prevents adversarial dummy
+`AlgebraicTaylorFamily` instances (such as a linearly dependent zero family). -/
+axiom canonicalMonomialTaylorFamily {d E r M : ℕ}
     (hd : 1 ≤ d) (hE : 1 ≤ E) (hr : 2 ≤ r) (hEr : E ≤ r - 1) (hM : 1 ≤ M)
     (β : Fin d → ℕ)
     (hβ_lo : ∀ i, r ≤ β i) (hβ_hi : ∀ i, β i ≤ M) (hβ_dvd : ∀ i, r ∣ β i)
     (hβ_mono : StrictMono β) :
-    Nonempty (AlgebraicTaylorFamily (Nat.choose (d + E) d - 1) r M)
+    AlgebraicTaylorFamily (Nat.choose (d + E) d - 1) r M
 
 /-- Differential Wronskian data for a non-zero Padé linear form
 $L(x) = \sum_{i \in S} P_i(x) f_i(x)$ supported on $S \subseteq \mathrm{Fin}(m+1)$ with $s = |S|$,
@@ -97,26 +110,32 @@ structure SupportWronskianData (m r D O M : ℕ) (S : Finset (Fin (m + 1))) (H :
     (Nat.factorial S.card : ℝ) * ((D + S.card * M : ℕ) : ℝ) ^ (S.card ^ 2) *
       H ^ S.card * C_Q ^ (Nat.choose S.card 2)
 
-/-- **Siegel (1949), Ch. 2, Lemma 4 & Bui–Pratt–Zaharescu (2023), Lemmas 5.4, 5.6, 6.3**:
-Given an `AlgebraicTaylorFamily m r M` and actual non-trivial Padé polynomials
-`P_coeff : Fin m → Fin (D + 1) → ℤ` (constructed by `lem_7_1_initial_pade_polynomials`)
-with coefficient bound `B`, vanishing equations of order `O`, and non-zero support `S`,
-the support-reduced differential Wronskian $\Delta_S(x) \in \mathbb{Z}[x]$ exists and satisfies
-all bounds in `SupportWronskianData`. -/
-axiom siegel_ode_wronskian_on_support {m r D O M B : ℕ}
-    (fam : AlgebraicTaylorFamily m r M)
-    (P_coeff : Fin m → Fin (D + 1) → ℤ)
-    (S : Finset (Fin (m + 1)))
-    (hr : 2 ≤ r) (hM : 1 ≤ M) (hm : 1 ≤ m) (hD : 1 ≤ D) (hO_gt : D < O)
+/-- **Siegel (1949), Ch. 2, Lemma 4 & Bui–Pratt–Zaharescu (2023), Lemmas 5.4, 5.6, 6.3
+(Canonical Support-Reduced Wronskian)**:
+Strictly scoped to `canonicalMonomialTaylorFamily` (which is $\mathbb{C}(x)$-linearly independent
+by Lemma 7.2) and actual non-trivial Padé polynomials `P_coeff` constructed by
+`lem_7_1_initial_pade_polynomials` with coefficient bound `B`, vanishing equations of order `O`,
+and non-zero support `S`: yields the canonical support-reduced differential Wronskian
+$\Delta_S(x) \in \mathbb{Z}[x]$ satisfying all bounds in `SupportWronskianData`. -/
+axiom canonicalSupportWronskian {d E r D O M B : ℕ}
+    (hd : 1 ≤ d) (hE : 1 ≤ E) (hr : 2 ≤ r) (hEr : E ≤ r - 1) (hM : 1 ≤ M)
+    (β : Fin d → ℕ)
+    (hβ_lo : ∀ i, r ≤ β i) (hβ_hi : ∀ i, β i ≤ M) (hβ_dvd : ∀ i, r ∣ β i)
+    (hβ_mono : StrictMono β)
+    (P_coeff : Fin (Nat.choose (d + E) d - 1) → Fin (D + 1) → ℤ)
+    (S : Finset (Fin ((Nat.choose (d + E) d - 1) + 1)))
+    (hD : 1 ≤ D) (hO_gt : D < O)
     (hP_nz : ∃ i j, P_coeff i j ≠ 0)
     (hP_bd : ∀ i j, |P_coeff i j| ≤ (B : ℤ))
     (hP_van : ∀ t : Fin (O - D),
-      ∑ i : Fin m, ∑ j : Fin (D + 1),
+      ∑ i : Fin (Nat.choose (d + E) d - 1), ∑ j : Fin (D + 1),
         (if j.val ≤ D + 1 + t.val then
-          fam.clearedCoeff i.succ (D + 1 + t.val - j.val) * (r : ℤ) ^ (2 * j.val)
+          (canonicalMonomialTaylorFamily hd hE hr hEr hM β hβ_lo hβ_hi hβ_dvd hβ_mono).clearedCoeff
+            i.succ (D + 1 + t.val - j.val) * (r : ℤ) ^ (2 * j.val)
         else 0) * P_coeff i j = 0)
-    (hS_eq : ∀ i : Fin m, i.succ ∈ S ↔ ∃ j : Fin (D + 1), P_coeff i j ≠ 0) :
-    Nonempty (SupportWronskianData m r D O M S (((D + 1) * B + 1 : ℕ) : ℝ))
+    (hS_eq : ∀ i : Fin (Nat.choose (d + E) d - 1),
+      i.succ ∈ S ↔ ∃ j : Fin (D + 1), P_coeff i j ≠ 0) :
+    SupportWronskianData (Nat.choose (d + E) d - 1) r D O M S (((D + 1) * B + 1 : ℕ) : ℝ)
 
 /-- Evaluated Padé–Wronskian Diophantine approximation data at a cluster base point $n_0$
 (Bui–Pratt–Zaharescu 2023, Proposition 3.4 & Lemmas 5.6, 6.3). -/
@@ -146,14 +165,17 @@ structure PadeEvaluationData (r E ν s D M a n₀ : ℕ) (x₀ : ℝ) where
   form_upper : nonZeroFormVal ≤ (s : ℝ) * x₀ ^ E * u * U ^ D * ρ + x₀ ^ E * w * W ^ (-(D : ℝ))
 
 /-- **Bui–Pratt–Zaharescu (2023), Lemmas 5.6 & 6.3 (Cauchy/Leibniz Cleared Padé Evaluation)**:
-For a fixed polynomial-factorial equation $s_{\mathrm{mult}} \cdot n! = P(x)$ with depressed
-degree gap $\nu \ge 2$ and admissible $(d, E, \varepsilon_0)$, there exist constants
-$C_1, C_2, C_3, C_0 \ge 1$ depending only on $(P, s_{\mathrm{mult}}, d, E, \nu, \varepsilon_0)$
-such that for any cluster shift tuple $\beta$, Padé degree $D \ge 10 m$, support-reduced
-Wronskian $W$ at vanishing order $O = \lfloor (m + 1 - \varepsilon_0) D \rfloor$, and cluster
-base point $n_0 \in [N, 2 N]$ ($8 M < N$) with $n_0$ and $n_0 - \beta_i$ all solving
-$s_{\mathrm{mult}} \cdot n! = P(x)$, evaluating the first $a + s$ derivatives at $x = 1/n_0$
-yields `PadeEvaluationData` satisfying the Cauchy/Leibniz bounds (eq. 7.15) and factorial-root
+Strictly scoped to `canonicalSupportWronskian` attached to the actual Padé polynomials `P_coeff`
+and support `S` (preventing adversarial dummy `SupportWronskianData` instances). For a fixed
+polynomial-factorial equation $s_{\mathrm{mult}} \cdot n! = P(x)$ with depressed degree gap
+$\nu \ge 2$ and admissible $(d, E, \varepsilon_0)$, there exist constants $C_1, C_2, C_3, C_0 \ge 1$
+depending only on $(P, s_{\mathrm{mult}}, d, E, \nu, \varepsilon_0)$ such that for any cluster
+shift tuple $\beta$, Padé degree $D \ge 10 m$, valid Padé polynomials `P_coeff` with support `S`
+at vanishing order $O = \lfloor (m + 1 - \varepsilon_0) D \rfloor$, and cluster base point
+$n_0 \in [N, 2 N]$ ($8 M < N$) with $n_0$ and $n_0 - \beta_i$ all solving
+$s_{\mathrm{mult}} \cdot n! = P(x)$, evaluating the first $a + s$ derivatives (where
+$a = W.\mathrm{multAt}\ n_0$ for `W := canonicalSupportWronskian ...`) at $x = 1/n_0$ yields
+`PadeEvaluationData` satisfying the Cauchy/Leibniz bounds (eq. 7.15) and factorial-root
 asymptotic $|\log x_0 - \frac{1}{r} \log(n_0!)| \le C_0$. -/
 axiom bpz_cauchy_leibniz_pade_eval (r ν d E : ℕ) (ε₀ : ℝ)
     (s_mult : ℕ) (P : ℤ[X])
@@ -163,18 +185,31 @@ axiom bpz_cauchy_leibniz_pade_eval (r ν d E : ℕ) (ε₀ : ℝ)
     (hε0_lt : ε₀ < ((Nat.choose (d + E) d - 1 : ℕ) : ℝ) - 1)
     (hs_mult : 1 ≤ s_mult) (hP_deg : P.natDegree = r) (hP_gap : HasDepressedDegreeGap P ν) :
     ∃ (C_1 C_2 C_3 C_0 : ℝ), 1 ≤ C_1 ∧ 1 ≤ C_2 ∧ 1 ≤ C_3 ∧ 1 ≤ C_0 ∧
-      ∀ (N M D : ℕ) (β : Fin d → ℕ)
-        (S : Finset (Fin ((Nat.choose (d + E) d - 1) + 1))) (H : ℝ)
-        (W : SupportWronskianData (Nat.choose (d + E) d - 1) r D
-          (Nat.floor ((((Nat.choose (d + E) d - 1 : ℕ) : ℝ) + 1 - ε₀) * (D : ℝ))) M S H)
-        (n₀ : ℕ),
-        1 ≤ M → 8 * M < N →
-        10 * (Nat.choose (d + E) d - 1) ≤ D →
-        (∀ i, r ≤ β i ∧ β i ≤ M ∧ r ∣ β i) →
-        StrictMono β →
+      ∀ (N M D B : ℕ) (β : Fin d → ℕ)
+        (P_coeff : Fin (Nat.choose (d + E) d - 1) → Fin (D + 1) → ℤ)
+        (S : Finset (Fin ((Nat.choose (d + E) d - 1) + 1)))
+        (n₀ : ℕ)
+        (hM : 1 ≤ M) (h8M : 8 * M < N)
+        (hD_ge : 10 * (Nat.choose (d + E) d - 1) ≤ D) (hD1 : 1 ≤ D)
+        (hO_gt : D < Nat.floor ((((Nat.choose (d + E) d - 1 : ℕ) : ℝ) + 1 - ε₀) * (D : ℝ)))
+        (hβ_lo : ∀ i, r ≤ β i) (hβ_hi : ∀ i, β i ≤ M) (hβ_dvd : ∀ i, r ∣ β i)
+        (hβ_mono : StrictMono β)
+        (hP_nz : ∃ i j, P_coeff i j ≠ 0)
+        (hP_bd : ∀ i j, |P_coeff i j| ≤ (B : ℤ))
+        (hP_van : ∀ t : Fin (Nat.floor ((((Nat.choose (d + E) d - 1 : ℕ) : ℝ) + 1 - ε₀) * (D : ℝ)) - D),
+          ∑ i : Fin (Nat.choose (d + E) d - 1), ∑ j : Fin (D + 1),
+            (if j.val ≤ D + 1 + t.val then
+              (canonicalMonomialTaylorFamily hd hE hr (le_trans hE_le (min_le_left _ _)) hM
+                β hβ_lo hβ_hi hβ_dvd hβ_mono).clearedCoeff
+                i.succ (D + 1 + t.val - j.val) * (r : ℤ) ^ (2 * j.val)
+            else 0) * P_coeff i j = 0)
+        (hS_eq : ∀ i : Fin (Nat.choose (d + E) d - 1),
+          i.succ ∈ S ↔ ∃ j : Fin (D + 1), P_coeff i j ≠ 0),
         N ≤ n₀ → n₀ ≤ 2 * N →
         IsPolyFactSol s_mult P n₀ →
         (∀ i, IsPolyFactSol s_mult P (n₀ - β i)) →
+        let W := canonicalSupportWronskian hd hE hr (le_trans hE_le (min_le_left _ _)) hM
+          β hβ_lo hβ_hi hβ_dvd hβ_mono P_coeff S hD1 hO_gt hP_nz hP_bd hP_van hS_eq
         ∃ (x₀ : ℝ) (E_dat : PadeEvaluationData r E ν S.card D M (W.multAt n₀) n₀ x₀),
           1 < x₀ ∧
           |Real.log x₀ - Real.log ((Nat.factorial n₀ : ℕ) : ℝ) / (r : ℝ)| ≤ C_0 ∧

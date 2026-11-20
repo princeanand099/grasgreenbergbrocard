@@ -47,11 +47,13 @@ All **28 external axioms** are isolated in **six** dedicated files and verified 
 
 ## 5. `GrasGreenbergBrocard/ExternalAxiomsSec7.lean` (3 axioms)
 
+All three Section 7 axioms follow the **canonical-object scoping pattern** (matching `canonicalRealQuadIwasawa`, `canonicalRealQuadRedei`, and `canonicalRealQuadClassGroup`), preventing adversarial dummy `AlgebraicTaylorFamily` (e.g., linearly dependent zero families) or dummy `SupportWronskianData` instances:
+
 | Axiom | Published Source | Role |
 | :--- | :--- | :--- |
-| `bpz_lemma_4_2_taylor_family` | Bui–Pratt–Zaharescu (2023), Lemma 4.2 | Cleared integer Taylor coefficients and growth bounds for monomial-product algebraic functions $\Omega_{\mathbf{e}}(x)$ |
-| `siegel_ode_wronskian_on_support` | Siegel (1949), Ch. 2, Lemma 4; BPZ (2023), Lemmas 5.4, 5.6, 6.3 | Parameterized by the actual Padé polynomials `P_coeff` from `lem_7_1_initial_pade_polynomials` and their non-zero support `S`; yields non-vanishing support-reduced Wronskian $\Delta_S(x) \in \mathbb{Z}[x]$ |
-| `bpz_cauchy_leibniz_pade_eval` | Bui–Pratt–Zaharescu (2023), Prop. 3.4 & Lemmas 5.6, 6.3 | Parameterized by `W : SupportWronskianData`, shift tuple `β`, and cluster base point `n₀`; yields `PadeEvaluationData` with Cauchy/Leibniz bounds (eq. 7.15) and factorial-root asymptotic |
+| `canonicalMonomialTaylorFamily` | Bui–Pratt–Zaharescu (2023), Lemma 4.2 | Canonical `AlgebraicTaylorFamily` for the $\mathbb{C}(x)$-linearly independent monomial-product family $\Omega_{\mathbf{e}}(x)$ with cleared integer Taylor coefficients and growth bounds |
+| `canonicalSupportWronskian` | Siegel (1949), Ch. 2, Lemma 4; BPZ (2023), Lemmas 5.4, 5.6, 6.3 | Scoped strictly to `canonicalMonomialTaylorFamily` and the actual Padé polynomials `P_coeff` from `lem_7_1_initial_pade_polynomials` with non-zero support `S`; yields the canonical non-vanishing support-reduced Wronskian $\Delta_S(x) \in \mathbb{Z}[x]$ |
+| `bpz_cauchy_leibniz_pade_eval` | Bui–Pratt–Zaharescu (2023), Prop. 3.4 & Lemmas 5.6, 6.3 | Scoped strictly to `canonicalSupportWronskian` attached to `P_coeff`, `S`, shift tuple `β`, and cluster base point `n₀`; yields `PadeEvaluationData` with Cauchy/Leibniz bounds (eq. 7.15) and factorial-root asymptotic |
 
 ## 6. `GrasGreenbergBrocard/ExternalAxiomsSec8.lean` (4 axioms)
 
