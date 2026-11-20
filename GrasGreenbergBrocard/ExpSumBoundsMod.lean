@@ -51,13 +51,11 @@ theorem prime_exp_sum_bounds_mod (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
         (T₀ ≥ (n : ℝ) ^ (δ / 2) →
           ‖∑ p ∈ I, (w (p : ℝ) * Real.log (p : ℝ) : ℂ) * eExp (F (p : ℝ))‖ ≤
             C₃ * W₀ * P * (n : ℝ) ^ (-η)) := by
-  obtain ⟨η', η, hη', hη, C, hC, hVaughan⟩ := vaughan_van_der_corput_prime_sum δ hδ0 hδ1
   let R := Nat.floor (1 / δ)
   let A_R := 6 * R + 30
   let Mmax : ℝ := ∏ k ∈ Finset.range (5 * R + 2), ((R + k : ℕ) : ℝ)
   let c₁_low : ℝ := (1 / (2 * (h_mod : ℝ))) * (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ))
   let c₂_high : ℝ := (2 / (h_mod : ℝ)) * Mmax
-  let C₂ : ℝ := C * ((2 : ℝ) ^ ((R : ℝ) / 6) + 1)
   have hh_pos : (0 : ℝ) < (h_mod : ℝ) := by exact_mod_cast (by omega : 0 < h_mod)
   have hR1 : 1 ≤ R := Nat.le_floor (by rw [Nat.cast_one, le_div_iff₀ hδ0]; linarith)
   have hM1 : (1 : ℝ) ≤ Mmax := by
@@ -65,6 +63,25 @@ theorem prime_exp_sum_bounds_mod (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
     have hN : 1 ≤ ∏ k ∈ Finset.range (5 * R + 2), (R + k) :=
       Nat.one_le_iff_ne_zero.mpr (Finset.prod_ne_zero_iff.mpr (fun k _ => by omega))
     exact_mod_cast hN
+  have hc₁_pos_top : 0 < c₁_low := by
+    unfold c₁_low
+    exact mul_pos (by positivity) (zpow_pos (by norm_num) _)
+  have hc₁_le_c₂_top : c₁_low ≤ c₂_high := by
+    unfold c₁_low c₂_high
+    have hpow_le : (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) ≤ 1 :=
+      zpow_le_one_of_nonpos₀ (by norm_num) (by omega)
+    have h1 : (1 / (2 * (h_mod : ℝ))) * (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) ≤ 1 / (2 * (h_mod : ℝ)) :=
+      mul_le_of_le_one_right (by positivity) hpow_le
+    have h2 : 1 / (2 * (h_mod : ℝ)) ≤ (2 / (h_mod : ℝ)) * Mmax := by
+      calc 1 / (2 * (h_mod : ℝ)) ≤ 2 / (h_mod : ℝ) := by
+            rw [div_le_div_iff₀ (by positivity) hh_pos]; nlinarith
+        _ = (2 / (h_mod : ℝ)) * 1 := (mul_one _).symm
+        _ ≤ (2 / (h_mod : ℝ)) * Mmax := mul_le_mul_of_nonneg_left hM1 (by positivity)
+    exact le_trans h1 h2
+  obtain ⟨η', η, hη', hη, C, hC, hVaughan⟩ :=
+    vaughan_van_der_corput_prime_sum δ hδ0 hδ1 (fun _ => c₁_low) (fun _ => c₂_high)
+      (fun _ _ _ => ⟨hc₁_pos_top, hc₁_le_c₂_top⟩)
+  let C₂ : ℝ := C * ((2 : ℝ) ^ ((R : ℝ) / 6) + 1)
   refine ⟨η', η, hη', hη, C, C₂, C, hC, mul_pos hC (by positivity), hC, ?_⟩
   have htend1 : Tendsto (fun n : ℕ => (Real.log (n : ℝ)) ^ (R + 2) / (n : ℝ) ^ δ) atTop (nhds 0) :=
     log_pow_div_rpow_tendsto_zero (R + 2) hδ0
@@ -109,24 +126,9 @@ theorem prime_exp_sum_bounds_mod (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
           mul_le_mul_of_nonneg_right hh1 (div_nonneg (Nat.cast_nonneg n) (pow_nonneg hP_pos.le _))
       _ = T₀ := by ring
   have hDeriv : ∀ (j : ℕ), 1 ≤ j → j ≤ 5 * R + 2 →
-      ∃ c₁ c₂ : ℝ, 0 < c₁ ∧ c₁ ≤ c₂ ∧
-        ∀ t ∈ Set.Icc P (2 * P),
-          c₁ * T₀ / P ^ j ≤ |iteratedDeriv j F t| ∧ |iteratedDeriv j F t| ≤ c₂ * T₀ / P ^ j := by
+      ∀ t ∈ Set.Icc P (2 * P),
+        c₁_low * T₀ / P ^ j ≤ |iteratedDeriv j F t| ∧ |iteratedDeriv j F t| ≤ c₂_high * T₀ / P ^ j := by
     intro j hj1 hj2
-    have hc₁_pos : 0 < c₁_low := by
-      unfold c₁_low
-      exact mul_pos (by positivity) (zpow_pos (by norm_num) _)
-    refine ⟨c₁_low, c₂_high, hc₁_pos, ?_, ?_⟩
-    · unfold c₁_low c₂_high
-      have hpow_le : (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) ≤ 1 :=
-        zpow_le_one_of_nonpos₀ (by norm_num) (by omega)
-      have h1 : (1 / (2 * (h_mod : ℝ))) * (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) ≤ 1 / (2 * (h_mod : ℝ)) :=
-        mul_le_of_le_one_right (by positivity) hpow_le
-      have h2 : 1 / (2 * (h_mod : ℝ)) ≤ (2 / (h_mod : ℝ)) * Mmax := by
-        calc 1 / (2 * (h_mod : ℝ)) ≤ 2 / (h_mod : ℝ) := by
-              rw [div_le_div_iff₀ (by positivity) hh_pos]; nlinarith
-          _ ≤ (2 / (h_mod : ℝ)) * Mmax := le_mul_of_one_le_right (by positivity) hM1
-      linarith
     · intro t ht
       have ht_pos : 0 < t := lt_of_lt_of_le hP_pos ht.1
       have hF_eq : F = ∑ r ∈ A, fun x : ℝ => ((h r : ℝ) * (n : ℝ) / (h_mod : ℝ)) * x ^ (-(r : ℤ)) := by

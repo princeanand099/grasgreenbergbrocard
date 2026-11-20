@@ -164,19 +164,27 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
         (T₀ ≥ (n : ℝ) ^ (δ / 2) →
           ‖∑ p ∈ I, (w (p : ℝ) * Real.log (p : ℝ) : ℂ) * eExp (F (p : ℝ))‖ ≤
             C₃ * W₀ * P * (n : ℝ) ^ (-η)) := by
-  obtain ⟨η', η, hη', hη, C, hC, hVaughan⟩ := vaughan_van_der_corput_prime_sum δ hδ0 hδ1
   let R := Nat.floor (1 / δ)
   let A_R := 6 * R + 30
   let Mmax : ℝ := ∏ k ∈ Finset.range (5 * R + 2), ((R + k : ℕ) : ℝ)
   let c₁_low : ℝ := (1 / 4 : ℝ) * (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ))
   let c₂_high : ℝ := (3 / 2 : ℝ) * Mmax
-  let C₂ : ℝ := C * ((2 : ℝ) ^ ((R : ℝ) / 6) + 1)
   have hR1 : 1 ≤ R := Nat.le_floor (by rw [Nat.cast_one, le_div_iff₀ hδ0]; linarith)
   have hM1 : (1 : ℝ) ≤ Mmax := by
     unfold Mmax
     have hN : 1 ≤ ∏ k ∈ Finset.range (5 * R + 2), (R + k) :=
       Nat.one_le_iff_ne_zero.mpr (Finset.prod_ne_zero_iff.mpr (fun k _ => by omega))
     exact_mod_cast hN
+  have hc₁_pos_top : 0 < c₁_low := mul_pos (by norm_num) (zpow_pos (by norm_num) _)
+  have hc₁_le_c₂_top : c₁_low ≤ c₂_high := by
+    unfold c₁_low c₂_high
+    have hpow_le : (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) ≤ 1 :=
+      zpow_le_one_of_nonpos₀ (by norm_num) (by omega)
+    linarith
+  obtain ⟨η', η, hη', hη, C, hC, hVaughan⟩ :=
+    vaughan_van_der_corput_prime_sum δ hδ0 hδ1 (fun _ => c₁_low) (fun _ => c₂_high)
+      (fun _ _ _ => ⟨hc₁_pos_top, hc₁_le_c₂_top⟩)
+  let C₂ : ℝ := C * ((2 : ℝ) ^ ((R : ℝ) / 6) + 1)
   refine ⟨η', η, hη', hη, C, C₂, C, hC, mul_pos hC (by positivity), hC, ?_⟩
   have htend1 : Tendsto (fun n : ℕ => (Real.log (n : ℝ)) ^ (R + 2) / (n : ℝ) ^ δ) atTop (nhds 0) :=
     log_pow_div_rpow_tendsto_zero (R + 2) hδ0
@@ -229,18 +237,9 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
           mul_le_mul_of_nonneg_right hh1 (div_nonneg (Nat.cast_nonneg n) (pow_nonneg hP_pos.le _))
       _ = T₀ := by ring
   have hDeriv : ∀ (j : ℕ), 1 ≤ j → j ≤ 5 * R + 2 →
-      ∃ c₁ c₂ : ℝ, 0 < c₁ ∧ c₁ ≤ c₂ ∧
-        ∀ t ∈ Set.Icc P (2 * P),
-          c₁ * T₀ / P ^ j ≤ |iteratedDeriv j F t| ∧ |iteratedDeriv j F t| ≤ c₂ * T₀ / P ^ j := by
+      ∀ t ∈ Set.Icc P (2 * P),
+        c₁_low * T₀ / P ^ j ≤ |iteratedDeriv j F t| ∧ |iteratedDeriv j F t| ≤ c₂_high * T₀ / P ^ j := by
     intro j hj1 hj2
-    have hc₁_pos : 0 < c₁_low := by
-      unfold c₁_low
-      exact mul_pos (by norm_num) (zpow_pos (by norm_num) _)
-    refine ⟨c₁_low, c₂_high, hc₁_pos, ?_, ?_⟩
-    · unfold c₁_low c₂_high
-      have hpow_le : (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) ≤ 1 :=
-        zpow_le_one_of_nonpos₀ (by norm_num) (by omega)
-      linarith
     · intro t ht
       have ht_pos : 0 < t := lt_of_lt_of_le hP_pos ht.1
       have hF_eq : F = ∑ r ∈ A, fun x : ℝ => ((h r : ℝ) * (n : ℝ) / 2) * x ^ (-(r : ℤ)) := by
@@ -554,13 +553,11 @@ theorem prime_exp_sum_bounds_general_phase (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ
         let F : ℝ → ℝ := fun t => ∑ s ∈ A, M s / (2 * t ^ s)
         ‖∑ p ∈ I, (w (p : ℝ) * Real.log (p : ℝ) : ℂ) * eExp (F (p : ℝ))‖ ≤
           C₂ * W₀ * P * (Real.log (n : ℝ)) ^ (-((R : ℝ) + 2)) := by
-  obtain ⟨η', η, hη', hη, C, hC, hVaughan⟩ := vaughan_van_der_corput_prime_sum δ hδ0 hδ1
   let R := Nat.floor (1 / δ)
   let A_R := 6 * R + 30
   let Mmax : ℝ := ∏ k ∈ Finset.range (5 * R + 2), ((R + k : ℕ) : ℝ)
   let c₁_low : ℝ := (1 / 4 : ℝ) * (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ))
   let c₂_high : ℝ := (3 / 2 : ℝ) * Mmax
-  let C₂ : ℝ := C * ((2 : ℝ) ^ ((R : ℝ) / 6) + 1)
   have hM1 : (1 : ℝ) ≤ Mmax := by
     unfold Mmax
     have hN : 1 ≤ ∏ k ∈ Finset.range (5 * R + 2), (R + k) :=
@@ -568,6 +565,16 @@ theorem prime_exp_sum_bounds_general_phase (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ
         have hR1 : 1 ≤ R := Nat.le_floor (by rw [Nat.cast_one, le_div_iff₀ hδ0]; linarith)
         omega))
     exact_mod_cast hN
+  have hc₁_pos_top : 0 < c₁_low := mul_pos (by norm_num) (zpow_pos (by norm_num) _)
+  have hc₁_le_c₂_top : c₁_low ≤ c₂_high := by
+    unfold c₁_low c₂_high
+    have hpow_le : (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) ≤ 1 :=
+      zpow_le_one_of_nonpos₀ (by norm_num) (by omega)
+    linarith
+  obtain ⟨η', η, hη', hη, C, hC, hVaughan⟩ :=
+    vaughan_van_der_corput_prime_sum δ hδ0 hδ1 (fun _ => c₁_low) (fun _ => c₂_high)
+      (fun _ _ _ => ⟨hc₁_pos_top, hc₁_le_c₂_top⟩)
+  let C₂ : ℝ := C * ((2 : ℝ) ^ ((R : ℝ) / 6) + 1)
   refine ⟨C₂, mul_pos hC (by positivity), ?_⟩
   have htend2 : Tendsto (fun n : ℕ => (Real.log (n : ℝ)) ^ (R + 5) / (n : ℝ) ^ (δ * η')) atTop (nhds 0) :=
     log_pow_div_rpow_tendsto_zero (R + 5) (mul_pos hδ0 hη')
@@ -577,22 +584,17 @@ theorem prime_exp_sum_bounds_general_phase (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ
   have hev_log : ∀ᶠ n : ℕ in atTop, (2 : ℝ) ≤ Real.log (n : ℝ) :=
     (tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually (eventually_ge_atTop 2)
   filter_upwards [Filter.eventually_ge_atTop 4, hev2, hev_log] with n hn hsmall2 hlog2
-  intro P I A M r₀ w W₀ hP_lo hP_hi hI_sub hA_range hr₀_mem T₀ hT₀_ge hDom hW_bound hW_anti hW₀ F
+  intro P I A M r₀ w W₀ hP_lo hP_hi hI_sub hA_range hr₀_mem hT₀_ge hDom hW_bound hW_anti hW₀
+  set T₀ := |M r₀| / P ^ r₀
+  set F : ℝ → ℝ := fun t => ∑ s ∈ A, M s / (2 * t ^ s)
   have hr₀_range : 1 ≤ r₀ ∧ r₀ ≤ R := hA_range r₀ hr₀_mem
   have hP_ge1 : (1 : ℝ) ≤ P :=
     le_trans (Real.one_le_rpow (by exact_mod_cast (by omega : 1 ≤ n)) hδ0.le) hP_lo
   have hP_pos : 0 < P := by linarith
   have hDeriv : ∀ (j : ℕ), 1 ≤ j → j ≤ 5 * R + 2 →
-      ∃ c₁ c₂ : ℝ, 0 < c₁ ∧ c₁ ≤ c₂ ∧
-        ∀ t ∈ Set.Icc P (2 * P),
-          c₁ * T₀ / P ^ j ≤ |iteratedDeriv j F t| ∧ |iteratedDeriv j F t| ≤ c₂ * T₀ / P ^ j := by
+      ∀ t ∈ Set.Icc P (2 * P),
+        c₁_low * T₀ / P ^ j ≤ |iteratedDeriv j F t| ∧ |iteratedDeriv j F t| ≤ c₂_high * T₀ / P ^ j := by
     intro j hj1 hj2
-    have hc₁_pos : 0 < c₁_low := mul_pos (by norm_num) (zpow_pos (by norm_num) _)
-    refine ⟨c₁_low, c₂_high, hc₁_pos, ?_, ?_⟩
-    · unfold c₁_low c₂_high
-      have hpow_le : (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) ≤ 1 :=
-        zpow_le_one_of_nonpos₀ (by norm_num) (by omega)
-      linarith
     · intro t ht
       have ht_pos : 0 < t := lt_of_lt_of_le hP_pos ht.1
       have hF_eq : F = ∑ s ∈ A, fun x : ℝ => (M s / 2) * x ^ (-(s : ℤ)) := by
@@ -633,7 +635,7 @@ theorem prime_exp_sum_bounds_general_phase (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ
           rw [zpow_neg, zpow_natCast, pow_add]; field_simp [hP_pos.ne']
         calc 2 * c₁_low * T₀ / P ^ j
             = (|M r₀| / 2) * 1 * ((2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) * ((1 / P ^ r₀) / P ^ j)) := by
-              unfold c₁_low; dsimp only [T₀]; ring
+              unfold c₁_low T₀; ring
           _ ≤ (|M r₀| / 2) * |negPowDerivCoeff r₀ j| * t ^ (-((r₀ + j : ℕ) : ℤ)) := by
               apply mul_le_mul
               · exact mul_le_mul_of_nonneg_left hcoeff_ge (by positivity)
@@ -655,13 +657,15 @@ theorem prime_exp_sum_bounds_general_phase (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ
             exact Nat.le_mul_of_pos_left _ (Finset.prod_pos (fun k _ => by omega))
           exact_mod_cast le_trans hN1 hN2
         have ht_ge : t ^ (-((r₀ + j : ℕ) : ℤ)) ≤ (1 / P ^ r₀) / P ^ j := by
-          rw [zpow_neg, zpow_natCast, div_div, ← pow_add, one_div]
-          exact inv_anti₀ (pow_pos hP_pos _) (pow_le_pow_left₀ hP_pos.le ht.1 _)
+          rw [zpow_neg, zpow_natCast]
+          have h1 : (t ^ (r₀ + j))⁻¹ ≤ (P ^ (r₀ + j))⁻¹ :=
+            inv_anti₀ (pow_pos hP_pos _) (pow_le_pow_left₀ hP_pos.le ht.1 _)
+          rw [pow_add] at h1; convert h1 using 1; field_simp [hP_pos.ne']
         calc (|M r₀| / 2) * |negPowDerivCoeff r₀ j| * t ^ (-((r₀ + j : ℕ) : ℤ))
             ≤ (|M r₀| / 2) * Mmax * ((1 / P ^ r₀) / P ^ j) := by
               apply mul_le_mul (mul_le_mul_of_nonneg_left hcoeff_le (by positivity)) ht_ge
                 (by positivity) (by positivity)
-          _ = (1 / 2 : ℝ) * (Mmax * T₀ / P ^ j) := by dsimp only [T₀]; ring
+          _ = (1 / 2 : ℝ) * (Mmax * T₀ / P ^ j) := by unfold T₀; ring
           _ ≤ Mmax * T₀ / P ^ j := by nlinarith [show 0 ≤ Mmax * T₀ / P ^ j by positivity]
       have htail_hi : |∑ s ∈ A.erase r₀, (M s / 2) * negPowDerivCoeff s j * t ^ (-((s + j : ℕ) : ℤ))| ≤
           c₁_low * T₀ / P ^ j := by
@@ -684,8 +688,10 @@ theorem prime_exp_sum_bounds_general_phase (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ
               exact Nat.le_mul_of_pos_left _ (Finset.prod_pos (fun k _ => by omega))
             exact_mod_cast le_trans hN1 hN2
           have ht_ge : t ^ (-((s + j : ℕ) : ℤ)) ≤ (1 / P ^ s) / P ^ j := by
-            rw [zpow_neg, zpow_natCast, div_div, ← pow_add, one_div]
-            exact inv_anti₀ (pow_pos hP_pos _) (pow_le_pow_left₀ hP_pos.le ht.1 _)
+            rw [zpow_neg, zpow_natCast]
+            have h1 : (t ^ (s + j))⁻¹ ≤ (P ^ (s + j))⁻¹ :=
+              inv_anti₀ (pow_pos hP_pos _) (pow_le_pow_left₀ hP_pos.le ht.1 _)
+            rw [pow_add] at h1; convert h1 using 1; field_simp [hP_pos.ne']
           calc (|M s| / 2) * |negPowDerivCoeff s j| * t ^ (-((s + j : ℕ) : ℤ))
               ≤ (|M s| / 2) * Mmax * ((1 / P ^ s) / P ^ j) := by
                 apply mul_le_mul (mul_le_mul_of_nonneg_left hcoeff_le (by positivity)) ht_ge
@@ -715,13 +721,12 @@ theorem prime_exp_sum_bounds_general_phase (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ
               have hden : 0 < (R : ℝ) * Mmax + 1 := by positivity
               rw [show (R : ℝ) * (Mmax * (c₁_low / ((R : ℝ) * Mmax + 1))) =
                 (((R : ℝ) * Mmax) / ((R : ℝ) * Mmax + 1)) * c₁_low by ring]
-              exact mul_le_of_le_one_left hc₁_pos.le ((div_le_one hden).mpr (by linarith))
+              exact mul_le_of_le_one_left hc₁_pos_top.le ((div_le_one hden).mpr (by linarith))
           _ = c₁_low * T₀ / P ^ j := by ring
       constructor
       · have hrev := abs_sub_abs_le_abs_add
           ((M r₀ / 2) * negPowDerivCoeff r₀ j * t ^ (-((r₀ + j : ℕ) : ℤ)))
           (∑ s ∈ A.erase r₀, (M s / 2) * negPowDerivCoeff s j * t ^ (-((s + j : ℕ) : ℤ)))
-        have h2c : 2 * c₁_low * T₀ / P ^ j = c₁_low * T₀ / P ^ j + c₁_low * T₀ / P ^ j := by ring
         linarith
       · have htri := abs_add_le
           ((M r₀ / 2) * negPowDerivCoeff r₀ j * t ^ (-((r₀ + j : ℕ) : ℤ)))
