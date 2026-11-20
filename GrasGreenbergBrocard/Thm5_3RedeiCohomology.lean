@@ -153,9 +153,9 @@ private lemma coreNat_two_X1_add_one_prime_mem_ramPrimes {n X₁ Y₁ p : ℕ}
     have hv_odd : padicValNat p (2 * (X₁ + 1)) % 2 = 1 := by
       have h2 := padicValNat_coreNat hp (by omega : 0 < 2 * (X₁ + 1))
       rw [hvc] at h2
-      split_ifs at h2 with h
-      · exact h
-      · omega
+      by_contra hne
+      rw [if_neg hne] at h2
+      omega
     have hv2 : padicValNat p 2 = 0 := padicValNat.eq_zero_of_not_dvd (fun h =>
       hp2 ((Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).mp h))
     rw [padicValNat.mul (by norm_num) (by omega), hv2, zero_add] at hv_odd
@@ -321,7 +321,7 @@ private lemma eps2_mul {a b : ℕ} (ha : a % 2 = 1) (hb : b % 2 = 1) :
     have hab : a * b = 4 * (4 * qa * qb + qa * rb + qb * ra) + ra * rb := by rw [ha4, hb4]; ring
     have ha_cases : ra = 1 ∨ ra = 3 := by omega
     have hb_cases : rb = 1 ∨ rb = 3 := by omega
-    rcases ha_cases with ha1 | ha1 <;> rcases hb_cases with hb1 | hb1 <;> omega
+    rcases ha_cases with ha1 | ha1 <;> rcases hb_cases with hb1 | hb1 <;> (rw [ha1, hb1] at hab; omega)
   rw [← Nat.cast_add, ZMod.natCast_eq_natCast_iff']
   exact hmod
 
