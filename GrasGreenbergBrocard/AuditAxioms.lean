@@ -92,6 +92,10 @@ verifying:
 #print axioms GrasGreenbergBrocard.lem_7_2_monomial_product_puiseux_indep
 #print axioms GrasGreenbergBrocard.lem_7_3_support_reduced_wronskian
 #print axioms GrasGreenbergBrocard.lem_7_4_denominator_clearing
+#print axioms GrasGreenbergBrocard.depressed_poly_asymptotic_core
+#print axioms GrasGreenbergBrocard.pade_chi_lt_ratio_iff_theta_lt
+#print axioms GrasGreenbergBrocard.pigeonhole_cluster_reduction
+#print axioms GrasGreenbergBrocard.dyadic_cluster_elimination_proved
 #print axioms GrasGreenbergBrocard.thm_1_3_part2_global_6_7
 #print axioms GrasGreenbergBrocard.thm_1_3_part2_brocard_6_7
 #print axioms GrasGreenbergBrocard.thm_1_3_part2_degree_gap_bounds
