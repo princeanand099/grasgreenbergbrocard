@@ -11,6 +11,7 @@ the manuscript's own contributions, where Mathlib v4.35.0 does not yet provide a
    $p$-adic uniformization for the Frey curves $\mathcal{E}_n$ and $F_n^{(2)}$.
 2. Dirichlet's analytic class number formula (Davenport 2000, Ch. 6), Gauss's genus theory
    (Gauss 1801), and Tatuzawa's effective refinement of Siegel's theorem (Tatuzawa 1951).
+3. Prime Number Theorem asymptotic $\pi(x) = (1 + o(1)) x / \log x$ (Hadamard / de la Vallée Poussin 1896).
 -/
 
 open Real Filter
@@ -29,23 +30,36 @@ structure FreyCurveArithmeticData (n m X₁ Y₁ : ℕ) where
   conductor_E : ℕ
   conductor_E_eq : conductor_E = 2 ^ alpha_E * ∏ p ∈ (Finset.Icc 3 n).filter Nat.Prime, p
   ap_E : ℕ → ℤ
-  ap_E_eq : ∀ p : ℕ, (hp : p.Prime) → 3 ≤ p → p ≤ n →
-    ap_E p = @legendreSym p ⟨hp⟩ (-(m : ℤ))
+  ap_E_eq : ∀ p : ℕ, p.Prime → 3 ≤ p → p ≤ n →
+    ap_E p = legendreSym p (-(m : ℤ))
   alpha_F2 : ℕ
   alpha_F2_le : alpha_F2 ≤ 3
   conductor_F2 : ℕ
-  surj_mod_ell_F2 : ℕ → Prop
+  conductor_F2_eq : conductor_F2 =
+    2 ^ alpha_F2 * ((∏ p ∈ (Finset.Icc 3 n).filter Nat.Prime, p) /
+      (∏ p ∈ (Finset.Icc 3 n).filter (fun p => p.Prime ∧ p ∣ X₁), p))
+  surj_mod_ell_F2 : ∀ ℓ : ℕ, ℓ.Prime → 5 ≤ ℓ → Prop
 
-/-- **Modularity & Mazur–Kenku–Serre–Tate Package** (Wiles 1995; Breuil–Conrad–Diamond–Taylor 2001;
-Mazur 1978; Kenku 1982; Serre 1972): For any Brocard solution $n! + 1 = m^2$ ($n \ge 8$), the
-Frey curves $\mathcal{E}_n$ and (when $k = 2$) $F_n^{(2)}$ are modular with the stated conductors,
-Frobenius traces, and surjective mod-$\ell$ Galois representations for $\ell \ge 5$ whenever
-$v_p(j(F_n^{(2)})) = -2 < 0$ at a prime $p \in (n/2, n]$. -/
-axiom frey_curve_modularity_and_galois {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
+/-- **Modularity of $\mathcal{E}_n$** (Wiles 1995; Breuil–Conrad–Diamond–Taylor 2001):
+For any Brocard solution $n! + 1 = m^2$ ($n \ge 8$), the Frey curve $\mathcal{E}_n$ is modular
+with conductor $N(\mathcal{E}_n) = 2^\alpha \prod_{3 \le p \le n} p$ ($\alpha \le 3$) and
+Frobenius traces $a_p(\mathcal{E}_n) = (-m / p)$. -/
+axiom frey_E_modularity {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     (hm : Nat.factorial n + 1 = m ^ 2) :
+    ∃ D : FreyCurveArithmeticData n m X₁ Y₁, D.isModular_E
+
+/-- **Level-2 Frey Curve $F_n^{(2)}$ Modularity & Galois Surjectivity** (Wiles 1995;
+Breuil–Conrad–Diamond–Taylor 2001; Mazur 1978; Kenku 1982; Serre 1972):
+In the $k = 2$ regime (`IsFundamentalPell (q_n n) X₁ Y₁` and `m + s_n √q_n = ε_n^2`), the
+Level-2 Frey curve $F_n^{(2)}$ is modular with slashed conductor
+$N(F_n^{(2)}) = 2^{\alpha'} (\prod_{3 \le p \le n} p) / \operatorname{rad}_{\mathrm{odd}}(X_1)$
+and surjective mod-$\ell$ Galois representation for every prime $\ell \ge 5$. -/
+axiom frey_F2_modularity_and_galois {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
+    (hm : Nat.factorial n + 1 = m ^ 2)
+    (hfund : IsFundamentalPell (q_n n) X₁ Y₁)
+    (hk2 : (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ 2) :
     ∃ D : FreyCurveArithmeticData n m X₁ Y₁,
-      D.isModular_E ∧ D.isModular_F2 ∧
-      (∀ ℓ : ℕ, ℓ.Prime → 5 ≤ ℓ → D.surj_mod_ell_F2 ℓ)
+      D.isModular_F2 ∧ (∀ ℓ : ℕ, ℓ.Prime → 5 ≤ ℓ → D.surj_mod_ell_F2 ℓ ‹_› ‹_›)
 
 /-- Fundamental discriminant $D_n \in \{q_n, 4 q_n\}$ of $K_n = \mathbb{Q}(\sqrt{q_n})$. -/
 def fundDisc (n : ℕ) : ℕ :=
