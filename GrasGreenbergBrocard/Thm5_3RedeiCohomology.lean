@@ -32,26 +32,35 @@ namespace GrasGreenbergBrocard
 
 /-- **Theorem 5.3(i) — Galois Cohomology Exact Sequence and Rédei–Reichardt 4-Rank Identity
 (eqs. 5.8–5.9)**:
-For any `n ≥ 8` and non-zero midpoint cocycle `y^{mid} ∈ ker_{𝔽₂}(R_n^{ram})`,
+For any `n ≥ 8` and non-zero midpoint cocycle `y^{mid}(n, X₁) ∈ ker_{𝔽₂}(R_n^{ram})`,
 there is an exact sequence of `𝔽₂`-vector spaces
-`0 → span_{𝔽₂}{y^{mid}} → ker_{𝔽₂}(R_n^{ram}) → Cl^+(q_n)[2] ∩ 2 Cl^+(q_n) → 0`,
+`0 → span_{𝔽₂}{y^{mid}(n, X₁)} → ker_{𝔽₂}(R_n^{ram}) → Cl^+(q_n)[2] ∩ 2 Cl^+(q_n) → 0`,
 and consequently `dim_{𝔽₂} ker_{𝔽₂}(R_n^{ram}) = 1 + rank₄ Cl^+(q_n)`. -/
-theorem thm_5_3_part1_cohomology_4rank {n : ℕ} (hn : 8 ≤ n)
-    (yMid : redeiKernel n) (hyMid_ne : yMid ≠ 0) :
-    ∃ data : RedeiNarrowClassData n yMid,
-      Function.Surjective data.psiPlus ∧
-      LinearMap.ker data.psiPlus = Submodule.span (ZMod 2) {yMid} ∧
-      Module.finrank (ZMod 2) (redeiKernel n) = 1 + data.rank4 := by
-  obtain ⟨data⟩ := redei_reichardt_exact_sequence n hn yMid hyMid_ne
-  have h_finrank_eq : Module.finrank (ZMod 2) (LinearMap.range data.psiPlus) +
-      Module.finrank (ZMod 2) (LinearMap.ker data.psiPlus) =
+theorem thm_5_3_part1_cohomology_4rank {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
+    (hfund : IsFundamentalPell (q_n n) X₁ Y₁)
+    (hyMid_mem : yMidVec n X₁ ∈ redeiKernel n)
+    (hyMid_ne : yMidVec n X₁ ≠ 0) :
+    let yMid : redeiKernel n := ⟨yMidVec n X₁, hyMid_mem⟩
+    ∃ psiPlus : redeiKernel n →ₗ[ZMod 2] (canonicalRealQuadRedei n).Cl4Rank,
+      Function.Surjective psiPlus ∧
+      LinearMap.ker psiPlus = Submodule.span (ZMod 2) {yMid} ∧
+      Module.finrank (ZMod 2) (redeiKernel n) = 1 + (canonicalRealQuadRedei n).rank4 := by
+  dsimp only
+  set yMid : redeiKernel n := ⟨yMidVec n X₁, hyMid_mem⟩
+  have hyMid_sub_ne : yMid ≠ 0 := by
+    intro h0
+    apply hyMid_ne
+    exact congrArg Subtype.val h0
+  obtain ⟨psiPlus, hsurj, hker⟩ := redei_reichardt_exact_sequence n X₁ Y₁ hn hfund hyMid_mem hyMid_ne
+  have h_finrank_eq : Module.finrank (ZMod 2) (LinearMap.range psiPlus) +
+      Module.finrank (ZMod 2) (LinearMap.ker psiPlus) =
       Module.finrank (ZMod 2) (redeiKernel n) :=
-    LinearMap.finrank_range_add_finrank_ker data.psiPlus
-  have h_range : Module.finrank (ZMod 2) (LinearMap.range data.psiPlus) = data.rank4 := by
-    rw [LinearMap.range_eq_top.mpr data.psiPlus_surjective, finrank_top, data.h_rank4]
-  have h_ker : Module.finrank (ZMod 2) (LinearMap.ker data.psiPlus) = 1 := by
-    rw [data.ker_psiPlus_eq_span, finrank_span_singleton hyMid_ne]
-  refine ⟨data, data.psiPlus_surjective, data.ker_psiPlus_eq_span, ?_⟩
+    LinearMap.finrank_range_add_finrank_ker psiPlus
+  have h_range : Module.finrank (ZMod 2) (LinearMap.range psiPlus) = (canonicalRealQuadRedei n).rank4 := by
+    rw [LinearMap.range_eq_top.mpr hsurj, finrank_top, (canonicalRealQuadRedei n).h_rank4]
+  have h_ker : Module.finrank (ZMod 2) (LinearMap.ker psiPlus) = 1 := by
+    rw [hker, finrank_span_singleton hyMid_sub_ne]
+  refine ⟨psiPlus, hsurj, hker, ?_⟩
   omega
 
 /-! ### Theorem 5.3(ii): Deterministic `𝒫_even^-(n)`-Absorption and Reduced Dual Quartic Laws -/

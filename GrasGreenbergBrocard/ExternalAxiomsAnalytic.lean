@@ -99,8 +99,9 @@ theorem isPrimeSubinterval_of_bounds {P a b : ℝ} (hP : 0 ≤ P) (I : Finset �
       have h1 : min (2 * P) a < (p : ℝ) := lt_of_le_of_lt (le_max_right _ _) ha'
       have h2 : (p : ℝ) ≤ 2 * P :=
         le_trans hb' (max_le (max_le (by linarith) (min_le_left _ _)) (min_le_left _ _))
-      by_contra hle; push Not at hle
-      linarith [le_min h2 hle]
+      by_contra hle; push_neg at hle
+      have hmin : min (2 * P) a = 2 * P := min_eq_left (le_trans h2 hle)
+      linarith
     have hb_le : (p : ℝ) ≤ b := by
       have h1 : ¬ (p : ℝ) ≤ a' := not_le.mpr ha'
       have h2 : b' = min (2 * P) b := by
@@ -115,11 +116,16 @@ theorem isPrimeSubinterval_of_bounds {P a b : ℝ} (hP : 0 ≤ P) (I : Finset �
 (Iwaniec & Kowalski, *Analytic Number Theory*, AMS Colloq. Publ. 53, 2004:
 Proposition 13.4, Corollary 8.11, Corollary 8.13, Theorem 8.25).
 Strictly requires:
+- `c₁, c₂ : ℕ → ℝ` (derivative-scale constants) are quantified **before** `∃ η' η C`,
+  so `C = C(δ, c₁, c₂)` genuinely depends on the derivative bounds (preventing quantifier
+  inversion on `F_ε(t) = ε / t`),
 - `I` is an exact prime subinterval `(a, b] ⊆ (P, 2P]` (`IsPrimeSubinterval P I`),
 - `w` is bounded (`|w t| ≤ W₀`) and monotone (`AntitoneOn w (Set.Icc P (2 * P))`, hence
   total variation `≤ 2 W₀` on `[P, 2P]`, enabling Abel partial summation without oscillation). -/
 axiom vaughan_van_der_corput_prime_sum :
   ∀ (δ : ℝ), 0 < δ → δ ≤ 1 / 3 →
+    ∀ (c₁ c₂ : ℕ → ℝ),
+      (∀ (j : ℕ), 1 ≤ j → j ≤ 5 * Nat.floor (1 / δ) + 2 → 0 < c₁ j ∧ c₁ j ≤ c₂ j) →
     ∃ (η' η : ℝ), 0 < η' ∧ 0 < η ∧
     ∃ C : ℝ, 0 < C ∧
     ∀ (n : ℕ) (P : ℝ) (I : Finset ℕ) (F : ℝ → ℝ) (w : ℝ → ℝ) (W₀ T₀ : ℝ),
@@ -133,9 +139,8 @@ axiom vaughan_van_der_corput_prime_sum :
       (∀ t ∈ Set.Icc P (2 * P), |w t| ≤ W₀) →
       AntitoneOn w (Set.Icc P (2 * P)) →
       (∀ (j : ℕ), 1 ≤ j → j ≤ 5 * R + 2 →
-        ∃ c₁ c₂ : ℝ, 0 < c₁ ∧ c₁ ≤ c₂ ∧
-          ∀ t ∈ Set.Icc P (2 * P),
-            c₁ * T₀ / P ^ j ≤ |iteratedDeriv j F t| ∧ |iteratedDeriv j F t| ≤ c₂ * T₀ / P ^ j) →
+        ∀ t ∈ Set.Icc P (2 * P),
+          c₁ j * T₀ / P ^ j ≤ |iteratedDeriv j F t| ∧ |iteratedDeriv j F t| ≤ c₂ j * T₀ / P ^ j) →
       ‖∑ p ∈ I, (w (p : ℝ) * Real.log (p : ℝ) : ℂ) * eExp (F (p : ℝ))‖ ≤
         C * W₀ * P * (T₀ ^ (- (1 / 6 : ℝ)) + P ^ (-η')) * (Real.log P) ^ 3 ∧
       (T₀ ≥ (n : ℝ) ^ (δ / 2) →

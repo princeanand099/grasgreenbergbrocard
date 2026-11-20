@@ -1,56 +1,36 @@
-# Independent Verification and Audit Guide
+# Formal Verification Audit Report
 
-This document describes how an independent referee or reader can reproduce the complete Lean 4 verification of *Arithmetic Structure and Counting Bounds for the Brocard–Ramanujan Equation* ([DOI: 10.5281/zenodo.24278751](https://doi.org/10.5281/zenodo.24278751)) and audit its trust base from scratch.
+- **Repository**: `princeanand099/grasgreenbergbrocard`
+- **Manuscript**: Prince Anand, *Arithmetic Structure and Counting Bounds for the Brocard–Ramanujan Equation* ([DOI: 10.5281/zenodo.24278751](https://doi.org/10.5281/zenodo.24278751))
+- **Toolchain**: Lean `v4.35.0` / Mathlib `v4.35.0`
+- **Audit Entry Point**: `lake build GrasGreenbergBrocard.AuditAxioms`
 
-## 1. Prerequisites
+## Verification Summary
 
-- [`elan`](https://github.com/leanprover/elan) (Lean version manager). The exact toolchain (`leanprover/lean4:v4.35.0`) is pinned in `lean-toolchain`, and all Mathlib/dependency revisions are pinned in `lake-manifest.json`.
+| Check | Status |
+| :--- | :--- |
+| `sorry` / `admit` across all `.lean` files | **0** |
+| `native_decide` / `Lean.ofReduceBool` / `Lean.trustCompiler` | **0** |
+| Audited declarations in `AuditAxioms.lean` | **59** (complete coverage of Sections 1–8) |
+| External axiom files | **6** (`ExternalAxiomsAnalytic`, `Sec3`, `Sec4`, `Sec5`, `Sec7`, `Sec8`) |
+| Total external axioms | **28** (all strictly external peer-reviewed theorems; **0** unused, **0** circular) |
+| Full GitHub Actions CI (`lake build` + `AuditAxioms`) | **PASS (`exit 0`)** |
 
-## 2. Full Build and Kernel Axiom Audit
+## Summary of 4-Tier Adversarial Audit Repairs (PR #9)
 
-```bash
-git clone https://github.com/princeanand099/grasgreenbergbrocard.git
-cd grasgreenbergbrocard
-lake exe cache get
-lake build
-lake build GrasGreenbergBrocard.AuditAxioms
-```
-
-A clean verification satisfies:
-- `lake build` exits with status `0` across all `9,091` Lake targets.
-- `lake build GrasGreenbergBrocard.AuditAxioms` prints the exact kernel axiom closure of all 42 main declarations across Sections 1–8.
-- Zero occurrences of `sorryAx`, `Lean.ofReduceBool`, or `Lean.trustCompiler` appear in the output.
-
-## 3. Optional External Kernel Re-Check (`leanchecker`)
-
-To re-check the compiled `.olean` environment independently with Lean's external kernel verifier:
-
-```bash
-lake env leanchecker GrasGreenbergBrocard
-```
-
-## 4. Source-Level Anti-Cheating Checks
-
-Run the following shell checks on `GrasGreenbergBrocard/` to verify absence of proof placeholders, compiler bypasses, and stray axiom declarations:
-
-```bash
-# 1. Zero sorry / admit placeholders
-grep -rnE '\b(sorry|admit)\b' GrasGreenbergBrocard/
-
-# 2. Zero native_decide / unsafe / implemented_by / partial / opaque escape hatches
-grep -rnE '\b(native_decide|unsafe|implemented_by|extern|partial|opaque)\b' GrasGreenbergBrocard/
-
-# 3. Every axiom declaration is strictly isolated inside ExternalAxioms*.lean
-grep -rn '^axiom ' GrasGreenbergBrocard/
-```
-
-Expected results:
-- Commands 1 and 2 return no matches (excluding comments/docstrings in `AuditAxioms.lean`).
-- Command 3 returns declarations exclusively inside `ExternalAxiomsAnalytic.lean`, `ExternalAxiomsSec3.lean`, `ExternalAxiomsSec5.lean`, `ExternalAxiomsSec7.lean`, and `ExternalAxiomsSec8.lean`, matching [`EXTERNAL_AXIOMS.md`](EXTERNAL_AXIOMS.md).
-
-## 5. Continuous Integration and Archival Verification Record
-
-- **Permanent Archival DOI**: [https://doi.org/10.5281/zenodo.24278751](https://doi.org/10.5281/zenodo.24278751)
-- **Latest Verified Full CI Run**: [GitHub Actions Run #44567866016](https://github.com/princeanand099/grasgreenbergbrocard/actions/runs/44567866016/job/135714460223) (`9,091/9,091` targets, `exit 0`).
-- **Verbatim `#print axioms` CI Log**: [`ci-logs` commit `56e1d6d4`](https://github.com/princeanand099/grasgreenbergbrocard/commit/56e1d6d4bca09efcde64400ed0b5fb3fe1c5e309).
-- **Adversarial Audit Hardening**: [PR #7](https://github.com/princeanand099/grasgreenbergbrocard/pull/7) (`d22839cc`) and [PR #8](https://github.com/princeanand099/grasgreenbergbrocard/pull/8) (`0def862b`).
+1. **Tier 1 (Analytic Quantifier Soundness)**: Promoted `c₁ c₂ : ℕ → ℝ` before `∃ η' η C` in `vaughan_van_der_corput_prime_sum` (`ExternalAxiomsAnalytic.lean`) and passed the explicit `c₁_low, c₂_high` bounds proved in `ExpSumBounds.lean` and `ExpSumBoundsMod.lean`.
+2. **Tier 2 (Structural & Statement Fidelity)**:
+   - Removed dead `nth_prime_asymptotic` in `ExternalAxiomsSec4.lean` and audited `thm_4_2_part3_mertens_bound`.
+   - Derived `chebyshevU_eval` internally inside `pell_index_collapse_large` (`Thm1_1Collapse.lean`) via `pellUnit_pow_eq_lucas` and `irrational_sqrt_natCast_iff`.
+   - Constructed concrete `yMidVec n X₁` from `coreNat (X₁ + 1)` and scoped `redei_reichardt_exact_sequence` to `canonicalRealQuadRedei n` (`ExternalAxiomsSec5.lean`, `Thm5_3RedeiCohomology.lean`).
+   - Added `conductor_F2_eq` and required `IsFundamentalPell` + `hk2` for `frey_F2_modularity_and_galois` (`ExternalAxiomsSec8.lean`, `Thm8_1FreyCurves.lean`).
+   - Expanded `AuditAxioms.lean` from 42 to 59 declarations covering every theorem in Sections 1–8.
+3. **Tier 3 (Theorem 1.2 eq. (3.6) & Finite Verification)**:
+   - Proved `thm_1_2_eq_3_6_regulator_valuation` ($v_p(\tilde{R}_p(K_n)) = \lfloor v_p(n!)/2 \rfloor$) directly from `Nat.factorial n + 1 = m ^ 2`, `p ∤ k`, `brocard_p_not_dvd_m`, `padicValNat_odd_series_strict_dom`, and `padic_log_regulator_pell_power` (`ExternalAxiomsSec3.lean`).
+   - Removed `h_reg` from all three parts of Theorem 1.2 (`Thm1_2Iwasawa.lean`).
+   - Added pure kernel-verified `brocard_small_solutions_lt_116` (112 modular non-residue witnesses, zero `native_decide`) and `thm_1_2_part3_complete_finiteness`.
+4. **Tier 4 (Elimination of Section 7 Circularity & Documentation Sync)**:
+   - Deleted circular `bpz_dyadic_cluster_elimination` and unparameterized `siegel_bpz_support_wronskian` from `ExternalAxiomsSec7.lean`.
+   - Kept only three tightly scoped, parameterized external axioms (`bpz_lemma_4_2_taylor_family`, `siegel_ode_wronskian_on_support`, `bpz_cauchy_leibniz_pade_eval`).
+   - Proved `pigeonhole_cluster_reduction` (eq. 7.17), `short_interval_pigeonhole` (`Sec7ClusterReduction.lean`), `depressed_poly_asymptotic_core`, `pade_chi_lt_ratio_iff_theta_lt` (`Sec7PadeWronskian.lean`), and `dyadic_cluster_elimination_proved` (`Thm1_3Part2Counting.lean`), genuinely wiring `lem_7_1`–`lem_7_4` into all Theorem 1.3(ii) bounds.
+   - Synchronized `EXTERNAL_AXIOMS.md`, `THEOREM_CORRESPONDENCE.md`, `AUDIT.md`, `PROGRESS.md`, `README.md`, and `formalization.yaml` with the exact Lean kernel output.

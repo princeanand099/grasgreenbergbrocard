@@ -231,12 +231,31 @@ private lemma padicValNat_factorial_three_le (n : ℕ) :
 /-- **Theorem 1.1 (Unconditional Collapse of the Pell Index, eq. 1.6)**:
 For all sufficiently large solutions `(n, m)` to `n! + 1 = m^2`, the Pell index `k`
 satisfies `k = 1 ∨ k = 2`. -/
+private lemma pellUnit_pow_eq_lucas (D X₁ Y₁ k : ℕ) :
+    (pellUnit D X₁ Y₁) ^ k =
+      (lucasX (D : ℤ) (X₁ : ℤ) (Y₁ : ℤ) k : ℝ) +
+        (lucasY (D : ℤ) (X₁ : ℤ) (Y₁ : ℤ) k : ℝ) * Real.sqrt (D : ℝ) := by
+  induction k with
+  | zero =>
+    unfold lucasX lucasY
+    simp
+  | succ k ih =>
+    rw [pow_succ, ih]
+    unfold pellUnit lucasX lucasY
+    rw [pow_succ, Zsqrtd.mul_re, Zsqrtd.mul_im]
+    push_cast
+    have hsq : Real.sqrt (D : ℝ) ^ 2 = (D : ℝ) := by
+      rw [sq]
+      exact Real.mul_self_sqrt (Nat.cast_nonneg D)
+    ring_nf
+    rw [hsq]
+    ring
+
 theorem pell_index_collapse_large :
     ∃ N₀ : ℕ, ∀ n m k X₁ Y₁ : ℕ, N₀ ≤ n →
       Nat.factorial n + 1 = m ^ 2 →
       IsFundamentalPell (q_n n) X₁ Y₁ →
       (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ k →
-      (s_n n : ℤ) = (Y₁ : ℤ) * chebyshevU_eval (q_n n : ℤ) (X₁ : ℤ) (Y₁ : ℤ) k →
       k = 1 ∨ k = 2 := by
   have hSodd := S_odd_asymptotic
   have hSodd_ev : ∀ᶠ n : ℕ in atTop,
@@ -322,9 +341,35 @@ theorem pell_index_collapse_large :
     rw [div_lt_iff₀ hnlog_pos] at hrat
     exact ⟨hS, hn116, hrat⟩
   obtain ⟨N₀, hN₀⟩ := Filter.eventually_atTop.mp h_large
-  refine ⟨N₀, fun n m k X₁ Y₁ hn hm hfund hk_eq hs_eq => ?_⟩
+  refine ⟨N₀, fun n m k X₁ Y₁ hn hm hfund hk_eq => ?_⟩
   obtain ⟨hS_bd, hn116, h_err_bd⟩ := hN₀ n hn
   have hq_log := log_q_n_gt_point4 hn116
+  have hs_eq : (s_n n : ℤ) = (Y₁ : ℤ) * chebyshevU_eval (q_n n : ℤ) (X₁ : ℤ) (Y₁ : ℤ) k := by
+    rw [← lucasY_eq_mul_chebyshevU]
+    have hk_lucas := hk_eq
+    rw [pellUnit_pow_eq_lucas] at hk_lucas
+    by_contra hne
+    have hsub_ne : (((s_n n : ℤ) - lucasY (q_n n : ℤ) (X₁ : ℤ) (Y₁ : ℤ) k : ℤ) : ℝ) ≠ 0 := by
+      exact_mod_cast sub_ne_zero.mpr hne
+    let r_q : ℚ :=
+      (((lucasX (q_n n : ℤ) (X₁ : ℤ) (Y₁ : ℤ) k - (m : ℤ) : ℤ) : ℚ)) /
+      ((((s_n n : ℤ) - lucasY (q_n n : ℤ) (X₁ : ℤ) (Y₁ : ℤ) k : ℤ) : ℚ))
+    have hsqrt_rat : (r_q : ℝ) = Real.sqrt (q_n n : ℝ) := by
+      dsimp only [r_q]
+      push_cast
+      rw [div_eq_iff hsub_ne]
+      linarith
+    have hq_nsq : ¬ IsSquare (q_n n) := by
+      rintro ⟨r, hr⟩
+      have hunit : IsUnit r := (q_n_squarefree n) r (by rw [hr])
+      have hr1 : r = 1 := Nat.isUnit_iff.mp hunit
+      have hq1 : q_n n = 1 := by rw [hr, hr1, mul_one]
+      have hlog0 : Real.log (q_n n : ℝ) = 0 := by rw [hq1]; simp
+      have : (0 : ℝ) < 0.4 * (n : ℝ) := by positivity
+      linarith
+    have hirr : Irrational (Real.sqrt (q_n n : ℝ)) :=
+      irrational_sqrt_natCast_iff.mpr hq_nsq
+    exact hirr ⟨r_q, hsqrt_rat⟩
   have heps_log := log_fund_pell_gt_point2 hq_log hfund
   obtain ⟨hk1, hk_lt, _⟩ := pell_index_upper_bound (by omega) hm hfund heps_log hk_eq
   have hpell_int : (X₁ : ℤ) ^ 2 - (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 = 1 := by
@@ -508,8 +553,12 @@ theorem fundamental_regulator_quantization :
       (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ k →
       |Real.log (pellUnit (q_n n) X₁ Y₁) / ((n : ℝ) * Real.log (n : ℝ)) - 1 / (2 * (k : ℝ))| ≤
         C / Real.log (n : ℝ) := by
+  -- From `log_s_n_sqrt_q_n_asymptotic`: `|log(s_n √q_n) - ((1/2) n log n - (1/2) n + (1/4) log(2πn))| ≤ C₁ * n⁻¹`
   obtain ⟨C₁, hC₁⟩ := log_s_n_sqrt_q_n_asymptotic.bound
   obtain ⟨N₁, hN₁⟩ := Filter.eventually_atTop.mp hC₁
+  -- Since we quantify over all `n ≥ 8`, `log(s_n √q_n) - (1/2) n log n = O(n)` for all `n ≥ 8`
+  -- Let's use `log(n!) = n log n - n + O(log n)` or directly `|log(s_n √q_n) - (1/2) n log n| ≤ C₀ * n` for `n ≥ 8`!
+  -- Actually `log(n!) ≤ n log n` and `n log n - n ≤ log(n!)` (already in `ValuationParityThm.lean` as `n_log_n_sub_n_le_log_factorial`!)
   refine ⟨10, by norm_num, fun n m k X₁ Y₁ hn hm hk1 hfund hk_eq => ?_⟩
   have hn_pos : (0 : ℝ) < (n : ℝ) := by positivity
   have hlogn_pos : 0 < Real.log (n : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n))
@@ -616,6 +665,7 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
       rw [hfac2, hfac1, hq_eq, ht_eq, mul_pow]
       ring
     rw [hmul, Nat.mul_div_cancel_left _ (Nat.factorial_pos n₁)]
+  -- Also `n₂! / n₁! = ∏ j ∈ Finset.range (n₂ - n₁), (n₁ + 1 + j)`
   have hprod_eq : Nat.factorial n₂ / Nat.factorial n₁ =
       ∏ j ∈ Finset.range (n₂ - n₁), (n₁ + 1 + j) := by
     have hmul : Nat.factorial n₂ = Nat.factorial n₁ * ∏ j ∈ Finset.range (n₂ - n₁), (n₁ + 1 + j) := by
@@ -646,9 +696,10 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
     have ht_le2 : t ≤ 2 := by omega
     have hsq4 : t ^ 2 ≤ 4 := by nlinarith
     omega
+  -- `(t * m₁ - m₂) * (t * m₁ + m₂) = t^2 - 1`
   have hid : (t * m₁) ^ 2 = m₂ ^ 2 + (t ^ 2 - 1) := by
     have hfac_succ : Nat.factorial (n₁ + 1) = (n₁ + 1) * Nat.factorial n₁ := Nat.factorial_succ n₁
-    have h1 : m₂ ^ 2 = t ^ 2 * Nat.factorial n₁ + 1 := by rw [← hm₂, hfac_succ, ← hn1_sq]
+    have h1 : m₂ ^ 2 = t ^ 2 * Nat.factorial n₁ + 1 := by rw [← hm₂, hfac_succ, ← hn1_sq]; ring
     have h2 : (t * m₁) ^ 2 = t ^ 2 * Nat.factorial n₁ + t ^ 2 := by
       calc (t * m₁) ^ 2 = t ^ 2 * m₁ ^ 2 := by ring
         _ = t ^ 2 * (Nat.factorial n₁ + 1) := by rw [hm₁]
@@ -669,6 +720,7 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
     calc t * m₁ + m₂ = 1 * (t * m₁ + m₂) := by ring
       _ ≤ (t * m₁ - m₂) * (t * m₁ + m₂) := Nat.mul_le_mul_right _ hdiff_ge1
       _ = t ^ 2 - 1 := hprod_factor
+  -- On the other hand, `n₁ ≥ 8` and `n₁ + 1 = t^2` gives `m₁^2 > t^2`, so `m₁ > t`, hence `t * m₁ + m₂ > t^2`!
   have hm1_gt_t : t < m₁ := by
     have hfac_gt : t ^ 2 < Nat.factorial n₁ + 1 := by
       have h1 : n₁ < Nat.factorial n₁ := by
@@ -689,9 +741,8 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
     have hsq : t ^ 2 < m₁ ^ 2 := by linarith [hm₁, hfac_gt]
     exact (Nat.pow_lt_pow_iff_left (by norm_num : 2 ≠ 0)).mp hsq
   have hsum_gt : t ^ 2 < t * m₁ + m₂ := by
-    have h1 : t * t < t * m₁ := Nat.mul_lt_mul_of_pos_left hm1_gt_t (by omega)
-    have h2 : t ^ 2 < t * m₁ := by simpa [sq] using h1
-    omega
-  omega
+    have : t * t < t * m₁ := Nat.mul_lt_mul_of_pos_left hm1_gt_t (by omega)
+    nlinarith
+  linarith
 
 end GrasGreenbergBrocard

@@ -152,26 +152,39 @@ def redeiKernel (n : ℕ) : Submodule (ZMod 2) (L0 n → ZMod 2) where
           c * ((((p.1 ^ 2 - 1) / 8 : ℕ) : ZMod 2) * a p) := fun p => by ring
       simp_rw [h_eq, ← Finset.mul_sum, ha3, mul_zero]
 
-/-- **Gauss (1801) / Hasse (1930) / Rédei–Reichardt (1934)**:
-Exact sequence of `𝔽₂`-vector spaces
-`0 → H^1(Gal(K_n/ℚ), O_{K_n}^{×,+}) → ker_{𝔽₂}(R_n^{ram}) → Cl^+(q_n)[2] ∩ 2 Cl^+(q_n) → 0`
-for `n ≥ 8`, where `H^1(Gal(K_n/ℚ), O_{K_n}^{×,+}) = {1, η_n} ≃ 𝔽₂` is spanned by the
-continued-fraction midpoint vector `y^{mid}(n) ∈ ker_{𝔽₂}(R_n^{ram})`. -/
-structure RedeiNarrowClassData (n : ℕ) (yMid : redeiKernel n) where
+/-- Concrete continued-fraction midpoint vector `y^{mid}(n, X₁) : L₀(n) → 𝔽₂` supported on the
+odd prime divisors of `δ₂^{mid}(n) = coreNat (X₁ + 1)` (Section 5.2). -/
+def yMidVec (n X₁ : ℕ) : L0 n → ZMod 2 :=
+  fun p => if p.1 ∣ coreNat (X₁ + 1) then 1 else 0
+
+/-- Canonical narrow 4-rank `𝔽₂`-vector space `Cl^+(q_n)[2] ∩ 2 Cl^+(q_n)` attached to `ℚ(√q_n)`.
+Fixing this canonical object per `n` (independent of any candidate kernel vector) prevents
+vacuous quotient instantiation. -/
+structure CanonicalNarrowCl4Rank (n : ℕ) where
   Cl4Rank : Type
   [instAdd : AddCommGroup Cl4Rank]
   [instMod : Module (ZMod 2) Cl4Rank]
   [instFin : Module.Finite (ZMod 2) Cl4Rank]
   rank4 : ℕ
   h_rank4 : Module.finrank (ZMod 2) Cl4Rank = rank4
-  psiPlus : redeiKernel n →ₗ[ZMod 2] Cl4Rank
-  psiPlus_surjective : Function.Surjective psiPlus
-  ker_psiPlus_eq_span : LinearMap.ker psiPlus = Submodule.span (ZMod 2) {yMid}
 
-attribute [instance] RedeiNarrowClassData.instAdd RedeiNarrowClassData.instMod RedeiNarrowClassData.instFin
+attribute [instance] CanonicalNarrowCl4Rank.instAdd CanonicalNarrowCl4Rank.instMod CanonicalNarrowCl4Rank.instFin
 
-axiom redei_reichardt_exact_sequence (n : ℕ) (hn : 8 ≤ n) (yMid : redeiKernel n)
-    (hyMid_ne : yMid ≠ 0) :
-    Nonempty (RedeiNarrowClassData n yMid)
+axiom canonicalRealQuadRedei (n : ℕ) : CanonicalNarrowCl4Rank n
+
+/-- **Gauss (1801) / Hasse (1930) / Rédei–Reichardt (1934)**:
+Exact sequence of `𝔽₂`-vector spaces
+`0 → span_{𝔽₂}{y^{mid}(n, X₁)} → ker_{𝔽₂}(R_n^{ram}) → Cl^+(q_n)[2] ∩ 2 Cl^+(q_n) → 0`
+for `n ≥ 8`, scoped specifically to the fundamental Pell solution `(X₁, Y₁)`, the concrete
+midpoint vector `yMidVec n X₁` constructed from `δ₂^{mid}(n) = coreNat (X₁ + 1)`, and the
+canonical narrow 4-rank space `(canonicalRealQuadRedei n).Cl4Rank`. -/
+axiom redei_reichardt_exact_sequence (n X₁ Y₁ : ℕ) (hn : 8 ≤ n)
+    (hfund : IsFundamentalPell (q_n n) X₁ Y₁)
+    (hyMid_mem : yMidVec n X₁ ∈ redeiKernel n)
+    (hyMid_ne : yMidVec n X₁ ≠ 0) :
+    let yMid : redeiKernel n := ⟨yMidVec n X₁, hyMid_mem⟩
+    ∃ psiPlus : redeiKernel n →ₗ[ZMod 2] (canonicalRealQuadRedei n).Cl4Rank,
+      Function.Surjective psiPlus ∧
+      LinearMap.ker psiPlus = Submodule.span (ZMod 2) {yMid}
 
 end GrasGreenbergBrocard

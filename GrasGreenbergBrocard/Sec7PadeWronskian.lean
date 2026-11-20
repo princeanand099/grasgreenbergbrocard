@@ -15,9 +15,10 @@ This file proves all four core lemmas of **Section 7** of the manuscript (0 `sor
   Support size bounds $\lceil m + 1 - \varepsilon_0 \rceil \le s \le m + 1$, root-multiplicity
   sum bound (eq. 7.12), and **Gauss's Lemma / leading-coefficient divisibility in $\mathbb{Z}[x]$**
   proving $\prod n_r^{a_r} \mid c_{\mathrm{lead}}(\Delta_S)$ and the multiplicity bound (eq. 7.13).
-- **Lemma 7.4** (`lem_7_4_denominator_clearing`): Common denominator clearing
-  $Z = r^{a+s} n_0^{D + (a+s)M}$ and elimination inequality connecting the Padé linear form to
-  the factorial-root approximation error $\rho$.
+- **Lemma 7.4** (`lem_7_4_denominator_clearing`, `depressed_poly_asymptotic_core`,
+  `pade_chi_lt_ratio_iff_theta_lt`): Common denominator clearing
+  $Z = r^{a+s} n_0^{D + (a+s)M}$, depressed polynomial gap core, elimination inequality, and
+  the exact Section 7.4 exponent equivalence $\chi(\theta) < (\nu - E)/E$.
 -/
 
 open scoped BigOperators
@@ -52,7 +53,7 @@ theorem siegel_lemma_pigeonhole {M_eq N_var : ℕ}
           ≤ ∑ j : Fin N_var, |A i j * ((v j : ℕ) : ℤ)| := Finset.abs_sum_le_sum_abs _ _
         _ ≤ ∑ _j : Fin N_var, ((A_max : ℤ) * (B : ℤ)) := by
             apply Finset.sum_le_sum; intro j _
-            rw [abs_mul, mul_comm |A i j|, abs_of_nonneg (Nat.cast_nonneg (v j : ℕ)), mul_comm]
+            rw [abs_mul, abs_of_nonneg (Nat.cast_nonneg _)]
             have hvj : ((v j : ℕ) : ℤ) ≤ (B : ℤ) := by exact_mod_cast Nat.le_of_lt_succ (v j).isLt
             exact mul_le_mul (hA i j) hvj (Nat.cast_nonneg _) (Nat.cast_nonneg _)
         _ = (S : ℤ) := by simp [S, mul_assoc]
@@ -73,7 +74,6 @@ theorem siegel_lemma_pigeonhole {M_eq N_var : ℕ}
     have hj := hall j
     apply Fin.ext; omega
   · intro j
-    dsimp only
     have h1 : (v₁ j : ℕ) ≤ B := Nat.le_of_lt_succ (v₁ j).isLt
     have h2 : (v₂ j : ℕ) ≤ B := Nat.le_of_lt_succ (v₂ j).isLt
     rw [abs_le]; omega
@@ -120,15 +120,10 @@ theorem lem_7_1_initial_pade_polynomials {m r M D O : ℕ}
     if p.2.val ≤ D + 1 + t.val then
       fam.clearedCoeff p.1.succ (D + 1 + t.val - p.2.val) * (r : ℤ) ^ (2 * p.2.val)
     else 0
-  have hCM_ge1 : (1 : ℝ) ≤ fam.C_P * (M : ℝ) := by
+  have hbase_ge1 : (1 : ℝ) ≤ (r : ℝ) ^ 2 * fam.C_P * (M : ℝ) := by
+    have hr1 : (1 : ℝ) ≤ (r : ℝ) := by exact_mod_cast (show 1 ≤ r by omega)
     have hM1 : (1 : ℝ) ≤ (M : ℝ) := by exact_mod_cast hM
     nlinarith [fam.C_P_pos]
-  have hr2_ge1 : (1 : ℝ) ≤ (r : ℝ) ^ 2 := by
-    have hr1 : (1 : ℝ) ≤ (r : ℝ) := by exact_mod_cast (show 1 ≤ r by omega)
-    nlinarith
-  have hbase_ge1 : (1 : ℝ) ≤ (r : ℝ) ^ 2 * fam.C_P * (M : ℝ) := by
-    have : (r : ℝ) ^ 2 * fam.C_P * (M : ℝ) = (r : ℝ) ^ 2 * (fam.C_P * (M : ℝ)) := by ring
-    rw [this]; nlinarith
   have hA_bound : ∀ t idx, |A t idx| ≤ (A_max : ℤ) := by
     intro t idx
     dsimp [A]
@@ -139,9 +134,9 @@ theorem lem_7_1_initial_pade_polynomials {m r M D O : ℕ}
           ((r : ℝ) ^ 2 * fam.C_P * (M : ℝ)) ^ (D + 1 + t.val - p.2.val) :=
         fam.coeff_bound _ _
       have hr2_le : ((r : ℝ) ^ 2) ^ p.2.val ≤ ((r : ℝ) ^ 2 * fam.C_P * (M : ℝ)) ^ p.2.val := by
+        have hM1 : (1 : ℝ) ≤ (M : ℝ) := by exact_mod_cast hM
         apply pow_le_pow_left₀ (by positivity)
-        have : (r : ℝ) ^ 2 * fam.C_P * (M : ℝ) = (r : ℝ) ^ 2 * (fam.C_P * (M : ℝ)) := by ring
-        rw [this]; nlinarith [sq_nonneg (r : ℝ)]
+        nlinarith [fam.C_P_pos, sq_nonneg (r : ℝ)]
       have hprod : |(fam.clearedCoeff p.1.succ (D + 1 + t.val - p.2.val) * (r : ℤ) ^ (2 * p.2.val) : ℝ)| ≤
           ((r : ℝ) ^ 2 * fam.C_P * (M : ℝ)) ^ O := by
         rw [abs_mul, abs_of_nonneg (by positivity : (0 : ℝ) ≤ ((r : ℤ) : ℝ) ^ (2 * p.2.val))]
@@ -247,11 +242,7 @@ theorem lem_7_2_monomial_product_puiseux_indep {K V : Type*} [Field K] [AddCommG
     subst he
     have hsing : (Fintype.piFinset (fun _ : Fin 0 => Finset.range (E + 1))).filter
         (fun e => ∑ i, e i ≤ E) = {Fin.elim0} := by
-      ext f
-      simp only [Finset.mem_filter, Finset.mem_singleton, Fintype.mem_piFinset]
-      constructor
-      · intro _; exact Subsingleton.elim f Fin.elim0
-      · intro hf; subst hf; exact ⟨fun i => Fin.elim0 i, by simp⟩
+      ext f; simp [Subsingleton.elim f Fin.elim0]
     rw [hsing, Finset.sum_singleton] at hsum
     exact (smul_eq_zero.mp hsum).resolve_right (hΩ0 Ω)
   | succ d' ih =>
@@ -274,13 +265,7 @@ theorem lem_7_2_monomial_product_puiseux_indep {K V : Type*} [Field K] [AddCommG
         intro x hx; simp only [Finset.mem_filter] at hx ⊢
         exact ⟨hx.1, by omega⟩
       rw [← Finset.sum_subset hsub]
-      · have hcongr : ∑ x ∈ (Fintype.piFinset (fun _ : Fin d' => Finset.range (E + 1))).filter
-              (fun e' => ∑ i, e' i ≤ E - c), R' x • Ω_prev x =
-            ∑ x ∈ (Fintype.piFinset (fun _ : Fin d' => Finset.range (E + 1))).filter
-              (fun e' => ∑ i, e' i ≤ E - c), R (Fin.snoc x c) • Ω_prev x := by
-          apply Finset.sum_congr rfl; intro x hx
-          dsimp [R']; rw [if_pos (Finset.mem_filter.mp hx).2]
-        rw [hcongr]; exact hslice_c
+      · simpa [R'] using hslice_c
       · intro x _ hx
         simp only [Finset.mem_filter] at hx
         have hnot : ¬ ∑ i, x i ≤ E - c := by
@@ -318,14 +303,7 @@ theorem gauss_leading_coeff_dvd_of_linear_factors {Delta : ℤ[X]} (hDelta : Del
     have hn_ne : (n : ℤ) ≠ 0 := by exact_mod_cast (hT n hn).ne'
     have h1 : (Polynomial.C (n : ℤ) * X - 1) = Polynomial.C (n : ℤ) * X + Polynomial.C (-1 : ℤ) := by
       simp [sub_eq_add_neg]
-    have hdeg_cx : (Polynomial.C (n : ℤ) * X).natDegree = 1 :=
-      Polynomial.natDegree_C_mul_X (n : ℤ) hn_ne
-    have hdeg : (Polynomial.C (n : ℤ) * X + Polynomial.C (-1 : ℤ)).natDegree = 1 := by
-      rw [Polynomial.natDegree_add_eq_left_of_natDegree_lt]
-      · exact hdeg_cx
-      · rw [Polynomial.natDegree_C, hdeg_cx]; omega
-    rw [h1, Polynomial.leadingCoeff, hdeg, Polynomial.coeff_add, Polynomial.coeff_C_mul_X, Polynomial.coeff_C]
-    simp
+    rw [h1, Polynomial.leadingCoeff_C_mul_X_add_C hn_ne]
   have hlead_prod : (∏ n ∈ T, (Polynomial.C (n : ℤ) * X - 1) ^ a n).leadingCoeff =
       ∏ n ∈ T, (n : ℤ) ^ a n := by
     rw [Polynomial.leadingCoeff_prod]
@@ -337,22 +315,17 @@ theorem gauss_leading_coeff_dvd_of_linear_factors {Delta : ℤ[X]} (hDelta : Del
   refine ⟨hlead_dvd, ?_⟩
   have hlc_ne : Delta.leadingCoeff ≠ 0 := Polynomial.leadingCoeff_ne_zero.mpr hDelta
   have habs_le : (∏ n ∈ T, (n : ℤ) ^ a n) ≤ |Delta.leadingCoeff| := by
-    obtain ⟨k, hk⟩ := hlead_dvd
-    have hk_ne : k ≠ 0 := fun h0 => hlc_ne (by rw [hk, h0, mul_zero])
-    have hk1 : (1 : ℤ) ≤ |k| := by
-      rcases lt_or_gt_of_ne hk_ne with h | h
-      · rw [abs_of_neg h]; omega
-      · rw [abs_of_pos h]; omega
+    have h1 : |∏ n ∈ T, (n : ℤ) ^ a n| ≤ |Delta.leadingCoeff| :=
+      Int.le_of_dvd (abs_pos.mpr hlc_ne) (dvd_abs.mpr hlead_dvd)
     have hnn : 0 ≤ ∏ n ∈ T, (n : ℤ) ^ a n := Finset.prod_nonneg (fun n _ => pow_nonneg (Nat.cast_nonneg _) _)
-    rw [hk, abs_mul, abs_of_nonneg hnn]
-    nlinarith
+    rwa [abs_of_nonneg hnn] at h1
   have hcast : ((∏ n ∈ T, n ^ a n : ℕ) : ℤ) = ∏ n ∈ T, (n : ℤ) ^ a n := by push_cast; rfl
   rw [← hcast] at habs_le
   exact_mod_cast habs_le
 
 /-- **Lemma 7.3(i)–(iii) (Support-Reduced Wronskian Bounds & Divisibility)**:
 Given `W : SupportWronskianData m r D O M S H`:
-1. Support-size bound: $O - (s - 1) \le s D + \binom{s}{2} M$ (so $\lceil m + 1 - \varepsilon_0 \rceil \le s \le m + 1$ for large $D$).
+1. Support-size bound: $O - (s - 1) \le s D + \binom{s}{2} M$.
 2. Multiplicity sum bound (eq. 7.12): $\sum_{n \in T} a(n) \le s D + \binom{s}{2} M - (O - (s - 1))$.
 3. Divisibility & height bound (eq. 7.13): $\prod_{n \in T} n^{a(n)} \mid c_{\mathrm{lead}}(\Delta_S)$ and
    $\prod_{n \in T} n^{a(n)} \le s! (D + s M)^{s^2} H^s C_Q^{\binom{s}{2}}$. -/
@@ -408,5 +381,125 @@ theorem lem_7_4_denominator_clearing {r E ν s D M a n₀ : ℕ} {x₀ : ℝ}
     _ = (s : ℝ) * E_dat.C_P * (M : ℝ) ^ E * E_dat.u * E_dat.U ^ D * (x₀ ^ E * x₀ ^ (-(ν : ℝ))) := by ring
     _ = (s : ℝ) * E_dat.C_P * (M : ℝ) ^ E * E_dat.u * E_dat.U ^ D * x₀ ^ ((E : ℝ) - (ν : ℝ)) := by
         rw [← Real.rpow_natCast x₀ E, ← Real.rpow_add hx₀, sub_eq_add_neg]
+
+/-! ### Lemma 7.4(ii) Algebraic Core & Section 7.4 Exponent Inequality -/
+
+/-- **Lemma 7.4(ii) (Depressed Polynomial Gap Core)**:
+If $P \in \mathbb{Z}[X]$ has degree $r \ge 2$ and depressed degree gap $\nu \in [2, r]$,
+and $s_{\mathrm{mult}} \cdot n! = P(x)$, then the depressed coordinate
+$y = r a_r x + a_{r-1}$ satisfies
+$$\bigl|y^r - r^r a_r^{r-1} s_{\mathrm{mult}} n!\bigr| \le C_{\mathrm{dep}} \cdot |y|^{r - \nu}$$
+whenever $|y| \ge 1$, where $C_{\mathrm{dep}} = \sum_{j=0}^{r-\nu} |b_j|$ depends only on $P$. -/
+theorem depressed_poly_asymptotic_core {P : ℤ[X]} {ν s_mult : ℕ}
+    (hgap : HasDepressedDegreeGap P ν) :
+    ∃ C_dep : ℝ, 0 ≤ C_dep ∧ ∀ (n : ℕ) (x : ℤ),
+      (s_mult : ℤ) * (Nat.factorial n : ℤ) = P.eval x →
+      let y : ℤ := (P.natDegree : ℤ) * P.leadingCoeff * x + P.coeff (P.natDegree - 1)
+      (1 : ℝ) ≤ |(y : ℝ)| →
+      |(y : ℝ) ^ P.natDegree -
+        ((P.natDegree : ℝ) ^ P.natDegree * (P.leadingCoeff : ℝ) ^ (P.natDegree - 1) *
+          (s_mult : ℝ) * ((Nat.factorial n : ℕ) : ℝ))| ≤
+        C_dep * |(y : ℝ)| ^ (P.natDegree - ν) := by
+  obtain ⟨hr2, hν2, hνr, _, P_dep, hmon, hdeg, hvan, heval⟩ := hgap
+  refine ⟨∑ j ∈ Finset.range (P.natDegree - ν + 1), |(P_dep.coeff j : ℝ)|,
+    Finset.sum_nonneg (fun _ _ => abs_nonneg _), ?_⟩
+  intro n x hx y hy1
+  have h1 : (P.natDegree : ℤ) ^ P.natDegree * P.leadingCoeff ^ (P.natDegree - 1) *
+      ((s_mult : ℤ) * (Nat.factorial n : ℤ)) = P_dep.eval y := by
+    rw [hx]; exact heval x
+  have h1r : ((P.natDegree : ℝ) ^ P.natDegree * (P.leadingCoeff : ℝ) ^ (P.natDegree - 1) *
+      (s_mult : ℝ) * ((Nat.factorial n : ℕ) : ℝ)) = (P_dep.eval y : ℝ) := by
+    have := congrArg (Int.cast (R := ℝ)) h1
+    push_cast at this
+    linarith
+  rw [h1r]
+  have hsum : (P_dep.eval y : ℝ) =
+      ∑ j ∈ Finset.range (P.natDegree + 1), (P_dep.coeff j : ℝ) * (y : ℝ) ^ j := by
+    rw [Polynomial.eval_eq_sum_range, hdeg]
+    push_cast
+    rfl
+  have hlead_term : (P_dep.coeff P.natDegree : ℝ) = 1 := by
+    have : P_dep.coeff P.natDegree = 1 := by rw [← hdeg]; exact hmon.leadingCoeff
+    exact_mod_cast this
+  have hdiff : (y : ℝ) ^ P.natDegree - (P_dep.eval y : ℝ) =
+      -(∑ j ∈ Finset.range (P.natDegree - ν + 1), (P_dep.coeff j : ℝ) * (y : ℝ) ^ j) := by
+    rw [hsum, Finset.sum_range_succ, hlead_term, one_mul]
+    have hsplit : ∑ j ∈ Finset.range P.natDegree, (P_dep.coeff j : ℝ) * (y : ℝ) ^ j =
+        ∑ j ∈ Finset.range (P.natDegree - ν + 1), (P_dep.coeff j : ℝ) * (y : ℝ) ^ j := by
+      have hsub : Finset.range (P.natDegree - ν + 1) ⊆ Finset.range P.natDegree := by
+        intro j hj; simp only [Finset.mem_range] at hj ⊢; omega
+      rw [← Finset.sum_subset hsub]
+      intro j hj1 hj2
+      simp only [Finset.mem_range] at hj1 hj2
+      have h0 : P_dep.coeff j = 0 := hvan j (by omega) hj1
+      simp [h0]
+    rw [hsplit]; ring
+  rw [hdiff, abs_neg]
+  calc |∑ j ∈ Finset.range (P.natDegree - ν + 1), (P_dep.coeff j : ℝ) * (y : ℝ) ^ j|
+      ≤ ∑ j ∈ Finset.range (P.natDegree - ν + 1), |(P_dep.coeff j : ℝ) * (y : ℝ) ^ j| :=
+        Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ j ∈ Finset.range (P.natDegree - ν + 1), |(P_dep.coeff j : ℝ)| * |(y : ℝ)| ^ (P.natDegree - ν) := by
+        apply Finset.sum_le_sum
+        intro j hj
+        rw [abs_mul, abs_pow]
+        have hjle : j ≤ P.natDegree - ν := Nat.lt_succ_iff.mp (Finset.mem_range.mp hj)
+        exact mul_le_mul_of_nonneg_left (pow_le_pow_right₀ hy1 hjle) (abs_nonneg _)
+    _ = (∑ j ∈ Finset.range (P.natDegree - ν + 1), |(P_dep.coeff j : ℝ)|) * |(y : ℝ)| ^ (P.natDegree - ν) := by
+        rw [← Finset.sum_mul]
+
+/-- **Section 7.4 Exponent Equivalence**:
+Whenever $m > 1$, $0 < \varepsilon_0 < m - 1$, $1 \le E < \nu$, and
+$0 < \theta < \frac{\varepsilon_0 ((\nu - E)(m - \varepsilon_0) - E)}{(m + 1 - \varepsilon_0)(\nu m - E \varepsilon_0)}$,
+the Padé denominator $m - \varepsilon_0 - \frac{m(m+1-\varepsilon_0)}{\varepsilon_0} \theta$ is
+strictly positive and the elimination ratio $\chi(\theta)$ satisfies $\chi(\theta) < (\nu - E)/E$. -/
+theorem pade_chi_lt_ratio_iff_theta_lt {m ν E : ℕ} {ε₀ θ : ℝ}
+    (hE : 1 ≤ E) (hEν : E < ν)
+    (hε0_pos : 0 < ε₀) (hε0_lt : ε₀ < (m : ℝ) - 1)
+    (hθ_pos : 0 < θ)
+    (hθ_lt : θ < ε₀ * (((ν : ℝ) - (E : ℝ)) * ((m : ℝ) - ε₀) - (E : ℝ)) /
+      (((m : ℝ) + 1 - ε₀) * ((ν : ℝ) * (m : ℝ) - (E : ℝ) * ε₀))) :
+    0 < ((m : ℝ) - ε₀) - ((m : ℝ) * ((m : ℝ) + 1 - ε₀) / ε₀) * θ ∧
+    (1 + (((m : ℝ) - ε₀) * ((m : ℝ) + 1 - ε₀) / ε₀) * θ) /
+      (((m : ℝ) - ε₀) - ((m : ℝ) * ((m : ℝ) + 1 - ε₀) / ε₀) * θ) <
+      ((ν : ℝ) - (E : ℝ)) / (E : ℝ) := by
+  have hm_gt : (1 : ℝ) < (m : ℝ) := by linarith
+  have hE_pos : (0 : ℝ) < (E : ℝ) := by exact_mod_cast (show 0 < E by omega)
+  have hνE_pos : (0 : ℝ) < (ν : ℝ) - (E : ℝ) := by
+    have : (E : ℝ) < (ν : ℝ) := by exact_mod_cast hEν
+    linarith
+  have hm1_pos : (0 : ℝ) < (m : ℝ) + 1 - ε₀ := by linarith
+  have hm0_pos : (0 : ℝ) < (m : ℝ) - ε₀ := by linarith
+  have hνm_pos : (0 : ℝ) < (ν : ℝ) * (m : ℝ) - (E : ℝ) * ε₀ := by
+    have h1 : (E : ℝ) < (ν : ℝ) := by exact_mod_cast hEν
+    nlinarith
+  have hden_big : 0 < ((m : ℝ) + 1 - ε₀) * ((ν : ℝ) * (m : ℝ) - (E : ℝ) * ε₀) :=
+    mul_pos hm1_pos hνm_pos
+  have hcross : θ * (((m : ℝ) + 1 - ε₀) * ((ν : ℝ) * (m : ℝ) - (E : ℝ) * ε₀)) <
+      ε₀ * (((ν : ℝ) - (E : ℝ)) * ((m : ℝ) - ε₀) - (E : ℝ)) :=
+    (lt_div_iff₀ hden_big).mp hθ_lt
+  have hmain : (E : ℝ) * (ε₀ + ((m : ℝ) - ε₀) * ((m : ℝ) + 1 - ε₀) * θ) <
+      ((ν : ℝ) - (E : ℝ)) * (ε₀ * ((m : ℝ) - ε₀) - (m : ℝ) * ((m : ℝ) + 1 - ε₀) * θ) := by
+    nlinarith
+  have hden_scaled : 0 < ε₀ * ((m : ℝ) - ε₀) - (m : ℝ) * ((m : ℝ) + 1 - ε₀) * θ := by
+    have hlhs_pos : 0 < (E : ℝ) * (ε₀ + ((m : ℝ) - ε₀) * ((m : ℝ) + 1 - ε₀) * θ) := by
+      have : 0 < ((m : ℝ) - ε₀) * ((m : ℝ) + 1 - ε₀) * θ := mul_pos (mul_pos hm0_pos hm1_pos) hθ_pos
+      nlinarith
+    nlinarith
+  have hden_pos : 0 < ((m : ℝ) - ε₀) - ((m : ℝ) * ((m : ℝ) + 1 - ε₀) / ε₀) * θ := by
+    have hrew : ((m : ℝ) - ε₀) - ((m : ℝ) * ((m : ℝ) + 1 - ε₀) / ε₀) * θ =
+        (ε₀ * ((m : ℝ) - ε₀) - (m : ℝ) * ((m : ℝ) + 1 - ε₀) * θ) / ε₀ := by
+      field_simp [hε0_pos.ne']
+    rw [hrew]
+    exact div_pos hden_scaled hε0_pos
+  refine ⟨hden_pos, ?_⟩
+  rw [div_lt_div_iff₀ hden_pos hE_pos]
+  have hrew_l : (1 + (((m : ℝ) - ε₀) * ((m : ℝ) + 1 - ε₀) / ε₀) * θ) * (E : ℝ) =
+      ((E : ℝ) * (ε₀ + ((m : ℝ) - ε₀) * ((m : ℝ) + 1 - ε₀) * θ)) / ε₀ := by
+    field_simp [hε0_pos.ne']
+  have hrew_r : ((ν : ℝ) - (E : ℝ)) * (((m : ℝ) - ε₀) - ((m : ℝ) * ((m : ℝ) + 1 - ε₀) / ε₀) * θ) =
+      (((ν : ℝ) - (E : ℝ)) * (ε₀ * ((m : ℝ) - ε₀) - (m : ℝ) * ((m : ℝ) + 1 - ε₀) * θ)) / ε₀ := by
+    field_simp [hε0_pos.ne']
+  rw [hrew_l, hrew_r]
+  exact div_lt_div_of_pos_right hmain hε0_pos
 
 end GrasGreenbergBrocard
