@@ -7,7 +7,7 @@ lean_version: "v4.35.0"
 mathlib_version: "v4.35.0"
 audit:
   entrypoint: "GrasGreenbergBrocard.AuditAxioms"
-  audited_declarations: 59
+  audited_declarations: 63
   sorries: 0
   admits: 0
   native_decide: 0

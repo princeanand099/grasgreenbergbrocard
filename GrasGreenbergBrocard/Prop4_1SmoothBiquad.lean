@@ -13,6 +13,7 @@ Formalizes Section 4.1 (eqs. 4.1–4.6 and Proposition 4.1(i)–(ii)) of the man
 - `k_eq_2_identities`: eqs. (4.1)–(4.3) in the `k = 2` regime
 - `rad`, `sfCore`, `sqPart`: radical, square-free core, and square part of a natural number
 - `prop_4_1_part1`: prime-support separation, `(n/2)`-smoothness of `m + 1`, and eq. (4.4)
+- `prop_4_1_part1_asymptotic`: asymptotic eq. (4.4) `(log 2 + o(1)) n` and `(1 - log 2 + o(1)) n`
 - `prop_4_1_part2`: biquadratic splitting in `ℚ(√(-δ₁), √δ₂)` (eq. 4.5) and
   modulo-`p^{v_p(n!)}` / Fermat-quotient congruences (eq. 4.6)
 -/
@@ -490,6 +491,151 @@ theorem prop_4_1_part1 {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
       _ = Real.log 2 + ∑ p ∈ (Finset.Icc 3 (n / 2)).filter Nat.Prime, Real.log (p : ℝ) := by
           rw [Finset.sum_insert h2_not]; norm_num
   exact ⟨hdisj, hPodd, hX_even, hm_smooth, h_rad_sub, h_rad_add⟩
+
+private lemma tendsto_exp_neg_sqrt_log_zero {c : ℝ} (hc : 0 < c) :
+    Tendsto (fun n : ℕ => Real.exp (-c * Real.sqrt (Real.log (n : ℝ)))) atTop (nhds 0) := by
+  have hsqrt : Tendsto (fun n : ℕ => Real.sqrt (Real.log (n : ℝ))) atTop atTop := by
+    rw [Filter.tendsto_atTop_atTop]
+    intro M
+    have hlog := (Real.tendsto_log_atTop.comp tendsto_natCast_atTop_atTop).eventually
+      (eventually_ge_atTop ((max M 0) ^ 2))
+    obtain ⟨N, hN⟩ := Filter.eventually_atTop.mp hlog
+    refine ⟨N, fun n hn => ?_⟩
+    have h1 : (max M 0) ^ 2 ≤ Real.log (n : ℝ) := hN n hn
+    have h2 : max M 0 ≤ Real.sqrt (Real.log (n : ℝ)) := by
+      rw [← Real.sqrt_sq (le_max_right M 0)]
+      exact Real.sqrt_le_sqrt h1
+    exact le_trans (le_max_left M 0) h2
+  have hneg : Tendsto (fun n : ℕ => -c * Real.sqrt (Real.log (n : ℝ))) atTop atBot :=
+    Filter.Tendsto.const_mul_atTop_of_neg (by linarith) hsqrt
+  exact Real.tendsto_exp_atBot.comp hneg
+
+/-- **Proposition 4.1(i), asymptotic eq. (4.4)**:
+Combining `prop_4_1_part1` with `ValuationParityLayer.log_q_n_asymptotic` and
+`de_la_vallee_poussin_theta`, for every `ε > 0`, for all sufficiently large `n` and any `k = 2`
+Brocard solution `n! + 1 = m^2` with fundamental Pell unit `X₁ + Y₁ √q_n`:
+1. `(Real.log 2 - ε) * n ≤ Real.log (rad (m - 1) : ℝ)`, and
+2. `Real.log (rad (m + 1) : ℝ) ≤ (1 - Real.log 2 + ε) * n`. -/
+theorem prop_4_1_part1_asymptotic :
+    ∀ ε : ℝ, 0 < ε →
+    ∃ N₀ : ℕ, ∀ n m X₁ Y₁ : ℕ, N₀ ≤ n →
+      Nat.factorial n + 1 = m ^ 2 →
+      IsFundamentalPell (q_n n) X₁ Y₁ →
+      (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ 2 →
+      (Real.log 2 - ε) * (n : ℝ) ≤ Real.log (rad (m - 1) : ℝ) ∧
+      Real.log (rad (m + 1) : ℝ) ≤ (1 - Real.log 2 + ε) * (n : ℝ) := by
+  intro ε hε
+  obtain ⟨c₀, hc₀, hq_bigO⟩ := log_q_n_asymptotic
+  obtain ⟨C₀, hC₀_ev⟩ := hq_bigO.bound
+  obtain ⟨c₁, hc₁, hth_bigO⟩ := de_la_vallee_poussin_theta
+  obtain ⟨C₁, hC₁_ev⟩ := (hth_bigO.comp_tendsto tendsto_natCast_atTop_atTop).bound
+  have hexp0 : ∀ᶠ n : ℕ in atTop,
+      |C₀| * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) ≤ ε / 3 := by
+    have ht := (tendsto_exp_neg_sqrt_log_zero hc₀).const_mul |C₀|
+    rw [mul_zero] at ht
+    exact ht.eventually (eventually_le_nhds (by positivity : (0 : ℝ) < ε / 3))
+  have hexp1 : ∀ᶠ n : ℕ in atTop,
+      |C₁| * Real.exp (-c₁ * Real.sqrt (Real.log (n : ℝ))) ≤ ε / 3 := by
+    have ht := (tendsto_exp_neg_sqrt_log_zero hc₁).const_mul |C₁|
+    rw [mul_zero] at ht
+    exact ht.eventually (eventually_le_nhds (by positivity : (0 : ℝ) < ε / 3))
+  have hlog2_ev : ∀ᶠ n : ℕ in atTop, Real.log 2 ≤ (ε / 3) * (n : ℝ) := by
+    filter_upwards [tendsto_natCast_atTop_atTop.eventually
+      (eventually_ge_atTop (3 * Real.log 2 / ε))] with n hn
+    have hmul := mul_le_mul_of_nonneg_left hn (by positivity : 0 ≤ ε / 3)
+    have hsimp : (ε / 3) * (3 * Real.log 2 / ε) = Real.log 2 := by field_simp [hε.ne']
+    linarith
+  have hall := (eventually_ge_atTop 8).and
+    (hC₀_ev.and (hC₁_ev.and (hexp0.and (hexp1.and hlog2_ev))))
+  obtain ⟨N₀, hN₀⟩ := Filter.eventually_atTop.mp hall
+  refine ⟨N₀, fun n m X₁ Y₁ hn hm hfund hk2 => ?_⟩
+  obtain ⟨hn8, hq_b, hth_b, he0, he1, hlog2_n⟩ := hN₀ n hn
+  have hn_nn : (0 : ℝ) ≤ (n : ℝ) := Nat.cast_nonneg n
+  have hq_lo : (Real.log 2 - ε / 3) * (n : ℝ) ≤ Real.log (q_n n : ℝ) := by
+    rw [Real.norm_eq_abs, Real.norm_of_nonneg (by positivity)] at hq_b
+    have h1 : |Real.log (q_n n : ℝ) - Real.log 2 * (n : ℝ)| ≤
+        |C₀| * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) * (n : ℝ) := by
+      have hC0_le : C₀ ≤ |C₀| := le_abs_self C₀
+      have hpos : 0 ≤ (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) := by positivity
+      calc |Real.log (q_n n : ℝ) - Real.log 2 * (n : ℝ)|
+          ≤ C₀ * ((n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ)))) := hq_b
+        _ ≤ |C₀| * ((n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ)))) :=
+            mul_le_mul_of_nonneg_right hC0_le hpos
+        _ = |C₀| * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) * (n : ℝ) := by ring
+    have h2 : |C₀| * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) * (n : ℝ) ≤ (ε / 3) * (n : ℝ) :=
+      mul_le_mul_of_nonneg_right he0 hn_nn
+    linarith [(abs_le.mp (le_trans h1 h2)).1]
+  have hth_hi : thetaPrime (n : ℝ) ≤ (1 + ε / 3) * (n : ℝ) := by
+    dsimp only [Function.comp_def] at hth_b
+    rw [Real.norm_eq_abs, Real.norm_of_nonneg (by positivity)] at hth_b
+    have h1 : |thetaPrime (n : ℝ) - (n : ℝ)| ≤
+        |C₁| * Real.exp (-c₁ * Real.sqrt (Real.log (n : ℝ))) * (n : ℝ) := by
+      have hC1_le : C₁ ≤ |C₁| := le_abs_self C₁
+      have hpos : 0 ≤ (n : ℝ) * Real.exp (-c₁ * Real.sqrt (Real.log (n : ℝ))) := by positivity
+      calc |thetaPrime (n : ℝ) - (n : ℝ)|
+          ≤ C₁ * ((n : ℝ) * Real.exp (-c₁ * Real.sqrt (Real.log (n : ℝ)))) := hth_b
+        _ ≤ |C₁| * ((n : ℝ) * Real.exp (-c₁ * Real.sqrt (Real.log (n : ℝ)))) :=
+            mul_le_mul_of_nonneg_right hC1_le hpos
+        _ = |C₁| * Real.exp (-c₁ * Real.sqrt (Real.log (n : ℝ))) * (n : ℝ) := by ring
+    have h2 : |C₁| * Real.exp (-c₁ * Real.sqrt (Real.log (n : ℝ))) * (n : ℝ) ≤ (ε / 3) * (n : ℝ) :=
+      mul_le_mul_of_nonneg_right he1 hn_nn
+    linarith [(abs_le.mp (le_trans h1 h2)).2]
+  have hpart1 := prop_4_1_part1 hn8 hm hfund hk2
+  have hX_even := hpart1.2.2.1
+  have h_rad_sub := hpart1.2.2.2.2.1
+  have hlo_sub : (Real.log 2 - ε) * (n : ℝ) ≤ Real.log (rad (m - 1) : ℝ) := by
+    rw [← log_q_n_eq_sum_log n] at h_rad_sub
+    nlinarith
+  have hhi_add : Real.log (rad (m + 1) : ℝ) ≤ (1 - Real.log 2 + ε) * (n : ℝ) := by
+    obtain ⟨_, hm_add1, _, _, _, _, _⟩ := k_eq_2_identities (by omega) (by omega) hm hfund hk2
+    have hsub : (m + 1).primeFactors ⊆ insert 2 (Peven n) := by
+      intro p hp_mem
+      have hp_pr := Nat.prime_of_mem_primeFactors hp_mem
+      have hpd := Nat.dvd_of_mem_primeFactors hp_mem
+      rw [hm_add1] at hpd
+      by_cases hp2 : p = 2
+      · subst hp2; exact Finset.mem_insert_self 2 _
+      · have hp3 : 3 ≤ p := by have := hp_pr.two_le; omega
+        rcases hp_pr.dvd_mul.mp hpd with h2 | hX2
+        · have := Nat.le_of_dvd (by norm_num) h2; omega
+        · exact Finset.mem_insert_of_mem (hX_even p hp_pr hp3 (hp_pr.dvd_of_dvd_pow hX2)).1
+    have hlog_rad : Real.log (rad (m + 1) : ℝ) = ∑ p ∈ (m + 1).primeFactors, Real.log (p : ℝ) := by
+      unfold rad
+      push_cast
+      rw [Real.log_prod (fun p hp => Nat.cast_ne_zero.mpr (Nat.prime_of_mem_primeFactors hp).ne_zero)]
+    have hrad_le_peven : Real.log (rad (m + 1) : ℝ) ≤
+        Real.log 2 + ∑ p ∈ Peven n, Real.log (p : ℝ) := by
+      rw [hlog_rad]
+      have h1 : ∑ p ∈ (m + 1).primeFactors, Real.log (p : ℝ) ≤
+          ∑ p ∈ insert 2 (Peven n), Real.log (p : ℝ) := by
+        apply Finset.sum_le_sum_of_subset_of_nonneg hsub
+        intro p hp _
+        rcases Finset.mem_insert.mp hp with rfl | hp'
+        · exact Real.log_nonneg (by norm_num)
+        · exact Real.log_nonneg (by exact_mod_cast (Finset.mem_filter.mp hp').2.1.one_lt.le)
+      by_cases h2mem : 2 ∈ Peven n
+      · rw [Finset.insert_eq_of_mem h2mem] at h1
+        have hlog2_nn : 0 ≤ Real.log 2 := Real.log_nonneg (by norm_num)
+        linarith
+      · rw [Finset.sum_insert h2mem] at h1
+        norm_num at h1
+        exact h1
+    have hpart_sum : ∑ p ∈ Podd n, Real.log (p : ℝ) + ∑ p ∈ Peven n, Real.log (p : ℝ) =
+        thetaPrime (n : ℝ) := by
+      have hunion : Podd n ∪ Peven n = (Finset.Icc 2 n).filter Nat.Prime := by
+        ext p
+        simp only [Podd, Peven, Finset.mem_union, Finset.mem_filter]
+        tauto
+      have hdisj : Disjoint (Podd n) (Peven n) := by
+        rw [Finset.disjoint_left]
+        intro p h1 h2
+        exact (Finset.mem_filter.mp h1).2.2 (Finset.mem_filter.mp h2).2.2
+      rw [← Finset.sum_union hdisj, hunion]
+      unfold thetaPrime
+      rw [Nat.floor_natCast]
+    rw [← log_q_n_eq_sum_log n] at hpart_sum
+    linarith
+  exact ⟨hlo_sub, hhi_add⟩
 
 /-- **Proposition 4.1(ii) (Biquadratic Splitting and Fermat-Quotient Lock, eqs. 4.5–4.6)**:
 Writing `X₁ - 1 = δ₁ u^2` and `X₁ + 1 = δ₂ v^2` with `δ₁, δ₂` square-free, every odd prime

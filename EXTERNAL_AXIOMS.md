@@ -2,7 +2,7 @@
 
 All external axioms in `GrasGreenbergBrocard` encode **established, peer-reviewed mathematical results** external to the manuscript's own contributions, where Mathlib `v4.35.0` does not yet contain a formalization. Zero manuscript-owned lemmas, propositions, or theorems are axiomatized, and zero unused axioms remain.
 
-All **28 external axioms** are isolated in **six** dedicated files and verified by `GrasGreenbergBrocard/AuditAxioms.lean` (59 audited declarations, zero `sorryAx`, zero `Lean.ofReduceBool`/`Lean.trustCompiler`).
+All **28 external axioms** are isolated in **six** dedicated files and verified by `GrasGreenbergBrocard/AuditAxioms.lean` (**63** audited declarations, zero `sorryAx`, zero `Lean.ofReduceBool`/`Lean.trustCompiler`).
 
 ## 1. `GrasGreenbergBrocard/ExternalAxiomsAnalytic.lean` (6 axioms)
 
@@ -11,7 +11,7 @@ All **28 external axioms** are isolated in **six** dedicated files and verified 
 | `de_la_vallee_poussin_theta` | de la Vallée Poussin (1899) | Classical zero-free region error term for $\vartheta(x) = x + O(x \exp(-c\sqrt{\log x}))$ |
 | `chebyshev_pi_upper` | Chebyshev (1852) | Effective upper bound $\pi(x) \le C x / \log x$ |
 | `pnt_pi_asymptotic` | Hadamard / de la Vallée Poussin (1896) | Prime Number Theorem $\pi(x) \sim x / \log x$ |
-| `mertens_first_theorem` | Mertens (1874) | $\sum_{p \le x} \frac{\log p}{p} = \log x + O(1)$ |
+| `mertens_first_theorem` | Mertens (1874) | $\sum_{3 \le p \le x} \frac{\log p}{p - 1} = \log x + O(1)$ |
 | `vaaler_extremal_polynomials` | Vaaler (1985), Thm. 18 | Extremal trigonometric polynomial majorants/minorants for sawtooth functions |
 | `vaughan_van_der_corput_prime_sum` | Vaughan (1977), Heath-Brown (1982), Graham–Kolesnik (1991), Thm. 2.9 | Type I/II prime exponential sum bound; `c₁ c₂ : ℕ → ℝ` are quantified **before** `∃ η' η C` so the constant `C` depends uniformly on `(δ, c₁, c₂)` |
 
@@ -34,7 +34,7 @@ All **28 external axioms** are isolated in **six** dedicated files and verified 
 
 | Axiom | Published Source | Role |
 | :--- | :--- | :--- |
-| `mertens_first_theorem_odd_primes` | Mertens (1874) | $\sum_{3 \le p \le x} \frac{\log p}{p} = \log x + O(1)$ (used in `thm_4_2_part3_mertens_bound`) |
+| `mertens_first_theorem_odd_primes` | Mertens (1874) | $\sum_{3 \le p \le x} \frac{\log p}{p - 1} = \log x - \gamma - \log 2 + o(1)$ (used in `thm_4_2_part3_mertens_bound`) |
 
 ## 4. `GrasGreenbergBrocard/ExternalAxiomsSec5.lean` (4 axioms)
 
@@ -58,6 +58,6 @@ All **28 external axioms** are isolated in **six** dedicated files and verified 
 | Axiom | Published Source | Role |
 | :--- | :--- | :--- |
 | `frey_E_modularity` | Wiles (1995), Breuil–Conrad–Diamond–Taylor (2001) | Modularity and conductor bound for Frey curve $E_n$ attached to $n! + 1 = m^2$ |
-| `frey_F2_modularity_and_galois` | Wiles (1995), BCDT (2001), Ribet (1990) | Modularity, exact conductor `conductor_F2_eq : N(F_n^{(2)}) = 2^{α_2} rad_odd(q_n) rad_odd(Y_1)`, and Galois representation for $F_n^{(2)}$; explicitly requires `IsFundamentalPell (q_n n) X₁ Y₁` and `hk2` ($k = 2$) |
+| `frey_F2_modularity_and_galois` | Wiles (1995), BCDT (2001), Ribet (1990) | Modularity, exact conductor `conductor_F2_eq : N(F_n^{(2)}) = 2^{α_2} (∏_{3 ≤ p ≤ n} p) / (∏_{3 ≤ p ≤ n, p ∣ X_1} p)`, and Galois representation for $F_n^{(2)}$; explicitly requires `IsFundamentalPell (q_n n) X₁ Y₁` and `hk2` ($k = 2$) |
 | `canonicalRealQuadClassGroup` | Classical genus theory & class group invariants | Canonical narrow class group record for $\mathbb{Q}(\sqrt{q_n})$ |
 | `tatuzawa_effective_siegel` | Tatuzawa (1951), *Japan. J. Math.* 21, 163–178 | Effective Siegel lower bound $L(1, \chi_D) > \frac{0.655 \varepsilon}{D^\varepsilon}$ with at most one exceptional discriminant |

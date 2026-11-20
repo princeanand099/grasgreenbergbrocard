@@ -45,6 +45,9 @@ verifying:
 #print axioms GrasGreenbergBrocard.known_k4
 #print axioms GrasGreenbergBrocard.known_k5
 #print axioms GrasGreenbergBrocard.known_k7
+#print axioms GrasGreenbergBrocard.log_q_n_gt_point4_ge8
+#print axioms GrasGreenbergBrocard.log_fund_pell_gt_point2_ge8
+#print axioms GrasGreenbergBrocard.pell_index_upper_bound_ge8
 #print axioms GrasGreenbergBrocard.pell_index_collapse_large
 #print axioms GrasGreenbergBrocard.fundamental_regulator_quantization
 #print axioms GrasGreenbergBrocard.q_n_ne_of_solutions
@@ -59,6 +62,7 @@ verifying:
 
 -- Section 4
 #print axioms GrasGreenbergBrocard.prop_4_1_part1
+#print axioms GrasGreenbergBrocard.prop_4_1_part1_asymptotic
 #print axioms GrasGreenbergBrocard.prop_4_1_part2
 #print axioms GrasGreenbergBrocard.thm_4_2_part1_euclidean_lock
 #print axioms GrasGreenbergBrocard.thm_4_2_part2_dual_quartic

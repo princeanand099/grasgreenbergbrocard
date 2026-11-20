@@ -7,9 +7,9 @@ Lean 4 (`v4.35.0`) formalization of **Prince Anand**, *Arithmetic Structure and 
 
 ## Highlights
 
-- **Complete Coverage (Sections 1–8)**: Formalizes Theorems 1.1, 1.2, 1.3(i)–(ii), 4.2, 5.2, 5.3, 6.4, 8.1, 8.2, Propositions 2.2, 2.4, 3.2, 4.1, 5.1, 6.1, 6.2, and Lemmas 2.1, 3.3, 6.3, 7.1–7.4.
+- **Complete Coverage (Sections 1–8)**: Formalizes Theorems 1.1, 1.2, 1.3(i)–(ii), 4.2, 5.2, 5.3, 6.4, 8.1, 8.2, Propositions 2.2, 2.4, 3.2, 4.1, 5.1, 6.1, 6.2, and Lemmas 2.1, 3.1, 3.3, 6.3, 7.1–7.4.
 - **Zero Kernel Bypasses**: `0` `sorry`s, `0` `admit`s, `0` `native_decide` (`Lean.ofReduceBool`/`Lean.trustCompiler`).
-- **Audited External Axioms**: **28** strictly external, peer-reviewed axioms isolated in **6** `ExternalAxioms*.lean` files (`0` unused, `0` circular), verified across **59** `#print axioms` declarations in `GrasGreenbergBrocard/AuditAxioms.lean`.
+- **Audited External Axioms**: **28** strictly external, peer-reviewed axioms isolated in **6** `ExternalAxioms*.lean` files (`0` unused, `0` circular), verified across **63** `#print axioms` declarations in `GrasGreenbergBrocard/AuditAxioms.lean`.
 
 ## Build & Verify
 
@@ -21,9 +21,9 @@ lake build GrasGreenbergBrocard.AuditAxioms
 
 ## Documentation
 
-- [`THEOREM_CORRESPONDENCE.md`](THEOREM_CORRESPONDENCE.md) — Exact theorem-by-theorem mapping between the manuscript and Lean 4 declarations.
+- [`THEOREM_CORRESPONDENCE.md`](THEOREM_CORRESPONDENCE.md) — Exact theorem-by-theorem mapping between the manuscript and Lean 4 declarations with kernel `#print axioms` closures.
 - [`EXTERNAL_AXIOMS.md`](EXTERNAL_AXIOMS.md) — Complete inventory of all 28 external axioms across 6 files with published references.
-- [`AUDIT.md`](AUDIT.md) — Machine-checked verification report and 4-tier adversarial audit repair log.
+- [`AUDIT.md`](AUDIT.md) — Machine-checked verification report and adversarial audit repair log.
 - [`PROGRESS.md`](PROGRESS.md) — Module-by-module completion status.
 - [`MATHEMATICAL_CORRECTIONS.md`](MATHEMATICAL_CORRECTIONS.md) — Record of mathematical clarifications and edge-case refinements discovered during formalization.
 
