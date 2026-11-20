@@ -241,8 +241,12 @@ private lemma pellUnit_pow_eq_lucas (D X₁ Y₁ k : ℕ) :
     simp
   | succ k ih =>
     rw [pow_succ, ih]
+    have hmul_re : ∀ (a b : Zsqrtd (D : ℤ)), (a * b).re = a.re * b.re + (D : ℤ) * a.im * b.im := by
+      intro a b; ring_nf; rfl
+    have hmul_im : ∀ (a b : Zsqrtd (D : ℤ)), (a * b).im = a.re * b.im + a.im * b.re := by
+      intro a b; ring_nf; rfl
     unfold pellUnit lucasX lucasY
-    rw [pow_succ, Zsqrtd.mul_re, Zsqrtd.mul_im]
+    rw [pow_succ, hmul_re, hmul_im]
     push_cast
     have hsq : Real.sqrt (D : ℝ) ^ 2 = (D : ℝ) := by
       rw [sq]
@@ -357,6 +361,7 @@ theorem pell_index_collapse_large :
     have hsqrt_rat : (r_q : ℝ) = Real.sqrt (q_n n : ℝ) := by
       dsimp only [r_q]
       push_cast
+      push_cast at hsub_ne
       rw [div_eq_iff hsub_ne]
       linarith
     have hq_nsq : ¬ IsSquare (q_n n) := by
@@ -699,7 +704,7 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
   -- `(t * m₁ - m₂) * (t * m₁ + m₂) = t^2 - 1`
   have hid : (t * m₁) ^ 2 = m₂ ^ 2 + (t ^ 2 - 1) := by
     have hfac_succ : Nat.factorial (n₁ + 1) = (n₁ + 1) * Nat.factorial n₁ := Nat.factorial_succ n₁
-    have h1 : m₂ ^ 2 = t ^ 2 * Nat.factorial n₁ + 1 := by rw [← hm₂, hfac_succ, ← hn1_sq]; ring
+    have h1 : m₂ ^ 2 = t ^ 2 * Nat.factorial n₁ + 1 := by rw [← hm₂, hfac_succ, ← hn1_sq]
     have h2 : (t * m₁) ^ 2 = t ^ 2 * Nat.factorial n₁ + t ^ 2 := by
       calc (t * m₁) ^ 2 = t ^ 2 * m₁ ^ 2 := by ring
         _ = t ^ 2 * (Nat.factorial n₁ + 1) := by rw [hm₁]
@@ -742,7 +747,8 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
     exact (Nat.pow_lt_pow_iff_left (by norm_num : 2 ≠ 0)).mp hsq
   have hsum_gt : t ^ 2 < t * m₁ + m₂ := by
     have : t * t < t * m₁ := Nat.mul_lt_mul_of_pos_left hm1_gt_t (by omega)
-    nlinarith
+    have hsq : t ^ 2 = t * t := sq t
+    omega
   linarith
 
 end GrasGreenbergBrocard

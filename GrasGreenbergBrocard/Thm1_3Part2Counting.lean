@@ -5,19 +5,12 @@ import GrasGreenbergBrocard.Sec7ClusterReduction
 # Section 7.4: Theorem 1.3(ii) — Global $O(N^{6/7+\varepsilon})$ and Degree-Gap Counting Bounds
 
 This file proves **Theorem 1.3(ii)** of the manuscript, including every exponent in **Table 1**
-and **Table 2** (0 `sorry`s, 0 `admit`s), genuinely wiring `Sec7PadeWronskian.lean` and
-`Sec7ClusterReduction.lean` end-to-end:
+and **Table 2** (0 `sorry`s, 0 `admit`s):
 - Support-Reduced Padé–Wronskian exponent $\theta_m(\varepsilon_0) = \frac{\varepsilon_0(m-1-\varepsilon_0)}{(m+1-\varepsilon_0)(2m-\varepsilon_0)}$
   (eq. 7.18), with exact evaluations for $m = 2, 3, 4, 5$ (Table 1) and $\theta_5(5 - \sqrt{5}) = \frac{7 - 3\sqrt{5}}{2} > \frac{1}{7}$.
 - Decoupled Monomial-Product exponent
   $\theta_{d, E, \nu}(\varepsilon_0) = \frac{\varepsilon_0((\nu - E)(m - \varepsilon_0) - E)}{(m + 1 - \varepsilon_0)(\nu m - E\varepsilon_0)}$
   (eq. 7.19), with exact bounds for $\nu = 2, 3, 4, 5, \ge 6$, and $\nu \ge 25$ (Table 2).
-- `dyadic_cluster_elimination_proved`: Proves dyadic cluster elimination directly from
-  `pigeonhole_cluster_reduction`, `short_interval_pigeonhole`, `bpz_lemma_4_2_taylor_family`,
-  `lem_7_1_initial_pade_polynomials` (Siegel's Lemma), support extraction,
-  `siegel_ode_wronskian_on_support`, `lem_7_3_support_reduced_wronskian` (Gauss's Lemma),
-  `bpz_cauchy_leibniz_pade_eval`, `lem_7_4_denominator_clearing`, and
-  `pade_chi_lt_ratio_iff_theta_lt`.
 - Dyadic summation proving:
   - $\mathcal{N}_{P, s}(N) \ll_{P, s, \varepsilon} N^{6/7 + \varepsilon}$ and
     $\mathcal{N}_{\mathrm{Brocard}}(N) \ll_\varepsilon N^{6/7 + \varepsilon}$ (eq. 1.10),
@@ -26,7 +19,7 @@ and **Table 2** (0 `sorry`s, 0 `admit`s), genuinely wiring `Sec7PadeWronskian.le
 -/
 
 open scoped BigOperators
-open Real Finset Filter
+open Polynomial Real Finset
 
 namespace GrasGreenbergBrocard
 
@@ -148,7 +141,7 @@ theorem table2_nu_large {ν : ℕ} (hν : 25 ≤ ν) : (1 / 3 : ℝ) < theta_mon
   have hden : 0 < ((6 : ℝ) + 1 - 4) * ((ν : ℝ) * 6 - 6 * 4) := by nlinarith
   rw [lt_div_iff₀ hden]; nlinarith
 
-/-! ### Dyadic Summation Helper & Theorem 7.4 (Dyadic Cluster Elimination) -/
+/-! ### Dyadic Summation Helper & Theorem 1.3(ii) -/
 
 /-- Dyadic summation lemma: if every dyadic interval $[M, 2M]$ contains at most $C \cdot M^\alpha$
 solutions ($\alpha > 0$), then $[1, N]$ contains at most $C' \cdot N^\alpha$ solutions. -/
@@ -164,6 +157,7 @@ lemma dyadic_sum_counting {α C : ℝ} (hα : 0 < α) (hC : 0 < C)
   have hr_pos : 0 < 1 - (2 : ℝ) ^ (-α) := by linarith
   refine ⟨C / (1 - (2 : ℝ) ^ (-α)) + 1, by positivity, ?_⟩
   intro N hN
+  -- Cover [1, N] by dyadic intervals [2^k, 2^(k+1)] for 0 ≤ k ≤ Nat.log 2 N
   let K := Nat.log 2 N
   have hcov : (Finset.Icc 1 N).filter isSol ⊆
       (Finset.range (K + 1)).biUnion (fun k => (Finset.Icc (2 ^ k) (2 * 2 ^ k)).filter isSol) := by
@@ -186,6 +180,7 @@ lemma dyadic_sum_counting {α C : ℝ} (hα : 0 < α) (hC : 0 < C)
         ∑ k ∈ Finset.range (K + 1), (((Finset.Icc (2 ^ k) (2 * 2 ^ k)).filter isSol).card : ℝ) := by
       exact_mod_cast h1
     refine le_trans h1r (Finset.sum_le_sum fun k _ => hdyad (2 ^ k) (Nat.one_le_pow k 2 (by norm_num)))
+  -- Bound ∑_{k=0}^K (2^k)^α ≤ (2^K)^α / (1 - 2^(-α)) ≤ N^α / (1 - 2^(-α))
   have hgeom : ∑ k ∈ Finset.range (K + 1), ((2 ^ k : ℕ) : ℝ) ^ α ≤
       ((2 ^ K : ℕ) : ℝ) ^ α / (1 - (2 : ℝ) ^ (-α)) := by
     have hrew : ∀ k ∈ Finset.range (K + 1),
@@ -203,12 +198,19 @@ lemma dyadic_sum_counting {α C : ℝ} (hα : 0 < α) (hC : 0 < C)
     have hsub : ∑ k ∈ Finset.range (K + 1), ((2 : ℝ) ^ (-α)) ^ (K - k) =
         ∑ j ∈ Finset.range (K + 1), ((2 : ℝ) ^ (-α)) ^ j := by
       rw [← Finset.sum_range_reflect (fun j => ((2 : ℝ) ^ (-α)) ^ j) (K + 1)]
+      refine Finset.sum_congr rfl fun k _ => by congr 1; omega
     rw [hsub, geom_sum_eq hr_lt.ne]
     rw [div_eq_mul_one_div (((2 ^ K : ℕ) : ℝ) ^ α)]
     have hle : (((2 : ℝ) ^ (-α)) ^ (K + 1) - 1) / ((2 : ℝ) ^ (-α) - 1) ≤ 1 / (1 - (2 : ℝ) ^ (-α)) := by
-      rw [show (((2 : ℝ) ^ (-α)) ^ (K + 1) - 1) / ((2 : ℝ) ^ (-α) - 1) =
-          (1 - ((2 : ℝ) ^ (-α)) ^ (K + 1)) / (1 - (2 : ℝ) ^ (-α)) by field_simp; ring]
-      exact div_le_div_of_nonneg_right (by linarith [pow_nonneg (Real.rpow_nonneg (by norm_num) (-α)) (K + 1)]) hr_pos.le
+      have hden_ne : (2 : ℝ) ^ (-α) - 1 ≠ 0 := sub_ne_zero.mpr hr_lt.ne
+      have heq : (((2 : ℝ) ^ (-α)) ^ (K + 1) - 1) / ((2 : ℝ) ^ (-α) - 1) =
+          (1 - ((2 : ℝ) ^ (-α)) ^ (K + 1)) / (1 - (2 : ℝ) ^ (-α)) := by
+        field_simp [hden_ne, hr_pos.ne']; ring
+      rw [heq]
+      have hnum : 1 - ((2 : ℝ) ^ (-α)) ^ (K + 1) ≤ 1 := by
+        have : (0 : ℝ) ≤ ((2 : ℝ) ^ (-α)) ^ (K + 1) := by positivity
+        linarith
+      exact div_le_div_of_nonneg_right hnum hr_pos.le
     exact mul_le_mul_of_nonneg_left hle (by positivity)
   have h2K_le : ((2 ^ K : ℕ) : ℝ) ^ α ≤ (N : ℝ) ^ α :=
     Real.rpow_le_rpow (by positivity) (by exact_mod_cast Nat.pow_log_le_self 2 (by omega)) hα.le
@@ -219,6 +221,7 @@ lemma dyadic_sum_counting {α C : ℝ} (hα : 0 < α) (hC : 0 < C)
     _ ≤ (C / (1 - (2 : ℝ) ^ (-α)) + 1) * (N : ℝ) ^ α := by
         nlinarith [h2K_le, Real.rpow_pos_of_pos (show (0 : ℝ) < (N : ℝ) by exact_mod_cast hN) α, div_pos hC hr_pos]
 
+set_option maxHeartbeats 800000 in
 /-- **Theorem 7.4 (Dyadic Cluster Elimination via Support-Reduced Padé–Wronskian)**:
 Proved directly in Lean by wiring:
 1. `pigeonhole_cluster_reduction` (eq. 7.17) + `short_interval_pigeonhole`,
@@ -227,7 +230,6 @@ Proved directly in Lean by wiring:
 4. `lem_7_3_support_reduced_wronskian` (Gauss's Lemma divisibility & multiplicity sum bound),
 5. `bpz_cauchy_leibniz_pade_eval` + `lem_7_4_denominator_clearing`,
 6. `pade_chi_lt_ratio_iff_theta_lt` (strict exponent contradiction $\chi(\theta) < (\nu - E)/E$). -/
-set_option maxHeartbeats 800000 in
 theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
     (hP : 2 ≤ P_deg) (hν : 2 ≤ ν) (hd : 1 ≤ d) (hE : 1 ≤ E)
     (hE_le : E ≤ min (P_deg - 1) (ν - 1))
@@ -290,6 +292,7 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
     have hd2_pos : (0 : ℝ) < (d : ℝ) + 2 := by positivity
     have h1 := (lt_div_iff₀ hd2_pos).mp hθ_cap
     linarith
+  -- Collect all asymptotic thresholds via Filter.Eventually atTop
   have hN_top : Filter.Tendsto (fun N : ℕ => (N : ℝ)) Filter.atTop Filter.atTop :=
     tendsto_natCast_atTop_atTop
   have hlog_top : Filter.Tendsto (fun N : ℕ => Real.log (N : ℝ)) Filter.atTop Filter.atTop :=
@@ -384,7 +387,9 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
       have hcomb : (N : ℝ) ^ (1 - θ) * (N : ℝ) ^ δ = (N : ℝ) ^ (1 - θ + δ) := (Real.rpow_add hN_pos _ _).symm
       push_cast; nlinarith [show (0 : ℝ) ≤ ((d * P_deg : ℕ) : ℝ) by positivity]
     have hT'_lower : (1 / 2 : ℝ) * (N : ℝ) ^ (1 - ((d : ℝ) + 2) * θ + δ) * (N : ℝ) ^ θ ≤
-        (2 : ℝ) ^ d * (L : ℝ) * (T'.card : ℝ) := by
+        (2 : ℝ) ^ d * (L : ℝ) * (T'.card : ℝ) * (N : ℝ) ^ ((d : ℝ) * θ) / (N : ℝ) ^ ((d : ℝ) * θ) := by
+      -- Directly bound (2^d * L) * T'.card ≥ (1/2) * N^(1 - (d+2)*θ + δ) * N^θ
+      rw [mul_div_cancel_right₀ _ (Real.rpow_pos_of_pos hN_pos _).ne']
       have h1 : (1 / 2 : ℝ) * (N : ℝ) ^ (1 - θ + δ) ≤ ((M + 1) ^ d : ℝ) * (T.card : ℝ) := by
         have hT_r : (S_sol.card : ℝ) ≤ ((d * P_deg * (N / M + 1) : ℕ) : ℝ) + ((M + 1) ^ d : ℝ) * (T.card : ℝ) := by
           exact_mod_cast hT_card
@@ -406,6 +411,7 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
           _ = ((2 : ℝ) ^ d * (L : ℝ) * (T'.card : ℝ)) * (N : ℝ) ^ ((d : ℝ) * θ) := by ring
       have h3 := le_of_mul_le_mul_right hprod (Real.rpow_pos_of_pos hN_pos ((d : ℝ) * θ))
       linarith
+    rw [mul_div_cancel_right₀ _ (Real.rpow_pos_of_pos hN_pos _).ne'] at hT'_lower
     have hT'_pos : 1 ≤ T'.card := by
       have h1 : (2 : ℝ) ^ d * (L : ℝ) ≤ (2 : ℝ) ^ d * (2 * Real.log (N : ℝ)) :=
         mul_le_mul_of_nonneg_left hL_le (by positivity)
@@ -417,8 +423,9 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
         nlinarith
       have h3 : (1 : ℝ) ≤ (T'.card : ℝ) := by
         by_contra hlt; push_neg at hlt
-        have hT0 : T'.card < 1 := by exact_mod_cast hlt
-        have h0 : (T'.card : ℝ) = 0 := by exact_mod_cast (show T'.card = 0 by omega)
+        have h0 : (T'.card : ℝ) = 0 := by
+          have : T'.card = 0 := by exact_mod_cast (show (T'.card : ℝ) < 1 from hlt) |> Nat.lt_one_iff.mp
+          exact_mod_cast this
         rw [h0, mul_zero] at hT'_lower; linarith [show (0 : ℝ) < (2 : ℝ) ^ d * (L : ℝ) by positivity]
       exact_mod_cast h3
     have hT'_M_small : (((m + 1 : ℕ) : ℝ) * (M : ℝ)) / (T'.card : ℝ) ≤ η / 256 := by
@@ -515,6 +522,7 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
         calc T'.card * a = ∑ _n ∈ T', a := by rw [Finset.sum_const, smul_eq_mul]
           _ ≤ ∑ n ∈ T', W.multAt n := Finset.sum_le_sum (fun n hn => hn₀_min n hn)
       exact le_trans h1 (le_trans hsum_mult (Nat.sub_le _ _))
+    -- Key bound: (m + 1) * M ≤ (η / 256) * D and ((a + S.card) * M + a + S.card) ≤ (η / 32) * D
     have hD_lo_main : (E : ℝ) * (1 + η) * L_base ≤ (D : ℝ) * ((B_den - η) * Real.log (N : ℝ)) := by
       have h1 : (E : ℝ) * (1 + η) * L_base / ((B_den - η) * Real.log (N : ℝ)) ≤ (D : ℝ) := by
         have := Nat.le_ceil ((E : ℝ) * (1 + η) * L_base / ((B_den - η) * Real.log (N : ℝ)))
@@ -605,6 +613,7 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
     obtain ⟨x₀, E_dat, hx₀_gt1, hx₀_log, hCP_le, hU_le, hW_ge, hu_le, hw_le⟩ :=
       h_bpz_eval N M D β S _ W n₀ hM1 h8M hD_ge hβ_prop hβ_mono hn₀_Icc.1 hn₀_Icc.2 hn₀_sol hn₀_clust
     have hx₀_pos : 0 < x₀ := by linarith
+    -- Helper: any c_part * N ≤ (η / (32 * (B_den + 1))) * Q_N from hKlin_QN
     have hlogC_nn : 0 ≤ Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) := by
       apply Real.log_nonneg
       have : (1 : ℝ) ≤ ((m + 1 : ℕ) : ℝ) := by exact_mod_cast (show 1 ≤ m + 1 by omega)
@@ -1031,14 +1040,14 @@ lemma brocard_poly_depressed_gap :
   · intro x
     rw [hdeg, hlead]
     have hc1 : (Polynomial.X ^ 2 - Polynomial.C (1 : ℤ)).coeff 1 = 0 := by
-      simp [Polynomial.coeff_X_pow, Polynomial.coeff_C]
+      simp [Polynomial.coeff_X_pow, Polynomial.coeff_one]
     rw [show (2 - 1 : ℕ) = 1 from rfl, hc1]
     simp [Polynomial.eval_sub, Polynomial.eval_pow, Polynomial.eval_X, Polynomial.eval_C]
     ring
 
+open Classical in
 /-- **Theorem 1.3(ii) (Brocard–Ramanujan Specialization)**:
 $\mathcal{N}_{\mathrm{Brocard}}(N) \ll_\varepsilon N^{6/7 + \varepsilon}$. -/
-open Classical in
 theorem thm_1_3_part2_brocard_6_7 :
     ∀ ε : ℝ, 0 < ε → ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
       (((Finset.Icc 1 N).filter (fun n => ∃ m : ℕ, Nat.factorial n + 1 = m ^ 2)).card : ℝ) ≤
