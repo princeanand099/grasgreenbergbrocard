@@ -1339,7 +1339,9 @@ theorem lem_6_3_osc_bound_honest
                         have hpow_le : (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) ≤ 1 :=
                           zpow_le_one_of_nonpos₀ (by norm_num) (by omega)
                         linarith
-                      have hRM1 : (1 : ℝ) ≤ (R : ℝ) * Mmax + 1 := by positivity
+                      have hRM1 : (1 : ℝ) ≤ (R : ℝ) * Mmax + 1 := by
+                        have : (0 : ℝ) ≤ (R : ℝ) * Mmax := by positivity
+                        linarith
                       have hlog3_le : 10 * (Real.log (n₁ : ℝ)) ^ (R + 3) ≤ (n₁ : ℝ) ^ δ := by
                         have h1 : (Real.log (n₁ : ℝ)) ^ (R + 3) / (n₁ : ℝ) ^ δ ≤ 1 / 10 := by
                           have h2 : c₁_low / (10 * ((R : ℝ) * Mmax + 1)) ≤ 1 / 10 := by
@@ -1759,7 +1761,9 @@ theorem lem_6_3_osc_bound_honest
                     have hpow_le : (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) ≤ 1 :=
                       zpow_le_one_of_nonpos₀ (by norm_num) (by omega)
                     linarith
-                  have hRM1 : (1 : ℝ) ≤ (R : ℝ) * Mmax + 1 := by positivity
+                  have hRM1 : (1 : ℝ) ≤ (R : ℝ) * Mmax + 1 := by
+                    have : (0 : ℝ) ≤ (R : ℝ) * Mmax := by positivity
+                    linarith
                   have hlog3_le : 10 * (Real.log (n₁ : ℝ)) ^ (R + 3) ≤ (n₁ : ℝ) ^ δ := by
                     have h1 : (Real.log (n₁ : ℝ)) ^ (R + 3) / (n₁ : ℝ) ^ δ ≤ 1 / 10 := by
                       have h2 : c₁_low / (10 * ((R : ℝ) * Mmax + 1)) ≤ 1 / 10 := by
