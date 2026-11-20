@@ -675,7 +675,7 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
         nlinarith only [hS_r, hM_le_D, hM_nn]
       have hM_ge1 : (1 : ℝ) ≤ (M : ℝ) := by exact_mod_cast hM1
       have ha_nn : (0 : ℝ) ≤ (a : ℝ) := by positivity
-      have hS_nn : (0 : ℝ) ≤ (S.card : ℝ) := by positivity
+      have hS_nn : (0 : ℝ) ≤ (S.card : ℝ) := Nat.cast_nonneg _
       push_cast; nlinarith only [haM_1, hSM_1, hM_ge1, ha_nn, hS_nn]
     -- Step 8: Call `bpz_cauchy_leibniz_pade_eval` at n₀ ∈ T'
     have hn₀_T : n₀ ∈ T := hT'_sub hn₀_mem
@@ -1016,11 +1016,14 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
     rw [Real.log_div (by norm_num) (by positivity), Real.log_one, zero_sub,
       Real.log_mul (by norm_num) hZ_pos.ne'] at hlog74
     have h2n₀_pos : (0 : ℝ) < ((2 * n₀ : ℕ) : ℝ) := by exact_mod_cast (show 0 < 2 * n₀ by omega)
-    have hRHS_pos1 : 0 < (S.card : ℝ) * E_dat.C_P * ((2 * n₀ : ℕ) : ℝ) ^ (((M * ν : ℕ) : ℝ) / (P_deg : ℝ)) * E_dat.u * E_dat.U ^ D := by
-      have := E_dat.C_P_pos; have := E_dat.u_pos; have := E_dat.U_pos; positivity
+    have hS_pos_r : (0 : ℝ) < (S.card : ℝ) := by exact_mod_cast (show 0 < S.card by omega)
+    have hpre_pos : 0 < (S.card : ℝ) * E_dat.C_P * ((2 * n₀ : ℕ) : ℝ) ^ (((M * ν : ℕ) : ℝ) / (P_deg : ℝ)) * E_dat.u :=
+      mul_pos (mul_pos (mul_pos hS_pos_r E_dat.C_P_pos) (Real.rpow_pos_of_pos h2n₀_pos _)) E_dat.u_pos
+    have hRHS_pos1 : 0 < (S.card : ℝ) * E_dat.C_P * ((2 * n₀ : ℕ) : ℝ) ^ (((M * ν : ℕ) : ℝ) / (P_deg : ℝ)) * E_dat.u * E_dat.U ^ D :=
+      mul_pos hpre_pos (pow_pos E_dat.U_pos D)
     rw [Real.log_mul hRHS_pos1.ne' (Real.rpow_pos_of_pos hx₀_pos _).ne',
       Real.log_rpow hx₀_pos,
-      Real.log_mul (by have := E_dat.C_P_pos; have := E_dat.u_pos; positivity) (pow_ne_zero D E_dat.U_pos.ne'),
+      Real.log_mul hpre_pos.ne' (pow_ne_zero D E_dat.U_pos.ne'),
       Real.log_pow] at hlog74
     have hlog_pre : Real.log 2 + Real.log ((S.card : ℝ) * E_dat.C_P * ((2 * n₀ : ℕ) : ℝ) ^ (((M * ν : ℕ) : ℝ) / (P_deg : ℝ)) * E_dat.u) ≤
         (η / 4) * (D : ℝ) * Real.log (N : ℝ) := by
@@ -1039,13 +1042,13 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
             (2 * ((m + 1 : ℕ) : ℝ) * C_1) * (4 * (N : ℝ)) ^ (((M * ν : ℕ) : ℝ) / (P_deg : ℝ)) := by
           have ha : 2 * (S.card : ℝ) * E_dat.C_P ≤ 2 * ((m + 1 : ℕ) : ℝ) * C_1 := by
             have hCP_pos := E_dat.C_P_pos
-            have hS_nn : (0 : ℝ) ≤ (S.card : ℝ) := by positivity
+            have hS_nn : (0 : ℝ) ≤ (S.card : ℝ) := Nat.cast_nonneg _
             nlinarith only [hS_r, hCP_le, hCP_pos, hS_nn]
           exact mul_le_mul ha hME (by positivity) (by positivity)
         have h2 := mul_le_mul hpart1 hu_le E_dat.u_pos.le (by positivity)
         linarith
-      have hlog1 := Real.log_le_log (by have := E_dat.C_P_pos; have := E_dat.u_pos; positivity) h1
-      rw [Real.log_mul (by norm_num) (by have := E_dat.C_P_pos; have := E_dat.u_pos; positivity)] at hlog1
+      have hlog1 := Real.log_le_log (mul_pos (by norm_num) hpre_pos) h1
+      rw [Real.log_mul (by norm_num) hpre_pos.ne'] at hlog1
       rw [Real.log_mul (by positivity) (Real.rpow_pos_of_pos (by norm_num) _).ne',
         Real.log_mul (by positivity) (pow_ne_zero _ (by positivity)),
         Real.log_mul (by positivity) (Real.rpow_pos_of_pos (by positivity) _).ne',
@@ -1400,7 +1403,7 @@ theorem poly_has_depressed_gap_two {P : ℤ[X]} (hdeg : 2 ≤ P.natDegree) :
   set r := P.natDegree
   set a_r := P.leadingCoeff
   set a_rm1 := P.coeff (r - 1)
-  have hP_ne : P ≠ 0 := by intro h0; rw [h0, Polynomial.natDegree_zero] at hdeg; omega
+  have hP_ne : P ≠ 0 := by intro h0; have : P.natDegree = 0 := by rw [h0, Polynomial.natDegree_zero]; omega
   have ha_r_ne : a_r ≠ 0 := Polynomial.leadingCoeff_ne_zero.mpr hP_ne
   set lin : ℤ[X] := Polynomial.X - Polynomial.C a_rm1
   have hlin_mon : lin.Monic := Polynomial.monic_X_sub_C a_rm1
@@ -1425,7 +1428,7 @@ theorem poly_has_depressed_gap_two {P : ℤ[X]} (hdeg : 2 ≤ P.natDegree) :
   have hlinr_deg : (lin ^ r).natDegree = r := by rw [hlin_mon.natDegree_pow, hlin_deg, mul_one]
   have hPdep_mon : P_dep.Monic := by
     dsimp only [P_dep]
-    exact hlinr_mon.add_of_left (by rw [hlinr_deg]; exact htail_deg)
+    exact hlinr_mon.add_of_left (Polynomial.degree_lt_degree (by rw [hlinr_deg]; exact htail_deg))
   have hPdep_deg : P_dep.natDegree = r := by
     dsimp only [P_dep]
     rw [Polynomial.natDegree_add_eq_left_of_natDegree_lt (by rw [hlinr_deg]; exact htail_deg), hlinr_deg]
@@ -1442,7 +1445,7 @@ theorem poly_has_depressed_gap_two {P : ℤ[X]} (hdeg : 2 ≤ P.natDegree) :
       rw [hbin, add_pow]
       rw [Polynomial.finset_sum_coeff]
       have hterm : ∀ k ∈ Finset.range (r + 1),
-          (Polynomial.X ^ k * Polynomial.C (-a_rm1) ^ (r - k) * ↑(r.choose k)).coeff (r - 1) =
+          (Polynomial.X ^ k * Polynomial.C (-a_rm1) ^ (r - k) * (r.choose k : ℤ[X])).coeff (r - 1) =
           if k = r - 1 then -(r : ℤ) * a_rm1 else 0 := by
         intro k hk
         rw [show Polynomial.X ^ k * Polynomial.C (-a_rm1) ^ (r - k) * (r.choose k : ℤ[X]) =
@@ -1470,7 +1473,7 @@ theorem poly_has_depressed_gap_two {P : ℤ[X]} (hdeg : 2 ≤ P.natDegree) :
         · subst heq
           have hsub1 : r - (r - 1) = 1 := by omega
           have hsub0 : r - (r - 1) - 1 = 0 := by omega
-          rw [hsub1, hsub0, pow_one, pow_zero, mul_one]
+          rw [hsub0, hsub1, pow_one, pow_zero, mul_one]
           have hlead : (lin ^ (r - 1)).coeff (r - 1) = 1 := by
             have hdeg_k : (lin ^ (r - 1)).natDegree = r - 1 := by
               rw [hlin_mon.natDegree_pow, hlin_deg, mul_one]
