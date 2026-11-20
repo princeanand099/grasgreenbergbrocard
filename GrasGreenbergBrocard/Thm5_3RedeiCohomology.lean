@@ -28,24 +28,788 @@ open Real Finset BigOperators
 
 namespace GrasGreenbergBrocard
 
-/-! ### Theorem 5.3(i): Galois Cohomology Exact Sequence & 4-Rank Identity (Eqs. 5.8–5.9) -/
+/-! ### Theorem 5.3(i): Midpoint Norm Cocycle Proofs & Galois Cohomology 4-Rank Identity -/
+
+private lemma q_n_pos_53 (n : ℕ) : 0 < q_n n := by
+  unfold q_n
+  exact Finset.prod_pos (fun p hp => (Finset.mem_filter.mp hp).2.1.pos)
+
+private lemma dvd_of_sq_dvd_sqfree_mul_sq {q m Y : ℕ} (hq : Squarefree q) (hq0 : q ≠ 0)
+    (hY0 : Y ≠ 0) (hm0 : m ≠ 0) (hdvd : m ^ 2 ∣ q * Y ^ 2) : m ∣ Y := by
+  rw [← Nat.factorization_le_iff_dvd hm0 hY0]
+  intro p
+  by_cases hp : p.Prime
+  · have hle := (Nat.factorization_le_iff_dvd (pow_ne_zero 2 hm0) (mul_ne_zero hq0 (pow_ne_zero 2 hY0))).mpr hdvd p
+    simp only [Nat.factorization_pow, Finsupp.smul_apply, smul_eq_mul, Nat.factorization_mul hq0 (pow_ne_zero 2 hY0),
+      Finsupp.add_apply] at hle
+    have hqp : q.factorization p ≤ 1 := by
+      by_contra hgt; push_neg at hgt
+      have hp2 : p ^ 2 ∣ q := by
+        have := Nat.ordProj_dvd q p
+        exact dvd_trans (pow_dvd_pow p (by omega : 2 ≤ q.factorization p)) this
+      exact hp.not_unit (hq p (by simpa [sq] using hp2))
+    omega
+  · simp [Nat.factorization_eq_zero_of_not_prime _ hp]
+
+private lemma prime_dvd_q_n_iff_mem_Podd {n p : ℕ} (hp : p.Prime) :
+    p ∣ q_n n ↔ p ∈ Podd n := by
+  constructor
+  · intro hdvd
+    unfold q_n at hdvd
+    by_contra hnot
+    have hcop : Nat.Coprime p (∏ q ∈ Podd n, q) := by
+      apply Nat.Coprime.prod_right
+      intro q hq
+      have hq_pr : q.Prime := (Finset.mem_filter.mp hq).2.1
+      exact (Nat.coprime_primes hp hq_pr).mpr (fun h => hnot (h ▸ hq))
+    have h1 : p ∣ Nat.gcd p (∏ q ∈ Podd n, q) := Nat.dvd_gcd dvd_rfl hdvd
+    rw [hcop.gcd_eq_one] at h1
+    exact hp.not_dvd_one h1
+  · intro hmem
+    unfold q_n
+    exact Finset.dvd_prod_of_mem _ hmem
+
+private lemma prime_mem_ramPrimes_prime {n p : ℕ} (hp : p ∈ ramPrimes n) : p.Prime := by
+  unfold ramPrimes at hp
+  split_ifs at hp with hq
+  · exact (Finset.mem_filter.mp hp).2.1
+  · rcases Finset.mem_insert.mp hp with rfl | hmem
+    · exact Nat.prime_two
+    · exact (Finset.mem_filter.mp hmem).2.1
+
+private lemma two_not_dvd_coreNat_two_mul_X1_add_one_of_mod4_eq1 {n X₁ Y₁ : ℕ}
+    (hfund : IsFundamentalPell (q_n n) X₁ Y₁) (hq1 : q_n n % 4 = 1) :
+    ¬ 2 ∣ coreNat (2 * (X₁ + 1)) := by
+  haveI : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
+  have hX1_pos : 0 < X₁ := by have := hfund.1; omega
+  have hY1_pos : 0 < Y₁ := hfund.2.1
+  have hpell : X₁ ^ 2 = q_n n * Y₁ ^ 2 + 1 := hfund.2.2.1
+  have hX1_odd : X₁ % 2 = 1 := by
+    by_contra hev
+    have h0 : X₁ % 2 = 0 := by omega
+    have h1 : X₁ ^ 2 % 4 = 0 := by
+      obtain ⟨k, rfl⟩ := Nat.dvd_of_mod_eq_zero h0
+      rw [show (2 * k) ^ 2 = 4 * k ^ 2 by ring]; omega
+    have hY_mod : Y₁ ^ 2 % 4 = 0 ∨ Y₁ ^ 2 % 4 = 1 := by
+      rcases Nat.even_or_odd Y₁ with ⟨k, rfl⟩ | ⟨k, rfl⟩
+      · left; rw [show (k + k) ^ 2 = 4 * k ^ 2 by ring]; omega
+      · right; rw [show (2 * k + 1) ^ 2 = 4 * (k ^ 2 + k) + 1 by ring]; omega
+    have hrhs : (q_n n * Y₁ ^ 2 + 1) % 4 = 1 ∨ (q_n n * Y₁ ^ 2 + 1) % 4 = 2 := by
+      rcases hY_mod with hy | hy
+      · left; rw [Nat.add_mod, Nat.mul_mod, hq1, hy]
+      · right; rw [Nat.add_mod, Nat.mul_mod, hq1, hy]
+    omega
+  have hX1_gt1 : 1 < X₁ := by
+    have hq_pos := q_n_pos_53 n
+    nlinarith [hpell, hq_pos, hY1_pos]
+  have hprod : (X₁ - 1) * (X₁ + 1) = q_n n * Y₁ ^ 2 := by
+    zify [show 1 ≤ X₁ by omega] at hpell ⊢; linarith
+  have hq_odd : ¬ 2 ∣ q_n n := by omega
+  have hvq : padicValNat 2 (q_n n) = 0 := padicValNat.eq_zero_of_not_dvd hq_odd
+  have hv_sum : padicValNat 2 (X₁ - 1) + padicValNat 2 (X₁ + 1) = 2 * padicValNat 2 Y₁ := by
+    have h1 := congrArg (padicValNat 2) hprod
+    rw [padicValNat.mul (by omega) (by omega),
+      padicValNat.mul (q_n_pos_53 n).ne' (pow_ne_zero 2 hY1_pos.ne'),
+      padicValNat.pow 2 hY1_pos.ne', hvq, zero_add] at h1
+    exact h1
+  have hnot_both4 : ¬ (4 ∣ X₁ - 1 ∧ 4 ∣ X₁ + 1) := by
+    rintro ⟨h1, h2⟩
+    have hsub : 4 ∣ (X₁ + 1) - (X₁ - 1) := Nat.dvd_sub h2 h1
+    rw [show (X₁ + 1) - (X₁ - 1) = 2 by omega] at hsub
+    omega
+  have hv_one : padicValNat 2 (X₁ - 1) = 1 ∨ padicValNat 2 (X₁ + 1) = 1 := by
+    have h2m : 2 ∣ X₁ - 1 := by omega
+    have h2p : 2 ∣ X₁ + 1 := by omega
+    have hvm : 1 ≤ padicValNat 2 (X₁ - 1) := one_le_padicValNat_of_dvd (by omega) h2m
+    have hvp : 1 ≤ padicValNat 2 (X₁ + 1) := one_le_padicValNat_of_dvd (by omega) h2p
+    by_contra hneither
+    push_neg at hneither
+    apply hnot_both4
+    exact ⟨dvd_trans (pow_dvd_pow 2 (by omega : 2 ≤ padicValNat 2 (X₁ - 1))) pow_padicValNat_dvd,
+           dvd_trans (pow_dvd_pow 2 (by omega : 2 ≤ padicValNat 2 (X₁ + 1))) pow_padicValNat_dvd⟩
+  have hvp_odd : padicValNat 2 (X₁ + 1) % 2 = 1 := by omega
+  have hv2p : padicValNat 2 (2 * (X₁ + 1)) % 2 = 0 := by
+    rw [padicValNat.mul (by norm_num) (by omega), padicValNat.self]; omega
+  intro hdvd
+  have hvc : 1 ≤ padicValNat 2 (coreNat (2 * (X₁ + 1))) :=
+    one_le_padicValNat_of_dvd (coreNat_pos _).ne' hdvd
+  rw [padicValNat_coreNat Nat.prime_two (by omega)] at hvc
+  omega
+
+private lemma coreNat_two_X1_add_one_prime_mem_ramPrimes {n X₁ Y₁ p : ℕ}
+    (hfund : IsFundamentalPell (q_n n) X₁ Y₁)
+    (hp : p.Prime) (hdvd : p ∣ coreNat (2 * (X₁ + 1))) :
+    p ∈ ramPrimes n := by
+  haveI : Fact p.Prime := ⟨hp⟩
+  by_cases hp2 : p = 2
+  · subst hp2
+    have hq_ne1 : q_n n % 4 ≠ 1 := fun h1 =>
+      two_not_dvd_coreNat_two_mul_X1_add_one_of_mod4_eq1 hfund h1 hdvd
+    unfold ramPrimes; rw [if_neg hq_ne1]; exact Finset.mem_insert_self 2 _
+  · have hvc : padicValNat p (coreNat (2 * (X₁ + 1))) = 1 := by
+      have h1 := one_le_padicValNat_of_dvd (coreNat_pos _).ne' hdvd
+      have h2 := padicValNat_coreNat hp (by omega : 0 < 2 * (X₁ + 1))
+      omega
+    have hv_odd : padicValNat p (2 * (X₁ + 1)) % 2 = 1 := by
+      rw [padicValNat_coreNat hp (by omega)] at hvc; omega
+    have hv2 : padicValNat p 2 = 0 := padicValNat.eq_zero_of_not_dvd (fun h =>
+      hp2 ((Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).mp h))
+    rw [padicValNat.mul (by norm_num) (by omega), hv2, zero_add] at hv_odd
+    have hp_dvd_p1 : p ∣ X₁ + 1 :=
+      dvd_trans (pow_dvd_pow p (by omega : 1 ≤ padicValNat p (X₁ + 1))) pow_padicValNat_dvd
+    have hp_not_m1 : ¬ p ∣ X₁ - 1 := by
+      intro hm1
+      have hX1_gt1 : 1 < X₁ := by
+        have := hfund.2.2.1; have := hfund.2.1; have := q_n_pos_53 n; nlinarith
+      have hsub : p ∣ (X₁ + 1) - (X₁ - 1) := Nat.dvd_sub hp_dvd_p1 hm1
+      rw [show (X₁ + 1) - (X₁ - 1) = 2 by omega] at hsub
+      exact hp2 ((Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).mp hsub)
+    have hX1_gt1 : 1 < X₁ := by
+      have := hfund.2.2.1; have := hfund.2.1; have := q_n_pos_53 n; nlinarith
+    have hprod : (X₁ - 1) * (X₁ + 1) = q_n n * Y₁ ^ 2 := by
+      have := hfund.2.2.1; zify [show 1 ≤ X₁ by omega] at this ⊢; linarith
+    have hvm1 : padicValNat p (X₁ - 1) = 0 := padicValNat.eq_zero_of_not_dvd hp_not_m1
+    have hv_eq := congrArg (padicValNat p) hprod
+    rw [padicValNat.mul (by omega) (by omega), hvm1, zero_add,
+      padicValNat.mul (q_n_pos_53 n).ne' (pow_ne_zero 2 hfund.2.1.ne'),
+      padicValNat.pow 2 hfund.2.1.ne'] at hv_eq
+    have hvq_odd : padicValNat p (q_n n) % 2 = 1 := by omega
+    have hp_q : p ∣ q_n n :=
+      dvd_trans (pow_dvd_pow p (by omega : 1 ≤ padicValNat p (q_n n))) pow_padicValNat_dvd
+    have hp_podd : p ∈ Podd n := (prime_dvd_q_n_iff_mem_Podd hp).mp hp_q
+    unfold ramPrimes
+    split_ifs
+    · exact hp_podd
+    · exact Finset.mem_insert_of_mem hp_podd
+
+/-- **Non-vanishing of the Midpoint Vector** (pure kernel proof, zero external axioms):
+For every `n ≥ 8` and fundamental Pell solution `(X₁, Y₁)` of `q_n`, `yMidVec n X₁ ≠ 0`. -/
+theorem yMidVec_ne_zero {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
+    (hfund : IsFundamentalPell (q_n n) X₁ Y₁) :
+    yMidVec n X₁ ≠ 0 := by
+  have hq_pos := q_n_pos_53 n
+  have hq2 : 2 ≤ q_n n := by
+    have h1 := oddPartNat_q_n_gt_one hn
+    have h2 := oddPartNat_le (m := q_n n)
+    omega
+  have hX1_gt1 : 1 < X₁ := by nlinarith [hfund.2.2.1, hq2, hfund.2.1]
+  have hc_ne1 : coreNat (2 * (X₁ + 1)) ≠ 1 := by
+    intro hc1
+    have hmul := coreNat_mul_sqPartNat_sq (m := 2 * (X₁ + 1)) (by omega)
+    rw [hc1, one_mul] at hmul
+    set v := sqPartNat (2 * (X₁ + 1))
+    have h2v : 2 ∣ v := by
+      have h2v2 : 2 ∣ v ^ 2 := ⟨X₁ + 1, hmul.symm⟩
+      exact Nat.prime_two.dvd_of_dvd_pow h2v2
+    obtain ⟨a, ha⟩ := h2v
+    have hX1_eq : X₁ + 1 = 2 * a ^ 2 := by
+      rw [ha] at hmul; nlinarith
+    have ha2 : 2 ≤ a := by nlinarith [hX1_gt1, hX1_eq]
+    have hprod : q_n n * Y₁ ^ 2 = (2 * a) ^ 2 * (a ^ 2 - 1) := by
+      have hpell := hfund.2.2.1
+      zify [show 1 ≤ a ^ 2 by nlinarith] at hpell hX1_eq ⊢; nlinarith
+    have h2a_dvd_Y1 : 2 * a ∣ Y₁ :=
+      dvd_of_sq_dvd_sqfree_mul_sq (q_n_squarefree n) hq_pos.ne' hfund.2.1.ne' (by omega)
+        ⟨a ^ 2 - 1, hprod⟩
+    obtain ⟨b, hb⟩ := h2a_dvd_Y1
+    have hb_pos : 0 < b := by
+      by_contra hb0; push_neg at hb0
+      have : Y₁ = 0 := by rw [hb, show b = 0 by omega, mul_zero]
+      omega
+    have hb_lt : b < Y₁ := by rw [hb]; nlinarith [ha2, hb_pos]
+    have hpell_b : a ^ 2 = q_n n * b ^ 2 + 1 := by
+      rw [hb] at hprod
+      have hcancel : (2 * a) ^ 2 * (q_n n * b ^ 2) = (2 * a) ^ 2 * (a ^ 2 - 1) := by
+        linarith [show q_n n * (2 * a * b) ^ 2 = (2 * a) ^ 2 * (q_n n * b ^ 2) by ring]
+      have hqb : q_n n * b ^ 2 = a ^ 2 - 1 := Nat.eq_of_mul_eq_mul_left (by positivity) hcancel
+      have ha2_ge1 : 1 ≤ a ^ 2 := by nlinarith
+      omega
+    have hmin := hfund.2.2.2 a b hb_pos hpell_b
+    omega
+  have hc_ge2 : 2 ≤ coreNat (2 * (X₁ + 1)) := by have := coreNat_pos (2 * (X₁ + 1)); omega
+  set p := (coreNat (2 * (X₁ + 1))).minFac
+  have hp_pr : p.Prime := Nat.minFac_prime (by omega)
+  have hp_dvd : p ∣ coreNat (2 * (X₁ + 1)) := Nat.minFac_dvd _
+  have hp_mem : p ∈ ramPrimes n := coreNat_two_X1_add_one_prime_mem_ramPrimes hfund hp_pr hp_dvd
+  intro h0
+  have hval := congrFun h0 ⟨p, hp_mem⟩
+  simp [yMidVec, hp_dvd] at hval
+
+private lemma legendreIdx_mul {p : ℕ} (hp : p.Prime) {a b : ℤ}
+    (ha : ¬ (p : ℤ) ∣ a) (hb : ¬ (p : ℤ) ∣ b) :
+    legendreIdx p (a * b) = legendreIdx p a + legendreIdx p b := by
+  haveI : Fact p.Prime := ⟨hp⟩
+  unfold legendreIdx chiLegendre
+  simp only [hp, ↓reduceDIte]
+  rw [legendreSym.mul]
+  have ha_val : legendreSym p a = 1 ∨ legendreSym p a = -1 := by
+    rcases legendreSym.eq_one_or_neg_one (p := p) (a := a) with h | h
+    · exact Or.inl h
+    · exact Or.inr h
+    · intro h0; exact ha ((ZMod.intCast_zmod_eq_zero_iff_dvd a p).mp h0)
+  have hb_val : legendreSym p b = 1 ∨ legendreSym p b = -1 := by
+    rcases legendreSym.eq_one_or_neg_one (p := p) (a := b) with h | h
+    · exact Or.inl h
+    · exact Or.inr h
+    · intro h0; exact hb ((ZMod.intCast_zmod_eq_zero_iff_dvd b p).mp h0)
+  rcases ha_val with ha1 | ha1 <;> rcases hb_val with hb1 | hb1 <;> simp [ha1, hb1] <;> decide
+
+private lemma legendreIdx_one {p : ℕ} (hp : p.Prime) : legendreIdx p 1 = 0 := by
+  haveI : Fact p.Prime := ⟨hp⟩
+  unfold legendreIdx chiLegendre
+  simp [hp, legendreSym.at_one]
+
+private lemma sum_legendreIdx_eq_prod {p : ℕ} (hp : p.Prime) (S : Finset ℕ)
+    (hS : ∀ q ∈ S, q.Prime ∧ q ≠ p) :
+    ∑ q ∈ S, legendreIdx p (q : ℤ) = legendreIdx p ((∏ q ∈ S, q : ℕ) : ℤ) := by
+  classical
+  induction S using Finset.induction_on with
+  | empty => simp [legendreIdx_one hp]
+  | @insert a s has ih =>
+    rw [Finset.sum_insert has, Finset.prod_insert has, Nat.cast_mul]
+    have ha_pr := (hS a (Finset.mem_insert_self a s)).1
+    have ha_ne := (hS a (Finset.mem_insert_self a s)).2
+    have ha_nd : ¬ (p : ℤ) ∣ (a : ℤ) := by
+      intro hd
+      exact ha_ne ((Nat.prime_dvd_prime_iff_eq hp ha_pr).mp (Int.natCast_dvd_natCast.mp hd)).symm
+    have hs_nd : ¬ (p : ℤ) ∣ ((∏ q ∈ s, q : ℕ) : ℤ) := by
+      intro hd
+      have h1 := Int.natCast_dvd_natCast.mp hd
+      obtain ⟨q, hqs, hqp⟩ := hp.prime.dvd_finset_prod_iff.mp h1
+      have hq_info := hS q (Finset.mem_insert_of_mem hqs)
+      exact hq_info.2 ((Nat.prime_dvd_prime_iff_eq hp hq_info.1).mp hqp).symm
+    rw [legendreIdx_mul hp ha_nd hs_nd, ih (fun q hq => hS q (Finset.mem_insert_of_mem hq))]
+
+private lemma squarefree_eq_prod_ramPrimes {n c : ℕ} (hc_pos : 0 < c) (hc_sqf : Squarefree c)
+    (hc_sub : ∀ p : ℕ, p.Prime → p ∣ c → p ∈ ramPrimes n) :
+    ∏ p ∈ (ramPrimes n).filter (· ∣ c), p = c := by
+  have hset : (ramPrimes n).filter (· ∣ c) = c.primeFactors := by
+    ext p
+    simp only [Finset.mem_filter, Nat.mem_primeFactors]
+    constructor
+    · rintro ⟨hp_ram, hp_dvd⟩
+      exact ⟨prime_mem_ramPrimes_prime hp_ram, hp_dvd, hc_pos.ne'⟩
+    · rintro ⟨hp_pr, hp_dvd, _⟩
+      exact ⟨hc_sub p hp_pr hp_dvd, hp_dvd⟩
+  rw [hset]
+  exact Nat.prod_primeFactors_of_squarefree hc_sqf
+
+private lemma legendreIdx_zero_of_sq_cong {p : ℕ} (hp : p.Prime) (hp3 : 3 ≤ p)
+    {a : ℤ} {u v : ℕ} (ha : ¬ (p : ℤ) ∣ a) (hv : ¬ p ∣ v)
+    (hcong : (p : ℤ) ∣ (u : ℤ) ^ 2 - a * (v : ℤ) ^ 2) :
+    legendreIdx p a = 0 := by
+  haveI : Fact p.Prime := ⟨hp⟩
+  unfold legendreIdx chiLegendre
+  simp only [hp, ↓reduceDIte]
+  have hmod : ((u : ZMod p)) ^ 2 = (a : ZMod p) * ((v : ZMod p)) ^ 2 := by
+    have h0 := (ZMod.intCast_zmod_eq_zero_iff_dvd _ p).mpr hcong
+    push_cast at h0; exact sub_eq_zero.mp h0
+  have hv_ne : (v : ZMod p) ≠ 0 := by
+    intro h0; exact hv ((ZMod.natCast_eq_zero_iff v p).mp h0)
+  have hsq : IsSquare (a : ZMod p) := by
+    refine ⟨(u : ZMod p) * (v : ZMod p)⁻¹, ?_⟩
+    field_simp [hv_ne]
+    rw [← sq, ← sq, hmod]; ring
+  have ha_ne : (a : ZMod p) ≠ 0 := fun h0 => ha ((ZMod.intCast_zmod_eq_zero_iff_dvd a p).mp h0)
+  rw [legendreSym.eq_one_iff p ha_ne |>.mpr hsq]; simp
+
+private lemma eps2_mul {a b : ℕ} (ha : a % 2 = 1) (hb : b % 2 = 1) :
+    (((a * b - 1) / 2 : ℕ) : ZMod 2) = (((a - 1) / 2 : ℕ) : ZMod 2) + (((b - 1) / 2 : ℕ) : ZMod 2) := by
+  have hmod : ((a * b - 1) / 2) % 2 = (((a - 1) / 2) + ((b - 1) / 2)) % 2 := by
+    have ha4 : a = 4 * (a / 4) + a % 4 := (Nat.div_add_mod a 4).symm
+    have hb4 : b = 4 * (b / 4) + b % 4 := (Nat.div_add_mod b 4).symm
+    have ha_cases : a % 4 = 1 ∨ a % 4 = 3 := by omega
+    have hb_cases : b % 4 = 1 ∨ b % 4 = 3 := by omega
+    rcases ha_cases with ha1 | ha1 <;> rcases hb_cases with hb1 | hb1 <;> omega
+  rw [← Nat.cast_add, ZMod.natCast_eq_natCast_iff']
+  exact hmod
+
+private lemma omega2_mul {a b : ℕ} (ha : a % 2 = 1) (hb : b % 2 = 1) :
+    ((((a * b) ^ 2 - 1) / 8 : ℕ) : ZMod 2) =
+      (((a ^ 2 - 1) / 8 : ℕ) : ZMod 2) + (((b ^ 2 - 1) / 8 : ℕ) : ZMod 2) := by
+  have hmod : (((a * b) ^ 2 - 1) / 8) % 2 = (((a ^ 2 - 1) / 8) + ((b ^ 2 - 1) / 8)) % 2 := by
+    set qa := a / 8; set ra := a % 8
+    set qb := b / 8; set rb := b % 8
+    have ha8 : a = 8 * qa + ra := (Nat.div_add_mod a 8).symm
+    have hb8 : b = 8 * qb + rb := (Nat.div_add_mod b 8).symm
+    have hra : ra = 1 ∨ ra = 3 ∨ ra = 5 ∨ ra = 7 := by omega
+    have hrb : rb = 1 ∨ rb = 3 ∨ rb = 5 ∨ rb = 7 := by omega
+    have h1 : (a ^ 2 - 1) / 8 % 2 = (ra ^ 2 - 1) / 8 % 2 := by
+      have : a ^ 2 = 16 * (4 * qa ^ 2 + qa * ra) + ra ^ 2 := by rw [ha8]; ring
+      have : 1 ≤ ra ^ 2 := by rcases hra with rfl | rfl | rfl | rfl <;> norm_num
+      omega
+    have h2 : (b ^ 2 - 1) / 8 % 2 = (rb ^ 2 - 1) / 8 % 2 := by
+      have : b ^ 2 = 16 * (4 * qb ^ 2 + qb * rb) + rb ^ 2 := by rw [hb8]; ring
+      have : 1 ≤ rb ^ 2 := by rcases hrb with rfl | rfl | rfl | rfl <;> norm_num
+      omega
+    have h3 : ((a * b) ^ 2 - 1) / 8 % 2 = ((ra * rb) ^ 2 - 1) / 8 % 2 := by
+      have hab : a * b = 8 * (8 * qa * qb + qa * rb + qb * ra) + ra * rb := by rw [ha8, hb8]; ring
+      set qab := 8 * qa * qb + qa * rb + qb * ra
+      have : (a * b) ^ 2 = 16 * (4 * qab ^ 2 + qab * (ra * rb)) + (ra * rb) ^ 2 := by rw [hab]; ring
+      have : 1 ≤ (ra * rb) ^ 2 := by
+        rcases hra with rfl | rfl | rfl | rfl <;> rcases hrb with rfl | rfl | rfl | rfl <;> norm_num
+      omega
+    rw [h3, Nat.add_mod, h1, h2, ← Nat.add_mod]
+    rcases hra with rfl | rfl | rfl | rfl <;> rcases hrb with rfl | rfl | rfl | rfl <;> norm_num
+  rw [← Nat.cast_add, ZMod.natCast_eq_natCast_iff']
+  exact hmod
+
+private def sqMod16 : Fin 4 → ℕ
+  | 0 => 0
+  | 1 => 1
+  | 2 => 4
+  | 3 => 9
+
+private lemma hilbert2_mod16_check :
+    ∀ (eq ec : Fin 2) (qo_i co_i : Fin 8) (ai bi di : Fin 4),
+      (sqMod16 ai % 2 = 1 ∨ sqMod16 bi % 2 = 1 ∨ sqMod16 di % 2 = 1) →
+      let qo := 2 * qo_i.1 + 1
+      let co := 2 * co_i.1 + 1
+      let q := (2 ^ eq.1) * qo
+      let c := (2 ^ ec.1) * co
+      sqMod16 ai % 16 = (q * sqMod16 bi + c * sqMod16 di) % 16 →
+      (((co - 1) / 2) * ((qo - 1) / 2) + eq.1 * ((co ^ 2 - 1) / 8) + ec.1 * ((qo ^ 2 - 1) / 8)) % 2 = 0 := by
+  decide
+
+private lemma sq_mod16_eq_sqMod16 (x : ℕ) :
+    ∃ i : Fin 4, x ^ 2 % 16 = sqMod16 i ∧ (x % 2 = 1 ↔ sqMod16 i % 2 = 1) := by
+  have hx : x = 8 * (x / 8) + x % 8 := (Nat.div_add_mod x 8).symm
+  have hsq : x ^ 2 % 16 = (x % 8) ^ 2 % 16 := by
+    have : x ^ 2 = 16 * (4 * (x / 8) ^ 2 + (x / 8) * (x % 8)) + (x % 8) ^ 2 := by rw [hx]; ring
+    omega
+  have hr : x % 8 < 8 := Nat.mod_lt x (by norm_num)
+  interval_cases h : x % 8
+  · exact ⟨0, by rw [hsq]; decide, by omega⟩
+  · exact ⟨1, by rw [hsq]; decide, by omega⟩
+  · exact ⟨2, by rw [hsq]; decide, by omega⟩
+  · exact ⟨3, by rw [hsq]; decide, by omega⟩
+  · exact ⟨0, by rw [hsq]; decide, by omega⟩
+  · exact ⟨3, by rw [hsq]; decide, by omega⟩
+  · exact ⟨2, by rw [hsq]; decide, by omega⟩
+  · exact ⟨1, by rw [hsq]; decide, by omega⟩
+
+/-- **Membership of the Midpoint Vector in `redeiKernel n`** (pure kernel proof, zero external axioms):
+For every `n ≥ 8` and fundamental Pell solution `(X₁, Y₁)` of `q_n`, the midpoint vector
+`yMidVec n X₁` satisfies every odd-prime row `redeiRowOdd n p` AND (when `q_n % 4 ≠ 1`) the
+2-adic Hilbert row `redeiRowTwo n`, hence `yMidVec n X₁ ∈ redeiKernel n`. -/
+theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
+    (hfund : IsFundamentalPell (q_n n) X₁ Y₁) :
+    yMidVec n X₁ ∈ redeiKernel n := by
+  set c := coreNat (2 * (X₁ + 1))
+  set v := sqPartNat (2 * (X₁ + 1))
+  have hc_pos : 0 < c := coreNat_pos _
+  have hv_pos : 0 < v := sqPartNat_pos _
+  have hq_pos : 0 < q_n n := q_n_pos_53 n
+  have hY1_pos : 0 < Y₁ := hfund.2.1
+  have hnorm : (X₁ + 1) ^ 2 = q_n n * Y₁ ^ 2 + c * v ^ 2 := by
+    have hpell := hfund.2.2.1
+    have hcv := coreNat_mul_sqPartNat_sq (m := 2 * (X₁ + 1)) (by omega)
+    nlinarith
+  have hc_prod : ∏ p' ∈ (ramPrimes n).filter (· ∣ c), p' = c :=
+    squarefree_eq_prod_ramPrimes hc_pos (coreNat_squarefree _)
+      (fun p hp hd => coreNat_two_X1_add_one_prime_mem_ramPrimes hfund hp hd)
+  refine ⟨?_, ?_⟩
+  · -- Odd prime rows: (c, q_n)_p = +1
+    intro p hp_ram hp3
+    have hp_pr : p.Prime := prime_mem_ramPrimes_prime hp_ram
+    haveI : Fact p.Prime := ⟨hp_pr⟩
+    have hp_podd : p ∈ Podd n := by
+      unfold ramPrimes at hp_ram
+      split_ifs at hp_ram with hq1
+      · exact hp_ram
+      · exact (Finset.mem_insert.mp hp_ram).resolve_left (by omega)
+    have hp_dvd_q : p ∣ q_n n := (prime_dvd_q_n_iff_mem_Podd hp_pr).mpr hp_podd
+    have hvp_q : padicValNat p (q_n n) = 1 := by
+      have h1 := one_le_padicValNat_of_dvd hq_pos.ne' hp_dvd_q
+      have h2 : padicValNat p (q_n n) ≤ 1 := by
+        by_contra hgt; push_neg at hgt
+        have hp2 : p ^ 2 ∣ q_n n := dvd_trans (pow_dvd_pow p (by omega : 2 ≤ padicValNat p (q_n n))) pow_padicValNat_dvd
+        exact hp_pr.not_unit ((q_n_squarefree n) p (by simpa [sq] using hp2))
+      omega
+    -- Rewrite redeiRowOdd as sum over S_c = (ramPrimes n).filter (· ∣ c)
+    unfold redeiRowOdd yMidVec
+    rw [← Finset.sum_attach (ramPrimes n)]
+    have hsum_eq : (∑ p' ∈ (ramPrimes n).attach,
+        (if p'.1 = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) * (if p'.1 ∣ c then 1 else 0)
+         else legendreIdx p (p'.1 : ℤ) * (if p'.1 ∣ c then 1 else 0))) =
+        ∑ p' ∈ (ramPrimes n).filter (· ∣ c),
+          if p' = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) else legendreIdx p (p' : ℤ) := by
+      rw [Finset.sum_attach (ramPrimes n) (fun x =>
+        if x = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) * (if x ∣ c then 1 else 0)
+        else legendreIdx p (x : ℤ) * (if x ∣ c then 1 else 0))]
+      rw [Finset.sum_filter]
+      refine Finset.sum_congr rfl fun x _ => ?_
+      split_ifs <;> simp
+    rw [hsum_eq]
+    by_cases hpc : p ∣ c
+    · -- Case p ∣ c: split off p from S_c
+      have hp_Sc : p ∈ (ramPrimes n).filter (· ∣ c) := Finset.mem_filter.mpr ⟨hp_ram, hpc⟩
+      rw [← Finset.add_sum_erase _ _ hp_Sc, if_pos rfl]
+      have hrest : ∑ x ∈ ((ramPrimes n).filter (· ∣ c)).erase p,
+          (if x = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) else legendreIdx p (x : ℤ)) =
+          legendreIdx p ((c / p : ℕ) : ℤ) := by
+        have h1 : ∑ x ∈ ((ramPrimes n).filter (· ∣ c)).erase p,
+            (if x = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) else legendreIdx p (x : ℤ)) =
+            ∑ x ∈ ((ramPrimes n).filter (· ∣ c)).erase p, legendreIdx p (x : ℤ) :=
+          Finset.sum_congr rfl fun x hx => if_neg (Finset.ne_of_mem_erase hx)
+        rw [h1, sum_legendreIdx_eq_prod hp_pr _ (fun q hq =>
+          ⟨prime_mem_ramPrimes_prime (Finset.mem_filter.mp (Finset.mem_of_mem_erase hq)).1,
+           Finset.ne_of_mem_erase hq⟩)]
+        congr 2
+        have hpm := Finset.mul_prod_erase ((ramPrimes n).filter (· ∣ c)) (fun x => x) hp_Sc
+        rw [hc_prod] at hpm
+        exact Nat.eq_div_of_mul_eq_right hp_pr.ne_zero hpm
+      rw [hrest]
+      have hnd_q' : ¬ p ∣ q_n n / p := by
+        intro hd
+        have hp2 : p ^ 2 ∣ q_n n := by
+          rw [sq]; exact (Nat.dvd_div_iff_mul_dvd hp_dvd_q).mp hd
+        exact hp_pr.not_unit ((q_n_squarefree n) p (by simpa [sq] using hp2))
+      have hnd_c' : ¬ p ∣ c / p := by
+        intro hd
+        have hp2 : p ^ 2 ∣ c := by
+          rw [sq]; exact (Nat.dvd_div_iff_mul_dvd hpc).mp hd
+        exact hp_pr.not_unit ((coreNat_squarefree _) p (by simpa [sq] using hp2))
+      rw [← legendreIdx_mul hp_pr (by intro h; exact hnd_q' (Int.natCast_dvd_natCast.mp (dvd_neg.mp h)))
+            (by intro h; exact hnd_c' (Int.natCast_dvd_natCast.mp h))]
+      -- From (X₁+1)^2 = q_n * Y₁^2 + c * v^2, p ∣ X₁+1, divide by p:
+      have hp_X1p1 : p ∣ X₁ + 1 := hp_pr.dvd_of_dvd_pow (by
+        rw [hnorm]; exact dvd_add (dvd_mul_of_dvd_left hp_dvd_q _) (dvd_mul_of_dvd_left hpc _))
+      obtain ⟨A₁, hA₁⟩ := hp_X1p1
+      have hdiv_p : p * A₁ ^ 2 = (q_n n / p) * Y₁ ^ 2 + (c / p) * v ^ 2 := by
+        have h1 : p * (p * A₁ ^ 2) = p * ((q_n n / p) * Y₁ ^ 2 + (c / p) * v ^ 2) := by
+          calc p * (p * A₁ ^ 2) = (p * A₁) ^ 2 := by ring
+            _ = (X₁ + 1) ^ 2 := by rw [← hA₁]
+            _ = q_n n * Y₁ ^ 2 + c * v ^ 2 := hnorm
+            _ = (p * (q_n n / p)) * Y₁ ^ 2 + (p * (c / p)) * v ^ 2 := by
+                rw [Nat.mul_div_cancel' hp_dvd_q, Nat.mul_div_cancel' hpc]
+            _ = p * ((q_n n / p) * Y₁ ^ 2 + (c / p) * v ^ 2) := by ring
+        exact Nat.eq_of_mul_eq_mul_left hp_pr.pos h1
+      -- Divide Y₁, v by p ^ min(v_p(Y₁), v_p(v))
+      set k := min (padicValNat p Y₁) (padicValNat p v)
+      have hpk_Y : p ^ k ∣ Y₁ := dvd_trans (pow_dvd_pow p (min_le_left _ _)) pow_padicValNat_dvd
+      have hpk_v : p ^ k ∣ v := dvd_trans (pow_dvd_pow p (min_le_right _ _)) pow_padicValNat_dvd
+      obtain ⟨B', hB'⟩ := hpk_Y
+      obtain ⟨C', hC'⟩ := hpk_v
+      have hpk2_dvd : p ^ (2 * k) ∣ p * A₁ ^ 2 := by
+        rw [hdiv_p, hB', hC', show 2 * k = k + k by omega, pow_add]
+        refine dvd_add ?_ ?_
+        · exact ⟨(q_n n / p) * B' ^ 2, by ring⟩
+        · exact ⟨(c / p) * C' ^ 2, by ring⟩
+      have hpk2_A1 : p ^ k ∣ A₁ := by
+        have hA1_pos : A₁ ≠ 0 := by intro h0; rw [h0, mul_zero] at hA₁; omega
+        have hv1 := (Nat.factorization_le_iff_dvd (pow_ne_zero (2 * k) hp_pr.ne_zero)
+          (mul_ne_zero hp_pr.ne_zero (pow_ne_zero 2 hA1_pos))).mpr hpk2_dvd p
+        simp only [Nat.factorization_pow, Finsupp.smul_apply, smul_eq_mul,
+          Nat.factorization_mul hp_pr.ne_zero (pow_ne_zero 2 hA1_pos), Finsupp.add_apply,
+          hp_pr.factorization_self] at hv1
+        have hle_k : k ≤ padicValNat p A₁ := by rw [← Nat.factorization_def _ hp_pr]; omega
+        exact dvd_trans (pow_dvd_pow p hle_k) pow_padicValNat_dvd
+      obtain ⟨A', hA'⟩ := hpk2_A1
+      have hred : p * A' ^ 2 = (q_n n / p) * B' ^ 2 + (c / p) * C' ^ 2 := by
+        have h1 : (p ^ k) ^ 2 * (p * A' ^ 2) = (p ^ k) ^ 2 * ((q_n n / p) * B' ^ 2 + (c / p) * C' ^ 2) := by
+          calc (p ^ k) ^ 2 * (p * A' ^ 2) = p * (p ^ k * A') ^ 2 := by ring
+            _ = p * A₁ ^ 2 := by rw [← hA']
+            _ = (q_n n / p) * (p ^ k * B') ^ 2 + (c / p) * (p ^ k * C') ^ 2 := by rw [← hB', ← hC', hdiv_p]
+            _ = (p ^ k) ^ 2 * ((q_n n / p) * B' ^ 2 + (c / p) * C' ^ 2) := by ring
+        exact Nat.eq_of_mul_eq_mul_left (pow_pos (pow_pos hp_pr.pos k) 2) h1
+      have hnot_both : ¬ (p ∣ B' ∧ p ∣ C') := by
+        rintro ⟨h1, h2⟩
+        have hvY : k + 1 ≤ padicValNat p Y₁ := by
+          rw [hB', padicValNat.mul (pow_ne_zero k hp_pr.ne_zero) (by intro h0; rw [h0, mul_zero] at hB'; exact hY1_pos.ne' hB'),
+            padicValNat.pow k hp_pr.ne_zero, padicValNat.self]
+          have := one_le_padicValNat_of_dvd (by intro h0; rw [h0, mul_zero] at hB'; exact hY1_pos.ne' hB') h1
+          omega
+        have hvv : k + 1 ≤ padicValNat p v := by
+          rw [hC', padicValNat.mul (pow_ne_zero k hp_pr.ne_zero) (by intro h0; rw [h0, mul_zero] at hC'; exact hv_pos.ne' hC'),
+            padicValNat.pow k hp_pr.ne_zero, padicValNat.self]
+          have := one_le_padicValNat_of_dvd (by intro h0; rw [h0, mul_zero] at hC'; exact hv_pos.ne' hC') h2
+          omega
+        omega
+      have hp_nd_C' : ¬ p ∣ C' := by
+        intro hC_dvd
+        have hB_dvd : p ∣ B' := by
+          have h1 : p ∣ (q_n n / p) * B' ^ 2 := by
+            have : (q_n n / p) * B' ^ 2 + (c / p) * C' ^ 2 = p * A' ^ 2 := hred.symm
+            exact (Nat.dvd_add_left (dvd_mul_of_dvd_right (dvd_pow hC_dvd (by norm_num)) _)).mp
+              (this ▸ dvd_mul_right p _)
+          exact hp_pr.dvd_of_dvd_pow ((hp_pr.dvd_mul.mp h1).resolve_left hnd_q')
+        exact hnot_both ⟨hB_dvd, hC_dvd⟩
+      have hcong : (p : ℤ) ∣ (((q_n n / p) * B' : ℕ) : ℤ) ^ 2 -
+          (-(q_n n / p : ℕ) : ℤ) * (c / p : ℕ) * (C' : ℤ) ^ 2 := by
+        refine ⟨(q_n n / p : ℕ) * (A' : ℤ) ^ 2, ?_⟩
+        have hred_z : (p : ℤ) * (A' : ℤ) ^ 2 = ((q_n n / p : ℕ) : ℤ) * (B' : ℤ) ^ 2 + ((c / p : ℕ) : ℤ) * (C' : ℤ) ^ 2 := by
+          exact_mod_cast hred
+        push_cast; nlinarith
+      exact legendreIdx_zero_of_sq_cong hp_pr hp3 (by
+        intro h; rcases Int.Prime.dvd_mul' (Nat.prime_iff_prime_int.mp hp_pr) h with h1 | h2
+        · exact hnd_q' (Int.natCast_dvd_natCast.mp (dvd_neg.mp h1))
+        · exact hnd_c' (Int.natCast_dvd_natCast.mp h2)) hp_nd_C' hcong
+    · -- Case ¬ p ∣ c
+      have h1 : ∑ x ∈ (ramPrimes n).filter (· ∣ c),
+          (if x = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) else legendreIdx p (x : ℤ)) =
+          ∑ x ∈ (ramPrimes n).filter (· ∣ c), legendreIdx p (x : ℤ) :=
+        Finset.sum_congr rfl fun x hx => if_neg (fun heq => hpc (heq ▸ (Finset.mem_filter.mp hx).2))
+      rw [h1, sum_legendreIdx_eq_prod hp_pr _ (fun q hq =>
+        ⟨prime_mem_ramPrimes_prime (Finset.mem_filter.mp hq).1,
+         fun heq => hpc (heq ▸ (Finset.mem_filter.mp hq).2)⟩), hc_prod]
+      -- Divide X₁+1, v by p ^ min(v_p(X₁+1), v_p(v))
+      set k := min (padicValNat p (X₁ + 1)) (padicValNat p v)
+      have hpk_A : p ^ k ∣ X₁ + 1 := dvd_trans (pow_dvd_pow p (min_le_left _ _)) pow_padicValNat_dvd
+      have hpk_v : p ^ k ∣ v := dvd_trans (pow_dvd_pow p (min_le_right _ _)) pow_padicValNat_dvd
+      obtain ⟨A', hA'⟩ := hpk_A
+      obtain ⟨C', hC'⟩ := hpk_v
+      have hpk2_dvd : p ^ (2 * k) ∣ q_n n * Y₁ ^ 2 := by
+        have hsub : (X₁ + 1) ^ 2 - c * v ^ 2 = q_n n * Y₁ ^ 2 := by omega
+        rw [← hsub, hA', hC', show 2 * k = k + k by omega, pow_add]
+        have h1 : p ^ k * p ^ k ∣ (p ^ k * A') ^ 2 := ⟨A' ^ 2, by ring⟩
+        have h2 : p ^ k * p ^ k ∣ c * (p ^ k * C') ^ 2 := ⟨c * C' ^ 2, by ring⟩
+        exact Nat.dvd_sub h1 h2
+      have hpk_Y : p ^ k ∣ Y₁ :=
+        dvd_of_sq_dvd_sqfree_mul_sq (q_n_squarefree n) hq_pos.ne' hY1_pos.ne' (pow_ne_zero k hp_pr.ne_zero)
+          (by simpa [pow_mul, mul_comm 2 k] using hpk2_dvd)
+      obtain ⟨B', hB'⟩ := hpk_Y
+      have hred : A' ^ 2 = q_n n * B' ^ 2 + c * C' ^ 2 := by
+        have h1 : (p ^ k) ^ 2 * A' ^ 2 = (p ^ k) ^ 2 * (q_n n * B' ^ 2 + c * C' ^ 2) := by
+          calc (p ^ k) ^ 2 * A' ^ 2 = (p ^ k * A') ^ 2 := by ring
+            _ = (X₁ + 1) ^ 2 := by rw [← hA']
+            _ = q_n n * (p ^ k * B') ^ 2 + c * (p ^ k * C') ^ 2 := by rw [← hB', ← hC', hnorm]
+            _ = (p ^ k) ^ 2 * (q_n n * B' ^ 2 + c * C' ^ 2) := by ring
+        exact Nat.eq_of_mul_eq_mul_left (pow_pos (pow_pos hp_pr.pos k) 2) h1
+      have hnot_both : ¬ (p ∣ A' ∧ p ∣ C') := by
+        rintro ⟨h1, h2⟩
+        have hvA : k + 1 ≤ padicValNat p (X₁ + 1) := by
+          rw [hA', padicValNat.mul (pow_ne_zero k hp_pr.ne_zero) (by intro h0; rw [h0, mul_zero] at hA'; omega),
+            padicValNat.pow k hp_pr.ne_zero, padicValNat.self]
+          have := one_le_padicValNat_of_dvd (by intro h0; rw [h0, mul_zero] at hA'; omega) h1
+          omega
+        have hvv : k + 1 ≤ padicValNat p v := by
+          rw [hC', padicValNat.mul (pow_ne_zero k hp_pr.ne_zero) (by intro h0; rw [h0, mul_zero] at hC'; exact hv_pos.ne' hC'),
+            padicValNat.pow k hp_pr.ne_zero, padicValNat.self]
+          have := one_le_padicValNat_of_dvd (by intro h0; rw [h0, mul_zero] at hC'; exact hv_pos.ne' hC') h2
+          omega
+        omega
+      have hp_nd_C' : ¬ p ∣ C' := by
+        intro hC_dvd
+        have hA_dvd : p ∣ A' := hp_pr.dvd_of_dvd_pow (by
+          rw [hred]; exact dvd_add (dvd_mul_of_dvd_left hp_dvd_q _) (dvd_mul_of_dvd_right (dvd_pow hC_dvd (by norm_num)) _))
+        exact hnot_both ⟨hA_dvd, hC_dvd⟩
+      have hcong : (p : ℤ) ∣ (A' : ℤ) ^ 2 - (c : ℤ) * (C' : ℤ) ^ 2 := by
+        have hred_z : (A' : ℤ) ^ 2 - (c : ℤ) * (C' : ℤ) ^ 2 = (q_n n : ℤ) * (B' : ℤ) ^ 2 := by
+          have : (A' : ℤ) ^ 2 = (q_n n : ℤ) * (B' : ℤ) ^ 2 + (c : ℤ) * (C' : ℤ) ^ 2 := by exact_mod_cast hred
+          linarith
+        rw [hred_z]
+        exact dvd_mul_of_dvd_left (Int.natCast_dvd_natCast.mpr hp_dvd_q) _
+      exact legendreIdx_zero_of_sq_cong hp_pr hp3 (fun h => hpc (Int.natCast_dvd_natCast.mp h)) hp_nd_C' hcong
+  · -- 2-adic Hilbert row when q_n % 4 ≠ 1
+    intro hq_ne1
+    haveI : Fact (Nat.Prime 2) := ⟨Nat.prime_two⟩
+    unfold redeiRowTwo yMidVec
+    set v2q := padicValNat 2 (q_n n)
+    set qodd := oddPartNat (q_n n)
+    set v2c := padicValNat 2 c
+    set codd := oddPartNat c
+    have hv2q_le1 : v2q ≤ 1 := by
+      by_contra hgt; push_neg at hgt
+      have h4 : 2 ^ 2 ∣ q_n n := dvd_trans (pow_dvd_pow 2 (by omega : 2 ≤ v2q)) pow_padicValNat_dvd
+      exact Nat.prime_two.not_unit ((q_n_squarefree n) 2 (by simpa [sq] using h4))
+    have hv2c_le1 : v2c ≤ 1 := by
+      by_contra hgt; push_neg at hgt
+      have h4 : 2 ^ 2 ∣ c := dvd_trans (pow_dvd_pow 2 (by omega : 2 ≤ v2c)) pow_padicValNat_dvd
+      exact Nat.prime_two.not_unit ((coreNat_squarefree _) 2 (by simpa [sq] using h4))
+    have hqodd_odd : qodd % 2 = 1 := by
+      have := oddPartNat_not_dvd_two hq_pos; omega
+    have hcodd_odd : codd % 2 = 1 := by
+      have := oddPartNat_not_dvd_two hc_pos; omega
+    -- Compute redeiRowTwo in terms of (v2c, codd, v2q, qodd)
+    rw [← Finset.sum_attach (ramPrimes n)]
+    have hsum_flt : (∑ p' ∈ (ramPrimes n).attach,
+        (if p'.1 = 2 then (((qodd ^ 2 - 1) / 8 : ℕ) : ZMod 2)
+         else ((((p'.1 - 1) / 2) * ((qodd - 1) / 2) + v2q * ((p'.1 ^ 2 - 1) / 8) : ℕ) : ZMod 2)) *
+        (if p'.1 ∣ c then 1 else 0)) =
+        ∑ p' ∈ (ramPrimes n).filter (· ∣ c),
+          if p' = 2 then (((qodd ^ 2 - 1) / 8 : ℕ) : ZMod 2)
+          else ((((p' - 1) / 2) * ((qodd - 1) / 2) + v2q * ((p' ^ 2 - 1) / 8) : ℕ) : ZMod 2) := by
+      rw [Finset.sum_attach (ramPrimes n) (fun x =>
+        (if x = 2 then (((qodd ^ 2 - 1) / 8 : ℕ) : ZMod 2)
+         else ((((x - 1) / 2) * ((qodd - 1) / 2) + v2q * ((x ^ 2 - 1) / 8) : ℕ) : ZMod 2)) *
+        (if x ∣ c then 1 else 0))]
+      rw [Finset.sum_filter]
+      refine Finset.sum_congr rfl fun x _ => ?_
+      split_ifs <;> simp
+    rw [hsum_flt]
+    set S_odd := ((ramPrimes n).filter (· ∣ c)).erase 2
+    have hSodd_odd : ∀ p' ∈ S_odd, p' % 2 = 1 := by
+      intro p' hp'
+      have hpr := prime_mem_ramPrimes_prime (Finset.mem_filter.mp (Finset.mem_of_mem_erase hp')).1
+      have hne2 := Finset.ne_of_mem_erase hp'
+      exact Nat.Prime.eq_two_or_odd hpr |>.resolve_left hne2
+    have hSodd_prod : ∏ p' ∈ S_odd, p' = codd := by
+      have hmul_c := oddPartNat_mul_two_pow hc_pos
+      by_cases h2c : 2 ∣ c
+      · have hv2c_eq1 : v2c = 1 := by
+          have := one_le_padicValNat_of_dvd hc_pos.ne' h2c; omega
+        have h2mem : 2 ∈ (ramPrimes n).filter (· ∣ c) :=
+          Finset.mem_filter.mpr ⟨by unfold ramPrimes; rw [if_neg hq_ne1]; exact Finset.mem_insert_self 2 _, h2c⟩
+        have h1 := Finset.mul_prod_erase ((ramPrimes n).filter (· ∣ c)) (fun x => x) h2mem
+        rw [hc_prod] at h1
+        rw [hv2c_eq1, pow_one] at hmul_c
+        change ∏ p' ∈ S_odd, p' = codd
+        omega
+      · have hv2c_eq0 : v2c = 0 := padicValNat.eq_zero_of_not_dvd h2c
+        have h2nmem : 2 ∉ (ramPrimes n).filter (· ∣ c) := fun h => h2c (Finset.mem_filter.mp h).2
+        rw [hv2c_eq0, pow_zero, mul_one] at hmul_c
+        change ∏ p' ∈ ((ramPrimes n).filter (· ∣ c)).erase 2, p' = codd
+        rw [Finset.erase_eq_of_not_mem h2nmem, hc_prod, hmul_c]
+    have hsum_odd_prod : ∀ T : Finset ℕ, (∀ p' ∈ T, p' % 2 = 1) →
+        (∑ p' ∈ T, (((p' - 1) / 2 : ℕ) : ZMod 2)) = ((((∏ p' ∈ T, p') - 1) / 2 : ℕ) : ZMod 2) ∧
+        (∑ p' ∈ T, (((p' ^ 2 - 1) / 8 : ℕ) : ZMod 2)) = ((((∏ p' ∈ T, p') ^ 2 - 1) / 8 : ℕ) : ZMod 2) := by
+      intro T
+      classical
+      induction T using Finset.induction_on with
+      | empty => intro _; simp
+      | @insert a s has ih =>
+        intro hT
+        have ha_odd := hT a (Finset.mem_insert_self a s)
+        have hs_odd : (∏ p' ∈ s, p') % 2 = 1 := by
+          have : Odd (∏ p' ∈ s, p') := Finset.odd_prod.mpr fun x hx =>
+            Nat.odd_iff.mpr (hT x (Finset.mem_insert_of_mem hx))
+          exact Nat.odd_iff.mp this
+        have ih' := ih (fun x hx => hT x (Finset.mem_insert_of_mem hx))
+        rw [Finset.sum_insert has, Finset.sum_insert has, Finset.prod_insert has]
+        exact ⟨by rw [ih'.1, eps2_mul ha_odd hs_odd], by rw [ih'.2, omega2_mul ha_odd hs_odd]⟩
+    have hsum_val : (∑ p' ∈ (ramPrimes n).filter (· ∣ c),
+        if p' = 2 then (((qodd ^ 2 - 1) / 8 : ℕ) : ZMod 2)
+        else ((((p' - 1) / 2) * ((qodd - 1) / 2) + v2q * ((p' ^ 2 - 1) / 8) : ℕ) : ZMod 2)) =
+        ((((codd - 1) / 2) * ((qodd - 1) / 2) + v2q * ((codd ^ 2 - 1) / 8) +
+          v2c * ((qodd ^ 2 - 1) / 8) : ℕ) : ZMod 2) := by
+      have hodd_part : ∑ p' ∈ S_odd,
+          (if p' = 2 then (((qodd ^ 2 - 1) / 8 : ℕ) : ZMod 2)
+           else ((((p' - 1) / 2) * ((qodd - 1) / 2) + v2q * ((p' ^ 2 - 1) / 8) : ℕ) : ZMod 2)) =
+          ((((codd - 1) / 2) * ((qodd - 1) / 2) + v2q * ((codd ^ 2 - 1) / 8) : ℕ) : ZMod 2) := by
+        have h1 : ∑ p' ∈ S_odd,
+            (if p' = 2 then (((qodd ^ 2 - 1) / 8 : ℕ) : ZMod 2)
+             else ((((p' - 1) / 2) * ((qodd - 1) / 2) + v2q * ((p' ^ 2 - 1) / 8) : ℕ) : ZMod 2)) =
+            (∑ p' ∈ S_odd, (((p' - 1) / 2 : ℕ) : ZMod 2)) * (((qodd - 1) / 2 : ℕ) : ZMod 2) +
+            (v2q : ZMod 2) * (∑ p' ∈ S_odd, (((p' ^ 2 - 1) / 8 : ℕ) : ZMod 2)) := by
+          rw [Finset.sum_mul, Finset.mul_sum, ← Finset.sum_add_distrib]
+          refine Finset.sum_congr rfl fun p' hp' => ?_
+          rw [if_neg (Finset.ne_of_mem_erase hp')]; push_cast; ring
+        rw [h1, (hsum_odd_prod S_odd hSodd_odd).1, (hsum_odd_prod S_odd hSodd_odd).2, hSodd_prod]
+        push_cast; ring
+      by_cases h2c : 2 ∣ c
+      · have hv2c_eq1 : v2c = 1 := by
+          have := one_le_padicValNat_of_dvd hc_pos.ne' h2c; omega
+        have h2mem : 2 ∈ (ramPrimes n).filter (· ∣ c) :=
+          Finset.mem_filter.mpr ⟨by unfold ramPrimes; rw [if_neg hq_ne1]; exact Finset.mem_insert_self 2 _, h2c⟩
+        rw [← Finset.add_sum_erase _ _ h2mem, if_pos rfl]
+        change (((qodd ^ 2 - 1) / 8 : ℕ) : ZMod 2) + ∑ p' ∈ S_odd, _ = _
+        rw [hodd_part, hv2c_eq1]; push_cast; ring
+      · have hv2c_eq0 : v2c = 0 := padicValNat.eq_zero_of_not_dvd h2c
+        have h2nmem : 2 ∉ (ramPrimes n).filter (· ∣ c) := fun h => h2c (Finset.mem_filter.mp h).2
+        have heq_S : (ramPrimes n).filter (· ∣ c) = S_odd := (Finset.erase_eq_of_not_mem h2nmem).symm
+        rw [heq_S, hodd_part, hv2c_eq0]; push_cast; ring
+    rw [hsum_val]
+    -- Reduce (X₁ + 1)^2 = q_n * Y₁^2 + c * v^2 by 2^k where k = min(v_2(X₁+1), v_2(Y₁), v_2(v))
+    set k := min (padicValNat 2 (X₁ + 1)) (min (padicValNat 2 Y₁) (padicValNat 2 v))
+    have h2k_A : 2 ^ k ∣ X₁ + 1 := dvd_trans (pow_dvd_pow 2 (min_le_left _ _)) pow_padicValNat_dvd
+    have h2k_B : 2 ^ k ∣ Y₁ := dvd_trans (pow_dvd_pow 2 (le_trans (min_le_right _ _) (min_le_left _ _))) pow_padicValNat_dvd
+    have h2k_C : 2 ^ k ∣ v := dvd_trans (pow_dvd_pow 2 (le_trans (min_le_right _ _) (min_le_right _ _))) pow_padicValNat_dvd
+    obtain ⟨A', hA'⟩ := h2k_A
+    obtain ⟨B', hB'⟩ := h2k_B
+    obtain ⟨C', hC'⟩ := h2k_C
+    have hred : A' ^ 2 = q_n n * B' ^ 2 + c * C' ^ 2 := by
+      have h1 : (2 ^ k) ^ 2 * A' ^ 2 = (2 ^ k) ^ 2 * (q_n n * B' ^ 2 + c * C' ^ 2) := by
+        calc (2 ^ k) ^ 2 * A' ^ 2 = (2 ^ k * A') ^ 2 := by ring
+          _ = (X₁ + 1) ^ 2 := by rw [← hA']
+          _ = q_n n * (2 ^ k * B') ^ 2 + c * (2 ^ k * C') ^ 2 := by rw [← hB', ← hC', hnorm]
+          _ = (2 ^ k) ^ 2 * (q_n n * B' ^ 2 + c * C' ^ 2) := by ring
+      exact Nat.eq_of_mul_eq_mul_left (pow_pos (pow_pos (by norm_num) k) 2) h1
+    have hone_odd : A' % 2 = 1 ∨ B' % 2 = 1 ∨ C' % 2 = 1 := by
+      by_contra hnone; push_neg at hnone
+      have hA_ev : 2 ∣ A' := by omega
+      have hB_ev : 2 ∣ B' := by omega
+      have hC_ev : 2 ∣ C' := by omega
+      have hvA : k + 1 ≤ padicValNat 2 (X₁ + 1) := by
+        rw [hA', padicValNat.mul (pow_ne_zero k (by norm_num)) (by intro h0; rw [h0, mul_zero] at hA'; omega),
+          padicValNat.pow k (by norm_num), padicValNat.self]
+        have := one_le_padicValNat_of_dvd (by intro h0; rw [h0, mul_zero] at hA'; omega) hA_ev; omega
+      have hvB : k + 1 ≤ padicValNat 2 Y₁ := by
+        rw [hB', padicValNat.mul (pow_ne_zero k (by norm_num)) (by intro h0; rw [h0, mul_zero] at hB'; exact hY1_pos.ne' hB'),
+          padicValNat.pow k (by norm_num), padicValNat.self]
+        have := one_le_padicValNat_of_dvd (by intro h0; rw [h0, mul_zero] at hB'; exact hY1_pos.ne' hB') hB_ev; omega
+      have hvC : k + 1 ≤ padicValNat 2 v := by
+        rw [hC', padicValNat.mul (pow_ne_zero k (by norm_num)) (by intro h0; rw [h0, mul_zero] at hC'; exact hv_pos.ne' hC'),
+          padicValNat.pow k (by norm_num), padicValNat.self]
+        have := one_le_padicValNat_of_dvd (by intro h0; rw [h0, mul_zero] at hC'; exact hv_pos.ne' hC') hC_ev; omega
+      omega
+    have hq_decomp : q_n n = 2 ^ v2q * qodd := by rw [mul_comm]; exact (oddPartNat_mul_two_pow hq_pos).symm
+    have hc_decomp : c = 2 ^ v2c * codd := by rw [mul_comm]; exact (oddPartNat_mul_two_pow hc_pos).symm
+    obtain ⟨ai, hai_sq, hai_odd⟩ := sq_mod16_eq_sqMod16 A'
+    obtain ⟨bi, hbi_sq, hbi_odd⟩ := sq_mod16_eq_sqMod16 B'
+    obtain ⟨di, hdi_sq, hdi_odd⟩ := sq_mod16_eq_sqMod16 C'
+    have hqodd_r : 2 * ((qodd % 16) / 2) + 1 = qodd % 16 := by omega
+    have hcodd_r : 2 * ((codd % 16) / 2) + 1 = codd % 16 := by omega
+    have hmod16 : sqMod16 ai % 16 = ((2 ^ v2q * (2 * ((qodd % 16) / 2) + 1)) * sqMod16 bi +
+        (2 ^ v2c * (2 * ((codd % 16) / 2) + 1)) * sqMod16 di) % 16 := by
+      have h1 := congrArg (· % 16) hred
+      rw [hqodd_r, hcodd_r]
+      rw [hai_sq, hq_decomp, hc_decomp] at h1
+      rw [Nat.add_mod, Nat.mul_mod (2 ^ v2q * qodd), Nat.mul_mod (2 ^ v2c * codd),
+        hbi_sq, hdi_sq, Nat.mul_mod (2 ^ v2q) qodd, Nat.mul_mod (2 ^ v2c) codd] at h1
+      have hsq_lt : sqMod16 ai < 16 := by fin_cases ai <;> decide
+      rw [Nat.mod_eq_of_lt hsq_lt]
+      rw [h1]
+      simp [Nat.add_mod, Nat.mul_mod]
+    have hodd_sq : sqMod16 ai % 2 = 1 ∨ sqMod16 bi % 2 = 1 ∨ sqMod16 di % 2 = 1 := by
+      rcases hone_odd with h | h | h
+      · exact Or.inl (hai_odd.mp h)
+      · exact Or.inr (Or.inl (hbi_odd.mp h))
+      · exact Or.inr (Or.inr (hdi_odd.mp h))
+    have hres := hilbert2_mod16_check ⟨v2q, by omega⟩ ⟨v2c, by omega⟩
+      ⟨(qodd % 16) / 2, by omega⟩ ⟨(codd % 16) / 2, by omega⟩
+      ai bi di hodd_sq hmod16
+    have hcong_exp : (((codd - 1) / 2) * ((qodd - 1) / 2) + v2q * ((codd ^ 2 - 1) / 8) +
+        v2c * ((qodd ^ 2 - 1) / 8)) % 2 =
+        ((((2 * ((codd % 16) / 2) + 1) - 1) / 2) * (((2 * ((qodd % 16) / 2) + 1) - 1) / 2) +
+          v2q * (((2 * ((codd % 16) / 2) + 1) ^ 2 - 1) / 8) +
+          v2c * (((2 * ((qodd % 16) / 2) + 1) ^ 2 - 1) / 8)) % 2 := by
+      have hq16 : qodd = 16 * (qodd / 16) + qodd % 16 := (Nat.div_add_mod qodd 16).symm
+      have hc16 : codd = 16 * (codd / 16) + codd % 16 := (Nat.div_add_mod codd 16).symm
+      have h1 : (qodd - 1) / 2 % 2 = (qodd % 16 - 1) / 2 % 2 := by omega
+      have h2 : (codd - 1) / 2 % 2 = (codd % 16 - 1) / 2 % 2 := by omega
+      have h3 : (qodd ^ 2 - 1) / 8 % 2 = ((qodd % 16) ^ 2 - 1) / 8 % 2 := by
+        have : qodd ^ 2 = 16 * (16 * (qodd / 16) ^ 2 + 2 * (qodd / 16) * (qodd % 16)) + (qodd % 16) ^ 2 := by rw [hq16]; ring
+        have : 1 ≤ (qodd % 16) ^ 2 := by nlinarith
+        omega
+      have h4 : (codd ^ 2 - 1) / 8 % 2 = ((codd % 16) ^ 2 - 1) / 8 % 2 := by
+        have : codd ^ 2 = 16 * (16 * (codd / 16) ^ 2 + 2 * (codd / 16) * (codd % 16)) + (codd % 16) ^ 2 := by rw [hc16]; ring
+        have : 1 ≤ (codd % 16) ^ 2 := by nlinarith
+        omega
+      rw [hqodd_r, hcodd_r]
+      rw [Nat.add_mod, Nat.add_mod, Nat.mul_mod ((codd - 1) / 2), Nat.mul_mod v2q, Nat.mul_mod v2c,
+        h1, h2, h3, h4]
+      simp [Nat.add_mod, Nat.mul_mod]
+    rw [ZMod.natCast_eq_zero_iff]
+    exact Nat.dvd_of_mod_eq_zero (by rw [hcong_exp]; exact hres)
 
 /-- **Theorem 5.3(i) — Galois Cohomology Exact Sequence and Rédei–Reichardt 4-Rank Identity
 (eqs. 5.8–5.9)**:
-For any `n ≥ 8` and non-zero midpoint cocycle `y^{mid}(n, X₁) ∈ ker_{𝔽₂}(R_n^{ram})`,
-there is an exact sequence of `𝔽₂`-vector spaces
-`0 → span_{𝔽₂}{y^{mid}(n, X₁)} → ker_{𝔽₂}(R_n^{ram}) → Cl^+(q_n)[2] ∩ 2 Cl^+(q_n) → 0`,
+For any `n ≥ 8` and fundamental Pell solution `(X₁, Y₁)` of `q_n` (with **no** unproved
+hypotheses on `yMidVec` — both `yMidVec_mem_redeiKernel` and `yMidVec_ne_zero` are proved
+directly from the Pell equation), there is an exact sequence of `𝔽₂`-vector spaces
+`0 → span_{𝔽₂}{y^{mid}} → ker_{𝔽₂}(R_n^{ram}) → Cl^+(q_n)[2] ∩ 2 Cl^+(q_n) → 0`,
 and consequently `dim_{𝔽₂} ker_{𝔽₂}(R_n^{ram}) = 1 + rank₄ Cl^+(q_n)`. -/
 theorem thm_5_3_part1_cohomology_4rank {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
-    (hfund : IsFundamentalPell (q_n n) X₁ Y₁)
-    (hyMid_mem : yMidVec n X₁ ∈ redeiKernel n)
-    (hyMid_ne : yMidVec n X₁ ≠ 0) :
-    let yMid : redeiKernel n := ⟨yMidVec n X₁, hyMid_mem⟩
+    (hfund : IsFundamentalPell (q_n n) X₁ Y₁) :
+    let yMid : redeiKernel n := ⟨yMidVec n X₁, yMidVec_mem_redeiKernel hn hfund⟩
     ∃ psiPlus : redeiKernel n →ₗ[ZMod 2] (canonicalRealQuadRedei n).Cl4Rank,
       Function.Surjective psiPlus ∧
       LinearMap.ker psiPlus = Submodule.span (ZMod 2) {yMid} ∧
       Module.finrank (ZMod 2) (redeiKernel n) = 1 + (canonicalRealQuadRedei n).rank4 := by
   dsimp only
+  have hyMid_mem := yMidVec_mem_redeiKernel hn hfund
+  have hyMid_ne := yMidVec_ne_zero hn hfund
   set yMid : redeiKernel n := ⟨yMidVec n X₁, hyMid_mem⟩
   have hyMid_sub_ne : yMid ≠ 0 := by
     intro h0
