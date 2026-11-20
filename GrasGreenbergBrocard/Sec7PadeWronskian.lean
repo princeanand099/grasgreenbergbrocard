@@ -392,7 +392,8 @@ theorem lem_7_4_denominator_clearing {r E ν s D M a n₀ : ℕ} {x₀ : ℝ}
     (hD_choice : x₀ ^ E * E_dat.w * E_dat.W ^ (-(D : ℝ)) ≤ (1 : ℝ) / (2 * (E_dat.Z : ℝ))) :
     (1 : ℝ) / (2 * (E_dat.Z : ℝ)) ≤ (s : ℝ) * x₀ ^ E * E_dat.u * E_dat.U ^ D * E_dat.ρ ∧
     (1 : ℝ) / (2 * (E_dat.Z : ℝ)) ≤
-      (s : ℝ) * E_dat.C_P * (M : ℝ) ^ E * E_dat.u * E_dat.U ^ D * x₀ ^ ((E : ℝ) - (ν : ℝ)) := by
+      (s : ℝ) * E_dat.C_P * ((2 * n₀ : ℕ) : ℝ) ^ (((M * ν : ℕ) : ℝ) / (r : ℝ)) *
+        E_dat.u * E_dat.U ^ D * x₀ ^ ((E : ℝ) - (ν : ℝ)) := by
   have h1 : (1 : ℝ) / (2 * (E_dat.Z : ℝ)) ≤ (s : ℝ) * x₀ ^ E * E_dat.u * E_dat.U ^ D * E_dat.ρ := by
     have hlow := E_dat.form_lower
     have hup := E_dat.form_upper
@@ -406,10 +407,13 @@ theorem lem_7_4_denominator_clearing {r E ν s D M a n₀ : ℕ} {x₀ : ℝ}
     have : 0 < E_dat.U := E_dat.U_pos
     positivity
   calc (s : ℝ) * x₀ ^ E * E_dat.u * E_dat.U ^ D * E_dat.ρ
-      ≤ (s : ℝ) * x₀ ^ E * E_dat.u * E_dat.U ^ D * (E_dat.C_P * (M : ℝ) ^ E * x₀ ^ (-(ν : ℝ))) :=
+      ≤ (s : ℝ) * x₀ ^ E * E_dat.u * E_dat.U ^ D *
+          (E_dat.C_P * ((2 * n₀ : ℕ) : ℝ) ^ (((M * ν : ℕ) : ℝ) / (r : ℝ)) * x₀ ^ (-(ν : ℝ))) :=
         mul_le_mul_of_nonneg_left E_dat.rho_le hcoef_nn
-    _ = (s : ℝ) * E_dat.C_P * (M : ℝ) ^ E * E_dat.u * E_dat.U ^ D * (x₀ ^ E * x₀ ^ (-(ν : ℝ))) := by ring
-    _ = (s : ℝ) * E_dat.C_P * (M : ℝ) ^ E * E_dat.u * E_dat.U ^ D * x₀ ^ ((E : ℝ) - (ν : ℝ)) := by
+    _ = (s : ℝ) * E_dat.C_P * ((2 * n₀ : ℕ) : ℝ) ^ (((M * ν : ℕ) : ℝ) / (r : ℝ)) *
+          E_dat.u * E_dat.U ^ D * (x₀ ^ E * x₀ ^ (-(ν : ℝ))) := by ring
+    _ = (s : ℝ) * E_dat.C_P * ((2 * n₀ : ℕ) : ℝ) ^ (((M * ν : ℕ) : ℝ) / (r : ℝ)) *
+          E_dat.u * E_dat.U ^ D * x₀ ^ ((E : ℝ) - (ν : ℝ)) := by
         rw [← Real.rpow_natCast x₀ E, ← Real.rpow_add hx₀, sub_eq_add_neg]
 
 /-! ### Lemma 7.4(ii) Algebraic Core & Section 7.4 Exponent Inequality -/

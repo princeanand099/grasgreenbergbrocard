@@ -353,7 +353,40 @@ theorem prime_exp_sum_bounds_mod (h_mod : ℕ) (hh_mod : 2 ≤ h_mod)
         have h2m : c₂_high * T₀ / P ^ j = (1 / (h_mod : ℝ)) * Mmax * T₀ / P ^ j + ((1 / (h_mod : ℝ)) * Mmax) * T₀ / P ^ j := by
           unfold c₂_high; ring
         linarith
-  have hMain := hVaughan n P I F w W₀ T₀ hn hP_lo hP_hi hI_prime hT₀_ge hW_bound hW_anti hDeriv
+  have hT₀_le : T₀ ≤ (n : ℝ) ^ 2 := by
+    have hh_r : |(h r₀ : ℝ)| ≤ (Real.log (n : ℝ)) ^ (R + 2) := by
+      have h1 : |(h r₀ : ℝ)| ≤ (H : ℝ) := by exact_mod_cast hh_bound r₀ hr₀_mem
+      have hH_le : (H : ℝ) ≤ (Real.log (n : ℝ)) ^ (R + 2) := Nat.floor_le (by positivity)
+      linarith
+    have hc1_le1 : c₁_low ≤ 1 := by
+      unfold c₁_low
+      have hpow_le : (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) ≤ 1 :=
+        zpow_le_one_of_nonpos₀ (by norm_num) (by omega)
+      have h2h : (2 : ℝ) ≤ 2 * (h_mod : ℝ) := by
+        have : (2 : ℝ) ≤ (h_mod : ℝ) := by exact_mod_cast hh_mod
+        linarith
+      have hdiv : (1 : ℝ) / (2 * (h_mod : ℝ)) ≤ 1 := div_le_one_of_le₀ (by linarith) (by positivity)
+      exact le_trans (mul_le_of_le_one_right (by positivity) hpow_le) hdiv
+    have hRM_ge1 : (1 : ℝ) ≤ (R : ℝ) * Mmax / (h_mod : ℝ) + 1 := by positivity
+    have hdiv_le1 : (Real.log (n : ℝ)) ^ (R + 2) / (n : ℝ) ^ δ ≤ 1 := by
+      have h1 : (Real.log (n : ℝ)) ^ (R + 2) / (n : ℝ) ^ δ ≤
+          ((Real.log (n : ℝ)) ^ (R + 2) / (n : ℝ) ^ δ) * ((R : ℝ) * Mmax / (h_mod : ℝ) + 1) :=
+        le_mul_of_one_le_right (by positivity) hRM_ge1
+      linarith
+    have hnd_le_n : (n : ℝ) ^ δ ≤ (n : ℝ) := by
+      calc (n : ℝ) ^ δ ≤ (n : ℝ) ^ (1 : ℝ) :=
+            Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast (by omega : 1 ≤ n)) (by linarith)
+        _ = (n : ℝ) := Real.rpow_one _
+    have hh_le_n : |(h r₀ : ℝ)| ≤ (n : ℝ) := by
+      have h1 : (Real.log (n : ℝ)) ^ (R + 2) ≤ (n : ℝ) ^ δ :=
+        (div_le_one (Real.rpow_pos_of_pos (by exact_mod_cast (by omega : 0 < n)) δ)).mp hdiv_le1
+      linarith
+    have hPr_ge1 : (1 : ℝ) ≤ P ^ r₀ := one_le_pow₀ hP_ge1
+    calc T₀ = |(h r₀ : ℝ)| * (n : ℝ) / P ^ r₀ := rfl
+      _ ≤ |(h r₀ : ℝ)| * (n : ℝ) := div_le_self (by positivity) hPr_ge1
+      _ ≤ (n : ℝ) * (n : ℝ) := mul_le_mul_of_nonneg_right hh_le_n (Nat.cast_nonneg n)
+      _ = (n : ℝ) ^ 2 := (sq _).symm
+  have hMain := hVaughan n P I F w W₀ T₀ hn hP_lo hP_hi hI_prime hT₀_ge hT₀_le hW_bound hW_anti hDeriv
   constructor
   · refine ⟨hMain.1, ?_⟩
     have hlogP_le : Real.log P ≤ Real.log (n : ℝ) := by

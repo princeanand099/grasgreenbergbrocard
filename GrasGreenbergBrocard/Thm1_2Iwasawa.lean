@@ -260,7 +260,7 @@ theorem thm_1_2_eq_3_6_regulator_valuation {n m p X₁ Y₁ k : ℕ}
     fun j hj => padicValNat_odd_series_strict_dom hp hp5 hj hs_ge1
   unfold pellUnit at hk_eq
   have hreg_add := padic_log_regulator_pell_power (q := q_n n) (p := p) (m := m) (s := s_n n)
-    (X₁ := X₁) (Y₁ := Y₁) (k := k) hp hp5 hq2
+    (X₁ := X₁) (Y₁ := Y₁) (k := k) hp hp5 hq2 (q_n_squarefree n)
     hfund.2.2.1 hfund.2.1 hfund.2.2.2 hm_pell hk_eq hs_ge1 hpm hdom
   have hvk : padicValNat p k = 0 := by
     rw [← Nat.factorization_def _ hp]
@@ -290,7 +290,7 @@ theorem thm_1_2_part1_valuation_law {n m p X₁ Y₁ k : ℕ}
     thm_1_2_eq_3_6_regulator_valuation hm hp hp5 hp_half hfund hk_eq hpk
   obtain ⟨hv2, _, _⟩ := val_s_n_ge_one_on_half hp hp5 hp_half
   have hreg_ge1 : 1 ≤ (canonicalRealQuadIwasawa (q_n n) p).v_reg := by omega
-  obtain ⟨h_unram, h_ram⟩ := leopoldt_coates_valuation_law (q := q_n n) (p := p) hp hp5 hreg_ge1
+  obtain ⟨h_unram, h_ram⟩ := leopoldt_coates_valuation_law (q := q_n n) (p := p) hp hp5 (q_n_squarefree n) hreg_ge1
   have hpn : p ≤ n := by omega
   have hp_dvd_q_iff := p_dvd_q_n_iff hp hpn
   have hLp_eq : (canonicalRealQuadIwasawa (q_n n) p).v_Lp =
@@ -498,27 +498,120 @@ theorem thm_1_2_part3_conditional_finiteness {n m p X₁ Y₁ k : ℕ}
     have h1 := h_res.2.2.2.2 h_n0
     omega
 
-/-- **Theorem 1.2(iii) (Complete Conditional Finiteness over all `n ≥ 1`)**:
-Combining `brocard_small_solutions_lt_116` with `nagura_prime_in_band` and
-`thm_1_2_part3_conditional_finiteness`, if `n! + 1 = m^2` (`n ≥ 1`) and `K_n` is `p`-rational
-for all primes `p ∈ (n/5, n/3]` whenever `n ≥ 116`, then `n ∈ {4, 5, 7}`. -/
+/-- **Wieferich Congruence in `ℤ[√q_n]` (Manuscript Section 3.3, eq. for `p ∈ [5, n/4]`)**:
+For any Brocard–Ramanujan solution `n! + 1 = m^2` and any prime `p ∈ [5, n/4]`, we have
+`p^2 ∣ s_n n` and the Brocard Pell unit `u = m + s_n √q_n ∈ ℤ[√q_n]` satisfies
+`u^2 ≡ 1 (mod p^2 ℤ[√q_n])` and hence `u^(p^2 - 1) ≡ 1 (mod p^2 ℤ[√q_n])` (pure kernel proof,
+zero external axioms). -/
+theorem thm_1_2_wieferich_congruence {n m p : ℕ}
+    (hm : Nat.factorial n + 1 = m ^ 2)
+    (hp : p.Prime) (hp5 : 5 ≤ p) (hp_q : p ≤ n / 4) :
+    p ^ 2 ∣ s_n n ∧
+    let u : Zsqrtd (q_n n : ℤ) := ⟨(m : ℤ), (s_n n : ℤ)⟩
+    ((p : ℤ) ^ 2 ∣ (u ^ (p ^ 2 - 1) - 1).re) ∧
+    ((p : ℤ) ^ 2 ∣ (u ^ (p ^ 2 - 1) - 1).im) := by
+  haveI : Fact p.Prime := ⟨hp⟩
+  have hv4 : 4 ≤ padicValNat p (Nat.factorial n) := by
+    have hle : 4 * p ≤ n := by omega
+    have h4 : 4 ≤ n / p := (Nat.le_div_iff_mul_le hp.pos).mpr (by omega)
+    have h1 := padicValNat_factorial_ge_div hp (by omega : 1 ≤ n)
+    exact le_trans h4 h1
+  have hfac_eq := factorial_eq_q_mul_s_sq n
+  have hq_pos : 0 < q_n n := by
+    unfold q_n; exact Finset.prod_pos (fun q hq => (Finset.mem_filter.mp hq).2.1.pos)
+  have hs_pos : 0 < s_n n := by
+    by_contra h0; push_neg at h0
+    have hs0 : s_n n = 0 := by omega
+    rw [hs0] at hfac_eq; simp at hfac_eq; exact (Nat.factorial_pos n).ne' hfac_eq
+  have hv_split : padicValNat p (Nat.factorial n) =
+      padicValNat p (q_n n) + 2 * padicValNat p (s_n n) := by
+    rw [hfac_eq, padicValNat.mul hq_pos.ne' (pow_ne_zero 2 hs_pos.ne'), padicValNat.pow 2 hs_pos.ne']
+  have hv_q : padicValNat p (q_n n) ≤ 1 := by
+    by_contra hgt; push_neg at hgt
+    have hp2_dvd : p ^ 2 ∣ q_n n := by
+      have := pow_padicValNat_dvd (p := p) (n := q_n n)
+      exact dvd_trans (pow_dvd_pow p (by omega : 2 ≤ padicValNat p (q_n n))) this
+    have hunit := (q_n_squarefree n) p (by simpa [sq] using hp2_dvd)
+    exact hp.not_unit hunit
+  have hv_s : 2 ≤ padicValNat p (s_n n) := by omega
+  have hp2_s : p ^ 2 ∣ s_n n :=
+    dvd_trans (pow_dvd_pow p hv_s) pow_padicValNat_dvd
+  refine ⟨hp2_s, ?_⟩
+  dsimp only
+  set u : Zsqrtd (q_n n : ℤ) := ⟨(m : ℤ), (s_n n : ℤ)⟩
+  have hp2_sz : (p : ℤ) ^ 2 ∣ (s_n n : ℤ) := by exact_mod_cast hp2_s
+  have hu2 : ((p : ℤ) ^ 2 ∣ (u ^ 2 - 1).re) ∧ ((p : ℤ) ^ 2 ∣ (u ^ 2 - 1).im) := by
+    have hre : (u ^ 2 - 1).re = 2 * (q_n n : ℤ) * (s_n n : ℤ) ^ 2 := by
+      have hm_z : (m : ℤ) ^ 2 = (q_n n : ℤ) * (s_n n : ℤ) ^ 2 + 1 := by
+        have : Nat.factorial n = q_n n * (s_n n) ^ 2 := hfac_eq
+        zify at hm this; linarith
+      change (m : ℤ) * (m : ℤ) + (q_n n : ℤ) * (s_n n : ℤ) * (s_n n : ℤ) - 1 = _
+      linarith
+    have him : (u ^ 2 - 1).im = 2 * (m : ℤ) * (s_n n : ℤ) := by
+      change (m : ℤ) * (s_n n : ℤ) + (s_n n : ℤ) * (m : ℤ) - 0 = _
+      ring
+    rw [hre, him]
+    exact ⟨dvd_mul_of_dvd_right (dvd_pow hp2_sz (by norm_num)) _, dvd_mul_of_dvd_right hp2_sz _⟩
+  -- Since p is odd, p^2 - 1 = 2 * t; by induction on t, u^(2*t) - 1 has both coords divisible by p^2.
+  have hp_odd : p % 2 = 1 := by
+    have h2 : p ≠ 2 := by omega
+    exact Nat.Prime.eq_two_or_odd hp |>.resolve_left h2
+  have heven : 2 ∣ p ^ 2 - 1 := by
+    have : (p ^ 2) % 2 = 1 := by rw [sq, Nat.mul_mod, hp_odd]
+    omega
+  obtain ⟨t, ht⟩ := heven
+  rw [ht]
+  have hind : ∀ t : ℕ, ((p : ℤ) ^ 2 ∣ (u ^ (2 * t) - 1).re) ∧ ((p : ℤ) ^ 2 ∣ (u ^ (2 * t) - 1).im) := by
+    intro t
+    induction t with
+    | zero => simp
+    | succ t ih =>
+      have hpow : u ^ (2 * (t + 1)) - 1 = (u ^ (2 * t) - 1) * u ^ 2 + (u ^ 2 - 1) := by
+        rw [show 2 * (t + 1) = 2 * t + 2 by omega, pow_add]; ring
+      rw [hpow]
+      set a := u ^ (2 * t) - 1
+      set b := u ^ 2
+      have hre : (a * b + (u ^ 2 - 1)).re = a.re * b.re + (q_n n : ℤ) * a.im * b.im + (u ^ 2 - 1).re := rfl
+      have him : (a * b + (u ^ 2 - 1)).im = a.re * b.im + a.im * b.re + (u ^ 2 - 1).im := rfl
+      rw [hre, him]
+      refine ⟨dvd_add (dvd_add (dvd_mul_of_dvd_left ih.1 _) ?_) hu2.1,
+              dvd_add (dvd_add (dvd_mul_of_dvd_left ih.1 _) (dvd_mul_of_dvd_left ih.2 _)) hu2.2⟩
+      exact dvd_mul_of_dvd_left (dvd_mul_of_dvd_right ih.2 _) _
+  exact hind t
+
+/-- **Theorem 1.2(iii) (Complete Conditional Finiteness over all `n ≥ 1`, Branches (a)–(c))**:
+Combining `brocard_small_solutions_lt_116` with `thm_1_2_part3_conditional_finiteness`, if
+`n! + 1 = m^2` (`n ≥ 1`) and whenever `n ≥ 116` at least one of the manuscript's three single-prime
+hypotheses holds:
+- (a) there exists a **single** prime `p ∈ (n/5, n/3]` such that `K_n` is `p`-rational, OR
+- (b) there exists a **single** split prime `p ∈ Peven(n) ∩ [5, n/4]` with `p ∤ k` such that
+  `X(K_∞)` is trivial, OR
+- (c) there exists a **single** split prime `p ∈ Peven(n) ∩ [5, n/4]` with `p ∤ k` such that
+  `λ_p(K_n) = 0` and `∀ r, r + 1 < n_0^{(r)}(K_n)`,
+then `n ∈ {4, 5, 7}`. -/
 theorem thm_1_2_part3_complete_finiteness {n m X₁ Y₁ k : ℕ}
     (hn1 : 1 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2)
     (hfund : IsFundamentalPell (q_n n) X₁ Y₁)
     (hk_eq : (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ k)
-    (h_prat_band : 116 ≤ n →
-      ∀ p : ℕ, p.Prime → (n : ℝ) / 5 < (p : ℝ) → (p : ℝ) ≤ (n : ℝ) / 3 →
-        (canonicalRealQuadIwasawa (q_n n) p).is_p_rational = true) :
+    (h_cond : 116 ≤ n →
+      (∃ p : ℕ, p.Prime ∧ (n : ℝ) / 5 < (p : ℝ) ∧ (p : ℝ) ≤ (n : ℝ) / 3 ∧
+        (canonicalRealQuadIwasawa (q_n n) p).is_p_rational = true) ∨
+      (∃ p : ℕ, p.Prime ∧ 5 ≤ p ∧ p ≤ n / 4 ∧ p ∈ Peven n ∧
+        (canonicalRealQuadIwasawa (q_n n) p).splits = true ∧ ¬ p ∣ k ∧
+        (canonicalRealQuadIwasawa (q_n n) p).X_trivial = true) ∨
+      (∃ p : ℕ, p.Prime ∧ 5 ≤ p ∧ p ≤ n / 4 ∧ p ∈ Peven n ∧
+        (canonicalRealQuadIwasawa (q_n n) p).splits = true ∧ ¬ p ∣ k ∧
+        (canonicalRealQuadIwasawa (q_n n) p).lambda_p = 0 ∧
+        (∀ r : ℕ, r + 1 < (canonicalRealQuadIwasawa (q_n n) p).n0_r r))) :
     n = 4 ∨ n = 5 ∨ n = 7 := by
   by_cases hn116 : n < 116
   · exact brocard_small_solutions_lt_116 hn1 hn116 hm
   · have hn_ge : 116 ≤ n := by omega
-    obtain ⟨p, hp, hlo, hhi4, _⟩ := nagura_prime_in_band hn_ge
-    have hhi3 : (p : ℝ) ≤ (n : ℝ) / 3 := by
-      have : (0 : ℝ) ≤ (n : ℝ) := by positivity
-      linarith
     exfalso
-    exact (thm_1_2_part3_conditional_finiteness hn_ge hm hp hfund hk_eq).1 hlo hhi3
-      (h_prat_band hn_ge p hp hlo hhi3)
+    rcases h_cond hn_ge with ⟨p, hp, hlo, hhi, hprat⟩ | ⟨p, hp, hp5, hpq, hpev, hspl, hpk, htriv⟩ |
+      ⟨p, hp, hp5, hpq, hpev, hspl, hpk, hlam0, hn0⟩
+    · exact (thm_1_2_part3_conditional_finiteness hn_ge hm hp hfund hk_eq).1 hlo hhi hprat
+    · exact (thm_1_2_part3_conditional_finiteness hn_ge hm hp hfund hk_eq).2.1 hp5 hpq hpev hspl hpk htriv
+    · exact (thm_1_2_part3_conditional_finiteness hn_ge hm hp hfund hk_eq).2.2 hp5 hpq hpev hspl hpk hlam0 hn0
 
 end GrasGreenbergBrocard
