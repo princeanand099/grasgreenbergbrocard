@@ -41,7 +41,7 @@ theorem pigeonhole_cluster_reduction {N M d r : ℕ}
   let S_good : Finset ℕ := S_sol.filter isGood
   let S_bad : Finset ℕ := S_sol.filter (fun n => ¬ isGood n)
   have hpart : S_sol.card = S_bad.card + S_good.card := by
-    have := Finset.filter_card_add_filter_neg_card_eq_card (s := S_sol) (p := isGood)
+    have := Finset.card_filter_add_card_filter_not (s := S_sol) (p := isGood)
     omega
   have hbad_le : S_bad.card ≤ d * r * (N / M + 1) := by
     let pairs := (Finset.range (N / M + 1)) ×ˢ (Finset.range r)
@@ -62,7 +62,7 @@ theorem pigeonhole_cluster_reduction {N M d r : ℕ}
       intro p _
       set A := (cell p.1 p.2).filter (fun n => ¬ isGood n)
       by_contra hgt
-      push_neg at hgt
+      push Not at hgt
       have hne : A.Nonempty := Finset.card_pos.mp (by omega)
       let n_max := A.max' hne
       have hmax_mem : n_max ∈ A := Finset.max'_mem A hne
@@ -114,6 +114,7 @@ theorem pigeonhole_cluster_reduction {N M d r : ℕ}
       have h1 := Nat.div_add_mod (n₀ - N) M
       have h2 := Nat.div_add_mod (emb ⟨L_set.card - 1 - i.val, hidx i⟩ - N) M
       have h3 := Nat.mod_lt (n₀ - N) (by omega : 0 < M)
+      rw [hm_blk] at h2
       omega
     let β : Fin d → Fin (M + 1) := fun i =>
       ⟨n₀ - emb ⟨L_set.card - 1 - i.val, hidx i⟩, Nat.lt_succ_of_le (hdiff_le i)⟩
@@ -159,12 +160,13 @@ theorem pigeonhole_cluster_reduction {N M d r : ℕ}
         (S_good.filter (fun n₀ => g n₀ = β_fin)).Nonempty ∧
         S_good.card ≤ (M + 1) ^ d * (S_good.filter (fun n₀ => g n₀ = β_fin)).card := by
       by_contra hall
-      push_neg at hall
+      push Not at hall
       have hsum_eq : ∑ β_fin : Fin d → Fin (M + 1), (S_good.filter (fun n₀ => g n₀ = β_fin)).card =
           S_good.card := by
         rw [← Finset.card_biUnion]
         · congr 1; ext n₀; simp
         · intro a _ b _ hab
+          change Disjoint _ _
           rw [Finset.disjoint_left]
           intro x hxa hxb
           exact hab ((Finset.mem_filter.mp hxa).2.symm.trans (Finset.mem_filter.mp hxb).2)
@@ -231,6 +233,7 @@ lemma short_interval_pigeonhole {N L : ℕ} (hL : 1 ≤ L)
     rw [← Finset.card_biUnion]
     · congr 1; ext n; simp
     · intro a _ b _ hab
+      change Disjoint _ _
       rw [Finset.disjoint_left]
       intro x hxa hxb
       exact hab ((Finset.mem_filter.mp hxa).2.symm.trans (Finset.mem_filter.mp hxb).2)
@@ -253,15 +256,16 @@ lemma short_interval_pigeonhole {N L : ℕ} (hL : 1 ≤ L)
       congrArg Fin.val (Finset.mem_filter.mp hn).2
     have hdiv_lt : (n - N) / step < L := by
       have h1 : n - N ≤ N := by omega
-      have h2 : N < L * step := by
+      have h2 : N < step * L := by
         have hdm := Nat.div_add_mod N L
         have hml := Nat.mod_lt N (by omega : 0 < L)
         dsimp only [step]; nlinarith
       exact Nat.div_lt_of_lt_mul (lt_of_le_of_lt h1 h2)
     have hmin_eq : min (L - 1) ((n - N) / step) = (n - N) / step := min_eq_right (by omega)
     rw [hmin_eq] at hfeq
+    have hstep_pos : 0 < step := Nat.succ_pos _
     have hdm := Nat.div_add_mod (n - N) step
-    have hml := Nat.mod_lt (n - N) (by omega : 0 < step)
+    have hml := Nat.mod_lt (n - N) hstep_pos
     have hlo : N + j_max.val * step ≤ n := by
       have : j_max.val * step = step * ((n - N) / step) := by rw [hfeq, mul_comm]
       omega
@@ -280,7 +284,7 @@ lemma factorial_log_lower {n : ℕ} (hn : 4 ≤ n) :
       calc (n / 2) ^ (n / 2)
           = ∏ _k ∈ Finset.range (n / 2), (n / 2) := by simp
         _ ≤ ∏ k ∈ Finset.range (n / 2), (n / 2 + 1 + k) :=
-            Finset.prod_le_prod (fun _ _ => Nat.zero_le _) (fun k _ => by omega)
+            Finset.prod_le_prod' (fun k _ => by omega)
     have hprod_dvd : ∏ k ∈ Finset.range (n / 2), (n / 2 + 1 + k) ≤ Nat.factorial n := by
       have hfac_eq : ∀ a b : ℕ, Nat.factorial a * (∏ k ∈ Finset.range b, (a + 1 + k)) =
           Nat.factorial (a + b) := by
@@ -316,13 +320,12 @@ lemma factorial_log_diff_upper {N' n₀ step : ℕ} (hN' : 1 ≤ N') (hlo : N' �
       | zero => simp
       | succ s ih =>
         rw [show N' + (s + 1) = (N' + s) + 1 by omega, Nat.factorial_succ, pow_succ]
-        have hstep : Nat.factorial N' * (N' + s) ^ s ≤ Nat.factorial N' * (N' + (s + 1)) ^ s :=
+        have hstep : Nat.factorial N' * (N' + s) ^ s ≤ Nat.factorial N' * (N' + s + 1) ^ s :=
           Nat.mul_le_mul_left _ (Nat.pow_le_pow_left (by omega) s)
         have h3 := le_trans ih hstep
-        have h4 : (N' + s + 1) * (Nat.factorial N' * (N' + (s + 1)) ^ s) =
-            Nat.factorial N' * ((N' + (s + 1)) ^ s * (N' + (s + 1))) := by ring
-        rw [← h4]
-        exact Nat.mul_le_mul_left _ h3
+        calc (N' + s + 1) * Nat.factorial (N' + s)
+            ≤ (N' + s + 1) * (Nat.factorial N' * (N' + s + 1) ^ s) := Nat.mul_le_mul_left _ h3
+          _ = Nat.factorial N' * ((N' + s + 1) ^ s * (N' + s + 1)) := by ring
     exact le_trans h1 h2
   have hpos1 : (0 : ℝ) < ((Nat.factorial n₀ : ℕ) : ℝ) := by exact_mod_cast Nat.factorial_pos n₀
   have hpos2 : (0 : ℝ) < ((Nat.factorial N' : ℕ) : ℝ) := by exact_mod_cast Nat.factorial_pos N'
@@ -376,6 +379,7 @@ lemma eventually_linear_lt_half_log (C : ℝ) :
     have : N ≤ 4 * (N / 2) := by omega
     have h1 : (N : ℝ) ≤ 4 * ((N / 2 : ℕ) : ℝ) := by exact_mod_cast this
     linarith
+  dsimp only [Function.comp_apply] at hlogN
   have hC_le : C ≤ max C 1 := le_max_left C 1
   nlinarith
 

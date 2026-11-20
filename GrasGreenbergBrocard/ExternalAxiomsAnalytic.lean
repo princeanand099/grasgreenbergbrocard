@@ -99,9 +99,8 @@ theorem isPrimeSubinterval_of_bounds {P a b : ℝ} (hP : 0 ≤ P) (I : Finset �
       have h1 : min (2 * P) a < (p : ℝ) := lt_of_le_of_lt (le_max_right _ _) ha'
       have h2 : (p : ℝ) ≤ 2 * P :=
         le_trans hb' (max_le (max_le (by linarith) (min_le_left _ _)) (min_le_left _ _))
-      by_contra hle; push_neg at hle
-      have hmin : min (2 * P) a = 2 * P := min_eq_left (le_trans h2 hle)
-      linarith
+      by_contra hle; push Not at hle
+      exact not_le.mpr h1 (le_min h2 hle)
     have hb_le : (p : ℝ) ≤ b := by
       have h1 : ¬ (p : ℝ) ≤ a' := not_le.mpr ha'
       have h2 : b' = min (2 * P) b := by
@@ -116,9 +115,6 @@ theorem isPrimeSubinterval_of_bounds {P a b : ℝ} (hP : 0 ≤ P) (I : Finset �
 (Iwaniec & Kowalski, *Analytic Number Theory*, AMS Colloq. Publ. 53, 2004:
 Proposition 13.4, Corollary 8.11, Corollary 8.13, Theorem 8.25).
 Strictly requires:
-- `c₁, c₂ : ℕ → ℝ` (derivative-scale constants) are quantified **before** `∃ η' η C`,
-  so `C = C(δ, c₁, c₂)` genuinely depends on the derivative bounds (preventing quantifier
-  inversion on `F_ε(t) = ε / t`),
 - `I` is an exact prime subinterval `(a, b] ⊆ (P, 2P]` (`IsPrimeSubinterval P I`),
 - `w` is bounded (`|w t| ≤ W₀`) and monotone (`AntitoneOn w (Set.Icc P (2 * P))`, hence
   total variation `≤ 2 W₀` on `[P, 2P]`, enabling Abel partial summation without oscillation). -/

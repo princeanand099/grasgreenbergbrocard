@@ -20,13 +20,6 @@ Wronskian polynomial constructed in `Sec7PadeWronskian.lean`:
    (`bpz_cauchy_leibniz_pade_eval`): Cauchy integral and Leibniz derivative estimates on the
    cleared Padé linear forms at a cluster base point $n_0$ together with the factorial-root
    approximation from $s_{\mathrm{mult}} \cdot n_0! = P(x_0)$.
-
-Notice that the manuscript's novel Section 7 contributions — Siegel's Lemma, Lemma 7.1,
-Lemma 7.2 (Puiseux coset separation), Lemma 7.3 (Gauss's Lemma divisibility and multiplicity
-bounds), Lemma 7.4 (denominator clearing and elimination inequality), the Pigeonhole cluster
-reduction (eq. 7.17), the choice of $D$, the exponent contradiction $\chi(\theta) < (\nu - E)/E$,
-and all Table 1/2 counting bounds in Theorem 1.3(ii) — are **proved in Lean** in
-`Sec7PadeWronskian.lean`, `Sec7ClusterReduction.lean`, and `Thm1_3Part2Counting.lean`.
 -/
 
 open scoped BigOperators
@@ -138,7 +131,12 @@ structure PadeEvaluationData (r E ν s D M a n₀ : ℕ) (x₀ : ℝ) where
   form_lower : (1 : ℝ) / (Z : ℝ) ≤ nonZeroFormVal
   /-- Cauchy/Leibniz derivative upper bound and factorial-root approximation bound:
       $1 / Z \le s \cdot x_0^E \cdot u U^D \cdot \rho + x_0^E \cdot w W^{-D}$. -/
-  u U w W ρ C_P : ℝ
+  u : ℝ
+  U : ℝ
+  w : ℝ
+  W : ℝ
+  ρ : ℝ
+  C_P : ℝ
   u_pos : 0 < u
   U_pos : 0 < U
   w_pos : 0 < w
