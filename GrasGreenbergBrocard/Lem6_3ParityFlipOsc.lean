@@ -562,6 +562,7 @@ theorem lem_6_3_osc_bound_honest
         (n : ℝ) ^ δ ≤ P → P ≤ (n : ℝ) / (Real.log (n : ℝ)) ^ 12 → IsPrimeSubinterval P I →
         (∀ s ∈ A, 1 ≤ s ∧ s ≤ R) → r₀ ∈ A →
         (2 : ℝ) ^ (-(R : ℤ)) * (Real.log (n : ℝ)) ^ A_R ≤ |M r₀| / P ^ r₀ →
+        |M r₀| / P ^ r₀ ≤ (n : ℝ) ^ 2 →
         (∀ s ∈ A.erase r₀, |M s| / P ^ s ≤ (c₁_low / ((R : ℝ) * Mmax + 1)) * (|M r₀| / P ^ r₀)) →
         (∀ t ∈ Set.Icc P (2 * P), |w t| ≤ W₀) → AntitoneOn w (Set.Icc P (2 * P)) → 0 ≤ W₀ →
         ‖∑ p ∈ I, (w (p : ℝ) * Real.log (p : ℝ) : ℂ) * eExp (∑ s ∈ A, M s / (2 * (p : ℝ) ^ s))‖ ≤
@@ -1279,10 +1280,10 @@ theorem lem_6_3_osc_bound_honest
                     simp only [mul_div_assoc, Complex.ofReal_zpow, Complex.ofReal_neg, Complex.ofReal_one]
                 exact add_le_add (Finset.sum_le_sum fun j _ => hvaal _)
                   (Finset.sum_le_sum fun j _ => hvaal _)
-              have hB_single : ∀ (m : ℕ), n₁ ≤ m → ∀ j ∈ Finset.Icc 1 r,
+              have hB_single : ∀ (m : ℕ), n₁ ≤ m → (m : ℝ) ≤ 2 * (n₁ : ℝ) → ∀ j ∈ Finset.Icc 1 r,
                   ∑ p ∈ I_k, (Real.log (p : ℝ) / (p : ℝ)) * (B_tilde ((m : ℝ) / (p : ℝ) ^ j)).re ≤
                     (4 + 12 * C₂) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by
-                intro m hm j hj
+                intro m hm hm_ub j hj
                 have hj_icc := Finset.mem_Icc.mp hj
                 have hBt_eq : ∀ p : ℕ, B_tilde ((m : ℝ) / (p : ℝ) ^ j) =
                     b_tilde 0 + ∑ h' ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (· ≠ 0),
@@ -1297,7 +1298,7 @@ theorem lem_6_3_osc_bound_honest
                 have hBt_re : ∀ p : ℕ, (B_tilde ((m : ℝ) / (p : ℝ) ^ j)).re = (b_tilde 0 + ∑ h' ∈ (Finset.Icc (-(2 * (H : ℤ) + 1)) (2 * (H : ℤ) + 1)).filter (· ≠ 0), b_tilde h' * eExp ((h' : ℝ) * ((m : ℝ) / (p : ℝ) ^ j) / 2)).re := fun p => congrArg Complex.re (hBt_eq p)
                 simp_rw [hBt_re]
                 have hvb := vaaler_btilde_dyadic_sum_bound_inv H hH_ge1 b_tilde h_btilde0 h_btilde_b
-                  n₁ m j P hP_pos (by linarith) I_k hIk_pr C₂ hC₂_pos.le R (fun h' hh' _ => by
+                  n₁ m j P hP_pos (by linarith) I_k hIk_pr C₂ hC₂_pos.le R (fun h' hh' hh'_le => by
                     have hT₀ : (2 : ℝ) ^ (-(R : ℤ)) * (Real.log (n₁ : ℝ)) ^ A_R ≤ |(h' : ℝ) * (m : ℝ)| / P ^ j := by
                       have hh'1 : (1 : ℝ) ≤ |(h' : ℝ)| := by exact_mod_cast Int.one_le_abs hh'
                       have hPj : P ^ j ≤ (n₁ : ℝ) / (Real.log (n₁ : ℝ)) ^ A_R := by
@@ -1329,9 +1330,40 @@ theorem lem_6_3_osc_bound_honest
                         _ = (1 * (m : ℝ)) / P ^ j := by ring
                         _ ≤ (|(h' : ℝ)| * (m : ℝ)) / P ^ j := by gcongr
                         _ = |(h' : ℝ) * (m : ℝ)| / P ^ j := by rw [abs_mul, abs_of_nonneg (a := (m : ℝ)) (Nat.cast_nonneg m)]
+                    have hT₀_le : |(h' : ℝ) * (m : ℝ)| / P ^ j ≤ (n₁ : ℝ) ^ 2 := by
+                      have hh'_r : |(h' : ℝ)| ≤ 2 * (H : ℝ) + 1 := by exact_mod_cast hh'_le
+                      have hH_le : (H : ℝ) ≤ (Real.log (n₁ : ℝ)) ^ (R + 3) := Nat.floor_le (by positivity)
+                      have hlog_ge1 : (1 : ℝ) ≤ Real.log (n₁ : ℝ) := by linarith
+                      have hc1_le1 : c₁_low ≤ 1 := by
+                        unfold c₁_low
+                        have hpow_le : (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) ≤ 1 :=
+                          zpow_le_one_of_nonpos₀ (by norm_num) (by omega)
+                        linarith
+                      have hRM1 : (1 : ℝ) ≤ (R : ℝ) * Mmax + 1 := by positivity
+                      have hlog3_le : 10 * (Real.log (n₁ : ℝ)) ^ (R + 3) ≤ (n₁ : ℝ) ^ δ := by
+                        have h1 : (Real.log (n₁ : ℝ)) ^ (R + 3) / (n₁ : ℝ) ^ δ ≤ 1 / 10 := by
+                          have h2 : c₁_low / (10 * ((R : ℝ) * Mmax + 1)) ≤ 1 / 10 := by
+                            rw [div_le_div_iff₀ (by positivity) (by norm_num)]; nlinarith
+                          linarith
+                        have h2 := (div_le_iff₀ (Real.rpow_pos_of_pos hn₁_pos δ)).mp h1
+                        linarith
+                      have hnd_le : (n₁ : ℝ) ^ δ ≤ (n₁ : ℝ) := by
+                        calc (n₁ : ℝ) ^ δ ≤ (n₁ : ℝ) ^ (1 : ℝ) :=
+                              Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast (by omega : 1 ≤ n₁)) (by linarith)
+                          _ = (n₁ : ℝ) := Real.rpow_one _
+                      have hh'_le_half : |(h' : ℝ)| * 2 ≤ (n₁ : ℝ) := by
+                        have h1 : (1 : ℝ) ≤ (Real.log (n₁ : ℝ)) ^ (R + 3) := one_le_pow₀ hlog_ge1
+                        linarith
+                      have hPj_ge1 : (1 : ℝ) ≤ P ^ j := one_le_pow₀ hP_ge1
+                      rw [abs_mul, abs_of_nonneg (Nat.cast_nonneg m)]
+                      calc |(h' : ℝ)| * (m : ℝ) / P ^ j ≤ |(h' : ℝ)| * (m : ℝ) := div_le_self (by positivity) hPj_ge1
+                        _ ≤ |(h' : ℝ)| * (2 * (n₁ : ℝ)) := mul_le_mul_of_nonneg_left hm_ub (abs_nonneg _)
+                        _ = (|(h' : ℝ)| * 2) * (n₁ : ℝ) := by ring
+                        _ ≤ (n₁ : ℝ) * (n₁ : ℝ) := mul_le_mul_of_nonneg_right hh'_le_half hn₁_pos.le
+                        _ = (n₁ : ℝ) ^ 2 := (sq _).symm
                     have hres := hGen P I_k {j} (fun _ => (h' : ℝ) * (m : ℝ)) j (fun t => 1 / t) (1 / P)
                       hP_lo hP_hi hIk_sub (fun s hs => by rw [Finset.mem_singleton.mp hs]; omega)
-                      (Finset.mem_singleton_self j) hT₀ (fun s hs => by simp at hs) hw_bd hw_anti (by positivity)
+                      (Finset.mem_singleton_self j) hT₀ hT₀_le (fun s hs => by simp at hs) hw_bd hw_anti (by positivity)
                     have hcancel : C₂ * (1 / P) * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) =
                         C₂ * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by field_simp [hP_pos.ne']
                     rw [hcancel] at hres; simpa using hres)
@@ -1370,8 +1402,8 @@ theorem lem_6_3_osc_bound_honest
                     rw [Finset.sum_comm, Finset.sum_comm (s := I_k)]
                 _ ≤ L₁ ^ (2 * r) * (2 * (r : ℝ) * (4 + 12 * C₂) * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2))) := by
                     apply mul_le_mul_of_nonneg_left _ (by positivity)
-                    have h1 := Finset.sum_le_sum (fun j hj => hB_single n₁ le_rfl j hj)
-                    have h2 := Finset.sum_le_sum (fun j hj => hB_single n₂ hlt.le j hj)
+                    have h1 := Finset.sum_le_sum (fun j hj => hB_single n₁ le_rfl (by linarith) j hj)
+                    have h2 := Finset.sum_le_sum (fun j hj => hB_single n₂ hlt.le hn₂_lt_2n₁.le j hj)
                     simp only [Finset.sum_const, Nat.card_Icc, nsmul_eq_mul] at h1 h2
                     have hcard : ((r + 1 - 1 : ℕ) : ℝ) = (r : ℝ) := by simp
                     rw [hcard] at h1 h2
@@ -1542,7 +1574,8 @@ theorem lem_6_3_osc_bound_honest
                 have hsmall_d10 : 10 * ((Real.log (n₁ : ℝ)) ^ (R + 3) / (n₁ : ℝ) ^ δ) ≤ c₁_low / ((R : ℝ) * Mmax + 1) := by
                   have hmul := mul_le_mul_of_nonneg_left hsmall_d (by norm_num : (0 : ℝ) ≤ 10)
                   have h10 : 10 * (c₁_low / (10 * ((R : ℝ) * Mmax + 1))) = c₁_low / ((R : ℝ) * Mmax + 1) := by
-                    rw [← mul_div_assoc, mul_div_mul_left _ _ (by norm_num : (10 : ℝ) ≠ 0)]
+                    have hden : (R : ℝ) * Mmax + 1 ≠ 0 := by positivity
+                    field_simp [hden]
                   linarith
                 -- Choose dominant index r₀ ∈ A
                 have hDom_exists : ∃ r₀ ∈ A,
@@ -1720,9 +1753,32 @@ theorem lem_6_3_osc_bound_honest
                               · exact hM_z_lb ⟨1, h1A⟩ h1_nz
                           _ ≤ (c₁_low / ((R : ℝ) * Mmax + 1)) * (|M 1| / P ^ 1) := by gcongr
                 obtain ⟨r₀, hr₀A, hT₀, hDom⟩ := hDom_exists
+                have hT₀_le : |M r₀| / P ^ r₀ ≤ (n₁ : ℝ) ^ 2 := by
+                  have hc1_le1 : c₁_low ≤ 1 := by
+                    unfold c₁_low
+                    have hpow_le : (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) ≤ 1 :=
+                      zpow_le_one_of_nonpos₀ (by norm_num) (by omega)
+                    linarith
+                  have hRM1 : (1 : ℝ) ≤ (R : ℝ) * Mmax + 1 := by positivity
+                  have hlog3_le : 10 * (Real.log (n₁ : ℝ)) ^ (R + 3) ≤ (n₁ : ℝ) ^ δ := by
+                    have h1 : (Real.log (n₁ : ℝ)) ^ (R + 3) / (n₁ : ℝ) ^ δ ≤ 1 / 10 := by
+                      have h2 : c₁_low / (10 * ((R : ℝ) * Mmax + 1)) ≤ 1 / 10 := by
+                        rw [div_le_div_iff₀ (by positivity) (by norm_num)]; nlinarith
+                      linarith
+                    have h2 := (div_le_iff₀ (Real.rpow_pos_of_pos hn₁_pos δ)).mp h1
+                    linarith
+                  have hnd_le : (n₁ : ℝ) ^ δ ≤ (n₁ : ℝ) := by
+                    calc (n₁ : ℝ) ^ δ ≤ (n₁ : ℝ) ^ (1 : ℝ) :=
+                          Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast (by omega : 1 ≤ n₁)) (by linarith)
+                      _ = (n₁ : ℝ) := Real.rpow_one _
+                  have hPr_ge1 : (1 : ℝ) ≤ P ^ r₀ := one_le_pow₀ hP_ge1
+                  calc |M r₀| / P ^ r₀ ≤ |M r₀| := div_le_self (abs_nonneg _) hPr_ge1
+                    _ ≤ 10 * (Real.log (n₁ : ℝ)) ^ (R + 3) * (n₁ : ℝ) := hM_ub ⟨r₀, hr₀A⟩
+                    _ ≤ (n₁ : ℝ) * (n₁ : ℝ) := mul_le_mul_of_nonneg_right (le_trans hlog3_le hnd_le) hn₁_pos.le
+                    _ = (n₁ : ℝ) ^ 2 := (sq _).symm
                 have hres := hGen P I_k A M r₀ (fun t => 1 / t) (1 / P)
                   hP_lo hP_hi hIk_sub (fun s hs => by have := Finset.mem_Icc.mp hs; omega)
-                  hr₀A hT₀ hDom hw_bd hw_anti (by positivity)
+                  hr₀A hT₀ hT₀_le hDom hw_bd hw_anti (by positivity)
                 have hcancel : C₂ * (1 / P) * P * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) =
                     C₂ * (Real.log (n₁ : ℝ)) ^ (-((R : ℝ) + 2)) := by field_simp [hP_pos.ne']
                 rw [hcancel] at hres; simpa [M] using hres
