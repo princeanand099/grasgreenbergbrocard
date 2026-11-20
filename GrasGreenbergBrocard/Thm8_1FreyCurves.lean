@@ -585,6 +585,7 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
         have hfac_le_r : (Nat.factorial n : ℝ) ≤ (((u_n * v_n) ^ 3 : ℕ) : ℝ) := by exact_mod_cast hfac_le_x3
         have h1 := Real.log_le_log hfac_pos_r hfac_le_r
         rw [Nat.cast_pow, Real.log_pow] at h1
+        norm_num at h1
         have h2 := (n_log_n_sub_n_le_log_factorial n (by omega : 1 ≤ n)).1
         linarith
       have hil := hN_lg n (by omega)
