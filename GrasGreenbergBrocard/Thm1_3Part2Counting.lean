@@ -1403,7 +1403,10 @@ theorem poly_has_depressed_gap_two {P : ℤ[X]} (hdeg : 2 ≤ P.natDegree) :
   set r := P.natDegree
   set a_r := P.leadingCoeff
   set a_rm1 := P.coeff (r - 1)
-  have hP_ne : P ≠ 0 := by intro h0; have : P.natDegree = 0 := by rw [h0, Polynomial.natDegree_zero]; omega
+  have hP_ne : P ≠ 0 := by
+    intro h0
+    have hr0 : r = 0 := by dsimp only [r]; rw [h0, Polynomial.natDegree_zero]
+    omega
   have ha_r_ne : a_r ≠ 0 := Polynomial.leadingCoeff_ne_zero.mpr hP_ne
   set lin : ℤ[X] := Polynomial.X - Polynomial.C a_rm1
   have hlin_mon : lin.Monic := Polynomial.monic_X_sub_C a_rm1
@@ -1452,12 +1455,13 @@ theorem poly_has_depressed_gap_two {P : ℤ[X]} (hdeg : 2 ≤ P.natDegree) :
             Polynomial.C ((-a_rm1) ^ (r - k) * (r.choose k : ℤ)) * Polynomial.X ^ k by
           rw [← Polynomial.C_pow, ← Polynomial.C_eq_natCast, Polynomial.C_mul]; ring]
         rw [Polynomial.coeff_C_mul_X_pow]
-        split_ifs with heq
-        · subst heq
+        by_cases hk_eq : k = r - 1
+        · subst hk_eq
+          rw [if_pos rfl, if_pos rfl]
           have hsub : r - (r - 1) = 1 := by omega
           rw [hsub, pow_one, Nat.choose_symm_of_eq_add (by omega : r = (r - 1) + 1), Nat.choose_one_right]
           ring
-        · rfl
+        · rw [if_neg (Ne.symm hk_eq), if_neg hk_eq]
       rw [Finset.sum_congr rfl hterm, Finset.sum_ite_eq' _ (r - 1)]
       simp [show r - 1 ∈ Finset.range (r + 1) from Finset.mem_range.mpr (by omega)]
     have h2 : tail.coeff (r - 1) = (r : ℤ) * a_rm1 := by
@@ -1477,7 +1481,9 @@ theorem poly_has_depressed_gap_two {P : ℤ[X]} (hdeg : 2 ≤ P.natDegree) :
           have hlead : (lin ^ (r - 1)).coeff (r - 1) = 1 := by
             have hdeg_k : (lin ^ (r - 1)).natDegree = r - 1 := by
               rw [hlin_mon.natDegree_pow, hlin_deg, mul_one]
-            rw [← hdeg_k]; exact (hlin_mon.pow (r - 1)).leadingCoeff
+            have hlc : (lin ^ (r - 1)).coeff (lin ^ (r - 1)).natDegree = 1 :=
+              (hlin_mon.pow (r - 1)).leadingCoeff
+            rwa [hdeg_k] at hlc
           rw [hlead, mul_one]; dsimp only [a_rm1]; ring
         · have hdeg_lt : (lin ^ k).natDegree < r - 1 := by
             rw [hlin_mon.natDegree_pow, hlin_deg, mul_one]; omega

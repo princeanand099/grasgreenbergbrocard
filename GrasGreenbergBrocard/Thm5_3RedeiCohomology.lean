@@ -20,7 +20,7 @@ Formalizes Section 5.2, Theorem 5.3(i)–(ii), and equations (5.8)–(5.10) of t
 - `thm_5_3_part2_dual_quartic`: reduced dual quartic equations (eq. 5.10)
 -/
 
-set_option maxHeartbeats 400000
+set_option maxHeartbeats 1600000
 
 noncomputable section
 
@@ -541,19 +541,20 @@ theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
         refine ⟨(q_n n / p : ℕ) * (A' : ℤ) ^ 2, ?_⟩
         have hred_z : (p : ℤ) * (A' : ℤ) ^ 2 = ((q_n n / p : ℕ) : ℤ) * (B' : ℤ) ^ 2 + ((c / p : ℕ) : ℤ) * (C' : ℤ) ^ 2 := by
           exact_mod_cast hred
-        push_cast; nlinarith
+        rw [Nat.cast_mul]
+        linear_combination -((q_n n / p : ℕ) : ℤ) * hred_z
       exact legendreIdx_zero_of_sq_cong hp_pr hp3 (by
-        intro h; rcases Int.Prime.dvd_mul' (Nat.prime_iff_prime_int.mp hp_pr) h with h1 | h2
+        intro h; rcases Int.Prime.dvd_mul' hp_pr h with h1 | h2
         · exact hnd_q' (Int.natCast_dvd_natCast.mp (dvd_neg.mp h1))
         · exact hnd_c' (Int.natCast_dvd_natCast.mp h2)) hp_nd_C' hcong
     · -- Case ¬ p ∣ c
       have h1 : ∑ x ∈ (ramPrimes n).filter (· ∣ c),
           (if x = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) else legendreIdx p (x : ℤ)) =
           ∑ x ∈ (ramPrimes n).filter (· ∣ c), legendreIdx p (x : ℤ) :=
-        Finset.sum_congr rfl fun x hx => if_neg (fun heq => hpc (heq ▸ (Finset.mem_filter.mp hx).2))
+        Finset.sum_congr rfl fun x hx => if_neg (fun heq => by subst heq; exact hpc (Finset.mem_filter.mp hx).2)
       rw [h1, sum_legendreIdx_eq_prod hp_pr _ (fun q hq =>
         ⟨prime_mem_ramPrimes_prime (Finset.mem_filter.mp hq).1,
-         fun heq => hpc (heq ▸ (Finset.mem_filter.mp hq).2)⟩), hc_prod]
+         fun heq => by subst heq; exact hpc (Finset.mem_filter.mp hq).2⟩), hc_prod]
       -- Divide X₁+1, v by p ^ min(v_p(X₁+1), v_p(v))
       set k := min (padicValNat p (X₁ + 1)) (padicValNat p v)
       have hpk_A : p ^ k ∣ X₁ + 1 := dvd_trans (pow_dvd_pow p (min_le_left _ _)) pow_padicValNat_dvd
@@ -654,14 +655,16 @@ theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
           Finset.mem_filter.mpr ⟨by unfold ramPrimes; rw [if_neg hq_ne1]; exact Finset.mem_insert_self 2 _, h2c⟩
         have h1 := Finset.mul_prod_erase ((ramPrimes n).filter (· ∣ c)) (fun x => x) h2mem
         rw [hc_prod] at h1
+        change codd * 2 ^ v2c = c at hmul_c
         rw [hv2c_eq1, pow_one] at hmul_c
         change ∏ p' ∈ S_odd, p' = codd
         omega
       · have hv2c_eq0 : v2c = 0 := padicValNat.eq_zero_of_not_dvd h2c
         have h2nmem : 2 ∉ (ramPrimes n).filter (· ∣ c) := fun h => h2c (Finset.mem_filter.mp h).2
+        change codd * 2 ^ v2c = c at hmul_c
         rw [hv2c_eq0, pow_zero, mul_one] at hmul_c
         change ∏ p' ∈ ((ramPrimes n).filter (· ∣ c)).erase 2, p' = codd
-        rw [Finset.erase_eq_of_not_mem h2nmem, hc_prod, hmul_c]
+        rw [Finset.erase_eq_of_notMem h2nmem, hc_prod, hmul_c]
     have hsum_odd_prod : ∀ T : Finset ℕ, (∀ p' ∈ T, p' % 2 = 1) →
         (∑ p' ∈ T, (((p' - 1) / 2 : ℕ) : ZMod 2)) = ((((∏ p' ∈ T, p') - 1) / 2 : ℕ) : ZMod 2) ∧
         (∑ p' ∈ T, (((p' ^ 2 - 1) / 8 : ℕ) : ZMod 2)) = ((((∏ p' ∈ T, p') ^ 2 - 1) / 8 : ℕ) : ZMod 2) := by
@@ -673,9 +676,15 @@ theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
         intro hT
         have ha_odd := hT a (Finset.mem_insert_self a s)
         have hs_odd : (∏ p' ∈ s, p') % 2 = 1 := by
-          have : Odd (∏ p' ∈ s, p') := Finset.odd_prod.mpr fun x hx =>
-            Nat.odd_iff.mpr (hT x (Finset.mem_insert_of_mem hx))
-          exact Nat.odd_iff.mp this
+          have hprod_odd : ∀ U : Finset ℕ, (∀ x ∈ U, x % 2 = 1) → (∏ x ∈ U, x) % 2 = 1 := by
+            intro U
+            induction U using Finset.induction_on with
+            | empty => intro _; simp
+            | @insert b t hbt iht =>
+              intro hU
+              rw [Finset.prod_insert hbt, Nat.mul_mod, hU b (Finset.mem_insert_self b t),
+                iht (fun x hx => hU x (Finset.mem_insert_of_mem hx))]
+          exact hprod_odd s (fun x hx => hT x (Finset.mem_insert_of_mem hx))
         have ih' := ih (fun x hx => hT x (Finset.mem_insert_of_mem hx))
         rw [Finset.sum_insert has, Finset.sum_insert has, Finset.prod_insert has]
         exact ⟨by rw [ih'.1, eps2_mul ha_odd hs_odd], by rw [ih'.2, omega2_mul ha_odd hs_odd]⟩
@@ -708,7 +717,7 @@ theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
         rw [hodd_part, hv2c_eq1]; push_cast; ring
       · have hv2c_eq0 : v2c = 0 := padicValNat.eq_zero_of_not_dvd h2c
         have h2nmem : 2 ∉ (ramPrimes n).filter (· ∣ c) := fun h => h2c (Finset.mem_filter.mp h).2
-        have heq_S : (ramPrimes n).filter (· ∣ c) = S_odd := (Finset.erase_eq_of_not_mem h2nmem).symm
+        have heq_S : (ramPrimes n).filter (· ∣ c) = S_odd := (Finset.erase_eq_of_notMem h2nmem).symm
         rw [heq_S, hodd_part, hv2c_eq0]; push_cast; ring
     rw [hsum_val]
     -- Reduce (X₁ + 1)^2 = q_n * Y₁^2 + c * v^2 by 2^k where k = min(v_2(X₁+1), v_2(Y₁), v_2(v))
@@ -782,12 +791,14 @@ theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
       have h1 : (qodd - 1) / 2 % 2 = (rq - 1) / 2 % 2 := by omega
       have h2 : (codd - 1) / 2 % 2 = (rc - 1) / 2 % 2 := by omega
       have h3 : (qodd ^ 2 - 1) / 8 % 2 = (rq ^ 2 - 1) / 8 % 2 := by
-        have : qodd ^ 2 = 16 * (16 * qq ^ 2 + 2 * qq * rq) + rq ^ 2 := by rw [hq16]; ring
-        have : 1 ≤ rq ^ 2 := by nlinarith [show 1 ≤ rq by omega]
+        have hq2 : qodd ^ 2 = 16 * (16 * qq ^ 2 + 2 * qq * rq) + rq ^ 2 := by rw [hq16]; ring
+        have hrq1 : 1 ≤ rq := by omega
+        have hrq2 : 1 ≤ rq ^ 2 := Nat.one_le_pow 2 rq hrq1
         omega
       have h4 : (codd ^ 2 - 1) / 8 % 2 = (rc ^ 2 - 1) / 8 % 2 := by
-        have : codd ^ 2 = 16 * (16 * qc ^ 2 + 2 * qc * rc) + rc ^ 2 := by rw [hc16]; ring
-        have : 1 ≤ rc ^ 2 := by nlinarith [show 1 ≤ rc by omega]
+        have hc2 : codd ^ 2 = 16 * (16 * qc ^ 2 + 2 * qc * rc) + rc ^ 2 := by rw [hc16]; ring
+        have hrc1 : 1 ≤ rc := by omega
+        have hrc2 : 1 ≤ rc ^ 2 := Nat.one_le_pow 2 rc hrc1
         omega
       rw [hqodd_r, hcodd_r]
       rw [Nat.add_mod, Nat.add_mod, Nat.mul_mod ((codd - 1) / 2), Nat.mul_mod v2q, Nat.mul_mod v2c,
