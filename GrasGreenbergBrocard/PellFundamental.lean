@@ -625,7 +625,7 @@ private lemma primes115_prime : ∀ p ∈ primes115, p.Prime := by
   rcases hp with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
     rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
     rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | h
-  all_goals first | norm_num | cases h
+  all_goals first | norm_num | simp at h
 
 private lemma primes115_nodup : primes115.Nodup := by decide
 
@@ -636,7 +636,11 @@ private lemma padicValNat_factorial_eq_legendreSum6 {n p : ℕ} (hn : n < 116) (
     have hp2 : 2 ≤ p := hp.two_le
     have : 2 ^ 7 ≤ p ^ 7 := Nat.pow_le_pow_left hp2 7
     omega
-  rw [padicValNat_factorial hlt]
+  have hlog : Nat.log p n < 7 := by
+    by_cases hn0 : n = 0
+    · subst hn0; simp
+    · exact (Nat.log_lt_iff_lt_pow hp.one_lt hn0).mpr hlt
+  rw [padicValNat_factorial hlog]
   unfold legendreSum6
   rw [show Finset.Ico 1 7 = {1, 2, 3, 4, 5, 6} by decide]
   simp [Finset.sum_insert, pow_one]
@@ -691,10 +695,8 @@ private lemma log_three_halves_gt_point4 : (0.4 : ℝ) < Real.log (3 / 2 : ℝ) 
       pow_lt_pow_left₀ he1 (Real.exp_pos 1).le (by norm_num)
     norm_num at h2 ⊢
     linarith
-  have hlog : (2 : ℝ) < Real.log ((3 / 2 : ℝ) ^ 5) := by
-    rw [← Real.log_exp 2]
-    exact Real.log_lt_log (Real.exp_pos 2) he2
-  rw [Real.log_pow] at hlog
+  have hlog := Real.log_lt_log (Real.exp_pos 2) he2
+  rw [Real.log_exp, Real.log_pow] at hlog
   norm_num at hlog
   linarith
 
@@ -731,7 +733,7 @@ private lemma q_n_ten_eq_seven : q_n 10 = 7 := by
     · rintro ⟨⟨hp2, hp10⟩, hp_pr, hodd⟩
       rw [padicValNat_factorial_eq_legendreSum6 (by norm_num) hp_pr] at hodd
       interval_cases p
-      all_goals first | rfl | (exfalso; norm_num [legendreSum6] at hp_pr hodd)
+      all_goals first | rfl | norm_num [legendreSum6] at hp_pr hodd
     · rintro rfl
       refine ⟨⟨by norm_num, by norm_num⟩, by norm_num, ?_⟩
       rw [padicValNat_factorial_eq_legendreSum6 (by norm_num) (by norm_num)]
@@ -772,6 +774,7 @@ theorem log_fund_pell_gt_point2_ge8 {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
       exact Real.sqrt_le_sqrt (by norm_num)
     have heps14 : (14 : ℝ) ≤ pellUnit 7 X₁ Y₁ := by
       unfold pellUnit
+      push_cast
       have hXr : (8 : ℝ) ≤ (X₁ : ℝ) := by exact_mod_cast hX8
       have hYr : (3 : ℝ) ≤ (Y₁ : ℝ) := by exact_mod_cast hY3
       nlinarith
