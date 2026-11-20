@@ -336,21 +336,21 @@ private lemma omega2_mul {a b : ℕ} (ha : a % 2 = 1) (hb : b % 2 = 1) :
     have hrb : rb = 1 ∨ rb = 3 ∨ rb = 5 ∨ rb = 7 := by omega
     have h1 : (a ^ 2 - 1) / 8 % 2 = (ra ^ 2 - 1) / 8 % 2 := by
       have : a ^ 2 = 16 * (4 * qa ^ 2 + qa * ra) + ra ^ 2 := by rw [ha8]; ring
-      have : 1 ≤ ra ^ 2 := by rcases hra with rfl | rfl | rfl | rfl <;> norm_num
+      have : 1 ≤ ra ^ 2 := by rcases hra with h | h | h | h <;> rw [h] <;> norm_num
       omega
     have h2 : (b ^ 2 - 1) / 8 % 2 = (rb ^ 2 - 1) / 8 % 2 := by
       have : b ^ 2 = 16 * (4 * qb ^ 2 + qb * rb) + rb ^ 2 := by rw [hb8]; ring
-      have : 1 ≤ rb ^ 2 := by rcases hrb with rfl | rfl | rfl | rfl <;> norm_num
+      have : 1 ≤ rb ^ 2 := by rcases hrb with h | h | h | h <;> rw [h] <;> norm_num
       omega
     have h3 : ((a * b) ^ 2 - 1) / 8 % 2 = ((ra * rb) ^ 2 - 1) / 8 % 2 := by
       have hab : a * b = 8 * (8 * qa * qb + qa * rb + qb * ra) + ra * rb := by rw [ha8, hb8]; ring
       set qab := 8 * qa * qb + qa * rb + qb * ra
       have : (a * b) ^ 2 = 16 * (4 * qab ^ 2 + qab * (ra * rb)) + (ra * rb) ^ 2 := by rw [hab]; ring
       have : 1 ≤ (ra * rb) ^ 2 := by
-        rcases hra with rfl | rfl | rfl | rfl <;> rcases hrb with rfl | rfl | rfl | rfl <;> norm_num
+        rcases hra with ha1 | ha1 | ha1 | ha1 <;> rcases hrb with hb1 | hb1 | hb1 | hb1 <;> rw [ha1, hb1] <;> norm_num
       omega
     rw [h3, Nat.add_mod, h1, h2, ← Nat.add_mod]
-    rcases hra with rfl | rfl | rfl | rfl <;> rcases hrb with rfl | rfl | rfl | rfl <;> norm_num
+    rcases hra with ha1 | ha1 | ha1 | ha1 <;> rcases hrb with hb1 | hb1 | hb1 | hb1 <;> rw [ha1, hb1] <;> norm_num
   rw [← Nat.cast_add, ZMod.natCast_eq_natCast_iff']
   exact hmod
 
@@ -373,20 +373,22 @@ private lemma hilbert2_mod16_check :
 
 private lemma sq_mod16_eq_sqMod16 (x : ℕ) :
     ∃ i : Fin 4, x ^ 2 % 16 = sqMod16 i ∧ (x % 2 = 1 ↔ sqMod16 i % 2 = 1) := by
-  have hx : x = 8 * (x / 8) + x % 8 := (Nat.div_add_mod x 8).symm
-  have hsq : x ^ 2 % 16 = (x % 8) ^ 2 % 16 := by
-    have : x ^ 2 = 16 * (4 * (x / 8) ^ 2 + (x / 8) * (x % 8)) + (x % 8) ^ 2 := by rw [hx]; ring
+  set q := x / 8
+  set r := x % 8
+  have hx : x = 8 * q + r := (Nat.div_add_mod x 8).symm
+  have hsq : x ^ 2 % 16 = r ^ 2 % 16 := by
+    have : x ^ 2 = 16 * (4 * q ^ 2 + q * r) + r ^ 2 := by rw [hx]; ring
     omega
-  have hr : x % 8 < 8 := Nat.mod_lt x (by norm_num)
-  interval_cases h : x % 8
-  · exact ⟨0, by rw [hsq]; decide, by omega⟩
-  · exact ⟨1, by rw [hsq]; decide, by omega⟩
-  · exact ⟨2, by rw [hsq]; decide, by omega⟩
-  · exact ⟨3, by rw [hsq]; decide, by omega⟩
-  · exact ⟨0, by rw [hsq]; decide, by omega⟩
-  · exact ⟨3, by rw [hsq]; decide, by omega⟩
-  · exact ⟨2, by rw [hsq]; decide, by omega⟩
-  · exact ⟨1, by rw [hsq]; decide, by omega⟩
+  have hr : r < 8 := Nat.mod_lt x (by norm_num)
+  interval_cases h : r
+  · exact ⟨0, by rw [hsq]; decide, by simp only [sqMod16]; omega⟩
+  · exact ⟨1, by rw [hsq]; decide, by simp only [sqMod16]; omega⟩
+  · exact ⟨2, by rw [hsq]; decide, by simp only [sqMod16]; omega⟩
+  · exact ⟨3, by rw [hsq]; decide, by simp only [sqMod16]; omega⟩
+  · exact ⟨0, by rw [hsq]; decide, by simp only [sqMod16]; omega⟩
+  · exact ⟨3, by rw [hsq]; decide, by simp only [sqMod16]; omega⟩
+  · exact ⟨2, by rw [hsq]; decide, by simp only [sqMod16]; omega⟩
+  · exact ⟨1, by rw [hsq]; decide, by simp only [sqMod16]; omega⟩
 
 /-- **Membership of the Midpoint Vector in `redeiKernel n`** (pure kernel proof, zero external axioms):
 For every `n ≥ 8` and fundamental Pell solution `(X₁, Y₁)` of `q_n`, the midpoint vector
@@ -428,15 +430,14 @@ theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
       omega
     -- Rewrite redeiRowOdd as sum over S_c = (ramPrimes n).filter (· ∣ c)
     unfold redeiRowOdd yMidVec
-    rw [← Finset.sum_attach (ramPrimes n)]
-    have hsum_eq : (∑ p' ∈ (ramPrimes n).attach,
-        (if p'.1 = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) * (if p'.1 ∣ c then 1 else 0)
-         else legendreIdx p (p'.1 : ℤ) * (if p'.1 ∣ c then 1 else 0))) =
+    rw [Finset.sum_coe_sort (ramPrimes n) (fun x =>
+      if x = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) * (if x ∣ c then 1 else 0)
+      else legendreIdx p (x : ℤ) * (if x ∣ c then 1 else 0))]
+    have hsum_eq : (∑ x ∈ ramPrimes n,
+        (if x = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) * (if x ∣ c then 1 else 0)
+         else legendreIdx p (x : ℤ) * (if x ∣ c then 1 else 0))) =
         ∑ p' ∈ (ramPrimes n).filter (· ∣ c),
           if p' = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) else legendreIdx p (p' : ℤ) := by
-      rw [Finset.sum_attach (ramPrimes n) (fun x =>
-        if x = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) * (if x ∣ c then 1 else 0)
-        else legendreIdx p (x : ℤ) * (if x ∣ c then 1 else 0))]
       rw [Finset.sum_filter]
       refine Finset.sum_congr rfl fun x _ => ?_
       split_ifs <;> simp
@@ -622,18 +623,18 @@ theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     have hcodd_odd : codd % 2 = 1 := by
       have := oddPartNat_not_dvd_two hc_pos; omega
     -- Compute redeiRowTwo in terms of (v2c, codd, v2q, qodd)
-    rw [← Finset.sum_attach (ramPrimes n)]
-    have hsum_flt : (∑ p' ∈ (ramPrimes n).attach,
-        (if p'.1 = 2 then (((qodd ^ 2 - 1) / 8 : ℕ) : ZMod 2)
-         else ((((p'.1 - 1) / 2) * ((qodd - 1) / 2) + v2q * ((p'.1 ^ 2 - 1) / 8) : ℕ) : ZMod 2)) *
-        (if p'.1 ∣ c then 1 else 0)) =
+    dsimp only
+    rw [Finset.sum_coe_sort (ramPrimes n) (fun x =>
+      (if x = 2 then (((qodd ^ 2 - 1) / 8 : ℕ) : ZMod 2)
+       else ((((x - 1) / 2) * ((qodd - 1) / 2) + v2q * ((x ^ 2 - 1) / 8) : ℕ) : ZMod 2)) *
+      (if x ∣ c then 1 else 0))]
+    have hsum_flt : (∑ x ∈ ramPrimes n,
+        (if x = 2 then (((qodd ^ 2 - 1) / 8 : ℕ) : ZMod 2)
+         else ((((x - 1) / 2) * ((qodd - 1) / 2) + v2q * ((x ^ 2 - 1) / 8) : ℕ) : ZMod 2)) *
+        (if x ∣ c then 1 else 0)) =
         ∑ p' ∈ (ramPrimes n).filter (· ∣ c),
           if p' = 2 then (((qodd ^ 2 - 1) / 8 : ℕ) : ZMod 2)
           else ((((p' - 1) / 2) * ((qodd - 1) / 2) + v2q * ((p' ^ 2 - 1) / 8) : ℕ) : ZMod 2) := by
-      rw [Finset.sum_attach (ramPrimes n) (fun x =>
-        (if x = 2 then (((qodd ^ 2 - 1) / 8 : ℕ) : ZMod 2)
-         else ((((x - 1) / 2) * ((qodd - 1) / 2) + v2q * ((x ^ 2 - 1) / 8) : ℕ) : ZMod 2)) *
-        (if x ∣ c then 1 else 0))]
       rw [Finset.sum_filter]
       refine Finset.sum_congr rfl fun x _ => ?_
       split_ifs <;> simp
@@ -774,17 +775,19 @@ theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
         ((((2 * ((codd % 16) / 2) + 1) - 1) / 2) * (((2 * ((qodd % 16) / 2) + 1) - 1) / 2) +
           v2q * (((2 * ((codd % 16) / 2) + 1) ^ 2 - 1) / 8) +
           v2c * (((2 * ((qodd % 16) / 2) + 1) ^ 2 - 1) / 8)) % 2 := by
-      have hq16 : qodd = 16 * (qodd / 16) + qodd % 16 := (Nat.div_add_mod qodd 16).symm
-      have hc16 : codd = 16 * (codd / 16) + codd % 16 := (Nat.div_add_mod codd 16).symm
-      have h1 : (qodd - 1) / 2 % 2 = (qodd % 16 - 1) / 2 % 2 := by omega
-      have h2 : (codd - 1) / 2 % 2 = (codd % 16 - 1) / 2 % 2 := by omega
-      have h3 : (qodd ^ 2 - 1) / 8 % 2 = ((qodd % 16) ^ 2 - 1) / 8 % 2 := by
-        have : qodd ^ 2 = 16 * (16 * (qodd / 16) ^ 2 + 2 * (qodd / 16) * (qodd % 16)) + (qodd % 16) ^ 2 := by rw [hq16]; ring
-        have : 1 ≤ (qodd % 16) ^ 2 := by nlinarith
+      set qq := qodd / 16; set rq := qodd % 16
+      set qc := codd / 16; set rc := codd % 16
+      have hq16 : qodd = 16 * qq + rq := (Nat.div_add_mod qodd 16).symm
+      have hc16 : codd = 16 * qc + rc := (Nat.div_add_mod codd 16).symm
+      have h1 : (qodd - 1) / 2 % 2 = (rq - 1) / 2 % 2 := by omega
+      have h2 : (codd - 1) / 2 % 2 = (rc - 1) / 2 % 2 := by omega
+      have h3 : (qodd ^ 2 - 1) / 8 % 2 = (rq ^ 2 - 1) / 8 % 2 := by
+        have : qodd ^ 2 = 16 * (16 * qq ^ 2 + 2 * qq * rq) + rq ^ 2 := by rw [hq16]; ring
+        have : 1 ≤ rq ^ 2 := by nlinarith [show 1 ≤ rq by omega]
         omega
-      have h4 : (codd ^ 2 - 1) / 8 % 2 = ((codd % 16) ^ 2 - 1) / 8 % 2 := by
-        have : codd ^ 2 = 16 * (16 * (codd / 16) ^ 2 + 2 * (codd / 16) * (codd % 16)) + (codd % 16) ^ 2 := by rw [hc16]; ring
-        have : 1 ≤ (codd % 16) ^ 2 := by nlinarith
+      have h4 : (codd ^ 2 - 1) / 8 % 2 = (rc ^ 2 - 1) / 8 % 2 := by
+        have : codd ^ 2 = 16 * (16 * qc ^ 2 + 2 * qc * rc) + rc ^ 2 := by rw [hc16]; ring
+        have : 1 ≤ rc ^ 2 := by nlinarith [show 1 ≤ rc by omega]
         omega
       rw [hqodd_r, hcodd_r]
       rw [Nat.add_mod, Nat.add_mod, Nat.mul_mod ((codd - 1) / 2), Nat.mul_mod v2q, Nat.mul_mod v2c,

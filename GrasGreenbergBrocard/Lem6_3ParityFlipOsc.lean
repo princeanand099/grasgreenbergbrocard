@@ -1357,7 +1357,7 @@ theorem lem_6_3_osc_bound_honest
                         have h1 : (1 : ℝ) ≤ (Real.log (n₁ : ℝ)) ^ (R + 3) := one_le_pow₀ hlog_ge1
                         linarith
                       have hPj_ge1 : (1 : ℝ) ≤ P ^ j := one_le_pow₀ hP_ge1
-                      rw [abs_mul, abs_of_nonneg (Nat.cast_nonneg m)]
+                      rw [abs_mul, show |(m : ℝ)| = (m : ℝ) from abs_of_nonneg (Nat.cast_nonneg m)]
                       calc |(h' : ℝ)| * (m : ℝ) / P ^ j ≤ |(h' : ℝ)| * (m : ℝ) := div_le_self (by positivity) hPj_ge1
                         _ ≤ |(h' : ℝ)| * (2 * (n₁ : ℝ)) := mul_le_mul_of_nonneg_left hm_ub (abs_nonneg _)
                         _ = (|(h' : ℝ)| * 2) * (n₁ : ℝ) := by ring
