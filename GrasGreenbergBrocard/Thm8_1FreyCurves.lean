@@ -222,7 +222,7 @@ theorem thm_8_1_part2_level2_cm_reduction {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
       have hle1 : padicValNat p (q_n n) ≤ 1 := by
         by_contra hgt; push Not at hgt
         have hsq_dvd : p ^ 2 ∣ q_n n := (padicValNat_dvd_iff_le hq_pos.ne').mpr hgt
-        exact hp.prime.not_unit (hsqf p (by simpa [sq] using hsq_dvd))
+        exact hp.prime.ne_one (Nat.isUnit_iff.mp (hsqf p (by simpa [sq] using hsq_dvd)))
       omega
     have hvp_Y1 : padicValNat p Y₁ = 0 := by
       have hfac_eq' : Nat.factorial n = 4 * X₁ ^ 2 * q_n n * (Y₁ * Y₁) := by

@@ -462,15 +462,19 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
         linarith
   have hT₀_le : T₀ ≤ (n : ℝ) ^ 2 := by
     have hh_r : |(h r₀ : ℝ)| ≤ 2 * (Real.log (n : ℝ)) ^ (R + 2) + 1 := by
-      have h1 : |(h r₀ : ℝ)| ≤ 2 * (H : ℝ) + 1 := by exact_mod_cast hh_bound r₀ hr₀_mem
-      have hH_le : (H : ℝ) ≤ (Real.log (n : ℝ)) ^ (R + 2) := Nat.floor_le (by positivity)
+      have h1 : |(h r₀ : ℝ)| ≤ 2 * (Nat.floor ((Real.log (n : ℝ)) ^ (R + 2)) : ℝ) + 1 := by
+        exact_mod_cast hh_bound r₀ hr₀_mem
+      have hH_le : (Nat.floor ((Real.log (n : ℝ)) ^ (R + 2)) : ℝ) ≤ (Real.log (n : ℝ)) ^ (R + 2) :=
+        Nat.floor_le (by positivity)
       linarith
     have hc1_le1 : c₁_low ≤ 1 := by
       unfold c₁_low
       have hpow_le : (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) ≤ 1 :=
         zpow_le_one_of_nonpos₀ (by norm_num) (by omega)
       linarith
-    have hRM_ge1 : (1 : ℝ) ≤ (R : ℝ) * Mmax + 1 := by positivity
+    have hRM_ge1 : (1 : ℝ) ≤ (R : ℝ) * Mmax + 1 := by
+      have : (0 : ℝ) ≤ (R : ℝ) * Mmax := by positivity
+      linarith
     have hdiv_le1 : (2 * (Real.log (n : ℝ)) ^ (R + 2) + 1) / (n : ℝ) ^ δ ≤ 1 := by
       have h1 : (2 * (Real.log (n : ℝ)) ^ (R + 2) + 1) / (n : ℝ) ^ δ ≤
           (2 * (Real.log (n : ℝ)) ^ (R + 2) + 1) / (n : ℝ) ^ δ * ((R : ℝ) * Mmax + 1) :=
