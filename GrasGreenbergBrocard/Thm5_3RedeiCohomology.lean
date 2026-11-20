@@ -47,7 +47,7 @@ private lemma dvd_of_sq_dvd_sqfree_mul_sq {q m Y : ℕ} (hq : Squarefree q) (hq0
       have hp2 : p ^ 2 ∣ q := by
         have := Nat.ordProj_dvd q p
         exact dvd_trans (pow_dvd_pow p (by omega : 2 ≤ q.factorization p)) this
-      exact hp.not_unit (hq p (by simpa [sq] using hp2))
+      exact hp.ne_one (Nat.isUnit_iff.mp (hq p (by simpa [sq] using hp2)))
     omega
   · simp [Nat.factorization_eq_zero_of_not_prime _ hp]
 
@@ -110,8 +110,8 @@ private lemma two_not_dvd_coreNat_two_mul_X1_add_one_of_mod4_eq1 {n X₁ Y₁ : 
     have h1 := congrArg (padicValNat 2) hprod
     rw [padicValNat.mul (by omega) (by omega),
       padicValNat.mul (q_n_pos_53 n).ne' (pow_ne_zero 2 hY1_pos.ne'),
-      padicValNat.pow 2 hY1_pos.ne', hvq, zero_add] at h1
-    exact h1
+      sq, padicValNat.mul hY1_pos.ne' hY1_pos.ne', hvq, zero_add] at h1
+    omega
   have hnot_both4 : ¬ (4 ∣ X₁ - 1 ∧ 4 ∣ X₁ + 1) := by
     rintro ⟨h1, h2⟩
     have hsub : 4 ∣ (X₁ + 1) - (X₁ - 1) := Nat.dvd_sub h2 h1
@@ -172,7 +172,7 @@ private lemma coreNat_two_X1_add_one_prime_mem_ramPrimes {n X₁ Y₁ p : ℕ}
     have hv_eq := congrArg (padicValNat p) hprod
     rw [padicValNat.mul (by omega) (by omega), hvm1, zero_add,
       padicValNat.mul (q_n_pos_53 n).ne' (pow_ne_zero 2 hfund.2.1.ne'),
-      padicValNat.pow 2 hfund.2.1.ne'] at hv_eq
+      sq, padicValNat.mul hfund.2.1.ne' hfund.2.1.ne'] at hv_eq
     have hvq_odd : padicValNat p (q_n n) % 2 = 1 := by omega
     have hp_q : p ∣ q_n n :=
       dvd_trans (pow_dvd_pow p (by omega : 1 ≤ padicValNat p (q_n n))) pow_padicValNat_dvd
@@ -424,7 +424,7 @@ theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
       have h2 : padicValNat p (q_n n) ≤ 1 := by
         by_contra hgt; push_neg at hgt
         have hp2 : p ^ 2 ∣ q_n n := dvd_trans (pow_dvd_pow p (by omega : 2 ≤ padicValNat p (q_n n))) pow_padicValNat_dvd
-        exact hp_pr.not_unit ((q_n_squarefree n) p (by simpa [sq] using hp2))
+        exact hp_pr.ne_one (Nat.isUnit_iff.mp ((q_n_squarefree n) p (by simpa [sq] using hp2)))
       omega
     -- Rewrite redeiRowOdd as sum over S_c = (ramPrimes n).filter (· ∣ c)
     unfold redeiRowOdd yMidVec
@@ -464,12 +464,12 @@ theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
         intro hd
         have hp2 : p ^ 2 ∣ q_n n := by
           rw [sq]; exact (Nat.dvd_div_iff_mul_dvd hp_dvd_q).mp hd
-        exact hp_pr.not_unit ((q_n_squarefree n) p (by simpa [sq] using hp2))
+        exact hp_pr.ne_one (Nat.isUnit_iff.mp ((q_n_squarefree n) p (by simpa [sq] using hp2)))
       have hnd_c' : ¬ p ∣ c / p := by
         intro hd
         have hp2 : p ^ 2 ∣ c := by
           rw [sq]; exact (Nat.dvd_div_iff_mul_dvd hpc).mp hd
-        exact hp_pr.not_unit ((coreNat_squarefree _) p (by simpa [sq] using hp2))
+        exact hp_pr.ne_one (Nat.isUnit_iff.mp ((coreNat_squarefree _) p (by simpa [sq] using hp2)))
       rw [← legendreIdx_mul hp_pr (by intro h; exact hnd_q' (Int.natCast_dvd_natCast.mp (dvd_neg.mp h)))
             (by intro h; exact hnd_c' (Int.natCast_dvd_natCast.mp h))]
       -- From (X₁+1)^2 = q_n * Y₁^2 + c * v^2, p ∣ X₁+1, divide by p:
@@ -517,12 +517,12 @@ theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
         rintro ⟨h1, h2⟩
         have hvY : k + 1 ≤ padicValNat p Y₁ := by
           rw [hB', padicValNat.mul (pow_ne_zero k hp_pr.ne_zero) (by intro h0; rw [h0, mul_zero] at hB'; exact hY1_pos.ne' hB'),
-            padicValNat.pow k hp_pr.ne_zero, padicValNat.self]
+            padicValNat.prime_pow k]
           have := one_le_padicValNat_of_dvd (by intro h0; rw [h0, mul_zero] at hB'; exact hY1_pos.ne' hB') h1
           omega
         have hvv : k + 1 ≤ padicValNat p v := by
           rw [hC', padicValNat.mul (pow_ne_zero k hp_pr.ne_zero) (by intro h0; rw [h0, mul_zero] at hC'; exact hv_pos.ne' hC'),
-            padicValNat.pow k hp_pr.ne_zero, padicValNat.self]
+            padicValNat.prime_pow k]
           have := one_le_padicValNat_of_dvd (by intro h0; rw [h0, mul_zero] at hC'; exact hv_pos.ne' hC') h2
           omega
         omega
@@ -580,12 +580,12 @@ theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
         rintro ⟨h1, h2⟩
         have hvA : k + 1 ≤ padicValNat p (X₁ + 1) := by
           rw [hA', padicValNat.mul (pow_ne_zero k hp_pr.ne_zero) (by intro h0; rw [h0, mul_zero] at hA'; omega),
-            padicValNat.pow k hp_pr.ne_zero, padicValNat.self]
+            padicValNat.prime_pow k]
           have := one_le_padicValNat_of_dvd (by intro h0; rw [h0, mul_zero] at hA'; omega) h1
           omega
         have hvv : k + 1 ≤ padicValNat p v := by
           rw [hC', padicValNat.mul (pow_ne_zero k hp_pr.ne_zero) (by intro h0; rw [h0, mul_zero] at hC'; exact hv_pos.ne' hC'),
-            padicValNat.pow k hp_pr.ne_zero, padicValNat.self]
+            padicValNat.prime_pow k]
           have := one_le_padicValNat_of_dvd (by intro h0; rw [h0, mul_zero] at hC'; exact hv_pos.ne' hC') h2
           omega
         omega
@@ -612,11 +612,11 @@ theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     have hv2q_le1 : v2q ≤ 1 := by
       by_contra hgt; push_neg at hgt
       have h4 : 2 ^ 2 ∣ q_n n := dvd_trans (pow_dvd_pow 2 (by omega : 2 ≤ v2q)) pow_padicValNat_dvd
-      exact Nat.prime_two.not_unit ((q_n_squarefree n) 2 (by simpa [sq] using h4))
+      exact Nat.prime_two.ne_one (Nat.isUnit_iff.mp ((q_n_squarefree n) 2 (by simpa [sq] using h4)))
     have hv2c_le1 : v2c ≤ 1 := by
       by_contra hgt; push_neg at hgt
       have h4 : 2 ^ 2 ∣ c := dvd_trans (pow_dvd_pow 2 (by omega : 2 ≤ v2c)) pow_padicValNat_dvd
-      exact Nat.prime_two.not_unit ((coreNat_squarefree _) 2 (by simpa [sq] using h4))
+      exact Nat.prime_two.ne_one (Nat.isUnit_iff.mp ((coreNat_squarefree _) 2 (by simpa [sq] using h4)))
     have hqodd_odd : qodd % 2 = 1 := by
       have := oddPartNat_not_dvd_two hq_pos; omega
     have hcodd_odd : codd % 2 = 1 := by
@@ -732,15 +732,15 @@ theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
       have hC_ev : 2 ∣ C' := by omega
       have hvA : k + 1 ≤ padicValNat 2 (X₁ + 1) := by
         rw [hA', padicValNat.mul (pow_ne_zero k (by norm_num)) (by intro h0; rw [h0, mul_zero] at hA'; omega),
-          padicValNat.pow k (by norm_num), padicValNat.self]
+          padicValNat.prime_pow k]
         have := one_le_padicValNat_of_dvd (by intro h0; rw [h0, mul_zero] at hA'; omega) hA_ev; omega
       have hvB : k + 1 ≤ padicValNat 2 Y₁ := by
         rw [hB', padicValNat.mul (pow_ne_zero k (by norm_num)) (by intro h0; rw [h0, mul_zero] at hB'; exact hY1_pos.ne' hB'),
-          padicValNat.pow k (by norm_num), padicValNat.self]
+          padicValNat.prime_pow k]
         have := one_le_padicValNat_of_dvd (by intro h0; rw [h0, mul_zero] at hB'; exact hY1_pos.ne' hB') hB_ev; omega
       have hvC : k + 1 ≤ padicValNat 2 v := by
         rw [hC', padicValNat.mul (pow_ne_zero k (by norm_num)) (by intro h0; rw [h0, mul_zero] at hC'; exact hv_pos.ne' hC'),
-          padicValNat.pow k (by norm_num), padicValNat.self]
+          padicValNat.prime_pow k]
         have := one_le_padicValNat_of_dvd (by intro h0; rw [h0, mul_zero] at hC'; exact hv_pos.ne' hC') hC_ev; omega
       omega
     have hq_decomp : q_n n = 2 ^ v2q * qodd := by rw [mul_comm]; exact (oddPartNat_mul_two_pow hq_pos).symm
