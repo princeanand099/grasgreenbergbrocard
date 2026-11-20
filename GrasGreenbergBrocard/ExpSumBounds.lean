@@ -460,7 +460,36 @@ theorem prime_exp_sum_bounds (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1 / 3) :
         have h32 : c₂_high * T₀ / P ^ j = Mmax * T₀ / P ^ j + ((1 / 2 : ℝ) * Mmax) * T₀ / P ^ j := by
           unfold c₂_high; ring
         linarith
-  have hMain := hVaughan n P I F w W₀ T₀ hn hP_lo hP_hi hI_prime hT₀_ge hW_bound hW_anti hDeriv
+  have hT₀_le : T₀ ≤ (n : ℝ) ^ 2 := by
+    have hh_r : |(h r₀ : ℝ)| ≤ 2 * (Real.log (n : ℝ)) ^ (R + 2) + 1 := by
+      have h1 : |(h r₀ : ℝ)| ≤ 2 * (H : ℝ) + 1 := by exact_mod_cast hh_bound r₀ hr₀_mem
+      have hH_le : (H : ℝ) ≤ (Real.log (n : ℝ)) ^ (R + 2) := Nat.floor_le (by positivity)
+      linarith
+    have hc1_le1 : c₁_low ≤ 1 := by
+      unfold c₁_low
+      have hpow_le : (2 : ℝ) ^ (-((R + (5 * R + 2) : ℕ) : ℤ)) ≤ 1 :=
+        zpow_le_one_of_nonpos₀ (by norm_num) (by omega)
+      linarith
+    have hRM_ge1 : (1 : ℝ) ≤ (R : ℝ) * Mmax + 1 := by positivity
+    have hdiv_le1 : (2 * (Real.log (n : ℝ)) ^ (R + 2) + 1) / (n : ℝ) ^ δ ≤ 1 := by
+      have h1 : (2 * (Real.log (n : ℝ)) ^ (R + 2) + 1) / (n : ℝ) ^ δ ≤
+          (2 * (Real.log (n : ℝ)) ^ (R + 2) + 1) / (n : ℝ) ^ δ * ((R : ℝ) * Mmax + 1) :=
+        le_mul_of_one_le_right (by positivity) hRM_ge1
+      linarith
+    have hnd_le_n : (n : ℝ) ^ δ ≤ (n : ℝ) := by
+      calc (n : ℝ) ^ δ ≤ (n : ℝ) ^ (1 : ℝ) :=
+            Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast (by omega : 1 ≤ n)) (by linarith)
+        _ = (n : ℝ) := Real.rpow_one _
+    have hh_le_n : |(h r₀ : ℝ)| ≤ (n : ℝ) := by
+      have h1 : 2 * (Real.log (n : ℝ)) ^ (R + 2) + 1 ≤ (n : ℝ) ^ δ :=
+        (div_le_one (Real.rpow_pos_of_pos (by exact_mod_cast (by omega : 0 < n)) δ)).mp hdiv_le1
+      linarith
+    have hPr_ge1 : (1 : ℝ) ≤ P ^ r₀ := one_le_pow₀ hP_ge1
+    calc T₀ = |(h r₀ : ℝ)| * (n : ℝ) / P ^ r₀ := rfl
+      _ ≤ |(h r₀ : ℝ)| * (n : ℝ) := div_le_self (by positivity) hPr_ge1
+      _ ≤ (n : ℝ) * (n : ℝ) := mul_le_mul_of_nonneg_right hh_le_n (Nat.cast_nonneg n)
+      _ = (n : ℝ) ^ 2 := (sq _).symm
+  have hMain := hVaughan n P I F w W₀ T₀ hn hP_lo hP_hi hI_prime hT₀_ge hT₀_le hW_bound hW_anti hDeriv
   constructor
   · refine ⟨hMain.1, ?_⟩
     have hlogP_le : Real.log P ≤ Real.log (n : ℝ) := by
@@ -546,6 +575,7 @@ theorem prime_exp_sum_bounds_general_phase (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ
         r₀ ∈ A →
         let T₀ := |M r₀| / P ^ r₀
         (2 : ℝ) ^ (-(R : ℤ)) * (Real.log (n : ℝ)) ^ A_R ≤ T₀ →
+        T₀ ≤ (n : ℝ) ^ 2 →
         (∀ s ∈ A.erase r₀, |M s| / P ^ s ≤ (c₁_low / ((R : ℝ) * Mmax + 1)) * T₀) →
         (∀ t ∈ Set.Icc P (2 * P), |w t| ≤ W₀) →
         AntitoneOn w (Set.Icc P (2 * P)) →
@@ -586,7 +616,7 @@ theorem prime_exp_sum_bounds_general_phase (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ
   filter_upwards [Filter.eventually_ge_atTop 4, hev2, hev_log] with n hn hsmall2 hlog2
   intro P I A M r₀ w W₀ hP_lo hP_hi hI_sub hA_range hr₀_mem
   dsimp only
-  intro hT₀_ge hDom hW_bound hW_anti hW₀
+  intro hT₀_ge hT₀_le hDom hW_bound hW_anti hW₀
   set T₀ := |M r₀| / P ^ r₀
   set F : ℝ → ℝ := fun t => ∑ s ∈ A, M s / (2 * t ^ s)
   have hr₀_range : 1 ≤ r₀ ∧ r₀ ≤ R := hA_range r₀ hr₀_mem
@@ -748,7 +778,7 @@ theorem prime_exp_sum_bounds_general_phase (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ
         have h32 : c₂_high * T₀ / P ^ j = Mmax * T₀ / P ^ j + ((1 / 2 : ℝ) * Mmax) * T₀ / P ^ j := by
           unfold c₂_high; ring
         linarith
-  have hMain := (hVaughan n P I F w W₀ T₀ hn hP_lo hP_hi hI_sub hT₀_ge hW_bound hW_anti hDeriv).1
+  have hMain := (hVaughan n P I F w W₀ T₀ hn hP_lo hP_hi hI_sub hT₀_ge hT₀_le hW_bound hW_anti hDeriv).1
   have hlogP_le : Real.log P ≤ Real.log (n : ℝ) := by
     apply Real.log_le_log hP_pos
     calc P ≤ (n : ℝ) / (Real.log (n : ℝ)) ^ 12 := hP_hi

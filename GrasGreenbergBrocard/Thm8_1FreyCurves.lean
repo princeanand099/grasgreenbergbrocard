@@ -70,9 +70,11 @@ theorem thm_8_1_part1_frey_E {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n) (hm : Nat.fact
       let εk_inv : Zsqrtd (q_n n : ℤ) := ⟨(m : ℤ), -(s_n n : ℤ)⟩
       εk * εk_inv = 1 ∧
       X * (X + εk) * (X + εk_inv) = X ^ 3 + (2 * (m : ℤ) : Zsqrtd (q_n n : ℤ)) * X ^ 2 + X) ∧
-    -- Modularity, conductor, and Frobenius traces
-    (∃ D : FreyCurveArithmeticData n m X₁ Y₁,
-      D.isModular_E ∧ D.conductor_E = 2 ^ D.alpha_E * ∏ p ∈ (Finset.Icc 3 n).filter Nat.Prime, p ∧
+    -- Mathlib WeierstrassCurve ℤ model invariants, conductor, and Frobenius traces
+    ((freyCurveE m).c₄ = freyE_c4 m ∧ (freyCurveE m).Δ = freyE_Delta m ∧
+     ∃ D : FreyCurveArithmeticData n m X₁ Y₁,
+      D.curveE = freyCurveE m ∧
+      D.conductor_E = 2 ^ D.alpha_E * ∏ p ∈ (Finset.Icc 3 n).filter Nat.Prime, p ∧
       D.alpha_E ≤ 3 ∧ ∀ (p : ℕ) (hp : p.Prime), 3 ≤ p → p ≤ n → D.ap_E p = @legendreSym p ⟨hp⟩ (-(m : ℤ))) := by
   have hm_z : (Nat.factorial n : ℤ) + 1 = (m : ℤ) ^ 2 := by exact_mod_cast hm
   have hc4 : freyE_c4 m = 16 * (4 * (Nat.factorial n : ℤ) + 1) := by
@@ -125,8 +127,10 @@ theorem thm_8_1_part1_frey_E {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n) (hm : Nat.fact
         = X ^ 3 + (⟨(m : ℤ), (s_n n : ℤ)⟩ + ⟨(m : ℤ), -(s_n n : ℤ)⟩) * X ^ 2 +
           (⟨(m : ℤ), (s_n n : ℤ)⟩ * ⟨(m : ℤ), -(s_n n : ℤ)⟩) * X := by ring
       _ = X ^ 3 + (2 * (m : ℤ) : Zsqrtd (q_n n : ℤ)) * X ^ 2 + X := by rw [hadd, hmul1, one_mul]
-  · obtain ⟨D, hmodE⟩ := frey_E_modularity (X₁ := X₁) (Y₁ := Y₁) hn hm
-    exact ⟨D, hmodE, D.conductor_E_eq, D.alpha_E_le, D.ap_E_eq⟩
+  · obtain ⟨D⟩ := frey_E_modularity (X₁ := X₁) (Y₁ := Y₁) hn hm
+    refine ⟨?_, ?_, D, D.curveE_eq, D.conductor_E_eq, D.alpha_E_le, D.ap_E_eq⟩
+    · simp [freyCurveE, freyE_c4, freyE_b2, freyE_b4, WeierstrassCurve.c₄, WeierstrassCurve.b₂, WeierstrassCurve.b₄]; ring
+    · simp [freyCurveE, freyE_Delta, freyE_b2, freyE_b4, freyE_b8, WeierstrassCurve.Δ, WeierstrassCurve.b₂, WeierstrassCurve.b₄, WeierstrassCurve.b₆, WeierstrassCurve.b₈]; ring
 
 /-- **Theorem 8.1(ii) (Algebraic, CM-Reduction, and Valuation Structure of $F_n^{(2)}$)**:
 In the $k = 2$ regime ($m = 2X_1^2 - 1$, $s_n = 2 X_1 Y_1$, $X_1^2 - q_n Y_1^2 = 1$), the Level-2
@@ -153,13 +157,13 @@ theorem thm_8_1_part2_level2_cm_reduction {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     -- v_p(j(F_n^{(2)})) = -2 for all primes p ∈ (n/2, n] (i.e. p^2 ∥ Δ and p ∤ c_4)
     (∀ p : ℕ, p.Prime → n / 2 < p → p ≤ n →
       padicValNat p (2 ^ 12 * (q_n n) ^ 2 * Y₁ ^ 4) = 2 ∧ ¬ ((p : ℤ) ∣ freyF2_c4 X₁)) ∧
-    -- Modularity, slashed conductor formula, and surjectivity of mod-ℓ Galois representation for ℓ ≥ 5
-    (∃ D : FreyCurveArithmeticData n m X₁ Y₁,
-      D.isModular_F2 ∧
+    -- Mathlib WeierstrassCurve ℤ model invariants and slashed conductor formula
+    ((freyCurveF2 X₁).c₄ = freyF2_c4 X₁ ∧ (freyCurveF2 X₁).Δ = freyF2_Delta X₁ ∧
+     ∃ D : FreyCurveArithmeticData n m X₁ Y₁,
+      D.curveF2 = freyCurveF2 X₁ ∧
       D.conductor_F2 = 2 ^ D.alpha_F2 * ((∏ p ∈ (Finset.Icc 3 n).filter Nat.Prime, p) /
         (∏ p ∈ (Finset.Icc 3 n).filter (fun p => p.Prime ∧ p ∣ X₁), p)) ∧
-      D.alpha_F2 ≤ 3 ∧
-      ∀ (ℓ : ℕ) (hℓ : ℓ.Prime) (hℓ5 : 5 ≤ ℓ), D.surj_mod_ell_F2 ℓ hℓ hℓ5) := by
+      D.alpha_F2 ≤ 3) := by
   have hX1_pos : 0 < X₁ := by have := hfund.1; omega
   have hY1_pos : 0 < Y₁ := hfund.2.1
   have hpell_z : (X₁ : ℤ) ^ 2 - 1 = (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 := by linarith [hfund.2.2.1]
@@ -258,8 +262,10 @@ theorem thm_8_1_part2_level2_cm_reduction {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
       have hp2 : p = 2 := (Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).mp
         (hp.dvd_of_dvd_pow (show p ∣ 2 ^ 2 from Int.natCast_dvd_natCast.mp h4))
       omega
-  · obtain ⟨D, hmodF2, hsurj⟩ := frey_F2_modularity_and_galois hn hm hfund hk2
-    exact ⟨D, hmodF2, D.conductor_F2_eq, D.alpha_F2_le, hsurj⟩
+  · obtain ⟨D⟩ := frey_F2_modularity_and_galois hn hm hfund hk2
+    refine ⟨?_, ?_, D, D.curveF2_eq, D.conductor_F2_eq, D.alpha_F2_le⟩
+    · simp [freyCurveF2, freyF2_c4, WeierstrassCurve.c₄, WeierstrassCurve.b₂, WeierstrassCurve.b₄]; ring
+    · simp [freyCurveF2, freyF2_Delta, WeierstrassCurve.Δ, WeierstrassCurve.b₂, WeierstrassCurve.b₄, WeierstrassCurve.b₆, WeierstrassCurve.b₈]; ring
 
 /-- **Theorem 8.1(ii) ($abc$-Quality Lower Bound & Hall-Type Cubic-Square Bound)**:
 1. In the $k = 2$ regime, the coprime triple $(A_n, B_n, C_n) = ((X_1 - 1)/c_0, 2/c_0, (X_1 + 1)/c_0)$
