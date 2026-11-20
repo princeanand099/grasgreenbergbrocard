@@ -749,6 +749,6 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
     have : t * t < t * m₁ := Nat.mul_lt_mul_of_pos_left hm1_gt_t (by omega)
     have hsq : t ^ 2 = t * t := sq t
     omega
-  linarith
+  omega
 
 end GrasGreenbergBrocard

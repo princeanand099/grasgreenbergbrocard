@@ -198,7 +198,7 @@ lemma dyadic_sum_counting {α C : ℝ} (hα : 0 < α) (hC : 0 < C)
     have hsub : ∑ k ∈ Finset.range (K + 1), ((2 : ℝ) ^ (-α)) ^ (K - k) =
         ∑ j ∈ Finset.range (K + 1), ((2 : ℝ) ^ (-α)) ^ j := by
       rw [← Finset.sum_range_reflect (fun j => ((2 : ℝ) ^ (-α)) ^ j) (K + 1)]
-      refine Finset.sum_congr rfl fun k _ => by congr 1; omega
+      refine Finset.sum_congr rfl fun k _ => by congr 1
     rw [hsub, geom_sum_eq hr_lt.ne]
     rw [div_eq_mul_one_div (((2 ^ K : ℕ) : ℝ) ^ α)]
     have hle : (((2 : ℝ) ^ (-α)) ^ (K + 1) - 1) / ((2 : ℝ) ^ (-α) - 1) ≤ 1 / (1 - (2 : ℝ) ^ (-α)) := by
@@ -221,7 +221,7 @@ lemma dyadic_sum_counting {α C : ℝ} (hα : 0 < α) (hC : 0 < C)
     _ ≤ (C / (1 - (2 : ℝ) ^ (-α)) + 1) * (N : ℝ) ^ α := by
         nlinarith [h2K_le, Real.rpow_pos_of_pos (show (0 : ℝ) < (N : ℝ) by exact_mod_cast hN) α, div_pos hC hr_pos]
 
-set_option maxHeartbeats 800000 in
+set_option maxHeartbeats 2000000 in
 /-- **Theorem 7.4 (Dyadic Cluster Elimination via Support-Reduced Padé–Wronskian)**:
 Proved directly in Lean by wiring:
 1. `pigeonhole_cluster_reduction` (eq. 7.17) + `short_interval_pigeonhole`,
@@ -273,7 +273,8 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
   have hE_pos : (0 : ℝ) < (E : ℝ) := by exact_mod_cast (show 0 < E by omega)
   have hP_rpos : (0 : ℝ) < (P_deg : ℝ) := by exact_mod_cast (show 0 < P_deg by omega)
   have hνE_pos : (0 : ℝ) < (ν : ℝ) - (E : ℝ) := by
-    have : (E : ℝ) < (ν : ℝ) := by exact_mod_cast hEν; linarith
+    have : (E : ℝ) < (ν : ℝ) := by exact_mod_cast hEν
+    linarith
   set γ : ℝ := ((ν : ℝ) - (E : ℝ)) * B_den - (E : ℝ) * A_num
   have hγ_pos : 0 < γ := by
     have h1 := (div_lt_div_iff₀ hB_pos hE_pos).mp hchi_lt
@@ -292,6 +293,9 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
     have hd2_pos : (0 : ℝ) < (d : ℝ) + 2 := by positivity
     have h1 := (lt_div_iff₀ hd2_pos).mp hθ_cap
     linarith
+  have hθ_lt_1 : θ < 1 := by
+    have hd1 : (1 : ℝ) ≤ (d : ℝ) := by exact_mod_cast hd
+    nlinarith
   -- Collect all asymptotic thresholds via Filter.Eventually atTop
   have hN_top : Filter.Tendsto (fun N : ℕ => (N : ℝ)) Filter.atTop Filter.atTop :=
     tendsto_natCast_atTop_atTop
@@ -349,7 +353,7 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
     have hM_le_rpow : (M : ℝ) ≤ (N : ℝ) ^ θ := Nat.floor_le (by positivity)
     have hrpow_lt_M1 : (N : ℝ) ^ θ < (M : ℝ) + 1 := Nat.lt_floor_add_one _
     have hM_ge_max : max 2 (d * P_deg) ≤ M := by
-      have : ((max 2 (d * P_deg) : ℕ) : ℝ) < (M : ℝ) + 1 := by linarith
+      have : ((max 2 (d * P_deg) : ℕ) : ℝ) < (M : ℝ) + 1 := by simp only [Nat.cast_max, Nat.cast_ofNat]; linarith
       have : (max 2 (d * P_deg) : ℕ) < M + 1 := by exact_mod_cast this
       omega
     have hM1 : 1 ≤ M := by omega
@@ -385,11 +389,19 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
         nlinarith [Real.rpow_pos_of_pos hN_pos (1 - θ)]
       have h1mθ_ge1 : (1 : ℝ) ≤ (N : ℝ) ^ (1 - θ) := Real.one_le_rpow (by linarith) (by linarith)
       have hcomb : (N : ℝ) ^ (1 - θ) * (N : ℝ) ^ δ = (N : ℝ) ^ (1 - θ + δ) := (Real.rpow_add hN_pos _ _).symm
-      push_cast; nlinarith [show (0 : ℝ) ≤ ((d * P_deg : ℕ) : ℝ) by positivity]
+      have hNM1 : ((N / M : ℕ) : ℝ) + 1 ≤ 3 * (N : ℝ) ^ (1 - θ) := by linarith
+      have hdP_nn : (0 : ℝ) ≤ ((d * P_deg : ℕ) : ℝ) := by positivity
+      have h1 : ((d * P_deg * (N / M + 1) : ℕ) : ℝ) ≤
+          ((d * P_deg : ℕ) : ℝ) * (3 * (N : ℝ) ^ (1 - θ)) := by
+        push_cast; exact mul_le_mul_of_nonneg_left hNM1 hdP_nn
+      have h2 : 3 * ((d * P_deg : ℕ) : ℝ) ≤ (1 / 2 : ℝ) * (N : ℝ) ^ δ := by linarith
+      calc ((d * P_deg * (N / M + 1) : ℕ) : ℝ)
+          ≤ (3 * ((d * P_deg : ℕ) : ℝ)) * (N : ℝ) ^ (1 - θ) := by linarith
+        _ ≤ ((1 / 2 : ℝ) * (N : ℝ) ^ δ) * (N : ℝ) ^ (1 - θ) :=
+            mul_le_mul_of_nonneg_right h2 (by positivity)
+        _ = (1 / 2 : ℝ) * (N : ℝ) ^ (1 - θ + δ) := by rw [← hcomb]; ring
     have hT'_lower : (1 / 2 : ℝ) * (N : ℝ) ^ (1 - ((d : ℝ) + 2) * θ + δ) * (N : ℝ) ^ θ ≤
-        (2 : ℝ) ^ d * (L : ℝ) * (T'.card : ℝ) * (N : ℝ) ^ ((d : ℝ) * θ) / (N : ℝ) ^ ((d : ℝ) * θ) := by
-      -- Directly bound (2^d * L) * T'.card ≥ (1/2) * N^(1 - (d+2)*θ + δ) * N^θ
-      rw [mul_div_cancel_right₀ _ (Real.rpow_pos_of_pos hN_pos _).ne']
+        (2 : ℝ) ^ d * (L : ℝ) * (T'.card : ℝ) := by
       have h1 : (1 / 2 : ℝ) * (N : ℝ) ^ (1 - θ + δ) ≤ ((M + 1) ^ d : ℝ) * (T.card : ℝ) := by
         have hT_r : (S_sol.card : ℝ) ≤ ((d * P_deg * (N / M + 1) : ℕ) : ℝ) + ((M + 1) ^ d : ℝ) * (T.card : ℝ) := by
           exact_mod_cast hT_card
@@ -401,17 +413,15 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
       have hT'_r : (T.card : ℝ) ≤ (L : ℝ) * (T'.card : ℝ) := by exact_mod_cast hT'_card
       have hsplit : (N : ℝ) ^ (1 - θ + δ) = (N : ℝ) ^ (1 - ((d : ℝ) + 2) * θ + δ) * (N : ℝ) ^ θ * (N : ℝ) ^ ((d : ℝ) * θ) := by
         rw [← Real.rpow_add hN_pos, ← Real.rpow_add hN_pos]; congr 1; ring
-      have hprod : (1 / 2 : ℝ) * ((N : ℝ) ^ (1 - ((d : ℝ) + 2) * θ + δ) * (N : ℝ) ^ θ * (N : ℝ) ^ ((d : ℝ) * θ)) ≤
+      have hprod : ((1 / 2 : ℝ) * (N : ℝ) ^ (1 - ((d : ℝ) + 2) * θ + δ) * (N : ℝ) ^ θ) * (N : ℝ) ^ ((d : ℝ) * θ) ≤
           ((2 : ℝ) ^ d * (L : ℝ) * (T'.card : ℝ)) * (N : ℝ) ^ ((d : ℝ) * θ) := by
-        calc (1 / 2 : ℝ) * ((N : ℝ) ^ (1 - ((d : ℝ) + 2) * θ + δ) * (N : ℝ) ^ θ * (N : ℝ) ^ ((d : ℝ) * θ))
-            = (1 / 2 : ℝ) * (N : ℝ) ^ (1 - θ + δ) := by rw [hsplit]
+        calc ((1 / 2 : ℝ) * (N : ℝ) ^ (1 - ((d : ℝ) + 2) * θ + δ) * (N : ℝ) ^ θ) * (N : ℝ) ^ ((d : ℝ) * θ)
+            = (1 / 2 : ℝ) * (N : ℝ) ^ (1 - θ + δ) := by rw [hsplit]; ring
           _ ≤ ((M + 1) ^ d : ℝ) * (T.card : ℝ) := h1
           _ ≤ ((2 : ℝ) ^ d * (N : ℝ) ^ ((d : ℝ) * θ)) * ((L : ℝ) * (T'.card : ℝ)) :=
               mul_le_mul h2 hT'_r (by positivity) (by positivity)
           _ = ((2 : ℝ) ^ d * (L : ℝ) * (T'.card : ℝ)) * (N : ℝ) ^ ((d : ℝ) * θ) := by ring
-      have h3 := le_of_mul_le_mul_right hprod (Real.rpow_pos_of_pos hN_pos ((d : ℝ) * θ))
-      linarith
-    rw [mul_div_cancel_right₀ _ (Real.rpow_pos_of_pos hN_pos _).ne'] at hT'_lower
+      exact le_of_mul_le_mul_right hprod (Real.rpow_pos_of_pos hN_pos ((d : ℝ) * θ))
     have hT'_pos : 1 ≤ T'.card := by
       have h1 : (2 : ℝ) ^ d * (L : ℝ) ≤ (2 : ℝ) ^ d * (2 * Real.log (N : ℝ)) :=
         mul_le_mul_of_nonneg_left hL_le (by positivity)
@@ -1073,7 +1083,7 @@ theorem thm_1_3_part2_brocard_6_7 :
       refine ⟨x.natAbs, ?_⟩
       have hsq : (x.natAbs : ℤ) ^ 2 = x ^ 2 := Int.natAbs_sq x
       have hmZ : ((Nat.factorial n + 1 : ℕ) : ℤ) = ((x.natAbs ^ 2 : ℕ) : ℤ) := by
-        push_cast; linarith
+        rw [Nat.cast_add, Nat.cast_one, Nat.cast_pow, hsq]; linarith
       exact_mod_cast hmZ
   rw [heq]
   exact hbd N hN
