@@ -733,6 +733,7 @@ theorem prime_exp_sum_bounds_general_phase (δ : ℝ) (hδ0 : 0 < δ) (hδ1 : δ
       · have hrev := abs_sub_abs_le_abs_add
           ((M r₀ / 2) * negPowDerivCoeff r₀ j * t ^ (-((r₀ + j : ℕ) : ℤ)))
           (∑ s ∈ A.erase r₀, (M s / 2) * negPowDerivCoeff s j * t ^ (-((s + j : ℕ) : ℤ)))
+        have h2c : 2 * c₁_low * T₀ / P ^ j = c₁_low * T₀ / P ^ j + c₁_low * T₀ / P ^ j := by ring
         linarith
       · have htri := abs_add_le
           ((M r₀ / 2) * negPowDerivCoeff r₀ j * t ^ (-((r₀ + j : ℕ) : ℤ)))

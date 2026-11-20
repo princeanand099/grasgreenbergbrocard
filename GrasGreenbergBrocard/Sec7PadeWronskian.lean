@@ -251,8 +251,8 @@ theorem lem_7_2_monomial_product_puiseux_indep {K V : Type*} [Field K] [AddCommG
     have he : e = Fin.elim0 := Subsingleton.elim e Fin.elim0
     subst he
     have hmem : Fin.elim0 ∈ (Fintype.piFinset (fun _ : Fin 0 => Finset.range (E + 1))).filter
-        (fun e => ∑ i, e i ≤ E) := by
-      simp
+        (fun e => ∑ i, e i ≤ E) :=
+      Finset.mem_filter.mpr ⟨Fintype.mem_piFinset.mpr (fun i => i.elim0), by simp⟩
     have hsing : (Fintype.piFinset (fun _ : Fin 0 => Finset.range (E + 1))).filter
         (fun e => ∑ i, e i ≤ E) = {Fin.elim0} :=
       Finset.eq_singleton_iff_unique_mem.mpr ⟨hmem, fun f _ => Subsingleton.elim f Fin.elim0⟩
@@ -324,9 +324,8 @@ theorem gauss_leading_coeff_dvd_of_linear_factors {Delta : ℤ[X]} (hDelta : Del
     have hdeg : (Polynomial.C (n : ℤ) * X - 1).natDegree = 1 := by
       apply le_antisymm
       · refine le_trans (Polynomial.natDegree_sub_le _ _)
-          (max_le ?_ (by rw [Polynomial.natDegree_one]; omega))
-        exact le_trans Polynomial.natDegree_mul_le
-          (by rw [Polynomial.natDegree_C, Polynomial.natDegree_X]; omega)
+          (max_le ?_ (by rw [Polynomial.natDegree_one]; exact Nat.zero_le 1))
+        exact le_trans Polynomial.natDegree_mul_le (by simp)
       · apply Polynomial.le_natDegree_of_ne_zero
         rw [Polynomial.coeff_sub, Polynomial.coeff_C_mul, Polynomial.coeff_X, Polynomial.coeff_one]
         simpa using hn_ne
