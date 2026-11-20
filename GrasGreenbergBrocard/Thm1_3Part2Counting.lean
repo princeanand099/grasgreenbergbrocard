@@ -302,7 +302,7 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
   have hlog_top : Filter.Tendsto (fun N : ℕ => Real.log (N : ℝ)) Filter.atTop Filter.atTop :=
     Real.tendsto_log_atTop.comp hN_top
   set K_lin : ℝ := (32 * (B_den + 1) * (P_deg : ℝ) / η) *
-      (((m : ℝ) / ε₀) * Real.log 10 + (E : ℝ) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
+      (((m : ℝ) / ε₀) * Real.log 10 + (2 * (ν : ℝ)) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
         (10 * (m : ℝ) + 2) + C_0 + 10 +
         Real.log (((m + 1 : ℕ) : ℝ) * (16 * (E : ℝ) / (B_den - η) + 2 * (10 * m + 3 : ℕ))) + 1)
   have h_ev : ∀ᶠ N : ℕ in Filter.atTop,
@@ -512,23 +512,41 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
     -- Step 5 & 6: `lem_7_1_initial_pade_polynomials` + support extraction + `canonicalSupportWronskian`
     obtain ⟨P_coeff, hP_nz, hP_bd, hP_van⟩ :=
       lem_7_1_initial_pade_polynomials fam hP hM1 hm1 hD1 hO_gt hO_lt
+    let S_pos : Finset (Fin (m + 1)) :=
+      (Finset.univ.filter (fun i : Fin m => ∃ j : Fin (D + 1), P_coeff i j ≠ 0)).image Fin.succ
     let S : Finset (Fin (m + 1)) :=
-      insert 0 ((Finset.univ.filter (fun i : Fin m => ∃ j : Fin (D + 1), P_coeff i j ≠ 0)).image Fin.succ)
+      if ∃ v : Fin (D + 1), padeP0Coeff fam P_coeff v ≠ 0 then insert 0 S_pos else S_pos
+    have hS_zero : (0 : Fin (m + 1)) ∈ S ↔ ∃ v : Fin (D + 1), padeP0Coeff fam P_coeff v ≠ 0 := by
+      dsimp only [S]
+      split_ifs with h0
+      · simp [h0]
+      · simp only [h0, iff_false, S_pos, Finset.mem_image, not_exists, not_and]
+        intro i _ heq
+        exact Fin.succ_ne_zero i heq
     have hS_eq : ∀ i : Fin m, i.succ ∈ S ↔ ∃ j : Fin (D + 1), P_coeff i j ≠ 0 := by
       intro i
-      simp only [S, Finset.mem_insert, Finset.mem_image, Finset.mem_filter, Finset.mem_univ, true_and]
-      constructor
-      · rintro (h0 | ⟨i', hi', heq⟩)
-        · exact absurd h0 (Fin.succ_ne_zero i)
-        · exact (Fin.succ_injective _ heq) ▸ hi'
-      · intro hi; exact Or.inr ⟨i, hi, rfl⟩
-    have hS_ge1 : 1 ≤ S.card := Finset.one_le_card.mpr ⟨0, Finset.mem_insert_self 0 _⟩
+      dsimp only [S]
+      split_ifs with h0
+      · simp only [Finset.mem_insert, S_pos, Finset.mem_image, Finset.mem_filter, Finset.mem_univ, true_and]
+        constructor
+        · rintro (hz | ⟨i', hi', heq⟩)
+          · exact absurd hz (Fin.succ_ne_zero i)
+          · exact (Fin.succ_injective _ heq) ▸ hi'
+        · intro hi; exact Or.inr ⟨i, hi, rfl⟩
+      · simp only [S_pos, Finset.mem_image, Finset.mem_filter, Finset.mem_univ, true_and]
+        constructor
+        · rintro ⟨i', hi', heq⟩
+          exact (Fin.succ_injective _ heq) ▸ hi'
+        · intro hi; exact ⟨i, hi, rfl⟩
+    have hS_ge1 : 1 ≤ S.card := by
+      obtain ⟨i, j, hij⟩ := hP_nz
+      exact Finset.one_le_card.mpr ⟨i.succ, (hS_eq i).mpr ⟨j, hij⟩⟩
     have hS_le : S.card ≤ m + 1 := by
       calc S.card ≤ (Finset.univ : Finset (Fin (m + 1))).card := Finset.card_le_univ S
         _ = m + 1 := Fintype.card_fin (m + 1)
     let W := canonicalSupportWronskian hd hE hP hEr hM1 β
       (fun i => (hβ_prop i).1) (fun i => (hβ_prop i).2.1) (fun i => (hβ_prop i).2.2) hβ_mono
-      P_coeff S hD1 hO_gt hP_nz hP_bd hP_van hS_eq
+      P_coeff S hD1 hO_gt hP_nz hP_bd hP_van hS_zero hS_eq
     -- Step 7: `lem_7_3_support_reduced_wronskian` on T' and minimal-multiplicity n₀ ∈ T'
     have hT'_gtM : ∀ n ∈ T', M < n := fun n hn => by have := (hT'_int n hn).1; omega
     obtain ⟨_, hsum_mult, _⟩ := lem_7_3_support_reduced_wronskian W T' hT'_gtM
@@ -669,7 +687,7 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
     obtain ⟨x₀, E_dat, hx₀_gt1, hx₀_log, hCP_le, hU_le, hW_ge, hu_le, hw_le⟩ :=
       h_bpz_eval N M D _ β P_coeff S n₀ hM1 h8M hD_ge hD1 hO_gt
         (fun i => (hβ_prop i).1) (fun i => (hβ_prop i).2.1) (fun i => (hβ_prop i).2.2) hβ_mono
-        hP_nz hP_bd hP_van hS_eq hn₀_Icc.1 hn₀_Icc.2 hn₀_sol hn₀_clust
+        hP_nz hP_bd hP_van hS_zero hS_eq hn₀_Icc.1 hn₀_Icc.2 hn₀_sol hn₀_clust
     have hx₀_pos : 0 < x₀ := by linarith
     -- Helper: any c_part * N ≤ (η / (32 * (B_den + 1))) * Q_N from hKlin_QN
     have hlogC_nn : 0 ≤ Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) := by
@@ -683,30 +701,30 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
         push_cast; linarith [show (0 : ℝ) < 16 * (E : ℝ) / (B_den - η) by positivity]
       nlinarith only [hm1, hr1]
     have hKlin_simp : (32 * (B_den + 1) / η) *
-        (((m : ℝ) / ε₀) * Real.log 10 + (E : ℝ) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
+        (((m : ℝ) / ε₀) * Real.log 10 + (2 * (ν : ℝ)) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
           (10 * (m : ℝ) + 2) + C_0 + 10 +
           Real.log (((m + 1 : ℕ) : ℝ) * (16 * (E : ℝ) / (B_den - η) + 2 * (10 * m + 3 : ℕ))) + 1) * (N : ℝ) < Q_N := by
       have h1 : K_lin / (P_deg : ℝ) = (32 * (B_den + 1) / η) *
-          (((m : ℝ) / ε₀) * Real.log 10 + (E : ℝ) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
+          (((m : ℝ) / ε₀) * Real.log 10 + (2 * (ν : ℝ)) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
             (10 * (m : ℝ) + 2) + C_0 + 10 +
             Real.log (((m + 1 : ℕ) : ℝ) * (16 * (E : ℝ) / (B_den - η) + 2 * (10 * m + 3 : ℕ))) + 1) := by
         dsimp only [K_lin]; field_simp [hP_rpos.ne']
       rwa [← h1]
-    have hKlin_scaled : (((m : ℝ) / ε₀) * Real.log 10 + (E : ℝ) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
+    have hKlin_scaled : (((m : ℝ) / ε₀) * Real.log 10 + (2 * (ν : ℝ)) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
         (10 * (m : ℝ) + 2) + C_0 + 10 +
         Real.log (((m + 1 : ℕ) : ℝ) * (16 * (E : ℝ) / (B_den - η) + 2 * (10 * m + 3 : ℕ))) + 1) * (N : ℝ) ≤
         (η / (32 * (B_den + 1))) * Q_N := by
       have hmul := mul_lt_mul_of_pos_left hKlin_simp (show 0 < η / (32 * (B_den + 1)) by positivity)
       have hsimp : η / (32 * (B_den + 1)) * ((32 * (B_den + 1) / η) *
-          (((m : ℝ) / ε₀) * Real.log 10 + (E : ℝ) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
+          (((m : ℝ) / ε₀) * Real.log 10 + (2 * (ν : ℝ)) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
             (10 * (m : ℝ) + 2) + C_0 + 10 +
             Real.log (((m + 1 : ℕ) : ℝ) * (16 * (E : ℝ) / (B_den - η) + 2 * (10 * m + 3 : ℕ))) + 1) * (N : ℝ)) =
-          (((m : ℝ) / ε₀) * Real.log 10 + (E : ℝ) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
+          (((m : ℝ) / ε₀) * Real.log 10 + (2 * (ν : ℝ)) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
             (10 * (m : ℝ) + 2) + C_0 + 10 +
             Real.log (((m + 1 : ℕ) : ℝ) * (16 * (E : ℝ) / (B_den - η) + 2 * (10 * m + 3 : ℕ))) + 1) * (N : ℝ) := by
         field_simp [hη_pos.ne', (by linarith : B_den + 1 ≠ 0)]
       rw [hsimp] at hmul; linarith
-    have hKlin_Dlog : (((m : ℝ) / ε₀) * Real.log 10 + (E : ℝ) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
+    have hKlin_Dlog : (((m : ℝ) / ε₀) * Real.log 10 + (2 * (ν : ℝ)) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
         (10 * (m : ℝ) + 2) + C_0 + 10 +
         Real.log (((m + 1 : ℕ) : ℝ) * (16 * (E : ℝ) / (B_den - η) + 2 * (10 * m + 3 : ℕ))) + 1) * (N : ℝ) ≤
         (η / 32) * (D : ℝ) * Real.log (N : ℝ) := by
@@ -727,7 +745,7 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
         have hC0_N : C_0 ≤ C_0 * (N : ℝ) :=
           le_mul_of_one_le_right (by linarith only [hC0]) (by linarith only [hN_pos, hlogN_ge4, hlogN_le_N])
         have h1 : C_0 * (N : ℝ) ≤ (η / (32 * (B_den + 1))) * Q_N := by
-          have hrest : 0 ≤ (((m : ℝ) / ε₀) * Real.log 10 + (E : ℝ) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
+          have hrest : 0 ≤ (((m : ℝ) / ε₀) * Real.log 10 + (2 * (ν : ℝ)) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
               (10 * (m : ℝ) + 2) + 10 +
               Real.log (((m + 1 : ℕ) : ℝ) * (16 * (E : ℝ) / (B_den - η) + 2 * (10 * m + 3 : ℕ))) + 1) := by positivity
           nlinarith only [hKlin_scaled, hrest, hN_pos]
@@ -769,7 +787,7 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
         have hC0_N : C_0 ≤ C_0 * (N : ℝ) :=
           le_mul_of_one_le_right (by linarith only [hC0]) (by linarith only [hN_pos, hlogN_ge4, hlogN_le_N])
         have h1 : (4 + C_0) * (N : ℝ) ≤ (η / (32 * (B_den + 1))) * Q_N := by
-          have hrest : 0 ≤ (((m : ℝ) / ε₀) * Real.log 10 + (E : ℝ) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
+          have hrest : 0 ≤ (((m : ℝ) / ε₀) * Real.log 10 + (2 * (ν : ℝ)) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
               (10 * (m : ℝ) + 2) + 6 +
               Real.log (((m + 1 : ℕ) : ℝ) * (16 * (E : ℝ) / (B_den - η) + 2 * (10 * m + 3 : ℕ))) + 1) := by positivity
           nlinarith only [hKlin_scaled, hrest, hN_pos]
@@ -935,7 +953,7 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
           nlinarith only [hlogD_const_nn, hlogN_le_N, h1N]
         have h4 : (Real.log (((m + 1 : ℕ) : ℝ) * (16 * (E : ℝ) / (B_den - η) + 2 * (10 * m + 3 : ℕ))) + 1) * (N : ℝ) ≤
             (η / 32) * (D : ℝ) * Real.log (N : ℝ) := by
-          have hrest : 0 ≤ (((m : ℝ) / ε₀) * Real.log 10 + (E : ℝ) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
+          have hrest : 0 ≤ (((m : ℝ) / ε₀) * Real.log 10 + (2 * (ν : ℝ)) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
               (10 * (m : ℝ) + 2) + C_0 + 10) := by positivity
           nlinarith only [hKlin_Dlog, hrest, hN_pos]
         linarith
@@ -949,7 +967,7 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
           have h2' := mul_le_mul_of_nonneg_left h1 hme_nn
           linarith only [h2']
         have h3 : (((m : ℝ) / ε₀) * Real.log 10) * (N : ℝ) ≤ (η / 32) * (D : ℝ) * Real.log (N : ℝ) := by
-          have hrest : 0 ≤ ((E : ℝ) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) + (10 * (m : ℝ) + 2) + C_0 + 10 +
+          have hrest : 0 ≤ ((2 * (ν : ℝ)) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) + (10 * (m : ℝ) + 2) + C_0 + 10 +
               Real.log (((m + 1 : ℕ) : ℝ) * (16 * (E : ℝ) / (B_den - η) + 2 * (10 * m + 3 : ℕ))) + 1) := by positivity
           nlinarith only [hKlin_Dlog, hrest, hN_pos]
         linarith
@@ -997,23 +1015,28 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
     have hlog74 := Real.log_le_log (by positivity) h74
     rw [Real.log_div (by norm_num) (by positivity), Real.log_one, zero_sub,
       Real.log_mul (by norm_num) hZ_pos.ne'] at hlog74
-    have hRHS_pos1 : 0 < (S.card : ℝ) * E_dat.C_P * (M : ℝ) ^ E * E_dat.u * E_dat.U ^ D := by
+    have h2n₀_pos : (0 : ℝ) < ((2 * n₀ : ℕ) : ℝ) := by exact_mod_cast (show 0 < 2 * n₀ by omega)
+    have hRHS_pos1 : 0 < (S.card : ℝ) * E_dat.C_P * ((2 * n₀ : ℕ) : ℝ) ^ (((M * ν : ℕ) : ℝ) / (P_deg : ℝ)) * E_dat.u * E_dat.U ^ D := by
       have := E_dat.C_P_pos; have := E_dat.u_pos; have := E_dat.U_pos; positivity
     rw [Real.log_mul hRHS_pos1.ne' (Real.rpow_pos_of_pos hx₀_pos _).ne',
       Real.log_rpow hx₀_pos,
       Real.log_mul (by have := E_dat.C_P_pos; have := E_dat.u_pos; positivity) (pow_ne_zero D E_dat.U_pos.ne'),
       Real.log_pow] at hlog74
-    have hlog_pre : Real.log 2 + Real.log ((S.card : ℝ) * E_dat.C_P * (M : ℝ) ^ E * E_dat.u) ≤
+    have hlog_pre : Real.log 2 + Real.log ((S.card : ℝ) * E_dat.C_P * ((2 * n₀ : ℕ) : ℝ) ^ (((M * ν : ℕ) : ℝ) / (P_deg : ℝ)) * E_dat.u) ≤
         (η / 4) * (D : ℝ) * Real.log (N : ℝ) := by
-      have h1 : 2 * ((S.card : ℝ) * E_dat.C_P * (M : ℝ) ^ E * E_dat.u) ≤
-          (2 * ((m + 1 : ℕ) : ℝ) * C_1) * (N : ℝ) ^ E *
+      have h1 : 2 * ((S.card : ℝ) * E_dat.C_P * ((2 * n₀ : ℕ) : ℝ) ^ (((M * ν : ℕ) : ℝ) / (P_deg : ℝ)) * E_dat.u) ≤
+          (2 * ((m + 1 : ℕ) : ℝ) * C_1) * (4 * (N : ℝ)) ^ (((M * ν : ℕ) : ℝ) / (P_deg : ℝ)) *
           (C_3 * (N : ℝ)) ^ ((a + S.card) * M + a + S.card) *
           (10 : ℝ) ^ (((m : ℝ) / ε₀) * (M : ℝ)) := by
         have hS_r : (S.card : ℝ) ≤ ((m + 1 : ℕ) : ℝ) := by exact_mod_cast hS_le
-        have hME : (M : ℝ) ^ E ≤ (N : ℝ) ^ E :=
-          pow_le_pow_left₀ (by positivity) (by exact_mod_cast (show M ≤ N by omega)) E
-        have hpart1 : 2 * (S.card : ℝ) * E_dat.C_P * (M : ℝ) ^ E ≤
-            (2 * ((m + 1 : ℕ) : ℝ) * C_1) * (N : ℝ) ^ E := by
+        have h2n₀_le : ((2 * n₀ : ℕ) : ℝ) ≤ 4 * (N : ℝ) := by
+          push_cast; have : (n₀ : ℝ) ≤ 2 * (N : ℝ) := by exact_mod_cast hn₀_Icc.2
+          linarith
+        have hME : ((2 * n₀ : ℕ) : ℝ) ^ (((M * ν : ℕ) : ℝ) / (P_deg : ℝ)) ≤
+            (4 * (N : ℝ)) ^ (((M * ν : ℕ) : ℝ) / (P_deg : ℝ)) :=
+          Real.rpow_le_rpow h2n₀_pos.le h2n₀_le (by positivity)
+        have hpart1 : 2 * (S.card : ℝ) * E_dat.C_P * ((2 * n₀ : ℕ) : ℝ) ^ (((M * ν : ℕ) : ℝ) / (P_deg : ℝ)) ≤
+            (2 * ((m + 1 : ℕ) : ℝ) * C_1) * (4 * (N : ℝ)) ^ (((M * ν : ℕ) : ℝ) / (P_deg : ℝ)) := by
           have ha : 2 * (S.card : ℝ) * E_dat.C_P ≤ 2 * ((m + 1 : ℕ) : ℝ) * C_1 := by
             have hCP_pos := E_dat.C_P_pos
             have hS_nn : (0 : ℝ) ≤ (S.card : ℝ) := by positivity
@@ -1025,20 +1048,45 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
       rw [Real.log_mul (by norm_num) (by have := E_dat.C_P_pos; have := E_dat.u_pos; positivity)] at hlog1
       rw [Real.log_mul (by positivity) (Real.rpow_pos_of_pos (by norm_num) _).ne',
         Real.log_mul (by positivity) (pow_ne_zero _ (by positivity)),
-        Real.log_mul (by positivity) (pow_ne_zero _ hN_pos.ne'),
-        Real.log_pow, Real.log_pow, Real.log_rpow (by norm_num)] at hlog1
-      have hpartA : Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) + (E : ℝ) * Real.log (N : ℝ) +
+        Real.log_mul (by positivity) (Real.rpow_pos_of_pos (by positivity) _).ne',
+        Real.log_rpow (by positivity), Real.log_pow, Real.log_rpow (by norm_num)] at hlog1
+      have hpartA : Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
+          (((M * ν : ℕ) : ℝ) / (P_deg : ℝ)) * Real.log (4 * (N : ℝ)) +
           ((m : ℝ) / ε₀) * (M : ℝ) * Real.log 10 ≤ (η / 32) * (D : ℝ) * Real.log (N : ℝ) := by
         have hMN : (M : ℝ) ≤ (N : ℝ) := by exact_mod_cast (show M ≤ N by omega)
-        have h2 : Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) + (E : ℝ) * Real.log (N : ℝ) +
+        have hlog4N : Real.log (4 * (N : ℝ)) ≤ 2 * Real.log (N : ℝ) := by
+          rw [Real.log_mul (by norm_num) hN_pos.ne']
+          linarith [log_four_lt_two]
+        have hMlog_le_N : (M : ℝ) * Real.log (N : ℝ) ≤ (N : ℝ) := by
+          have hlog_lt : Real.log (N : ℝ) ≤ (N : ℝ) ^ (1 - θ) := by
+            have hpos_c : 0 ≤ (2048 * ((m + 1 : ℕ) : ℝ) * (P_deg : ℝ) * (B_den - η) / (η * (E : ℝ))) * Real.log (N : ℝ) := by
+              have : 0 ≤ Real.log (N : ℝ) := by linarith only [hlogN_ge4]
+              positivity
+            linarith only [hM_D_log, hpos_c]
+          have hmul : (N : ℝ) ^ θ * (N : ℝ) ^ (1 - θ) = (N : ℝ) := by
+            rw [← Real.rpow_add hN_pos]; simp
+          calc (M : ℝ) * Real.log (N : ℝ)
+              ≤ (N : ℝ) ^ θ * (N : ℝ) ^ (1 - θ) :=
+                mul_le_mul hM_le_rpow hlog_lt (by linarith only [hlogN_ge4]) (by positivity)
+            _ = (N : ℝ) := hmul
+        have hrho_term : (((M * ν : ℕ) : ℝ) / (P_deg : ℝ)) * Real.log (4 * (N : ℝ)) ≤ (2 * (ν : ℝ)) * (N : ℝ) := by
+          have hP1 : (1 : ℝ) ≤ (P_deg : ℝ) := by exact_mod_cast (show 1 ≤ P_deg by omega)
+          have hdiv : ((M * ν : ℕ) : ℝ) / (P_deg : ℝ) ≤ (M : ℝ) * (ν : ℝ) := by
+            push_cast; exact div_le_self (by positivity) hP1
+          calc (((M * ν : ℕ) : ℝ) / (P_deg : ℝ)) * Real.log (4 * (N : ℝ))
+              ≤ ((M : ℝ) * (ν : ℝ)) * (2 * Real.log (N : ℝ)) :=
+                mul_le_mul hdiv hlog4N (Real.log_nonneg (by linarith only [hN_pos, hlogN_ge4, hlogN_le_N])) (by positivity)
+            _ = (2 * (ν : ℝ)) * ((M : ℝ) * Real.log (N : ℝ)) := by ring
+            _ ≤ (2 * (ν : ℝ)) * (N : ℝ) := mul_le_mul_of_nonneg_left hMlog_le_N (by positivity)
+        have h2 : Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
+            (((M * ν : ℕ) : ℝ) / (P_deg : ℝ)) * Real.log (4 * (N : ℝ)) +
             ((m : ℝ) / ε₀) * (M : ℝ) * Real.log 10 ≤
-            (Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) + (E : ℝ) + ((m : ℝ) / ε₀) * Real.log 10) * (N : ℝ) := by
+            (Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) + (2 * (ν : ℝ)) + ((m : ℝ) / ε₀) * Real.log 10) * (N : ℝ) := by
           have h1N : (1 : ℝ) ≤ (N : ℝ) := by linarith only [hlogN_ge4, hlogN_le_N]
           have hme10 : 0 ≤ ((m : ℝ) / ε₀) * Real.log 10 := by positivity
-          have hE_nn : (0 : ℝ) ≤ (E : ℝ) := by positivity
           have hcomm : ((m : ℝ) / ε₀) * (M : ℝ) * Real.log 10 = (((m : ℝ) / ε₀) * Real.log 10) * (M : ℝ) := by ring
-          nlinarith only [hcomm, hlogC_nn, hlogN_le_N, hMN, hme10, hE_nn, h1N]
-        have h3 : (Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) + (E : ℝ) + ((m : ℝ) / ε₀) * Real.log 10) * (N : ℝ) ≤
+          nlinarith only [hcomm, hlogC_nn, hrho_term, hMN, hme10, h1N]
+        have h3 : (Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) + (2 * (ν : ℝ)) + ((m : ℝ) / ε₀) * Real.log 10) * (N : ℝ) ≤
             (η / 32) * (D : ℝ) * Real.log (N : ℝ) := by
           have hrest : 0 ≤ ((10 * (m : ℝ) + 2) + C_0 + 10 +
               Real.log (((m + 1 : ℕ) : ℝ) * (16 * (E : ℝ) / (B_den - η) + 2 * (10 * m + 3 : ℕ))) + 1) := by positivity
@@ -1069,7 +1117,7 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
           have hm_nn : (0 : ℝ) ≤ (m : ℝ) := by positivity
           nlinarith only [hlogN_le_N, hm_nn]
         have h2 : (10 * (m : ℝ) + 2) * (N : ℝ) ≤ (η / (32 * (B_den + 1))) * Q_N := by
-          have hrest : 0 ≤ (((m : ℝ) / ε₀) * Real.log 10 + (E : ℝ) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
+          have hrest : 0 ≤ (((m : ℝ) / ε₀) * Real.log 10 + (2 * (ν : ℝ)) + Real.log (2 * ((m + 1 : ℕ) : ℝ) * C_1) +
               C_0 + 10 + Real.log (((m + 1 : ℕ) : ℝ) * (16 * (E : ℝ) / (B_den - η) + 2 * (10 * m + 3 : ℕ))) + 1) := by positivity
           nlinarith only [hKlin_scaled, hrest, hN_pos]
         have h3 : (η / (32 * (B_den + 1))) * Q_N ≤ η * L_base := by
@@ -1080,9 +1128,9 @@ theorem dyadic_cluster_elimination_proved (P_deg ν d E : ℕ) (ε₀ θ : ℝ)
     have hfinal : ((ν : ℝ) - (E : ℝ)) * (1 - η) * L_base ≤
         (A_num + η) * (((E : ℝ) * (1 + η) / (B_den - η) + η) * L_base) := by
       have h1 : ((ν : ℝ) - (E : ℝ)) * Real.log x₀ ≤
-          (Real.log 2 + Real.log ((S.card : ℝ) * E_dat.C_P * (M : ℝ) ^ E * E_dat.u)) +
+          (Real.log 2 + Real.log ((S.card : ℝ) * E_dat.C_P * ((2 * n₀ : ℕ) : ℝ) ^ (((M * ν : ℕ) : ℝ) / (P_deg : ℝ)) * E_dat.u)) +
           Real.log (E_dat.Z : ℝ) + (D : ℝ) * Real.log E_dat.U := by linarith
-      have h2 : (Real.log 2 + Real.log ((S.card : ℝ) * E_dat.C_P * (M : ℝ) ^ E * E_dat.u)) +
+      have h2 : (Real.log 2 + Real.log ((S.card : ℝ) * E_dat.C_P * ((2 * n₀ : ℕ) : ℝ) ^ (((M * ν : ℕ) : ℝ) / (P_deg : ℝ)) * E_dat.u)) +
           Real.log (E_dat.Z : ℝ) + (D : ℝ) * Real.log E_dat.U ≤
           (A_num + η) * ((D : ℝ) * Real.log (N : ℝ)) := by
         have hDU : (D : ℝ) * Real.log E_dat.U ≤ (α₁ * θ + η / 4) * ((D : ℝ) * Real.log (N : ℝ)) := by
@@ -1338,5 +1386,248 @@ theorem thm_1_3_part2_degree_gap_bounds (P_deg ν : ℕ)
     obtain ⟨C', hC', hsum⟩ := dyadic_sum_counting (by linarith) hC (IsPolyFactSol s_mult P) hdyad
     refine ⟨C', hC', fun N hN => le_trans (hsum N hN) ?_⟩
     exact mul_le_mul_of_nonneg_left (Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast hN) (by linarith [min_le_left (ε / 2) (1 / 6)])) hC'.le
+
+
+/-! ### General Polynomial Depression (Eq. 7.1), Arbitrary Non-Zero `s : ℤ`, and Table 1 Bounds -/
+
+/-- **Classical Polynomial Depression (Manuscript eq. 7.1)**:
+Every polynomial `P ∈ ℤ[X]` of degree `r ≥ 2` has depressed degree gap `ν = 2`:
+setting `P_dep(y) = (y - a_{r-1})^r + ∑_{j < r} c_j r^{r-j} a_r^{r-j-1} (y - a_{r-1})^j`
+yields a monic polynomial of degree `r` with zero `y^{r-1}`-coefficient satisfying
+`r^r a_r^{r-1} P(x) = P_dep(r a_r x + a_{r-1})` for all `x ∈ ℤ`. -/
+theorem poly_has_depressed_gap_two {P : ℤ[X]} (hdeg : 2 ≤ P.natDegree) :
+    HasDepressedDegreeGap P 2 := by
+  set r := P.natDegree
+  set a_r := P.leadingCoeff
+  set a_rm1 := P.coeff (r - 1)
+  have hP_ne : P ≠ 0 := by intro h0; rw [h0, Polynomial.natDegree_zero] at hdeg; omega
+  have ha_r_ne : a_r ≠ 0 := Polynomial.leadingCoeff_ne_zero.mpr hP_ne
+  set lin : ℤ[X] := Polynomial.X - Polynomial.C a_rm1
+  have hlin_mon : lin.Monic := Polynomial.monic_X_sub_C a_rm1
+  have hlin_deg : lin.natDegree = 1 := Polynomial.natDegree_X_sub_C a_rm1
+  set tail : ℤ[X] := ∑ j ∈ Finset.range r,
+    Polynomial.C (P.coeff j * (r : ℤ) ^ (r - j) * a_r ^ (r - j - 1)) * lin ^ j
+  set P_dep : ℤ[X] := lin ^ r + tail
+  have htail_deg : tail.natDegree < r := by
+    by_cases h0 : tail = 0
+    · rw [h0, Polynomial.natDegree_zero]; omega
+    · refine lt_of_le_of_lt (Polynomial.natDegree_sum_le _ _) ?_
+      rw [Finset.fold_max_lt]
+      refine ⟨by omega, fun j hj => ?_⟩
+      have hj_lt : j < r := Finset.mem_range.mp hj
+      calc (Polynomial.C (P.coeff j * (r : ℤ) ^ (r - j) * a_r ^ (r - j - 1)) * lin ^ j).natDegree
+          ≤ (Polynomial.C (P.coeff j * (r : ℤ) ^ (r - j) * a_r ^ (r - j - 1))).natDegree + (lin ^ j).natDegree :=
+            Polynomial.natDegree_mul_le
+        _ = 0 + j * lin.natDegree := by rw [Polynomial.natDegree_C, hlin_mon.natDegree_pow]
+        _ = j := by rw [hlin_deg]; ring
+        _ < r := hj_lt
+  have hlinr_mon : (lin ^ r).Monic := hlin_mon.pow r
+  have hlinr_deg : (lin ^ r).natDegree = r := by rw [hlin_mon.natDegree_pow, hlin_deg, mul_one]
+  have hPdep_mon : P_dep.Monic := by
+    dsimp only [P_dep]
+    exact hlinr_mon.add_of_left (by rw [hlinr_deg]; exact htail_deg)
+  have hPdep_deg : P_dep.natDegree = r := by
+    dsimp only [P_dep]
+    rw [Polynomial.natDegree_add_eq_left_of_natDegree_lt (by rw [hlinr_deg]; exact htail_deg), hlinr_deg]
+  refine ⟨hdeg, le_rfl, hdeg, ha_r_ne, P_dep, hPdep_mon, hPdep_deg, ?_, ?_⟩
+  · intro j hj1 hj2
+    have hj_eq : j = r - 1 := by omega
+    subst hj_eq
+    dsimp only [P_dep]
+    rw [Polynomial.coeff_add]
+    have h1 : (lin ^ r).coeff (r - 1) = -(r : ℤ) * a_rm1 := by
+      have hbin : (Polynomial.X - Polynomial.C a_rm1) ^ r =
+          (Polynomial.X + Polynomial.C (-a_rm1)) ^ r := by simp [sub_eq_add_neg]
+      dsimp only [lin]
+      rw [hbin, add_pow]
+      rw [Polynomial.finset_sum_coeff]
+      have hterm : ∀ k ∈ Finset.range (r + 1),
+          (Polynomial.X ^ k * Polynomial.C (-a_rm1) ^ (r - k) * ↑(r.choose k)).coeff (r - 1) =
+          if k = r - 1 then -(r : ℤ) * a_rm1 else 0 := by
+        intro k hk
+        rw [show Polynomial.X ^ k * Polynomial.C (-a_rm1) ^ (r - k) * (r.choose k : ℤ[X]) =
+            Polynomial.C ((-a_rm1) ^ (r - k) * (r.choose k : ℤ)) * Polynomial.X ^ k by
+          rw [← Polynomial.C_pow, ← Polynomial.C_eq_natCast, Polynomial.C_mul]; ring]
+        rw [Polynomial.coeff_C_mul_X_pow]
+        split_ifs with heq
+        · subst heq
+          have hsub : r - (r - 1) = 1 := by omega
+          rw [hsub, pow_one, Nat.choose_symm_of_eq_add (by omega : r = (r - 1) + 1), Nat.choose_one_right]
+          ring
+        · rfl
+      rw [Finset.sum_congr rfl hterm, Finset.sum_ite_eq' _ (r - 1)]
+      simp [show r - 1 ∈ Finset.range (r + 1) from Finset.mem_range.mpr (by omega)]
+    have h2 : tail.coeff (r - 1) = (r : ℤ) * a_rm1 := by
+      dsimp only [tail]
+      rw [Polynomial.finset_sum_coeff]
+      have hterm : ∀ k ∈ Finset.range r,
+          (Polynomial.C (P.coeff k * (r : ℤ) ^ (r - k) * a_r ^ (r - k - 1)) * lin ^ k).coeff (r - 1) =
+          if k = r - 1 then (r : ℤ) * a_rm1 else 0 := by
+        intro k hk
+        have hk_lt : k < r := Finset.mem_range.mp hk
+        rw [Polynomial.coeff_C_mul]
+        split_ifs with heq
+        · subst heq
+          have hsub1 : r - (r - 1) = 1 := by omega
+          have hsub0 : r - (r - 1) - 1 = 0 := by omega
+          rw [hsub1, hsub0, pow_one, pow_zero, mul_one]
+          have hlead : (lin ^ (r - 1)).coeff (r - 1) = 1 := by
+            have hdeg_k : (lin ^ (r - 1)).natDegree = r - 1 := by
+              rw [hlin_mon.natDegree_pow, hlin_deg, mul_one]
+            rw [← hdeg_k]; exact (hlin_mon.pow (r - 1)).leadingCoeff
+          rw [hlead, mul_one]; dsimp only [a_rm1]; ring
+        · have hdeg_lt : (lin ^ k).natDegree < r - 1 := by
+            rw [hlin_mon.natDegree_pow, hlin_deg, mul_one]; omega
+          rw [Polynomial.coeff_eq_zero_of_natDegree_lt hdeg_lt, mul_zero]
+      rw [Finset.sum_congr rfl hterm, Finset.sum_ite_eq' _ (r - 1)]
+      simp [show r - 1 ∈ Finset.range r from Finset.mem_range.mpr (by omega)]
+    rw [h1, h2]; ring
+  · intro x
+    dsimp only [P_dep, tail, lin]
+    rw [Polynomial.eval_add, Polynomial.eval_pow, Polynomial.eval_sub, Polynomial.eval_X, Polynomial.eval_C,
+      Polynomial.eval_finset_sum]
+    have hlin_eval : (r : ℤ) * a_r * x + a_rm1 - a_rm1 = (r : ℤ) * a_r * x := by ring
+    rw [hlin_eval, Polynomial.eval_eq_sum_range, Finset.mul_sum, Finset.sum_range_succ]
+    have htop : (r : ℤ) ^ r * a_r ^ (r - 1) * (P.coeff r * x ^ r) = ((r : ℤ) * a_r * x) ^ r := by
+      have hcr : P.coeff r = a_r := rfl
+      rw [hcr, mul_pow, mul_pow]
+      have hpow : a_r ^ (r - 1) * a_r = a_r ^ r := by
+        rw [← pow_succ, Nat.sub_add_cancel (by omega : 1 ≤ r)]
+      calc (r : ℤ) ^ r * a_r ^ (r - 1) * (a_r * x ^ r)
+          = (r : ℤ) ^ r * (a_r ^ (r - 1) * a_r) * x ^ r := by ring
+        _ = (r : ℤ) ^ r * a_r ^ r * x ^ r := by rw [hpow]
+    rw [add_comm, htop]
+    congr 1
+    refine Finset.sum_congr rfl fun j hj => ?_
+    have hj_lt : j < r := Finset.mem_range.mp hj
+    rw [Polynomial.eval_mul, Polynomial.eval_C, Polynomial.eval_pow, Polynomial.eval_sub,
+      Polynomial.eval_X, Polynomial.eval_C, hlin_eval, mul_pow, mul_pow]
+    have hr_pow : (r : ℤ) ^ (r - j) * (r : ℤ) ^ j = (r : ℤ) ^ r := by
+      rw [← pow_add, Nat.sub_add_cancel hj_lt.le]
+    have ha_pow : a_r ^ (r - j - 1) * a_r ^ j = a_r ^ (r - 1) := by
+      rw [← pow_add, show r - j - 1 + j = r - 1 by omega]
+    calc (r : ℤ) ^ r * a_r ^ (r - 1) * (P.coeff j * x ^ j)
+        = P.coeff j * ((r : ℤ) ^ (r - j) * (r : ℤ) ^ j) * (a_r ^ (r - j - 1) * a_r ^ j) * x ^ j := by
+          rw [hr_pow, ha_pow]; ring
+      _ = P.coeff j * (r : ℤ) ^ (r - j) * a_r ^ (r - j - 1) * ((r : ℤ) ^ j * a_r ^ j * x ^ j) := by ring
+
+/-- Signed solution predicate for `s_mult * n! = P(x)` with any non-zero `s_mult : ℤ`. -/
+def IsPolyFactSolZ (s_mult : ℤ) (P : ℤ[X]) (n : ℕ) : Prop :=
+  ∃ x : ℤ, s_mult * (Nat.factorial n : ℤ) = P.eval x
+
+open Classical in
+/-- **Theorem 1.3(ii) (Unrestricted Global `O_{P,s,ε}(N^{6/7+ε})` Bound, eq. 1.10)**:
+Holds for **any** `P ∈ ℤ[X]` with `deg P ≥ 2` and **any** non-zero `s ∈ ℤ \ {0}` (positive or
+negative), deriving `HasDepressedDegreeGap P 2` internally via `poly_has_depressed_gap_two`. -/
+theorem thm_1_3_part2_global_6_7_general (P : ℤ[X]) (hP : 2 ≤ P.natDegree)
+    (s_mult : ℤ) (hs : s_mult ≠ 0) :
+    ∀ ε : ℝ, 0 < ε → ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
+      (((Finset.Icc 1 N).filter (IsPolyFactSolZ s_mult P)).card : ℝ) ≤
+        C * (N : ℝ) ^ ((6 / 7 : ℝ) + ε) := by
+  intro ε hε
+  by_cases hpos : 0 < s_mult
+  · have hsnat : 1 ≤ s_mult.natAbs := Int.natAbs_pos.mpr hs
+    obtain ⟨C, hC, hbd⟩ := thm_1_3_part2_global_6_7 P.natDegree hP s_mult.natAbs hsnat P rfl
+      (poly_has_depressed_gap_two hP) ε hε
+    refine ⟨C, hC, fun N hN => ?_⟩
+    have heq : (Finset.Icc 1 N).filter (IsPolyFactSolZ s_mult P) =
+        (Finset.Icc 1 N).filter (IsPolyFactSol s_mult.natAbs P) := by
+      apply Finset.filter_congr; intro n _
+      unfold IsPolyFactSolZ IsPolyFactSol
+      rw [Int.natAbs_of_nonneg hpos.le]
+    rw [heq]; exact hbd N hN
+  · have hneg : 0 < -s_mult := by omega
+    have hsnat : 1 ≤ (-s_mult).natAbs := Int.natAbs_pos.mpr (neg_ne_zero.mpr hs)
+    have hdeg_neg : (-P).natDegree = P.natDegree := Polynomial.natDegree_neg P
+    obtain ⟨C, hC, hbd⟩ := thm_1_3_part2_global_6_7 P.natDegree hP (-s_mult).natAbs hsnat (-P) hdeg_neg
+      (poly_has_depressed_gap_two (by rw [hdeg_neg]; exact hP)) ε hε
+    refine ⟨C, hC, fun N hN => ?_⟩
+    have heq : (Finset.Icc 1 N).filter (IsPolyFactSolZ s_mult P) =
+        (Finset.Icc 1 N).filter (IsPolyFactSol (-s_mult).natAbs (-P)) := by
+      apply Finset.filter_congr; intro n _
+      unfold IsPolyFactSolZ IsPolyFactSol
+      rw [Int.natAbs_of_nonneg hneg.le]
+      simp only [Polynomial.eval_neg, neg_mul, neg_inj]
+    rw [heq]; exact hbd N hN
+
+/-- **Table 1 Support-Reduced Padé–Wronskian Counting Bounds (`m = 2, 3, 4`)**:
+Instantiates `dyadic_cluster_elimination_proved` at `m = 2, 3, 4` (`E = 1, ν = 2`), yielding
+`O_ε(N^{33/34+ε})`, `O(N^{0.92821})`, and `O_ε(N^{8/9+ε})` respectively. -/
+theorem thm_1_3_part2_table1_bounds (P : ℤ[X]) (hP : 2 ≤ P.natDegree)
+    (s_mult : ℕ) (hs_mult : 1 ≤ s_mult)
+    [DecidablePred (IsPolyFactSol s_mult P)] :
+    (∀ ε : ℝ, 0 < ε → ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
+      (((Finset.Icc 1 N).filter (IsPolyFactSol s_mult P)).card : ℝ) ≤
+        C * (N : ℝ) ^ ((33 / 34 : ℝ) + ε)) ∧
+    (∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
+      (((Finset.Icc 1 N).filter (IsPolyFactSol s_mult P)).card : ℝ) ≤
+        C * (N : ℝ) ^ (0.92821 : ℝ)) ∧
+    (∀ ε : ℝ, 0 < ε → ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
+      (((Finset.Icc 1 N).filter (IsPolyFactSol s_mult P)).card : ℝ) ≤
+        C * (N : ℝ) ^ ((8 / 9 : ℝ) + ε)) := by
+  have hgap := poly_has_depressed_gap_two hP
+  refine ⟨?_, ?_, ?_⟩
+  · intro ε hε
+    let δ := min (ε / 2) (1 / 68)
+    have hδ : 0 < δ := lt_min (by positivity) (by norm_num)
+    have hch : Nat.choose (2 + 1) 2 - 1 = 2 := by decide
+    have hs2_gt : (1 : ℝ) < Real.sqrt 2 := by
+      have : (1 : ℝ) ^ 2 < (Real.sqrt 2) ^ 2 := by rw [Real.sq_sqrt (by norm_num)]; norm_num
+      exact lt_of_pow_lt_pow_left₀ 2 (Real.sqrt_nonneg _) this
+    have hs2_lt : Real.sqrt 2 < 2 := by
+      have : (Real.sqrt 2) ^ 2 < (2 : ℝ) ^ 2 := by rw [Real.sq_sqrt (by norm_num)]; norm_num
+      exact lt_of_pow_lt_pow_left₀ 2 (by norm_num) this
+    have hθ_lt : (1 / 34 : ℝ) - δ < theta_monomial 2 1 2 (2 - Real.sqrt 2) := by
+      rw [theta_monomial_E1_nu2]; linarith [table1_m2_exact.2]
+    obtain ⟨C, hC, hdyad⟩ := dyadic_cluster_elimination_proved P.natDegree 2 2 1 (2 - Real.sqrt 2) ((1 / 34 : ℝ) - δ)
+      hP (by norm_num) (by norm_num) (by norm_num) (by omega)
+      (by linarith) (by rw [hch]; push_cast; linarith)
+      (by linarith [min_le_right (ε / 2) (1 / 68)])
+      (by norm_num; linarith)
+      (by simpa [theta_monomial] using hθ_lt)
+      s_mult hs_mult P rfl hgap δ hδ
+    obtain ⟨C', hC', hsum⟩ := dyadic_sum_counting (by linarith) hC (IsPolyFactSol s_mult P) hdyad
+    refine ⟨C', hC', fun N hN => le_trans (hsum N hN) ?_⟩
+    exact mul_le_mul_of_nonneg_left (Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast hN) (by linarith [min_le_left (ε / 2) (1 / 68)])) hC'.le
+  · have hch : Nat.choose (3 + 1) 3 - 1 = 3 := by decide
+    have hs3_gt : (1 : ℝ) < Real.sqrt 3 := by
+      have : (1 : ℝ) ^ 2 < (Real.sqrt 3) ^ 2 := by rw [Real.sq_sqrt (by norm_num)]; norm_num
+      exact lt_of_pow_lt_pow_left₀ 2 (Real.sqrt_nonneg _) this
+    have hs3_lt : Real.sqrt 3 < 2 := by
+      have : (Real.sqrt 3) ^ 2 < (2 : ℝ) ^ 2 := by rw [Real.sq_sqrt (by norm_num)]; norm_num
+      exact lt_of_pow_lt_pow_left₀ 2 (by norm_num) this
+    have hθ3 : (0.071795 : ℝ) < theta_monomial 3 1 2 (3 - Real.sqrt 3) := by
+      rw [theta_monomial_E1_nu2, table1_m3_exact.1]
+      have hs3 : Real.sqrt 3 ^ 2 = 3 := Real.sq_sqrt (by norm_num)
+      have hlt : 4 * Real.sqrt 3 < 7 - 0.071795 := by
+        have hsq : (4 * Real.sqrt 3) ^ 2 < (7 - 0.071795 : ℝ) ^ 2 := by
+          have : (4 * Real.sqrt 3) ^ 2 = 48 := by nlinarith [hs3]
+          rw [this]; norm_num
+        exact lt_of_pow_lt_pow_left₀ 2 (by norm_num) hsq
+      linarith
+    obtain ⟨C, hC, hdyad⟩ := dyadic_cluster_elimination_proved P.natDegree 2 3 1 (3 - Real.sqrt 3) 0.071795
+      hP (by norm_num) (by norm_num) (by norm_num) (by omega)
+      (by linarith) (by rw [hch]; push_cast; linarith) (by norm_num) (by norm_num)
+      (by simpa [theta_monomial] using hθ3)
+      s_mult hs_mult P rfl hgap 0.000005 (by norm_num)
+    obtain ⟨C', hC', hsum⟩ := dyadic_sum_counting (by norm_num) hC (IsPolyFactSol s_mult P) hdyad
+    refine ⟨C', hC', fun N hN => le_trans (hsum N hN) ?_⟩
+    exact mul_le_mul_of_nonneg_left (Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast hN) (by norm_num)) hC'.le
+  · intro ε hε
+    let δ := min (ε / 2) (1 / 18)
+    have hδ : 0 < δ := lt_min (by positivity) (by norm_num)
+    have hch : Nat.choose (4 + 1) 4 - 1 = 4 := by decide
+    have hθ4 : (1 / 9 : ℝ) - δ < theta_monomial 4 1 2 2 := by
+      rw [theta_monomial_E1_nu2, table1_m4_exact]; linarith
+    obtain ⟨C, hC, hdyad⟩ := dyadic_cluster_elimination_proved P.natDegree 2 4 1 2 ((1 / 9 : ℝ) - δ)
+      hP (by norm_num) (by norm_num) (by norm_num) (by omega)
+      (by norm_num) (by rw [hch]; norm_num)
+      (by linarith [min_le_right (ε / 2) (1 / 18)])
+      (by norm_num; linarith)
+      (by simpa [theta_monomial] using hθ4)
+      s_mult hs_mult P rfl hgap δ hδ
+    obtain ⟨C', hC', hsum⟩ := dyadic_sum_counting (by linarith) hC (IsPolyFactSol s_mult P) hdyad
+    refine ⟨C', hC', fun N hN => le_trans (hsum N hN) ?_⟩
+    exact mul_le_mul_of_nonneg_left (Real.rpow_le_rpow_of_exponent_le (by exact_mod_cast hN) (by linarith [min_le_left (ε / 2) (1 / 18)])) hC'.le
 
 end GrasGreenbergBrocard
