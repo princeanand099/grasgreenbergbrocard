@@ -92,6 +92,14 @@ structure RealQuadIwasawaInvariants (q p : ℕ) where
   X_trivial : Bool
   h_X_triv : X_trivial = true ↔ lambda_p = 0 ∧ nu_p = 0
 
+/- **Leopoldt's `p`-Adic Class Number Formula (Washington 1997, Theorem 5.24)** and
+**Coates's Formula (Coates 1977, Appendix Lemma 8; Taya 1996, Prop. 1)** for `K = ℚ(√q)` at `p ≥ 5`:
+- In the unramified case (`p ∤ q`, i.e., `2 ∣ v_p(n!)`), `v_p(1 - χ_D(p)p⁻¹) = -1` and
+  `v_p(∏_{𝔭∣p}(1 - N(𝔭)⁻¹)) = -2`.
+- In the ramified case (`p ∣ q`, i.e., `2 ∤ v_p(n!)`), `v_p(1 - χ_D(p)p⁻¹) = 0` and
+  `v_p(∏_{𝔭∣p}(1 - N(𝔭)⁻¹)) = -1`.
+In both cases, `v_p(w_1(K(μ_p))) = 1` for `p ≥ 5`, giving the exact valuation formulas for
+`L_p(1, χ_D)` and `#T_{K, p}` whenever `v_reg ≥ 1`. -/
 /-- Canonical algebraic and Iwasawa-theoretic invariants of the real quadratic field
 `K = ℚ(√q)` at an odd prime `p ≥ 5`. Scoping the external Iwasawa axioms strictly to this
 canonical object (rather than quantifying universally over arbitrary unconstrained records)
@@ -110,7 +118,7 @@ axiom padic_log_regulator_pell_power :
     ∀ {q p m s X₁ Y₁ k : ℕ},
       let inv := canonicalRealQuadIwasawa q p
       p.Prime → 5 ≤ p →
-      2 ≤ q →
+      2 ≤ q → Squarefree q →
       X₁ ^ 2 = q * Y₁ ^ 2 + 1 → 0 < Y₁ →
       (∀ x y : ℕ, 0 < y → x ^ 2 = q * y ^ 2 + 1 → Y₁ ≤ y) →
       m ^ 2 = q * s ^ 2 + 1 →
@@ -120,12 +128,10 @@ axiom padic_log_regulator_pell_power :
       (∀ j : ℕ, 1 ≤ j → padicValNat p (2 * j + 1) < 2 * j * padicValNat p s) →
       inv.v_reg + padicValNat p k = padicValNat p s
 
-/-- **Leopoldt's `p`-Adic Class Number Formula (Washington 1997, Theorem 5.24)** and
-**Coates's Formula (Coates 1977, Appendix Lemma 8; Taya 1996, Prop. 1)** for `K = ℚ(√q)` at `p ≥ 5`. -/
 axiom leopoldt_coates_valuation_law :
     ∀ {q p : ℕ},
       let inv := canonicalRealQuadIwasawa q p
-      p.Prime → 5 ≤ p → 1 ≤ inv.v_reg →
+      p.Prime → 5 ≤ p → Squarefree q → 1 ≤ inv.v_reg →
       ((¬ p ∣ q →
           inv.v_Lp = padicValNat p inv.classNumber + inv.v_reg - 1 ∧
           inv.v_T = padicValNat p inv.classNumber + inv.v_reg - 1) ∧

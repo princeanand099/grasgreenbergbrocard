@@ -80,35 +80,44 @@ axiom davenport_real_char_half_band_upper :
           (chiLegendre d p : ℝ) * Real.log (p : ℝ) ≤
             C * (n : ℝ) * Real.exp (-c₃ * Real.sqrt (Real.log (n : ℝ)))
 
-/-- Odd ramified prime set `L₀(n) = Podd(n) \ {2}` (Section 5.2). -/
-def L0 (n : ℕ) : Finset ℕ :=
-  (Podd n).filter (3 ≤ ·)
+/-- Full ramified prime set `ℒ_ram(n)` of `K_n = ℚ(√q_n)`: `Podd(n)` when `q_n ≡ 1 (mod 4)`,
+and `insert 2 (Podd n)` when `q_n ≢ 1 (mod 4)` (`2 ∣ D_n`). -/
+def ramPrimes (n : ℕ) : Finset ℕ :=
+  if q_n n % 4 = 1 then Podd n else insert 2 (Podd n)
 
 /-- Additive Legendre index `ℓ_p(a) ∈ 𝔽₂` defined by `(-1)^{ℓ_p(a)} = (a/p)` for `p ∤ a`. -/
 def legendreIdx (p : ℕ) (a : ℤ) : ZMod 2 :=
   if chiLegendre a p = -1 then 1 else 0
 
-/-- Ramified Rédei symbol matrix `R_n^{ram}` over `𝔽₂` acting on `L₀(n) → 𝔽₂` (Section 5.2). -/
-def redeiRow (n : ℕ) (p : ℕ) (y : L0 n → ZMod 2) : ZMod 2 :=
-  (∑ p' : L0 n,
+/-- Odd-prime row of the ramified Rédei symbol matrix `R_n^{ram}` over `𝔽₂` acting on
+`ramPrimes n → 𝔽₂`, encoding the `p`-adic Hilbert symbol `(c(y), q_n)_p = +1` (Section 5.2). -/
+def redeiRowOdd (n : ℕ) (p : ℕ) (y : ramPrimes n → ZMod 2) : ZMod 2 :=
+  ∑ p' : ramPrimes n,
     if p'.1 = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) * y p'
-    else legendreIdx p (p'.1 : ℤ) * y p')
+    else legendreIdx p (p'.1 : ℤ) * y p'
 
-/-- Kernel `ker_{𝔽₂}(R_n^{ram})` of the ramified Rédei symbol matrix over `𝔽₂` (Section 5.2).
-When `q_n % 4 ≠ 1` (`2 ∣ D_n`), vectors in the kernel also satisfy `c₂(y) ≡ 1 (mod 8)`,
-encoded via the two linear equations `∑ ((p-1)/2) y_p = 0` and `∑ ((p^2-1)/8) y_p = 0` in `𝔽₂`. -/
-def redeiKernel (n : ℕ) : Submodule (ZMod 2) (L0 n → ZMod 2) where
-  carrier := {y | (∀ p ∈ L0 n, redeiRow n p y = 0) ∧
-    (q_n n % 4 ≠ 1 →
-      (∑ p : L0 n, (((p.1 - 1) / 2 : ℕ) : ZMod 2) * y p = 0) ∧
-      (∑ p : L0 n, (((p.1 ^ 2 - 1) / 8 : ℕ) : ZMod 2) * y p = 0))}
+/-- 2-adic Hilbert symbol row of `R_n^{ram}` over `𝔽₂` when `2 ∣ D_n` (`q_n % 4 ≠ 1`),
+encoding `(c(y), q_n)_2 = +1` linearly in `y : ramPrimes n → 𝔽₂`. -/
+def redeiRowTwo (n : ℕ) (y : ramPrimes n → ZMod 2) : ZMod 2 :=
+  let v2q := padicValNat 2 (q_n n)
+  let qodd := oddPartNat (q_n n)
+  ∑ p' : ramPrimes n,
+    (if p'.1 = 2 then (((qodd ^ 2 - 1) / 8 : ℕ) : ZMod 2)
+     else ((((p'.1 - 1) / 2) * ((qodd - 1) / 2) + v2q * ((p'.1 ^ 2 - 1) / 8) : ℕ) : ZMod 2)) * y p'
+
+/-- Kernel `ker_{𝔽₂}(R_n^{ram})` of the ramified Rédei symbol matrix over `𝔽₂` (Section 5.2):
+the subspace of `y : ramPrimes n → 𝔽₂` satisfying `(c(y), q_n)_p = +1` for every odd `p ∈ ramPrimes n`
+and `(c(y), q_n)_2 = +1` whenever `2 ∣ D_n` (`q_n % 4 ≠ 1`). -/
+def redeiKernel (n : ℕ) : Submodule (ZMod 2) (ramPrimes n → ZMod 2) where
+  carrier := {y | (∀ p ∈ ramPrimes n, 3 ≤ p → redeiRowOdd n p y = 0) ∧
+    (q_n n % 4 ≠ 1 → redeiRowTwo n y = 0)}
   zero_mem' := by
-    refine ⟨fun p _ => ?_, fun _ => ⟨?_, ?_⟩⟩ <;> simp [redeiRow]
+    refine ⟨fun p _ _ => ?_, fun _ => ?_⟩ <;> simp [redeiRowOdd, redeiRowTwo]
   add_mem' {a b} ha hb := by
-    refine ⟨fun p hp => ?_, fun hq => ⟨?_, ?_⟩⟩
-    · have ha1 := ha.1 p hp
-      have hb1 := hb.1 p hp
-      have h_eq : ∀ p' : L0 n,
+    refine ⟨fun p hp hp3 => ?_, fun hq => ?_⟩
+    · have ha1 := ha.1 p hp hp3
+      have hb1 := hb.1 p hp hp3
+      have h_eq : ∀ p' : ramPrimes n,
           (if p'.1 = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) * (a p' + b p')
            else legendreIdx p (p'.1 : ℤ) * (a p' + b p')) =
           (if p'.1 = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) * a p'
@@ -116,46 +125,51 @@ def redeiKernel (n : ℕ) : Submodule (ZMod 2) (L0 n → ZMod 2) where
           (if p'.1 = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) * b p'
            else legendreIdx p (p'.1 : ℤ) * b p') := by
         intro p'; split_ifs <;> ring
-      change (∑ p' : L0 n, _) = 0
+      change (∑ p' : ramPrimes n, _) = 0
       simp only [Pi.add_apply]
       simp_rw [h_eq, Finset.sum_add_distrib]
-      change redeiRow n p a + redeiRow n p b = 0
+      change redeiRowOdd n p a + redeiRowOdd n p b = 0
       rw [ha1, hb1, add_zero]
-    · have ha2 := (ha.2 hq).1
-      have hb2 := (hb.2 hq).1
-      simp only [Pi.add_apply, mul_add, Finset.sum_add_distrib, ha2, hb2, add_zero]
-    · have ha3 := (ha.2 hq).2
-      have hb3 := (hb.2 hq).2
-      simp only [Pi.add_apply, mul_add, Finset.sum_add_distrib, ha3, hb3, add_zero]
+    · have ha2 := ha.2 hq
+      have hb2 := hb.2 hq
+      change (∑ p' : ramPrimes n, _) = 0
+      simp only [Pi.add_apply, mul_add, Finset.sum_add_distrib]
+      change redeiRowTwo n a + redeiRowTwo n b = 0
+      rw [ha2, hb2, add_zero]
   smul_mem' c {a} ha := by
-    refine ⟨fun p hp => ?_, fun hq => ⟨?_, ?_⟩⟩
-    · have ha1 := ha.1 p hp
-      have h_eq : ∀ p' : L0 n,
+    refine ⟨fun p hp hp3 => ?_, fun hq => ?_⟩
+    · have ha1 := ha.1 p hp hp3
+      have h_eq : ∀ p' : ramPrimes n,
           (if p'.1 = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) * (c * a p')
            else legendreIdx p (p'.1 : ℤ) * (c * a p')) =
           c * (if p'.1 = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) * a p'
                else legendreIdx p (p'.1 : ℤ) * a p') := by
         intro p'; split_ifs <;> ring
-      change (∑ p' : L0 n, _) = 0
+      change (∑ p' : ramPrimes n, _) = 0
       simp only [Pi.smul_apply, smul_eq_mul]
       simp_rw [h_eq, ← Finset.mul_sum]
-      change c * redeiRow n p a = 0
+      change c * redeiRowOdd n p a = 0
       rw [ha1, mul_zero]
-    · have ha2 := (ha.2 hq).1
+    · have ha2 := ha.2 hq
+      change (∑ p' : ramPrimes n, _) = 0
       simp only [Pi.smul_apply, smul_eq_mul]
-      have h_eq : ∀ p : L0 n, (((p.1 - 1) / 2 : ℕ) : ZMod 2) * (c * a p) =
-          c * ((((p.1 - 1) / 2 : ℕ) : ZMod 2) * a p) := fun p => by ring
-      simp_rw [h_eq, ← Finset.mul_sum, ha2, mul_zero]
-    · have ha3 := (ha.2 hq).2
-      simp only [Pi.smul_apply, smul_eq_mul]
-      have h_eq : ∀ p : L0 n, (((p.1 ^ 2 - 1) / 8 : ℕ) : ZMod 2) * (c * a p) =
-          c * ((((p.1 ^ 2 - 1) / 8 : ℕ) : ZMod 2) * a p) := fun p => by ring
-      simp_rw [h_eq, ← Finset.mul_sum, ha3, mul_zero]
+      have h_eq : ∀ p' : ramPrimes n,
+          (if p'.1 = 2 then (((oddPartNat (q_n n) ^ 2 - 1) / 8 : ℕ) : ZMod 2)
+           else ((((p'.1 - 1) / 2) * ((oddPartNat (q_n n) - 1) / 2) +
+             padicValNat 2 (q_n n) * ((p'.1 ^ 2 - 1) / 8) : ℕ) : ZMod 2)) * (c * a p') =
+          c * ((if p'.1 = 2 then (((oddPartNat (q_n n) ^ 2 - 1) / 8 : ℕ) : ZMod 2)
+           else ((((p'.1 - 1) / 2) * ((oddPartNat (q_n n) - 1) / 2) +
+             padicValNat 2 (q_n n) * ((p'.1 ^ 2 - 1) / 8) : ℕ) : ZMod 2)) * a p') := fun p' => by ring
+      simp_rw [h_eq, ← Finset.mul_sum]
+      change c * redeiRowTwo n a = 0
+      rw [ha2, mul_zero]
 
-/-- Concrete continued-fraction midpoint vector `y^{mid}(n, X₁) : L₀(n) → 𝔽₂` supported on the
-odd prime divisors of `δ₂^{mid}(n) = coreNat (X₁ + 1)` (Section 5.2). -/
-def yMidVec (n X₁ : ℕ) : L0 n → ZMod 2 :=
-  fun p => if p.1 ∣ coreNat (X₁ + 1) then 1 else 0
+/-- Concrete continued-fraction midpoint vector `y^{mid}(n, X₁) : ramPrimes n → 𝔽₂` supported on the
+ramified prime divisors of `c_mid(n, X₁) = coreNat (2 * (X₁ + 1))` (Section 5.2).
+Because `(X₁ + 1)^2 - q_n Y₁^2 = 2 (X₁ + 1) = c_mid * v^2`, `c_mid` is always a rational norm
+from `ℚ(√q_n)`, is supported inside `ramPrimes n`, and satisfies `c_mid > 1` (by minimality of `Y₁`). -/
+def yMidVec (n X₁ : ℕ) : ramPrimes n → ZMod 2 :=
+  fun p => if p.1 ∣ coreNat (2 * (X₁ + 1)) then 1 else 0
 
 /-- Canonical narrow 4-rank `𝔽₂`-vector space `Cl^+(q_n)[2] ∩ 2 Cl^+(q_n)` attached to `ℚ(√q_n)`.
 Fixing this canonical object per `n` (independent of any candidate kernel vector) prevents

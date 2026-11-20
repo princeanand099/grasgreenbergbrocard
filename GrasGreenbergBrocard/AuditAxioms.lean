@@ -22,19 +22,20 @@ import GrasGreenbergBrocard.Thm8_1FreyCurves
 import GrasGreenbergBrocard.Thm8_2TatuzawaClassGroup
 
 /-!
-# Machine-Checked `#print axioms` Audit for All Manuscript Theorems
+# Machine-Checked `#print axioms` Audit for All Public Manuscript Theorems (78 Declarations)
 
 Running `lake build GrasGreenbergBrocard.AuditAxioms` prints the exact Lean 4 kernel axiom
-closure of every main theorem, proposition, and lemma across Sections 1–8 of the manuscript,
+closure of every public theorem, proposition, and lemma across Sections 1–8 of the manuscript,
 verifying:
 - zero `sorryAx`,
 - zero `Lean.ofReduceBool` / `Lean.trustCompiler` (`native_decide`),
 - only Lean's standard logical axioms (`propext`, `Classical.choice`, `Quot.sound`) plus
-  explicitly documented, sound external axioms.
+  explicitly documented external axioms in `EXTERNAL_AXIOMS.md`.
 -/
 
 -- Section 2
 #print axioms GrasGreenbergBrocard.log_q_n_asymptotic
+#print axioms GrasGreenbergBrocard.log_s_n_asymptotic
 #print axioms GrasGreenbergBrocard.vaaler_parity_approx
 #print axioms GrasGreenbergBrocard.prime_exp_sum_bounds
 #print axioms GrasGreenbergBrocard.Delta_parity_second_order
@@ -45,6 +46,7 @@ verifying:
 #print axioms GrasGreenbergBrocard.known_k4
 #print axioms GrasGreenbergBrocard.known_k5
 #print axioms GrasGreenbergBrocard.known_k7
+#print axioms GrasGreenbergBrocard.neg_pell_no_rat_sol
 #print axioms GrasGreenbergBrocard.log_q_n_gt_point4_ge8
 #print axioms GrasGreenbergBrocard.log_fund_pell_gt_point2_ge8
 #print axioms GrasGreenbergBrocard.pell_index_upper_bound_ge8
@@ -52,8 +54,11 @@ verifying:
 #print axioms GrasGreenbergBrocard.fundamental_regulator_quantization
 #print axioms GrasGreenbergBrocard.q_n_ne_of_solutions
 #print axioms GrasGreenbergBrocard.J_n_principal_iff_k_eq_2
+#print axioms GrasGreenbergBrocard.k_eq_1_picard_identity
+#print axioms GrasGreenbergBrocard.second_stage_nonprincipal_k_eq_2
 #print axioms GrasGreenbergBrocard.nagura_prime_in_band
 #print axioms GrasGreenbergBrocard.thm_1_2_eq_3_6_regulator_valuation
+#print axioms GrasGreenbergBrocard.thm_1_2_wieferich_congruence
 #print axioms GrasGreenbergBrocard.brocard_small_solutions_lt_116
 #print axioms GrasGreenbergBrocard.thm_1_2_part1_valuation_law
 #print axioms GrasGreenbergBrocard.thm_1_2_part2_split_primes
@@ -64,8 +69,10 @@ verifying:
 #print axioms GrasGreenbergBrocard.prop_4_1_part1
 #print axioms GrasGreenbergBrocard.prop_4_1_part1_asymptotic
 #print axioms GrasGreenbergBrocard.prop_4_1_part2
+#print axioms GrasGreenbergBrocard.thm_4_2_part1_quartic_law
 #print axioms GrasGreenbergBrocard.thm_4_2_part1_euclidean_lock
 #print axioms GrasGreenbergBrocard.thm_4_2_part2_dual_quartic
+#print axioms GrasGreenbergBrocard.thm_4_2_part2_euclidean_locks
 #print axioms GrasGreenbergBrocard.thm_4_2_part3_midpoint_core_bounds
 #print axioms GrasGreenbergBrocard.thm_4_2_part3_mertens_bound
 
@@ -76,15 +83,20 @@ verifying:
 #print axioms GrasGreenbergBrocard.thm_5_2_part1_radical_bounds
 #print axioms GrasGreenbergBrocard.thm_5_2_part2_effective_cores
 #print axioms GrasGreenbergBrocard.thm_5_2_part2_pell_pm2_insoluble
+#print axioms GrasGreenbergBrocard.yMidVec_ne_zero
+#print axioms GrasGreenbergBrocard.yMidVec_mem_redeiKernel
 #print axioms GrasGreenbergBrocard.thm_5_3_part1_cohomology_4rank
 #print axioms GrasGreenbergBrocard.thm_5_3_part2_inert_absorption
 #print axioms GrasGreenbergBrocard.thm_5_3_part2_dual_quartic
 
 -- Section 6 & Theorem 1.3(i)
 #print axioms GrasGreenbergBrocard.prop_6_1_part1_sl2_and_four_squares
+#print axioms GrasGreenbergBrocard.prop_6_1_part2_zsqrtd_identities
+#print axioms GrasGreenbergBrocard.prop_6_1_part3_characters_and_quadrant_iv
 #print axioms GrasGreenbergBrocard.prop_6_2_part1_n4_boundary
 #print axioms GrasGreenbergBrocard.prop_6_2_part2_consecutive_equipartition
 #print axioms GrasGreenbergBrocard.prop_6_2_part3_square_shift_exclusions
+#print axioms GrasGreenbergBrocard.prop_6_2_part3_consecutive_squares_k2_exclusion
 #print axioms GrasGreenbergBrocard.lem_6_3_parity_flip_uniform
 #print axioms GrasGreenbergBrocard.thm_6_4_capacity_diamond
 #print axioms GrasGreenbergBrocard.thm_1_3_part1_k2_gap_and_counting
@@ -99,9 +111,12 @@ verifying:
 #print axioms GrasGreenbergBrocard.depressed_poly_asymptotic_core
 #print axioms GrasGreenbergBrocard.pade_chi_lt_ratio_iff_theta_lt
 #print axioms GrasGreenbergBrocard.pigeonhole_cluster_reduction
+#print axioms GrasGreenbergBrocard.poly_has_depressed_gap_two
 #print axioms GrasGreenbergBrocard.dyadic_cluster_elimination_proved
 #print axioms GrasGreenbergBrocard.thm_1_3_part2_global_6_7
+#print axioms GrasGreenbergBrocard.thm_1_3_part2_global_6_7_general
 #print axioms GrasGreenbergBrocard.thm_1_3_part2_brocard_6_7
+#print axioms GrasGreenbergBrocard.thm_1_3_part2_table1_bounds
 #print axioms GrasGreenbergBrocard.thm_1_3_part2_degree_gap_bounds
 
 -- Section 8

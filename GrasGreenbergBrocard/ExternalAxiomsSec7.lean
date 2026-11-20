@@ -80,6 +80,16 @@ axiom canonicalMonomialTaylorFamily {d E r M : ℕ}
     (hβ_mono : StrictMono β) :
     AlgebraicTaylorFamily (Nat.choose (d + E) d - 1) r M
 
+/-- The $i = 0$ Padé polynomial coefficients $p_{0, v}$ ($0 \le v \le D$) uniquely determined
+from `P_coeff` ($P_1, \dots, P_m$) and `fam.clearedCoeff` by canceling Taylor orders
+$0 \le v \le D$ (manuscript eq. 7.5). -/
+def padeP0Coeff {m r M D : ℕ} (fam : AlgebraicTaylorFamily m r M)
+    (P_coeff : Fin m → Fin (D + 1) → ℤ) (v : Fin (D + 1)) : ℤ :=
+  - ∑ i : Fin m, ∑ j : Fin (D + 1),
+      if j.val ≤ v.val then
+        fam.clearedCoeff i.succ (v.val - j.val) * (r : ℤ) ^ (2 * j.val) * P_coeff i j
+      else 0
+
 /-- Differential Wronskian data for a non-zero Padé linear form
 $L(x) = \sum_{i \in S} P_i(x) f_i(x)$ supported on $S \subseteq \mathrm{Fin}(m+1)$ with $s = |S|$,
 packaging Siegel (1949) Ch. 2 Lemma 4 and Bui–Pratt–Zaharescu (2023) Lemmas 5.4, 5.6, 6.3. -/
@@ -133,6 +143,10 @@ axiom canonicalSupportWronskian {d E r D O M B : ℕ}
           (canonicalMonomialTaylorFamily hd hE hr hEr hM β hβ_lo hβ_hi hβ_dvd hβ_mono).clearedCoeff
             i.succ (D + 1 + t.val - j.val) * (r : ℤ) ^ (2 * j.val)
         else 0) * P_coeff i j = 0)
+    (hS_zero : (0 : Fin ((Nat.choose (d + E) d - 1) + 1)) ∈ S ↔
+      ∃ v : Fin (D + 1), padeP0Coeff
+        (canonicalMonomialTaylorFamily hd hE hr hEr hM β hβ_lo hβ_hi hβ_dvd hβ_mono)
+        P_coeff v ≠ 0)
     (hS_eq : ∀ i : Fin (Nat.choose (d + E) d - 1),
       i.succ ∈ S ↔ ∃ j : Fin (D + 1), P_coeff i j ≠ 0) :
     SupportWronskianData (Nat.choose (d + E) d - 1) r D O M S (((D + 1) * B + 1 : ℕ) : ℝ)
@@ -161,7 +175,7 @@ structure PadeEvaluationData (r E ν s D M a n₀ : ℕ) (x₀ : ℝ) where
   w_pos : 0 < w
   W_pos : 0 < W
   C_P_pos : 0 < C_P
-  rho_le : ρ ≤ C_P * (M : ℝ) ^ E * x₀ ^ (-(ν : ℝ))
+  rho_le : ρ ≤ C_P * ((2 * n₀ : ℕ) : ℝ) ^ (((M * ν : ℕ) : ℝ) / (r : ℝ)) * x₀ ^ (-(ν : ℝ))
   form_upper : nonZeroFormVal ≤ (s : ℝ) * x₀ ^ E * u * U ^ D * ρ + x₀ ^ E * w * W ^ (-(D : ℝ))
 
 /-- **Bui–Pratt–Zaharescu (2023), Lemmas 5.6 & 6.3 (Cauchy/Leibniz Cleared Padé Evaluation)**:
@@ -203,13 +217,18 @@ axiom bpz_cauchy_leibniz_pade_eval (r ν d E : ℕ) (ε₀ : ℝ)
                 β hβ_lo hβ_hi hβ_dvd hβ_mono).clearedCoeff
                 i.succ (D + 1 + t.val - j.val) * (r : ℤ) ^ (2 * j.val)
             else 0) * P_coeff i j = 0)
+        (hS_zero : (0 : Fin ((Nat.choose (d + E) d - 1) + 1)) ∈ S ↔
+          ∃ v : Fin (D + 1), padeP0Coeff
+            (canonicalMonomialTaylorFamily hd hE hr (le_trans hE_le (min_le_left _ _)) hM
+              β hβ_lo hβ_hi hβ_dvd hβ_mono)
+            P_coeff v ≠ 0)
         (hS_eq : ∀ i : Fin (Nat.choose (d + E) d - 1),
           i.succ ∈ S ↔ ∃ j : Fin (D + 1), P_coeff i j ≠ 0),
         N ≤ n₀ → n₀ ≤ 2 * N →
         IsPolyFactSol s_mult P n₀ →
         (∀ i, IsPolyFactSol s_mult P (n₀ - β i)) →
         let W := canonicalSupportWronskian hd hE hr (le_trans hE_le (min_le_left _ _)) hM
-          β hβ_lo hβ_hi hβ_dvd hβ_mono P_coeff S hD1 hO_gt hP_nz hP_bd hP_van hS_eq
+          β hβ_lo hβ_hi hβ_dvd hβ_mono P_coeff S hD1 hO_gt hP_nz hP_bd hP_van hS_zero hS_eq
         ∃ (x₀ : ℝ) (E_dat : PadeEvaluationData r E ν S.card D M (W.multAt n₀) n₀ x₀),
           1 < x₀ ∧
           |Real.log x₀ - Real.log ((Nat.factorial n₀ : ℕ) : ℝ) / (r : ℝ)| ≤ C_0 ∧

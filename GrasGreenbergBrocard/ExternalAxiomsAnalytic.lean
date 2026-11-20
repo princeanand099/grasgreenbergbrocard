@@ -132,6 +132,7 @@ axiom vaughan_van_der_corput_prime_sum :
       P ≤ (n : ℝ) / (Real.log (n : ℝ)) ^ 12 →
       IsPrimeSubinterval P I →
       (2 : ℝ) ^ (- (R : ℤ)) * (Real.log (n : ℝ)) ^ A_R ≤ T₀ →
+      T₀ ≤ (n : ℝ) ^ 2 →
       (∀ t ∈ Set.Icc P (2 * P), |w t| ≤ W₀) →
       AntitoneOn w (Set.Icc P (2 * P)) →
       (∀ (j : ℕ), 1 ≤ j → j ≤ 5 * R + 2 →

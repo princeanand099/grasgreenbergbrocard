@@ -9,32 +9,25 @@
 
 | Check | Status |
 | :--- | :--- |
-| `sorry` / `admit` across all `.lean` files | **0** |
+| `sorry` / `admit` / `opaque` / `unsafe` across all `.lean` files | **0** |
 | `native_decide` / `Lean.ofReduceBool` / `Lean.trustCompiler` | **0** |
-| Audited declarations in `AuditAxioms.lean` | **63** (complete coverage of Sections 1–8) |
+| Audited declarations in `AuditAxioms.lean` | **78** (all public theorems/lemmas across Sections 1–8) |
 | External axiom files | **6** (`ExternalAxiomsAnalytic`, `Sec3`, `Sec4`, `Sec5`, `Sec7`, `Sec8`) |
-| Total external axioms | **28** (all strictly external peer-reviewed theorems; **0** unused, **0** circular) |
-| Full GitHub Actions CI (`lake build` + `AuditAxioms`) | **PASS (`exit 0`, fail-fast enforced on build errors)** |
+| Total custom axioms | **28** (all soundness defects F1–F4, F7, F9 resolved; opaque/analytic scope boundaries documented honestly in `EXTERNAL_AXIOMS.md`) |
 
-## Summary of 4-Tier Adversarial Audit Repairs & Polish
+## Comprehensive Adversarial Audit Remediation Log (F1–F22)
 
-1. **Tier 1 (Analytic Quantifier Soundness)**: Promoted `c₁ c₂ : ℕ → ℝ` before `∃ η' η C` in `vaughan_van_der_corput_prime_sum` (`ExternalAxiomsAnalytic.lean`) and passed the explicit `c₁_low, c₂_high` bounds proved in `ExpSumBounds.lean` and `ExpSumBoundsMod.lean`.
-2. **Tier 2 (Structural & Statement Fidelity)**:
-   - Removed dead `nth_prime_asymptotic` in `ExternalAxiomsSec4.lean` and audited `thm_4_2_part3_mertens_bound`.
-   - Derived `chebyshevU_eval` internally inside `pell_index_collapse_large` (`Thm1_1Collapse.lean`) via `pellUnit_pow_eq_lucas` and `irrational_sqrt_natCast_iff`.
-   - Constructed concrete `yMidVec n X₁` from `coreNat (X₁ + 1)` and scoped `redei_reichardt_exact_sequence` to `canonicalRealQuadRedei n` (`ExternalAxiomsSec5.lean`, `Thm5_3RedeiCohomology.lean`).
-   - Added `conductor_F2_eq` and required `IsFundamentalPell` + `hk2` for `frey_F2_modularity_and_galois` (`ExternalAxiomsSec8.lean`, `Thm8_1FreyCurves.lean`).
-   - Expanded `AuditAxioms.lean` to cover every theorem in Sections 1–8.
-3. **Tier 3 (Theorem 1.2 eq. (3.6) & Finite Verification)**:
-   - Proved `thm_1_2_eq_3_6_regulator_valuation` ($v_p(\tilde{R}_p(K_n)) = \lfloor v_p(n!)/2 \rfloor$) directly from `Nat.factorial n + 1 = m ^ 2`, `p ∤ k`, `brocard_p_not_dvd_m`, `padicValNat_odd_series_strict_dom`, and `padic_log_regulator_pell_power` (`ExternalAxiomsSec3.lean`).
-   - Removed `h_reg` from all three parts of Theorem 1.2 (`Thm1_2Iwasawa.lean`).
-   - Added pure kernel-verified `brocard_small_solutions_lt_116` (112 modular non-residue witnesses, zero `native_decide`) and `thm_1_2_part3_complete_finiteness`.
-4. **Tier 4 (Elimination of Section 7 Circularity & Canonical Scoping)**:
-   - Deleted circular `bpz_dyadic_cluster_elimination` and unparameterized `siegel_bpz_support_wronskian` from `ExternalAxiomsSec7.lean`.
-   - Kept only three tightly scoped, parameterized external axioms (`canonicalMonomialTaylorFamily`, `canonicalSupportWronskian`, `bpz_cauchy_leibniz_pade_eval`), canonically scoped to prevent adversarial dummy `AlgebraicTaylorFamily` (such as a linearly dependent zero family) or dummy `SupportWronskianData` instances.
-   - Proved `pigeonhole_cluster_reduction` (eq. 7.17), `short_interval_pigeonhole` (`Sec7ClusterReduction.lean`), `depressed_poly_asymptotic_core`, `pade_chi_lt_ratio_iff_theta_lt` (`Sec7PadeWronskian.lean`), and `dyadic_cluster_elimination_proved` (`Thm1_3Part2Counting.lean`), genuinely wiring `lem_7_1`–`lem_7_4` into all Theorem 1.3(ii) bounds.
-5. **Minor Polish & CI Hardening**:
-   - Completed Lemma 3.1(i) on the finite range $8 \le n < 116$ (`log_q_n_gt_point4_ge8`, `log_fund_pell_gt_point2_ge8`, `pell_index_upper_bound_ge8` in `PellFundamental.lean`) with pure kernel `decide` (zero `native_decide`).
-   - Added `prop_4_1_part1_asymptotic` (`Prop4_1SmoothBiquad.lean`) establishing the asymptotic eq. (4.4) bounds $(\log 2 + o(1))n$ and $(1 - \log 2 + o(1))n$.
-   - Hardened `.github/workflows/lean_action_ci.yml` so exit codes are always captured before log publication and any `lake build` failure fails the CI job visibly.
-   - Reconciled `THEOREM_CORRESPONDENCE.md`, `EXTERNAL_AXIOMS.md`, `AUDIT.md`, `PROGRESS.md`, `README.md`, and `formalization.yaml` line-for-line with the exact Lean kernel `#print axioms` output across all 63 audited declarations.
+1. **Tier 1 Soundness & Mathematical Correctness (F1–F4) — All Resolved**:
+   - **F1**: Added `T₀ ≤ (n : ℝ) ^ 2` to `vaughan_van_der_corput_prime_sum` (`ExternalAxiomsAnalytic.lean`), closing the unbounded-$T_0$ inconsistency, and discharged it at every call site in `ExpSumBounds.lean`, `ExpSumBoundsMod.lean`, and `Lem6_3ParityFlipOsc.lean`.
+   - **F2**: Defined `padeP0Coeff` explicitly in `ExternalAxiomsSec7.lean`, enforced `hS_zero : 0 ∈ S ↔ ∃ v, padeP0Coeff ... P_coeff v ≠ 0` in `canonicalSupportWronskian` and `bpz_cauchy_leibniz_pade_eval`, and constructed `S` in `Thm1_3Part2Counting.lean` by filtering `0` on `P₀ ≠ 0`.
+   - **F3 & F8**: Repaired Theorem 5.3(i) in both the manuscript and Lean (`ExternalAxiomsSec5.lean`, `Thm5_3RedeiCohomology.lean`): augmented the ramified prime set to `ramPrimes n` (including `p = 2` whenever `2 ∣ D_n`), replaced the false `c₂(y) ≡ 1 (mod 8)` condition with the exact linear 2-adic Hilbert row `redeiRowTwo`, defined `yMidVec` from `coreNat (2 * (X₁ + 1))`, and **proved** `yMidVec_ne_zero` and `yMidVec_mem_redeiKernel` directly from the Pell equation (eliminating the unproved `hyMid_mem` and `hyMid_ne` hypotheses).
+   - **F4**: Replaced the false $M^E x_0^{-\nu}$ bound with the true $(2N)^{M\nu/r} x_0^{-\nu}$ bound (and fixed the inverted $(x_i/x_0)^r \to (x_0/x_i)^r$ ratio) in manuscript eq. (7.16), `ExternalAxiomsSec7.lean` (`PadeEvaluationData.rho_le`), `Sec7PadeWronskian.lean` (`lem_7_4_denominator_clearing`), and `Thm1_3Part2Counting.lean` (`dyadic_cluster_elimination_proved`).
+2. **Tier 2 & Tier 3 Repairs (F7, F9, F10–F12) — Resolved; Transparent Scope Boundaries (F5, F6)**:
+   - **F7**: Added `Squarefree q` to `padic_log_regulator_pell_power` and `leopoldt_coates_valuation_law` (`ExternalAxiomsSec3.lean`) and discharged via `q_n_squarefree n` (`Thm1_2Iwasawa.lean`).
+   - **F9**: Bound `FreyCurveArithmeticData` to Mathlib's `WeierstrassCurve ℤ` (`freyCurveE m`, `freyCurveF2 X₁`), verified `.c₄` and `.Δ` directly in `Thm8_1FreyCurves.lean`, and removed the vacuous unconstrained `Prop` fields (`isModular_E`, `isModular_F2`, `surj_mod_ell_F2`).
+   - **F10–F12**: Weakened the unproved `= O(n)` in manuscript eq. (5.4) to `= o(n \log n)`, noted $d_n \in \{1, 3\}$ is odd in the proof of Theorem 5.3(i), and stated the $\nu \ge 25$ threshold explicitly in Table 2.
+   - **F5–F6 (Honest Scope Boundary)**: Full Mathlib formalization of Puiseux series expansions of $\Omega_{\mathbf{e}}(x)$, differential Wronskian construction $\Delta_S(x)$, and Cauchy–Leibniz derivative estimates for general $(d, E, \nu)$ remains an open formalization frontier and is honestly documented as packaged in the 3 canonically scoped Section 7 axioms.
+3. **Tier 4 & Tier 5 Repairs (F13, F14, F18, F19–F22)**:
+   - **F13 & F18**: Strengthened `thm_1_2_part3_complete_finiteness` to assume a **single** prime `∃ p` (matching manuscript Theorem 1.2(iii)(a)) and added branches (b) and (c); added pure kernel-verified `thm_1_2_wieferich_congruence`.
+   - **F14**: Proved `poly_has_depressed_gap_two` (eq. 7.1) for arbitrary `P : ℤ[X]` of degree `≥ 2`, generalized the global $N^{6/7+\varepsilon}$ bound to any `s_mult : ℤ` with `s_mult ≠ 0` (`thm_1_3_part2_global_6_7_general`), and added Table 1 counting bounds for $m = 2, 3, 4$ (`thm_1_3_part2_table1_bounds`).
+   - **F19–F22**: Expanded `AuditAxioms.lean` from 63 to 78 declarations (adding all 9 omitted public theorems plus 6 new theorems), fixed all stale manuscript numbering in `THEOREM_CORRESPONDENCE.md`, fixed Davenport Ch. 19 and Mazur/Kenku/Serre citations in `EXTERNAL_AXIOMS.md`, and removed all overclaims.
