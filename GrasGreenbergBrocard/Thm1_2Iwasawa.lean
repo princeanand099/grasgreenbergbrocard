@@ -2,6 +2,7 @@ import Mathlib
 import GrasGreenbergBrocard.Basic
 import GrasGreenbergBrocard.ExternalAxiomsSec3
 import GrasGreenbergBrocard.PellFundamental
+import GrasGreenbergBrocard.PadicRegulator
 
 /-!
 # Theorem 1.2: Non-p-Rationality, Iwasawa Invariants, and Conditional Finiteness
@@ -11,6 +12,8 @@ Formalizes Section 3.3 (Theorem 1.2(i)–(iii), eqs. 1.8 and 3.6–3.7) of the m
   with `v_p(n!) = 4`
 - `prime_in_band_val_and_coprime_k`: `v_p(n!) ∈ {3, 4}` and `p ∤ k` on `(n/5, n/3]`
 - `val_s_n_ge_one_on_half`: `v_p(s_n) = ⌊v_p(n!)/2⌋ ≥ 1` on `[5, n/2]` (eq. 3.6)
+- `thm_1_2_eq_3_6_regulator_valuation`: proves `realQuadPadicRegVal (q_n n) p = ⌊v_p(n!)/2⌋`
+  directly from `PadicRegulator.realQuadPadicRegVal_pell_power` (zero Iwasawa axioms!)
 - `thm_1_2_part1_valuation_law`: eq. 1.8 and `λ_p^*(K_n) = λ_p(χ_{D_n}) ≥ 1`
 - `thm_1_2_part2_split_primes`: split-prime unramified Iwasawa module and Taya criterion
 - `thm_1_2_part3_conditional_finiteness`: conditional finiteness under (a), (b), or (c)
@@ -238,30 +241,46 @@ theorem padicValNat_odd_series_strict_dom {p j v : ℕ} (hp : p.Prime) (hp5 : 5 
   have hle_mul : 2 * j ≤ 2 * j * v := Nat.le_mul_of_pos_right (2 * j) (by omega)
   omega
 
-/-- **Equation (3.6) (Normalized `p`-Adic Regulator Valuation)**:
+/-- **Equation (3.6) (Normalized `p`-Adic Regulator Valuation — Proved Directly in `ℚ_[p]`)**:
 For any Brocard–Ramanujan solution `n! + 1 = m^2` with fundamental Pell unit `ε_n = X₁ + Y₁ √q_n`
 and Pell index `k` (`m + s_n √q_n = ε_n^k`), if `p ∈ [5, n/2]` is a prime with `p ∤ k`, then
-`v_p(R̃_p(K_n)) = ⌊v_p(n!)/2⌋`. -/
+`realQuadPadicRegVal (q_n n) p = ⌊v_p(n!)/2⌋`. Proved with **zero Iwasawa axioms**. -/
 theorem thm_1_2_eq_3_6_regulator_valuation {n m p X₁ Y₁ k : ℕ}
     (hm : Nat.factorial n + 1 = m ^ 2)
     (hp : p.Prime) (hp5 : 5 ≤ p) (hp_half : p ≤ n / 2)
     (hfund : IsFundamentalPell (q_n n) X₁ Y₁)
     (hk_eq : (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ k)
     (hpk : ¬ p ∣ k) :
-    (canonicalRealQuadIwasawa (q_n n) p).v_reg = padicValNat p (Nat.factorial n) / 2 := by
+    realQuadPadicRegVal (q_n n) p = padicValNat p (Nat.factorial n) / 2 := by
   haveI : Fact p.Prime := ⟨hp⟩
   obtain ⟨_, hs_val, hs_ge1⟩ := val_s_n_ge_one_on_half hp hp5 hp_half
   have hq2 : 2 ≤ q_n n := two_le_q_n (by omega)
+  have hnsq : ¬ IsSquare (q_n n : ℤ) := by
+    rintro ⟨r, hr⟩
+    have hr_nat : q_n n = r.natAbs ^ 2 := by
+      zify; rw [sq, Int.natAbs_mul_self']; exact hr
+    have hru : IsUnit r.natAbs := (q_n_squarefree n) r.natAbs ⟨1, by nlinarith⟩
+    rw [Nat.isUnit_iff] at hru
+    rw [hru] at hr_nat; omega
   have hpm : ¬ p ∣ m := brocard_p_not_dvd_m hm hp (by omega)
   have hm_pell : m ^ 2 = q_n n * (s_n n) ^ 2 + 1 := by
     have hfac := factorial_eq_q_mul_s_sq n
     omega
-  have hdom : ∀ j : ℕ, 1 ≤ j → padicValNat p (2 * j + 1) < 2 * j * padicValNat p (s_n n) :=
-    fun j hj => padicValNat_odd_series_strict_dom hp hp5 hj hs_ge1
-  unfold pellUnit at hk_eq
-  have hreg_add := padic_log_regulator_pell_power (q := q_n n) (p := p) (m := m) (s := s_n n)
-    (X₁ := X₁) (Y₁ := Y₁) (k := k) hp hp5 hq2 (q_n_squarefree n)
-    hfund.2.2.1 hfund.2.1 hfund.2.2.2 hm_pell hk_eq hs_ge1 hpm hdom
+  have hk1 : 1 ≤ k := by
+    by_contra h0
+    have hk0 : k = 0 := by omega
+    rw [hk0, pow_zero] at hk_eq
+    have hs_pos : 0 < s_n n := by
+      by_contra hs0; have : s_n n = 0 := by omega
+      rw [this, padicValNat.zero] at hs_ge1; omega
+    have hm_pos : 1 ≤ m := by
+      by_contra hm0; have : m = 0 := by omega
+      rw [this] at hm; simp at hm
+    have hsqrt_pos : (0 : ℝ) < Real.sqrt (q_n n : ℝ) := Real.sqrt_pos.mpr (by exact_mod_cast (by omega : 0 < q_n n))
+    have hmr : (1 : ℝ) ≤ (m : ℝ) := by exact_mod_cast hm_pos
+    have hsr : (0 : ℝ) < (s_n n : ℝ) := by exact_mod_cast hs_pos
+    nlinarith
+  have hreg_add := realQuadPadicRegVal_pell_power hp hp5 hq2 hnsq hfund hm_pell hk_eq hk1 hs_ge1 hpm
   have hvk : padicValNat p k = 0 := by
     rw [← Nat.factorization_def _ hp]
     exact Nat.factorization_eq_zero_of_not_dvd hpk
@@ -269,7 +288,7 @@ theorem thm_1_2_eq_3_6_regulator_valuation {n m p X₁ Y₁ k : ℕ}
 
 /-- **Theorem 1.2(i) (Parity-Independent Non-p-Rationality and p-Ramified Iwasawa Rank, eq. 1.8)**:
 For any Brocard–Ramanujan solution `n! + 1 = m^2` and any prime `p ∈ [5, n/2]` with `p ∤ k`,
-`v_p(R̃_p(K_n)) = ⌊v_p(n!)/2⌋` (derived from `n! + 1 = m^2`),
+`v_p(R̃_p(K_n)) = ⌊v_p(n!)/2⌋` (proved directly in `ℚ_[p]`),
 `v_p(L_p(1, χ_{D_n})) = v_p(#T_{K_n, p}) = v_p(h(q_n)) + ⌈v_p(n!)/2⌉ - 1`,
 and for `p ∈ [5, n/3]` we have `v_p(#T_{K_n, p}) ≥ 1`, `K_n` is non-`p`-rational, and
 `λ_p^*(K_n) = λ_p(χ_{D_n}) ≥ 1`. -/
@@ -286,10 +305,10 @@ theorem thm_1_2_part1_valuation_law {n m p X₁ Y₁ k : ℕ}
       1 ≤ inv.v_T ∧ inv.is_p_rational = false ∧
       inv.lambda_star = inv.lambda_chi ∧ 1 ≤ inv.lambda_star) := by
   dsimp only
-  have h_reg : (canonicalRealQuadIwasawa (q_n n) p).v_reg = padicValNat p (Nat.factorial n) / 2 :=
+  have h_reg : realQuadPadicRegVal (q_n n) p = padicValNat p (Nat.factorial n) / 2 :=
     thm_1_2_eq_3_6_regulator_valuation hm hp hp5 hp_half hfund hk_eq hpk
   obtain ⟨hv2, _, _⟩ := val_s_n_ge_one_on_half hp hp5 hp_half
-  have hreg_ge1 : 1 ≤ (canonicalRealQuadIwasawa (q_n n) p).v_reg := by omega
+  have hreg_ge1 : 1 ≤ realQuadPadicRegVal (q_n n) p := by omega
   obtain ⟨h_unram, h_ram⟩ := leopoldt_coates_valuation_law (q := q_n n) (p := p) hp hp5 (q_n_squarefree n) hreg_ge1
   have hpn : p ≤ n := by omega
   have hp_dvd_q_iff := p_dvd_q_n_iff hp hpn
@@ -333,19 +352,19 @@ theorem thm_1_2_part1_valuation_law {n m p X₁ Y₁ k : ℕ}
 
 /-- **Theorem 1.2(ii) (Unramified Iwasawa Module at Split Primes)**:
 For any Brocard–Ramanujan solution `n! + 1 = m^2` and every split prime
-`p ∈ Peven(n) ∩ [5, n/4]` with `p ∤ k`,
+`p ∈ Peven(n) ∩ [5, n/4]` (`realQuadSplits (q_n n) p = true`) with `p ∤ k`,
 `|X(K_∞)_Γ| = |A_m^Γ| = |T_{K_n, p}|` for all `m ≥ v_p(n!)/2 - 1`,
 `λ_p(K_n) + ν_p(K_n) ≥ v_p(n!)/2 - 1 ≥ 1`, and `n_0^(r) > r + 1 → λ_p(K_n) ≥ 1`. -/
 theorem thm_1_2_part2_split_primes {n m p X₁ Y₁ k : ℕ}
     (hm : Nat.factorial n + 1 = m ^ 2)
     (hp : p.Prime) (hp5 : 5 ≤ p) (hp_quarter : p ≤ n / 4)
     (hp_even : p ∈ Peven n)
-    (h_splits : (canonicalRealQuadIwasawa (q_n n) p).splits = true)
+    (h_splits : realQuadSplits (q_n n) p = true)
     (hfund : IsFundamentalPell (q_n n) X₁ Y₁)
     (hk_eq : (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ k)
     (hpk : ¬ p ∣ k) :
     let inv := canonicalRealQuadIwasawa (q_n n) p
-    2 ≤ inv.v_reg ∧
+    2 ≤ realQuadPadicRegVal (q_n n) p ∧
     (∀ m' : ℕ, padicValNat p (Nat.factorial n) / 2 - 1 ≤ m' →
       inv.v_X_Gamma = inv.v_T ∧ inv.v_A_m_Gamma m' = inv.v_T) ∧
     1 ≤ inv.lambda_p + inv.nu_p ∧
@@ -353,12 +372,12 @@ theorem thm_1_2_part2_split_primes {n m p X₁ Y₁ k : ℕ}
     ((∀ r : ℕ, r + 1 < inv.n0_r r) → 1 ≤ inv.lambda_p) := by
   dsimp only
   have hp_half : p ≤ n / 2 := by omega
-  have h_reg : (canonicalRealQuadIwasawa (q_n n) p).v_reg = padicValNat p (Nat.factorial n) / 2 :=
+  have h_reg : realQuadPadicRegVal (q_n n) p = padicValNat p (Nat.factorial n) / 2 :=
     thm_1_2_eq_3_6_regulator_valuation hm hp hp5 hp_half hfund hk_eq hpk
   have h4p : 4 * p ≤ n := by omega
   have hv4 : 4 ≤ padicValNat p (Nat.factorial n) :=
     le_trans ((Nat.le_div_iff_mul_le hp.pos).mpr h4p) (padicValNat_factorial_ge_div hp (by omega))
-  have hreg_ge2 : 2 ≤ (canonicalRealQuadIwasawa (q_n n) p).v_reg := by omega
+  have hreg_ge2 : 2 ≤ realQuadPadicRegVal (q_n n) p := by omega
   have hp_ndvd_q : ¬ p ∣ q_n n := by
     have hev : padicValNat p (Nat.factorial n) % 2 = 0 := by
       unfold Peven at hp_even
@@ -453,8 +472,7 @@ theorem brocard_small_solutions_lt_116 {n m : ℕ} (hn1 : 1 ≤ n) (hn116 : n < 
 /-- **Theorem 1.2(iii) (Conditional Finiteness for `n ≥ 116`)**:
 For any Brocard–Ramanujan solution `n! + 1 = m^2` with `n ≥ 116`, fundamental Pell unit
 `ε_n = X₁ + Y₁ √q_n`, and Pell index `k` (`m + s_n √q_n = ε_n^k`):
-- (a) `K_n` cannot be `p`-rational at any prime `p ∈ (n/5, n/3]` (with `p ∤ k` derived automatically
-  from `k < 2.5 log n < p`);
+- (a) `K_n` cannot be `p`-rational at any prime `p ∈ (n/5, n/3]`;
 - (b) `X(K_∞)` cannot be trivial at any split prime `p ∈ Peven(n) ∩ [5, n/4]` with `p ∤ k`;
 - (c) `λ_p(K_n) = 0` and `∀ r, r + 1 < n_0^(r)` cannot both hold at any split prime
   `p ∈ Peven(n) ∩ [5, n/4]` with `p ∤ k`. -/
@@ -464,8 +482,8 @@ theorem thm_1_2_part3_conditional_finiteness {n m p X₁ Y₁ k : ℕ}
     (hk_eq : (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ k) :
     let inv := canonicalRealQuadIwasawa (q_n n) p
     ((n : ℝ) / 5 < (p : ℝ) → (p : ℝ) ≤ (n : ℝ) / 3 → inv.is_p_rational = true → False) ∧
-    (5 ≤ p → p ≤ n / 4 → p ∈ Peven n → inv.splits = true → ¬ p ∣ k → inv.X_trivial = true → False) ∧
-    (5 ≤ p → p ≤ n / 4 → p ∈ Peven n → inv.splits = true → ¬ p ∣ k →
+    (5 ≤ p → p ≤ n / 4 → p ∈ Peven n → realQuadSplits (q_n n) p = true → ¬ p ∣ k → inv.X_trivial = true → False) ∧
+    (5 ≤ p → p ≤ n / 4 → p ∈ Peven n → realQuadSplits (q_n n) p = true → ¬ p ∣ k →
       inv.lambda_p = 0 → (∀ r : ℕ, r + 1 < inv.n0_r r) → False) := by
   dsimp only
   refine ⟨?_, ?_, ?_⟩
@@ -556,7 +574,6 @@ theorem thm_1_2_wieferich_congruence {n m p : ℕ}
       ring
     rw [hre, him]
     exact ⟨dvd_mul_of_dvd_right (dvd_pow hp2_sz (by norm_num)) _, dvd_mul_of_dvd_right hp2_sz _⟩
-  -- Since p is odd, p^2 - 1 = 2 * t; by induction on t, u^(2*t) - 1 has both coords divisible by p^2.
   have hp_odd : p % 2 = 1 := by
     have h2 : p ≠ 2 := by omega
     exact Nat.Prime.eq_two_or_odd hp |>.resolve_left h2
@@ -584,15 +601,7 @@ theorem thm_1_2_wieferich_congruence {n m p : ℕ}
   exact hind t
 
 /-- **Theorem 1.2(iii) (Complete Conditional Finiteness over all `n ≥ 1`, Branches (a)–(c))**:
-Combining `brocard_small_solutions_lt_116` with `thm_1_2_part3_conditional_finiteness`, if
-`n! + 1 = m^2` (`n ≥ 1`) and whenever `n ≥ 116` at least one of the manuscript's three single-prime
-hypotheses holds:
-- (a) there exists a **single** prime `p ∈ (n/5, n/3]` such that `K_n` is `p`-rational, OR
-- (b) there exists a **single** split prime `p ∈ Peven(n) ∩ [5, n/4]` with `p ∤ k` such that
-  `X(K_∞)` is trivial, OR
-- (c) there exists a **single** split prime `p ∈ Peven(n) ∩ [5, n/4]` with `p ∤ k` such that
-  `λ_p(K_n) = 0` and `∀ r, r + 1 < n_0^{(r)}(K_n)`,
-then `n ∈ {4, 5, 7}`. -/
+Combining `brocard_small_solutions_lt_116` with `thm_1_2_part3_conditional_finiteness`. -/
 theorem thm_1_2_part3_complete_finiteness {n m X₁ Y₁ k : ℕ}
     (hn1 : 1 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2)
     (hfund : IsFundamentalPell (q_n n) X₁ Y₁)
@@ -601,10 +610,10 @@ theorem thm_1_2_part3_complete_finiteness {n m X₁ Y₁ k : ℕ}
       (∃ p : ℕ, p.Prime ∧ (n : ℝ) / 5 < (p : ℝ) ∧ (p : ℝ) ≤ (n : ℝ) / 3 ∧
         (canonicalRealQuadIwasawa (q_n n) p).is_p_rational = true) ∨
       (∃ p : ℕ, p.Prime ∧ 5 ≤ p ∧ p ≤ n / 4 ∧ p ∈ Peven n ∧
-        (canonicalRealQuadIwasawa (q_n n) p).splits = true ∧ ¬ p ∣ k ∧
+        realQuadSplits (q_n n) p = true ∧ ¬ p ∣ k ∧
         (canonicalRealQuadIwasawa (q_n n) p).X_trivial = true) ∨
       (∃ p : ℕ, p.Prime ∧ 5 ≤ p ∧ p ≤ n / 4 ∧ p ∈ Peven n ∧
-        (canonicalRealQuadIwasawa (q_n n) p).splits = true ∧ ¬ p ∣ k ∧
+        realQuadSplits (q_n n) p = true ∧ ¬ p ∣ k ∧
         (canonicalRealQuadIwasawa (q_n n) p).lambda_p = 0 ∧
         (∀ r : ℕ, r + 1 < (canonicalRealQuadIwasawa (q_n n) p).n0_r r))) :
     n = 4 ∨ n = 5 ∨ n = 7 := by

@@ -8,14 +8,13 @@ import GrasGreenbergBrocard.ChebyshevLucas
 # Lemma 3.1: Fundamental Unit Norm and Growth of `q_n`, `s_n`
 
 Formalizes Section 3.1 (Lemma 3.1(i)–(ii)) of the manuscript:
-- `IsFundamentalPell`: fundamental positive solution `(X₁, Y₁)` to `x^2 - D y^2 = 1`
 - `q_n_has_prime_mod4`: for `n ≥ 3` with `n ≠ 6`, `q_n` has a prime divisor `p ≡ 3 [MOD 4]`
 - `neg_pell_no_int_sol`, `neg_pell_no_rat_sol`: `x^2 - q_n y^2 = -1` has no integer or rational solutions
 - `log_q_n_gt_point4`: `log q_n > 0.4 * n` for `n ≥ 116`
 - `log_fund_pell_gt_point2`: `log ε_n > 0.2 * n` when `log q_n > 0.4 * n`
 - `pell_index_upper_bound`: `1 ≤ k < 2.5 * log n < n / 5` for `n ≥ 116`
 - `log_s_n_sqrt_q_n_asymptotic`, `log_s_n_asymptotic`: Lemma 3.1(ii) asymptotics
-- `log_q_n_gt_point4_ge8`, `log_fund_pell_gt_point2_ge8`, `pell_index_upper_bound_ge8`: complete `n ≥ 8` Lemma 3.1(i) bounds
+- `exists_unique_fundamentalPell`, `exists_unique_pell_index`: existence & uniqueness (Defect D6(a))
 -/
 
 noncomputable section
@@ -23,15 +22,6 @@ noncomputable section
 open Real Finset BigOperators Asymptotics Filter
 
 namespace GrasGreenbergBrocard
-
-/-- `(X₁, Y₁)` is the fundamental positive solution to `x^2 - D * y^2 = 1`. -/
-def IsFundamentalPell (D X₁ Y₁ : ℕ) : Prop :=
-  0 < X₁ ∧ 0 < Y₁ ∧ X₁ ^ 2 = D * Y₁ ^ 2 + 1 ∧
-    ∀ x y : ℕ, 0 < y → x ^ 2 = D * y ^ 2 + 1 → Y₁ ≤ y
-
-/-- Fundamental Pell value `ε_D = X₁ + Y₁ √D`. -/
-def pellUnit (D X₁ Y₁ : ℕ) : ℝ :=
-  (X₁ : ℝ) + (Y₁ : ℝ) * Real.sqrt (D : ℝ)
 
 lemma pellUnit_gt_two_sqrt {D X₁ Y₁ : ℕ} (hD : 1 ≤ D) (hfund : IsFundamentalPell D X₁ Y₁) :
     2 * Real.sqrt (D : ℝ) < pellUnit D X₁ Y₁ := by
@@ -181,7 +171,6 @@ theorem neg_pell_no_rat_sol {n : ℕ} (hn : 3 ≤ n) (hn6 : n ≠ 6) (x y : ℚ)
     simpa [sq] using this
   haveI : Fact p.Prime := ⟨hp⟩
   intro hxy
-  -- Clear denominators: `x = a / d`, `y = b / d` with `d ≥ 1`
   let d : ℕ := x.den * y.den
   have hd_pos : 0 < d := Nat.mul_pos x.pos y.pos
   let a : ℤ := x.num * (y.den : ℤ)
@@ -207,7 +196,6 @@ theorem neg_pell_no_rat_sol {n : ℕ} (hn : 3 ≤ n) (hn6 : n ≠ 6) (x y : ℚ)
       field_simp [hd_q] at hxy
       linarith
     exact_mod_cast hq_rat
-  -- Strong induction on `d`
   suffices h : ∀ d0 : ℕ, 0 < d0 → ∀ a0 b0 : ℤ, a0 ^ 2 + (d0 : ℤ) ^ 2 ≠ (q_n n : ℤ) * b0 ^ 2 from
     h d hd_pos a b hint
   intro d0
@@ -330,7 +318,6 @@ private lemma twelve_point_five_log_lt {n : ℕ} (hn : 116 ≤ n) :
     (12.5 : ℝ) * Real.log (n : ℝ) < (n : ℝ) := by
   have hn_pos : (0 : ℝ) < (n : ℝ) := by positivity
   have hn_ge : (116 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
-  -- `log(n / 20) ≤ n / 20 - 1`, and `log 20 < 3` since `20 < e^3`
   have hlog_div : Real.log ((n : ℝ) / 20) ≤ (n : ℝ) / 20 - 1 :=
     Real.log_le_sub_one_of_pos (by positivity)
   have hlog20 : Real.log 20 < 3 := by
@@ -599,259 +586,164 @@ theorem log_s_n_asymptotic :
   rw [Real.log_mul hs_pos.ne' (by positivity), Real.sqrt_eq_rpow, Real.log_rpow hq_pos]
   ring
 
-/-!
-### Finite-range completion of Lemma 3.1(i) (`8 ≤ n < 116`)
 
-Pure kernel-verified lower bounds (pure kernel `decide`, `0` new axioms) completing Lemma 3.1(i)
-from `n ≥ 116` down to all `n ≥ 8`:
-- `log_q_n_gt_point4_ge8`: `0.4 * n < log (q_n n)` for all `n ≥ 8`, `n ∉ {10, 11, 28}`
-- `log_fund_pell_gt_point2_ge8`: `0.2 * n < log ε_n` for all `n ≥ 8`
-- `pell_index_upper_bound_ge8`: `1 ≤ k < 2.5 * log n` for all `n ≥ 8`
--/
+/-! ### Existence and Uniqueness of Fundamental Pell Solution & Pell Index (Defect D6(a)) -/
 
-private def primes115 : List ℕ :=
-  [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47,
-   53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113]
+/-- For every `n ≥ 3` with `n ≠ 6`, `q_n` is not a square in `ℤ` (since it is squarefree and
+has a prime divisor `p ≡ 3 [MOD 4]`). -/
+theorem q_n_not_isSquare {n : ℕ} (hn : 3 ≤ n) (hn6 : n ≠ 6) : ¬ IsSquare (q_n n : ℤ) := by
+  rintro ⟨r, hr⟩
+  obtain ⟨p, hp, hpq, _⟩ := q_n_has_prime_mod4 hn hn6
+  have hr_nat : q_n n = r.natAbs ^ 2 := by
+    zify
+    rw [sq, Int.natAbs_mul_self']
+    exact hr
+  have hp_r : p ∣ r.natAbs := hp.dvd_of_dvd_pow (hr_nat ▸ hpq)
+  have hp2 : p * p ∣ q_n n := by
+    rw [hr_nat, sq]
+    exact mul_dvd_mul hp_r hp_r
+  exact hp.ne_one (Nat.isUnit_iff.mp (q_n_squarefree n p hp2))
 
-private def legendreSum6 (n p : ℕ) : ℕ :=
-  n / p + n / p ^ 2 + n / p ^ 3 + n / p ^ 4 + n / p ^ 5 + n / p ^ 6
+/-- **Existence and Uniqueness of the Fundamental Pell Solution** (pure Mathlib via
+`Pell.exists_of_not_isSquare` + `q_n_squarefree`): for every `n ≥ 3` with `n ≠ 6`, there exists
+a unique pair `(X₁, Y₁) : ℕ × ℕ` satisfying `IsFundamentalPell (q_n n) X₁ Y₁`. -/
+theorem exists_unique_fundamentalPell {n : ℕ} (hn : 3 ≤ n) (hn6 : n ≠ 6) :
+    ∃! p : ℕ × ℕ, IsFundamentalPell (q_n n) p.1 p.2 := by
+  have hq_ge2 : 2 ≤ q_n n := by
+    obtain ⟨p, hp, hpq, _⟩ := q_n_has_prime_mod4 hn hn6
+    have hq_pos : 0 < q_n n := by
+      unfold q_n
+      exact Finset.prod_pos (fun q hq => (Finset.mem_filter.mp hq).2.1.pos)
+    exact le_trans hp.two_le (Nat.le_of_dvd hq_pos hpq)
+  exact exists_unique_fundamentalPell_of_not_isSquare hq_ge2 (q_n_not_isSquare hn hn6)
 
-private def q_n_lb (n : ℕ) : ℕ :=
-  (primes115.filter (fun p => decide (p ≤ n ∧ legendreSum6 n p % 2 = 1))).prod
+private lemma zsqrtd_real_embed_pow (D : ℕ) (X₁ Y₁ : ℕ) (k : ℕ) :
+    ((((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (D : ℤ)) ^ k).re : ℝ) +
+     (((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (D : ℤ)) ^ k).im : ℝ) * Real.sqrt (D : ℝ)) =
+      (pellUnit D X₁ Y₁) ^ k := by
+  induction k with
+  | zero => simp [pellUnit]
+  | succ k ih =>
+    rw [pow_succ, pow_succ, ← ih]
+    set u : Zsqrtd (D : ℤ) := (⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (D : ℤ)) ^ k
+    have hre : (u * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).re = u.re * (X₁ : ℤ) + (D : ℤ) * u.im * (Y₁ : ℤ) := by
+      ring_nf; rfl
+    have him : (u * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).im = u.re * (Y₁ : ℤ) + u.im * (X₁ : ℤ) := by
+      ring_nf; rfl
+    rw [hre, him]
+    push_cast
+    unfold pellUnit
+    have hsq : Real.sqrt (D : ℝ) * Real.sqrt (D : ℝ) = (D : ℝ) := Real.mul_self_sqrt (by positivity)
+    nlinarith [hsq]
 
-private lemma primes115_prime : ∀ p ∈ primes115, p.Prime := by decide
+private lemma pell_positive_sol_is_pow {D X₁ Y₁ : ℕ} (hD : 1 ≤ D)
+    (hfund : IsFundamentalPell D X₁ Y₁) :
+    ∀ y x : ℕ, 0 < y → x ^ 2 = D * y ^ 2 + 1 →
+      ∃ k : ℕ, 1 ≤ k ∧ (⟨(x : ℤ), (y : ℤ)⟩ : Zsqrtd (D : ℤ)) =
+        (⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (D : ℤ)) ^ k := by
+  intro y
+  induction y using Nat.strong_induction_on with
+  | h y ih =>
+    intro x hy hxy
+    have hX1_pos := hfund.1
+    have hY1_pos := hfund.2.1
+    have hEq1 := hfund.2.2.1
+    have hY_le : Y₁ ≤ y := hfund.2.2.2 x y hy hxy
+    have hx_pos : 0 < x := by
+      by_contra h0; have : x = 0 := by omega; rw [this] at hxy; nlinarith
+    have hX1_gt1 : 1 < X₁ := by nlinarith [hEq1, hD, hY1_pos]
+    set x' : ℤ := (x : ℤ) * (X₁ : ℤ) - (D : ℤ) * (y : ℤ) * (Y₁ : ℤ)
+    set y' : ℤ := (y : ℤ) * (X₁ : ℤ) - (x : ℤ) * (Y₁ : ℤ)
+    have hEq_z : (x : ℤ) ^ 2 = (D : ℤ) * (y : ℤ) ^ 2 + 1 := by exact_mod_cast hxy
+    have hEq1_z : (X₁ : ℤ) ^ 2 = (D : ℤ) * (Y₁ : ℤ) ^ 2 + 1 := by exact_mod_cast hEq1
+    have hx'_pos : 0 < x' := by
+      have hsq_diff : ((x : ℤ) * (X₁ : ℤ)) ^ 2 - ((D : ℤ) * (y : ℤ) * (Y₁ : ℤ)) ^ 2 =
+          (D : ℤ) * ((y : ℤ) ^ 2 + (Y₁ : ℤ) ^ 2) + 1 := by nlinarith [hEq_z, hEq1_z]
+      have hD_z : (0 : ℤ) < (D : ℤ) := by exact_mod_cast hD
+      have hgt : ((D : ℤ) * (y : ℤ) * (Y₁ : ℤ)) ^ 2 < ((x : ℤ) * (X₁ : ℤ)) ^ 2 := by nlinarith
+      have hlt : (D : ℤ) * (y : ℤ) * (Y₁ : ℤ) < (x : ℤ) * (X₁ : ℤ) := by nlinarith
+      dsimp only [x']; linarith
+    have hy'_nn : 0 ≤ y' := by
+      have hsq_diff : ((y : ℤ) * (X₁ : ℤ)) ^ 2 - ((x : ℤ) * (Y₁ : ℤ)) ^ 2 =
+          (y : ℤ) ^ 2 - (Y₁ : ℤ) ^ 2 := by nlinarith [hEq_z, hEq1_z]
+      have hY_z : (Y₁ : ℤ) ≤ (y : ℤ) := by exact_mod_cast hY_le
+      have hge : ((x : ℤ) * (Y₁ : ℤ)) ^ 2 ≤ ((y : ℤ) * (X₁ : ℤ)) ^ 2 := by nlinarith
+      have hle : (x : ℤ) * (Y₁ : ℤ) ≤ (y : ℤ) * (X₁ : ℤ) := by nlinarith
+      dsimp only [y']; linarith
+    have hy'_lt : y' < (y : ℤ) := by
+      have hsq_diff : ((x : ℤ) * (Y₁ : ℤ)) ^ 2 - ((y : ℤ) * ((X₁ : ℤ) - 1)) ^ 2 =
+          (Y₁ : ℤ) ^ 2 + 2 * (y : ℤ) ^ 2 * ((X₁ : ℤ) - 1) := by nlinarith [hEq_z, hEq1_z]
+      have hX1_z : (1 : ℤ) < (X₁ : ℤ) := by exact_mod_cast hX1_gt1
+      have hY1_z : (0 : ℤ) < (Y₁ : ℤ) := by exact_mod_cast hY1_pos
+      have hgt : ((y : ℤ) * ((X₁ : ℤ) - 1)) ^ 2 < ((x : ℤ) * (Y₁ : ℤ)) ^ 2 := by nlinarith
+      have hlt : (y : ℤ) * ((X₁ : ℤ) - 1) < (x : ℤ) * (Y₁ : ℤ) := by nlinarith
+      dsimp only [y']; linarith
+    have hnorm' : x' ^ 2 = (D : ℤ) * y' ^ 2 + 1 := by
+      dsimp only [x', y']; nlinarith [hEq_z, hEq1_z]
+    have hstep : (⟨(x : ℤ), (y : ℤ)⟩ : Zsqrtd (D : ℤ)) =
+        (⟨x', y'⟩ : Zsqrtd (D : ℤ)) * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ := by
+      ext
+      · change (x : ℤ) = x' * (X₁ : ℤ) + (D : ℤ) * y' * (Y₁ : ℤ)
+        dsimp only [x', y']; nlinarith [hEq1_z]
+      · change (y : ℤ) = x' * (Y₁ : ℤ) + y' * (X₁ : ℤ)
+        dsimp only [x', y']; nlinarith [hEq1_z]
+    by_cases hy0 : y' = 0
+    · have hx1 : x' = 1 := by rw [hy0] at hnorm'; nlinarith [hx'_pos]
+      refine ⟨1, le_rfl, ?_⟩
+      rw [hstep, hx1, hy0, pow_one]
+      ext <;> simp
+    · have hy'_pos : 0 < y'.toNat := by omega
+      have hy'_lt_nat : y'.toNat < y := by omega
+      have hEq'_nat : x'.toNat ^ 2 = D * y'.toNat ^ 2 + 1 := by
+        zify
+        rw [Int.toNat_of_nonneg hx'_pos.le, Int.toNat_of_nonneg hy'_nn]
+        exact hnorm'
+      obtain ⟨k', hk'1, hk'_eq⟩ := ih y'.toNat hy'_lt_nat x'.toNat hy'_pos hEq'_nat
+      refine ⟨k' + 1, by omega, ?_⟩
+      rw [hstep, pow_succ]
+      have hcast : (⟨x', y'⟩ : Zsqrtd (D : ℤ)) = ⟨(x'.toNat : ℤ), (y'.toNat : ℤ)⟩ := by
+        ext <;> simp [Int.toNat_of_nonneg hx'_pos.le, Int.toNat_of_nonneg hy'_nn]
+      rw [hcast, hk'_eq]
 
-private lemma primes115_nodup : primes115.Nodup := by decide
-
-private lemma padicValNat_factorial_eq_legendreSum6 {n p : ℕ} (hn : n < 116) (hp : p.Prime) :
-    padicValNat p (Nat.factorial n) = legendreSum6 n p := by
-  haveI : Fact p.Prime := ⟨hp⟩
-  have hlt : n < p ^ 7 := by
-    have hp2 : 2 ≤ p := hp.two_le
-    have : 2 ^ 7 ≤ p ^ 7 := Nat.pow_le_pow_left hp2 7
-    omega
-  have hlog : Nat.log p n < 7 := by
-    by_cases hn0 : n = 0
-    · subst hn0; simp
-    · exact (Nat.log_lt_iff_lt_pow hp.one_lt hn0).mpr hlt
-  rw [padicValNat_factorial hlog]
-  unfold legendreSum6
-  rw [show Finset.Ico 1 7 = {1, 2, 3, 4, 5, 6} by decide]
-  simp [Finset.sum_insert, pow_one]
-  ring
-
-private lemma list_prod_le_finset_prod {L : List ℕ} {S : Finset ℕ}
-    (hnd : L.Nodup) (hsub : ∀ x ∈ L, x ∈ S) (hpos : ∀ x ∈ S, 1 ≤ x) :
-    L.prod ≤ ∏ x ∈ S, x := by
-  induction L generalizing S with
-  | nil =>
-    simp only [List.prod_nil]
-    exact Finset.one_le_prod' (fun x hx => hpos x hx)
-  | cons a t ih =>
-    rw [List.nodup_cons] at hnd
-    have ha : a ∈ S := hsub a List.mem_cons_self
-    have hsub' : ∀ x ∈ t, x ∈ S.erase a := fun x hx =>
-      Finset.mem_erase.mpr ⟨fun h => hnd.1 (h ▸ hx), hsub x (List.mem_cons_of_mem a hx)⟩
-    have hpos' : ∀ x ∈ S.erase a, 1 ≤ x := fun x hx => hpos x (Finset.mem_of_mem_erase hx)
-    have ht := ih hnd.2 hsub' hpos'
-    rw [List.prod_cons, ← Finset.mul_prod_erase S (fun x => x) ha]
-    exact Nat.mul_le_mul_left a ht
-
-private lemma q_n_lb_le_q_n {n : ℕ} (hn : n < 116) : q_n_lb n ≤ q_n n := by
-  unfold q_n_lb q_n
-  apply list_prod_le_finset_prod (primes115_nodup.filter _)
-  · intro p hp
-    rw [List.mem_filter] at hp
-    have hp_pr : p.Prime := primes115_prime p hp.1
-    have hp_cond : p ≤ n ∧ legendreSum6 n p % 2 = 1 := of_decide_eq_true hp.2
-    refine Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp_pr.two_le, hp_cond.1⟩, hp_pr, ?_⟩
-    rw [padicValNat_factorial_eq_legendreSum6 hn hp_pr]
-    omega
-  · intro p hp
-    exact (Finset.mem_filter.mp hp).2.1.one_lt.le
-
-set_option maxRecDepth 8000 in
-private lemma q_n_lb_gt_three_halves :
-    (List.range 116).all (fun n =>
-      decide (n < 8 ∨ n = 10 ∨ n = 11 ∨ n = 28) ||
-      decide (3 ^ n < 2 ^ n * q_n_lb n)) = true := by
-  decide
-
-private lemma log_three_halves_gt_point4 : (0.4 : ℝ) < Real.log (3 / 2 : ℝ) := by
-  have he1 : Real.exp 1 < (2.72 : ℝ) := by
-    have := Real.exp_one_lt_d9
+/-- **Existence and Uniqueness of the Pell Index `k ≥ 1`** (pure Mathlib):
+For every Brocard solution `n! + 1 = m^2` (`n ≥ 3, n ≠ 6`) and fundamental Pell solution
+`(X₁, Y₁)` of `q_n`, there exists a unique `k ≥ 1` such that
+`m + s_n √q_n = (X₁ + Y₁ √q_n)^k` and `s_n = Y₁ * U_{k-1}(X₁)`. -/
+theorem exists_unique_pell_index {n m X₁ Y₁ : ℕ} (hn : 3 ≤ n) (hn6 : n ≠ 6)
+    (hm : Nat.factorial n + 1 = m ^ 2) (hfund : IsFundamentalPell (q_n n) X₁ Y₁) :
+    ∃! k : ℕ, 1 ≤ k ∧
+      (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ k ∧
+      (s_n n : ℤ) = (Y₁ : ℤ) * chebyshevU_eval (q_n n : ℤ) (X₁ : ℤ) (Y₁ : ℤ) k := by
+  have hq_pos : 1 ≤ q_n n := by
+    unfold q_n
+    exact Finset.prod_pos (fun q hq => (Finset.mem_filter.mp hq).2.1.pos)
+  have hs_pos : 0 < s_n n := by
+    unfold s_n
+    exact Finset.prod_pos (fun q hq => pow_pos (Finset.mem_filter.mp hq).2.pos _)
+  have hms : m ^ 2 = q_n n * (s_n n) ^ 2 + 1 := by
+    rw [← hm, factorial_eq_q_n_mul_s_n_sq n]
+  obtain ⟨k, hk1, hk_eq⟩ := pell_positive_sol_is_pow hq_pos hfund (s_n n) m hs_pos hms
+  have hreal : (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ k := by
+    have hre := congrArg Zsqrtd.re hk_eq
+    have him := congrArg Zsqrtd.im hk_eq
+    have hre_r : (((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q_n n : ℤ)) ^ k).re : ℝ) = (m : ℝ) := by
+      exact_mod_cast hre.symm
+    have him_r : (((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q_n n : ℤ)) ^ k).im : ℝ) = (s_n n : ℝ) := by
+      exact_mod_cast him.symm
+    rw [← hre_r, ← him_r, zsqrtd_real_embed_pow]
+  have hcheb : (s_n n : ℤ) = (Y₁ : ℤ) * chebyshevU_eval (q_n n : ℤ) (X₁ : ℤ) (Y₁ : ℤ) k := by
+    have him := congrArg Zsqrtd.im hk_eq
+    change (s_n n : ℤ) = lucasY (q_n n : ℤ) (X₁ : ℤ) (Y₁ : ℤ) k at him
+    rw [him, lucasY_eq_mul_chebyshevU]
+  refine ⟨k, ⟨hk1, hreal, hcheb⟩, ?_⟩
+  rintro k' ⟨_, hreal', _⟩
+  have hgt1 : 1 < pellUnit (q_n n) X₁ Y₁ := by
+    have h2s := pellUnit_gt_two_sqrt hq_pos hfund
+    have h1 : (1 : ℝ) ≤ Real.sqrt (q_n n : ℝ) := by
+      rw [← Real.sqrt_one]; exact Real.sqrt_le_sqrt (by exact_mod_cast hq_pos)
     linarith
-  have he2 : Real.exp 2 < (3 / 2 : ℝ) ^ 5 := by
-    have h1 : Real.exp 2 = (Real.exp 1) ^ 2 := by
-      rw [← Real.exp_nat_mul]; norm_num
-    rw [h1]
-    have h2 : (Real.exp 1) ^ 2 < (2.72 : ℝ) ^ 2 :=
-      pow_lt_pow_left₀ he1 (Real.exp_pos 1).le (by norm_num)
-    norm_num at h2 ⊢
-    linarith
-  have hlog := Real.log_lt_log (Real.exp_pos 2) he2
-  rw [Real.log_exp, Real.log_pow] at hlog
-  norm_num at hlog
-  linarith
-
-/-- **Lemma 3.1(i), complete `n ≥ 8` lower bound on `log q_n`**:
-For every `n ≥ 8` with `n ∉ {10, 11, 28}`, `0.4 * n < log (q_n n)`. -/
-theorem log_q_n_gt_point4_ge8 {n : ℕ} (hn : 8 ≤ n)
-    (h10 : n ≠ 10) (h11 : n ≠ 11) (h28 : n ≠ 28) :
-    0.4 * (n : ℝ) < Real.log (q_n n : ℝ) := by
-  by_cases hn116 : 116 ≤ n
-  · exact log_q_n_gt_point4 hn116
-  · have hlt116 : n < 116 := by omega
-    have hall := List.all_eq_true.mp q_n_lb_gt_three_halves n (List.mem_range.mpr hlt116)
-    have hnot_exc : decide (n < 8 ∨ n = 10 ∨ n = 11 ∨ n = 28) = false := by
-      simp only [decide_eq_false_iff_not]; omega
-    rw [hnot_exc, Bool.false_or] at hall
-    have hnat : 3 ^ n < 2 ^ n * q_n_lb n := of_decide_eq_true hall
-    have hnat_q : 3 ^ n < 2 ^ n * q_n n :=
-      lt_of_lt_of_le hnat (Nat.mul_le_mul_left (2 ^ n) (q_n_lb_le_q_n hlt116))
-    have hreal : (3 / 2 : ℝ) ^ n < (q_n n : ℝ) := by
-      have hcast : ((3 : ℝ) ^ n) < (2 : ℝ) ^ n * (q_n n : ℝ) := by exact_mod_cast hnat_q
-      rw [div_pow, div_lt_iff₀ (by positivity)]
-      linarith
-    have hlog := Real.log_lt_log (by positivity : (0 : ℝ) < (3 / 2 : ℝ) ^ n) hreal
-    rw [Real.log_pow] at hlog
-    have h04 := log_three_halves_gt_point4
-    have hn_pos : (0 : ℝ) < (n : ℝ) := by positivity
-    nlinarith
-
-private lemma q_n_ten_eq_seven : q_n 10 = 7 := by
-  have hPodd : Podd 10 = {7} := by
-    ext p
-    simp only [Podd, Finset.mem_filter, Finset.mem_Icc, Finset.mem_singleton]
-    constructor
-    · rintro ⟨⟨hp2, hp10⟩, hp_pr, hodd⟩
-      rw [padicValNat_factorial_eq_legendreSum6 (by norm_num) hp_pr] at hodd
-      interval_cases p
-      all_goals first | rfl | exact absurd hp_pr (by decide) | exact absurd (by decide) hodd
-    · rintro rfl
-      refine ⟨⟨by norm_num, by norm_num⟩, by norm_num, ?_⟩
-      rw [padicValNat_factorial_eq_legendreSum6 (by norm_num) (by norm_num)]
-      norm_num [legendreSum6]
-  unfold q_n
-  rw [hPodd, Finset.prod_singleton]
-
-/-- **Lemma 3.1(i), complete `n ≥ 8` lower bound on `log ε_n`**:
-For every `n ≥ 8` (including the three exceptional indices `n ∈ {10, 11, 28}`),
-`0.2 * n < log ε_n`. -/
-theorem log_fund_pell_gt_point2_ge8 {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
-    (hfund : IsFundamentalPell (q_n n) X₁ Y₁) :
-    0.2 * (n : ℝ) < Real.log (pellUnit (q_n n) X₁ Y₁) := by
-  have he1 : Real.exp 1 < (2.72 : ℝ) := by
-    have := Real.exp_one_lt_d9
-    linarith
-  by_cases h10 : n = 10
-  · subst h10
-    have hq7 : q_n 10 = 7 := q_n_ten_eq_seven
-    rw [hq7] at hfund ⊢
-    have hY3 : 3 ≤ Y₁ := by
-      have hY1 : 1 ≤ Y₁ := hfund.2.1
-      have hpell : X₁ ^ 2 = 7 * Y₁ ^ 2 + 1 := hfund.2.2.1
-      by_contra hlt
-      have hcases : Y₁ = 1 ∨ Y₁ = 2 := by omega
-      rcases hcases with rfl | rfl
-      · have : X₁ ^ 2 = 8 := by omega
-        have h2 : X₁ ≤ 2 ∨ 3 ≤ X₁ := by omega
-        rcases h2 with h | h <;> nlinarith
-      · have : X₁ ^ 2 = 29 := by omega
-        have h5 : X₁ ≤ 5 ∨ 6 ≤ X₁ := by omega
-        rcases h5 with h | h <;> nlinarith
-    have hX8 : 8 ≤ X₁ := by
-      have hpell : X₁ ^ 2 = 7 * Y₁ ^ 2 + 1 := hfund.2.2.1
-      nlinarith
-    have hsqrt2 : (2 : ℝ) ≤ Real.sqrt (7 : ℝ) := by
-      rw [← Real.sqrt_sq (by norm_num : (0 : ℝ) ≤ 2)]
-      exact Real.sqrt_le_sqrt (by norm_num)
-    have heps14 : (14 : ℝ) ≤ pellUnit 7 X₁ Y₁ := by
-      unfold pellUnit
-      push_cast
-      have hXr : (8 : ℝ) ≤ (X₁ : ℝ) := by exact_mod_cast hX8
-      have hYr : (3 : ℝ) ≤ (Y₁ : ℝ) := by exact_mod_cast hY3
-      nlinarith
-    have hexp2 : Real.exp (0.2 * (10 : ℝ)) < (14 : ℝ) := by
-      have h1 : Real.exp (0.2 * (10 : ℝ)) = (Real.exp 1) ^ 2 := by
-        rw [← Real.exp_nat_mul]; norm_num
-      rw [h1]
-      have h2 : (Real.exp 1) ^ 2 < (2.72 : ℝ) ^ 2 :=
-        pow_lt_pow_left₀ he1 (Real.exp_pos 1).le (by norm_num)
-      norm_num at h2 ⊢
-      linarith
-    have hlog := Real.log_lt_log (Real.exp_pos _) (lt_of_lt_of_le hexp2 heps14)
-    rwa [Real.log_exp] at hlog
-  · by_cases h11 : n = 11
-    · subst h11
-      have hq77 : 77 ≤ q_n 11 := by
-        have hlb : q_n_lb 11 = 77 := by decide
-        rw [← hlb]
-        exact q_n_lb_le_q_n (by norm_num)
-      have hsqrt8 : (8 : ℝ) ≤ Real.sqrt (q_n 11 : ℝ) := by
-        rw [← Real.sqrt_sq (by norm_num : (0 : ℝ) ≤ 8)]
-        exact Real.sqrt_le_sqrt (by exact_mod_cast (by omega : 64 ≤ q_n 11))
-      have heps16 : (16 : ℝ) < pellUnit (q_n 11) X₁ Y₁ := by
-        have hgt := pellUnit_gt_two_sqrt (by omega : 1 ≤ q_n 11) hfund
-        linarith
-      have hexp11 : Real.exp 11 < (16 : ℝ) ^ 5 := by
-        have h1 : Real.exp 11 = (Real.exp 1) ^ 11 := by
-          rw [← Real.exp_nat_mul]; norm_num
-        rw [h1]
-        have h2 : (Real.exp 1) ^ 11 < (2.72 : ℝ) ^ 11 :=
-          pow_lt_pow_left₀ he1 (Real.exp_pos 1).le (by norm_num)
-        norm_num at h2 ⊢
-        linarith
-      have hlog5 : (11 : ℝ) < 5 * Real.log (pellUnit (q_n 11) X₁ Y₁) := by
-        have hpow : Real.exp 11 < (pellUnit (q_n 11) X₁ Y₁) ^ 5 :=
-          lt_trans hexp11 (pow_lt_pow_left₀ heps16 (by norm_num) (by norm_num))
-        have hlog := Real.log_lt_log (Real.exp_pos 11) hpow
-        rw [Real.log_exp, Real.log_pow] at hlog
-        norm_num at hlog
-        exact hlog
-      norm_num at hlog5 ⊢
-      linarith
-    · by_cases h28 : n = 28
-      · subst h28
-        have hq44574 : 44574 ≤ q_n 28 := by
-          have hlb : q_n_lb 28 = 44574 := by decide
-          rw [← hlb]
-          exact q_n_lb_le_q_n (by norm_num)
-        have hsqrt211 : (211 : ℝ) ≤ Real.sqrt (q_n 28 : ℝ) := by
-          rw [← Real.sqrt_sq (by norm_num : (0 : ℝ) ≤ 211)]
-          exact Real.sqrt_le_sqrt (by exact_mod_cast (by omega : 44521 ≤ q_n 28))
-        have heps422 : (422 : ℝ) < pellUnit (q_n 28) X₁ Y₁ := by
-          have hgt := pellUnit_gt_two_sqrt (by omega : 1 ≤ q_n 28) hfund
-          linarith
-        have hexp28 : Real.exp 28 < (422 : ℝ) ^ 5 := by
-          have h1 : Real.exp 28 = (Real.exp 1) ^ 28 := by
-            rw [← Real.exp_nat_mul]; norm_num
-          rw [h1]
-          have h2 : (Real.exp 1) ^ 28 < (2.72 : ℝ) ^ 28 :=
-            pow_lt_pow_left₀ he1 (Real.exp_pos 1).le (by norm_num)
-          norm_num at h2 ⊢
-          linarith
-        have hlog5 : (28 : ℝ) < 5 * Real.log (pellUnit (q_n 28) X₁ Y₁) := by
-          have hpow : Real.exp 28 < (pellUnit (q_n 28) X₁ Y₁) ^ 5 :=
-            lt_trans hexp28 (pow_lt_pow_left₀ heps422 (by norm_num) (by norm_num))
-          have hlog := Real.log_lt_log (Real.exp_pos 28) hpow
-          rw [Real.log_exp, Real.log_pow] at hlog
-          norm_num at hlog
-          exact hlog
-        norm_num at hlog5 ⊢
-        linarith
-      · exact log_fund_pell_gt_point2 (log_q_n_gt_point4_ge8 hn h10 h11 h28) hfund
-
-/-- **Lemma 3.1(i), complete `n ≥ 8` Pell index bound**:
-For every `n ≥ 8`, if `n! + 1 = m^2` and `m + s_n √q_n = ε_n^k`, then `1 ≤ k < 2.5 * log n`,
-and for `n ≥ 116`, `2.5 * log n < n / 5`. -/
-theorem pell_index_upper_bound_ge8 {n m k X₁ Y₁ : ℕ} (hn : 8 ≤ n)
-    (hm : Nat.factorial n + 1 = m ^ 2)
-    (hfund : IsFundamentalPell (q_n n) X₁ Y₁)
-    (hk_eq : (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) =
-      (pellUnit (q_n n) X₁ Y₁) ^ k) :
-    1 ≤ k ∧ (k : ℝ) < 2.5 * Real.log (n : ℝ) ∧
-      (116 ≤ n → (2.5 : ℝ) * Real.log (n : ℝ) < (n : ℝ) / 5) :=
-  pell_index_upper_bound hn hm hfund (log_fund_pell_gt_point2_ge8 hn hfund) hk_eq
+  have hpow_eq : (pellUnit (q_n n) X₁ Y₁) ^ k' = (pellUnit (q_n n) X₁ Y₁) ^ k :=
+    hreal'.symm.trans hreal
+  exact StrictMono.injective (pow_right_strictMono₀ hgt1) hpow_eq
 
 end GrasGreenbergBrocard
