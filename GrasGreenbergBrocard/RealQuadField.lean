@@ -13,7 +13,7 @@ group `Cl^+(K)`, and its 4-rank `𝔽₂`-vector space `Cl^+(K)[2] ∩ 2 Cl^+(K)
 - `NarrowClassGroup q`: concrete quotient of invertible fractional ideals of `𝒪_{RealQuadK q}` by
   totally positive principal ideals `(γ)` with `N_{K/ℚ}(γ) > 0`.
 - `narrowToOrdinary q`: canonical surjective homomorphism `NarrowClassGroup q →* ClassGroup 𝒪_K`.
-- `Cl4RankSubspace q` & `Cl4RankVec q`: concrete `𝔽₂`-vector space `Cl^+(K)[2] ∩ 2 Cl^+(K)`.
+- `Cl4RankSubgroup q` & `Cl4RankVec q`: concrete `𝔽₂`-vector space `Cl^+(K)[2] ∩ 2 Cl^+(K)`.
 -/
 
 noncomputable section
@@ -94,7 +94,7 @@ instance realQuadK_finiteDimensional (q : ℕ) [Fact (¬ IsSquare (q : ℚ))] :
 
 instance realQuadK_charZero (q : ℕ) [Fact (¬ IsSquare (q : ℚ))] :
     CharZero (RealQuadK q) :=
-  RingHom.charZero (algebraMap ℚ (RealQuadK q))
+  charZero_of_injective_algebraMap (algebraMap ℚ (RealQuadK q)).injective
 
 instance realQuadK_numberField (q : ℕ) [Fact (¬ IsSquare (q : ℚ))] :
     NumberField (RealQuadK q) :=
@@ -110,10 +110,12 @@ def realQuadClassNumber (q : ℕ) : ℕ :=
 
 lemma realQuadClassNumber_pos (q : ℕ) : 0 < realQuadClassNumber q := by
   unfold realQuadClassNumber
-  split_ifs with h
-  · haveI : Fact (¬ IsSquare (q : ℚ)) := ⟨h⟩
+  by_cases h : ¬ IsSquare (q : ℚ)
+  · rw [dif_pos h]
+    haveI : Fact (¬ IsSquare (q : ℚ)) := ⟨h⟩
     exact NumberField.classNumber_pos (RealQuadK q)
-  · norm_num
+  · rw [dif_neg h]
+    norm_num
 
 /-- Helper: a squarefree natural `q ≥ 2` is not a square in `ℚ`. -/
 lemma not_isSquare_rat_of_squarefree {q : ℕ} (hq2 : 2 ≤ q) (hsqf : Squarefree q) :
@@ -121,9 +123,12 @@ lemma not_isSquare_rat_of_squarefree {q : ℕ} (hq2 : 2 ≤ q) (hsqf : Squarefre
   rintro ⟨r, hr⟩
   have hq_eq : (q : ℚ) = r ^ 2 := by rw [sq]; exact hr
   have hnum : (q : ℤ) * (r.den : ℤ) ^ 2 = r.num ^ 2 := by
-    have h1 : ((q : ℚ) * (r.den : ℚ) ^ 2) = (r.num : ℚ) ^ 2 := by
-      rw [hq_eq, ← Rat.num_div_den r, div_pow, div_mul_cancel₀]
-      exact pow_ne_zero 2 (Nat.cast_ne_zero.mpr r.den_pos.ne')
+    have hden_ne : (r.den : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr r.den_pos.ne'
+    have h1 : (q : ℚ) * (r.den : ℚ) ^ 2 = (r.num : ℚ) ^ 2 := by
+      calc (q : ℚ) * (r.den : ℚ) ^ 2
+          = r ^ 2 * (r.den : ℚ) ^ 2 := by rw [hq_eq]
+        _ = ((r.num : ℚ) / (r.den : ℚ)) ^ 2 * (r.den : ℚ) ^ 2 := by rw [Rat.num_div_den r]
+        _ = (r.num : ℚ) ^ 2 := by field_simp [hden_ne]
     exact_mod_cast h1
   have hnat : q * r.den ^ 2 = r.num.natAbs ^ 2 := by
     have := congrArg Int.natAbs hnum
@@ -154,8 +159,10 @@ def totallyPositiveUnits (q : ℕ) [Fact (¬ IsSquare (q : ℚ))] : Subgroup (Re
     exact mul_pos ha hb
   inv_mem' {a} ha := by
     change 0 < Algebra.norm ℚ ((a⁻¹ : (RealQuadK q)ˣ) : RealQuadK q)
-    rw [Units.val_inv_eq_inv_val, map_inv₀]
-    exact inv_pos.mpr ha
+    have hmul : Algebra.norm ℚ ((a⁻¹ : (RealQuadK q)ˣ) : RealQuadK q) *
+        Algebra.norm ℚ ((a : (RealQuadK q)ˣ) : RealQuadK q) = 1 := by
+      rw [← map_mul, ← Units.val_mul, inv_mul_cancel, Units.val_one, map_one]
+    nlinarith
 
 /-- Subgroup of totally positive principal fractional ideals `(γ)` (`N_{K/ℚ}(γ) > 0`) inside the
 group of invertible fractional ideals of `𝒪_{RealQuadK q}`. -/
@@ -168,29 +175,29 @@ def totallyPositivePrincipalIdeals (q : ℕ) [Fact (¬ IsSquare (q : ℚ))] :
 /-- **Concrete Narrow Class Group `Cl^+(ℚ(√q))`**:
 Quotient of the group of invertible fractional ideals of `𝒪_{RealQuadK q}` by totally positive
 principal fractional ideals `(γ)` with `N_{K/ℚ}(γ) > 0`. -/
-def NarrowClassGroup (q : ℕ) [Fact (¬ IsSquare (q : ℚ))] : Type :=
+abbrev NarrowClassGroup (q : ℕ) [Fact (¬ IsSquare (q : ℚ))] : Type :=
   (FractionalIdeal (nonZeroDivisors (NumberField.RingOfIntegers (RealQuadK q)))
     (RealQuadK q))ˣ ⧸ totallyPositivePrincipalIdeals q
-
-instance (q : ℕ) [Fact (¬ IsSquare (q : ℚ))] : CommGroup (NarrowClassGroup q) :=
-  QuotientGroup.Quotient.commGroup (totallyPositivePrincipalIdeals q)
 
 /-- Canonical surjective homomorphism `Cl^+(ℚ(√q)) →* Cl(ℚ(√q))`. -/
 def narrowToOrdinary (q : ℕ) [Fact (¬ IsSquare (q : ℚ))] :
     NarrowClassGroup q →* ClassGroup (NumberField.RingOfIntegers (RealQuadK q)) :=
-  QuotientGroup.map (totallyPositivePrincipalIdeals q)
-    (toPrincipalIdeal (NumberField.RingOfIntegers (RealQuadK q)) (RealQuadK q)).range
-    (MonoidHom.id _)
-    (by
-      intro x hx
-      rcases hx with ⟨⟨u, _⟩, rfl⟩
-      exact ⟨u, rfl⟩)
+  (ClassGroup.equiv (RealQuadK q)).symm.toMonoidHom.comp
+    (QuotientGroup.map (totallyPositivePrincipalIdeals q)
+      (toPrincipalIdeal (NumberField.RingOfIntegers (RealQuadK q)) (RealQuadK q)).range
+      (MonoidHom.id _)
+      (by
+        intro x hx
+        rcases hx with ⟨⟨u, _⟩, rfl⟩
+        exact ⟨u, rfl⟩))
 
 lemma narrowToOrdinary_surjective (q : ℕ) [Fact (¬ IsSquare (q : ℚ))] :
     Function.Surjective (narrowToOrdinary q) := by
   intro c
-  rcases QuotientGroup.mk_surjective c with ⟨I, rfl⟩
-  exact ⟨QuotientGroup.mk I, rfl⟩
+  rcases QuotientGroup.mk_surjective ((ClassGroup.equiv (RealQuadK q)) c) with ⟨I, hI⟩
+  refine ⟨QuotientGroup.mk I, ?_⟩
+  simp only [narrowToOrdinary, MonoidHom.comp_apply, MulEquiv.toMonoidHom_eq_coe,
+    MonoidHom.coe_coe, QuotientGroup.map_mk, MonoidHom.id_apply, hI, MulEquiv.symm_apply_apply]
 
 /-- The kernel of `narrowToOrdinary q` has cardinality at most 2 (generated by `(-1)` or any
 negative-norm principal ideal), hence is finite. -/
@@ -201,33 +208,40 @@ instance narrowToOrdinary_ker_finite (q : ℕ) [Fact (¬ IsSquare (q : ℚ))] :
     apply Subtype.ext
     rcases QuotientGroup.mk_surjective x with ⟨I, rfl⟩
     rcases QuotientGroup.mk_surjective y with ⟨J, rfl⟩
-    rw [MonoidHom.mem_ker] at hx hy
-    simp only [narrowToOrdinary, QuotientGroup.map_mk, MonoidHom.id_apply] at hx hy
+    have hx' : narrowToOrdinary q (QuotientGroup.mk I) = 1 := MonoidHom.mem_ker.mp hx
+    have hy' : narrowToOrdinary q (QuotientGroup.mk J) = 1 := MonoidHom.mem_ker.mp hy
+    simp only [narrowToOrdinary, MonoidHom.comp_apply, MulEquiv.toMonoidHom_eq_coe,
+      MonoidHom.coe_coe, QuotientGroup.map_mk, MonoidHom.id_apply, map_eq_one_iff] at hx' hy'
     have hI : I ∈ (toPrincipalIdeal (NumberField.RingOfIntegers (RealQuadK q)) (RealQuadK q)).range :=
-      (QuotientGroup.eq_one_iff I).mp hx
+      (QuotientGroup.eq_one_iff I).mp hx'
     have hJ : J ∈ (toPrincipalIdeal (NumberField.RingOfIntegers (RealQuadK q)) (RealQuadK q)).range :=
-      (QuotientGroup.eq_one_iff J).mp hy
+      (QuotientGroup.eq_one_iff J).mp hy'
     rcases hI with ⟨u, hu⟩
     rcases hJ with ⟨v, hv⟩
     have hu_not_pos : ¬ 0 < Algebra.norm ℚ (u : RealQuadK q) := by
       intro hpos
       apply hx1
       apply Subtype.ext
-      exact (QuotientGroup.eq_one_iff _).mpr ⟨⟨u, hpos⟩, hu⟩
+      exact (QuotientGroup.eq_one_iff I).mpr ⟨⟨u, hpos⟩, hu⟩
     have hv_not_pos : ¬ 0 < Algebra.norm ℚ (v : RealQuadK q) := by
       intro hpos
       apply hy1
       apply Subtype.ext
-      exact (QuotientGroup.eq_one_iff _).mpr ⟨⟨v, hpos⟩, hv⟩
+      exact (QuotientGroup.eq_one_iff J).mpr ⟨⟨v, hpos⟩, hv⟩
     have hu_ne : Algebra.norm ℚ (u : RealQuadK q) ≠ 0 :=
       (Algebra.norm_eq_zero_iff).not.mpr u.ne_zero
     have hv_ne : Algebra.norm ℚ (v : RealQuadK q) ≠ 0 :=
       (Algebra.norm_eq_zero_iff).not.mpr v.ne_zero
     have hu_neg : Algebra.norm ℚ (u : RealQuadK q) < 0 := lt_of_le_of_ne (not_lt.mp hu_not_pos) hu_ne
     have hv_neg : Algebra.norm ℚ (v : RealQuadK q) < 0 := lt_of_le_of_ne (not_lt.mp hv_not_pos) hv_ne
+    have hu_inv_neg : Algebra.norm ℚ ((u⁻¹ : (RealQuadK q)ˣ) : RealQuadK q) < 0 := by
+      have hmul : Algebra.norm ℚ ((u⁻¹ : (RealQuadK q)ˣ) : RealQuadK q) *
+          Algebra.norm ℚ ((u : (RealQuadK q)ˣ) : RealQuadK q) = 1 := by
+        rw [← map_mul, ← Units.val_mul, inv_mul_cancel, Units.val_one, map_one]
+      nlinarith
     have huv_pos : 0 < Algebra.norm ℚ ((u⁻¹ * v : (RealQuadK q)ˣ) : RealQuadK q) := by
-      rw [Units.val_mul, Units.val_inv_eq_inv_val, map_mul, map_inv₀]
-      exact mul_pos_of_neg_of_neg (inv_lt_zero.mpr hu_neg) hv_neg
+      rw [Units.val_mul, map_mul]
+      exact mul_pos_of_neg_of_neg hu_inv_neg hv_neg
     rw [QuotientGroup.eq]
     refine ⟨⟨u⁻¹ * v, huv_pos⟩, ?_⟩
     simp only [MonoidHom.comp_apply, Subgroup.coe_subtype, map_mul, map_inv, hu, hv]
@@ -282,19 +296,29 @@ lemma cl4RankVec_two_nsmul {q : ℕ} [Fact (¬ IsSquare (q : ℚ))] (x : Cl4Rank
   have h := (Additive.toMul x).property.1
   simpa [sq] using h
 
+def cl4Smul {q : ℕ} [Fact (¬ IsSquare (q : ℚ))] (a : ZMod 2) (x : Cl4RankVec q) : Cl4RankVec q :=
+  if a = 0 then 0 else x
+
+instance cl4RankVec_smul (q : ℕ) [Fact (¬ IsSquare (q : ℚ))] : SMul (ZMod 2) (Cl4RankVec q) :=
+  ⟨cl4Smul⟩
+
 instance cl4RankVec_module (q : ℕ) [Fact (¬ IsSquare (q : ℚ))] :
     Module (ZMod 2) (Cl4RankVec q) where
-  smul a x := if a = 0 then 0 else x
-  one_smul x := by simp
+  smul := cl4Smul
+  one_smul x := by change cl4Smul 1 x = x; simp [cl4Smul]
   mul_smul a b x := by
-    fin_cases a <;> fin_cases b <;> simp
+    change cl4Smul (a * b) x = cl4Smul a (cl4Smul b x)
+    fin_cases a <;> fin_cases b <;> simp [cl4Smul]
   smul_zero a := by
-    fin_cases a <;> simp
+    change cl4Smul a 0 = 0
+    fin_cases a <;> simp [cl4Smul]
   smul_add a x y := by
-    fin_cases a <;> simp
+    change cl4Smul a (x + y) = cl4Smul a x + cl4Smul a y
+    fin_cases a <;> simp [cl4Smul]
   add_smul a b x := by
-    fin_cases a <;> fin_cases b <;> simp [cl4RankVec_two_nsmul]
-  zero_smul x := by simp
+    change cl4Smul (a + b) x = cl4Smul a x + cl4Smul b x
+    fin_cases a <;> fin_cases b <;> simp [cl4Smul, cl4RankVec_two_nsmul]
+  zero_smul x := by change cl4Smul 0 x = 0; simp [cl4Smul]
 
 instance cl4RankVec_finite (q : ℕ) [Fact (¬ IsSquare (q : ℚ))] :
     Finite (Cl4RankVec q) :=
