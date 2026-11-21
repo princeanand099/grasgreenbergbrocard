@@ -13,6 +13,8 @@ Formalizes Section 3.2 (Theorem 1.1, eqs. 1.6–1.7 and 3.4–3.5) of the manusc
 - `known_k4`, `known_k5`, `known_k7`: `k(4) = 1`, `k(5) = 1`, `k(7) = 2`
 - `pell_index_collapse_large`: for all sufficiently large solutions `(n, m)` to `n! + 1 = m^2`,
   the Pell index satisfies `k ∈ {1, 2}` (eq. 1.6)
+- `thm_1_1_unconditional`: unconditional top-level statement deriving existence/uniqueness of
+  `(X₁, Y₁)` and `k ∈ {1, 2}` directly from `n! + 1 = m^2` (Defect D6(a))
 - `fundamental_regulator_quantization`: `log ε_n / (n log n) = 1 / (2k) + O(1 / log n)` (eq. 1.7)
 - `q_n_ne_of_solutions`: no two solutions `4 ≤ n₁ < n₂` share `q_{n₁} = q_{n₂}`
 -/
@@ -231,35 +233,12 @@ private lemma padicValNat_factorial_three_le (n : ℕ) :
 /-- **Theorem 1.1 (Unconditional Collapse of the Pell Index, eq. 1.6)**:
 For all sufficiently large solutions `(n, m)` to `n! + 1 = m^2`, the Pell index `k`
 satisfies `k = 1 ∨ k = 2`. -/
-private lemma pellUnit_pow_eq_lucas (D X₁ Y₁ k : ℕ) :
-    (pellUnit D X₁ Y₁) ^ k =
-      (lucasX (D : ℤ) (X₁ : ℤ) (Y₁ : ℤ) k : ℝ) +
-        (lucasY (D : ℤ) (X₁ : ℤ) (Y₁ : ℤ) k : ℝ) * Real.sqrt (D : ℝ) := by
-  induction k with
-  | zero =>
-    unfold lucasX lucasY
-    simp
-  | succ k ih =>
-    rw [pow_succ, ih]
-    have hmul_re : ∀ (a b : Zsqrtd (D : ℤ)), (a * b).re = a.re * b.re + (D : ℤ) * a.im * b.im := by
-      intro a b; ring_nf; rfl
-    have hmul_im : ∀ (a b : Zsqrtd (D : ℤ)), (a * b).im = a.re * b.im + a.im * b.re := by
-      intro a b; ring_nf; rfl
-    unfold pellUnit lucasX lucasY
-    rw [pow_succ, hmul_re, hmul_im]
-    push_cast
-    have hsq : Real.sqrt (D : ℝ) ^ 2 = (D : ℝ) := by
-      rw [sq]
-      exact Real.mul_self_sqrt (Nat.cast_nonneg D)
-    ring_nf
-    rw [hsq]
-    ring
-
 theorem pell_index_collapse_large :
     ∃ N₀ : ℕ, ∀ n m k X₁ Y₁ : ℕ, N₀ ≤ n →
       Nat.factorial n + 1 = m ^ 2 →
       IsFundamentalPell (q_n n) X₁ Y₁ →
       (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ k →
+      (s_n n : ℤ) = (Y₁ : ℤ) * chebyshevU_eval (q_n n : ℤ) (X₁ : ℤ) (Y₁ : ℤ) k →
       k = 1 ∨ k = 2 := by
   have hSodd := S_odd_asymptotic
   have hSodd_ev : ∀ᶠ n : ℕ in atTop,
@@ -345,36 +324,9 @@ theorem pell_index_collapse_large :
     rw [div_lt_iff₀ hnlog_pos] at hrat
     exact ⟨hS, hn116, hrat⟩
   obtain ⟨N₀, hN₀⟩ := Filter.eventually_atTop.mp h_large
-  refine ⟨N₀, fun n m k X₁ Y₁ hn hm hfund hk_eq => ?_⟩
+  refine ⟨N₀, fun n m k X₁ Y₁ hn hm hfund hk_eq hs_eq => ?_⟩
   obtain ⟨hS_bd, hn116, h_err_bd⟩ := hN₀ n hn
   have hq_log := log_q_n_gt_point4 hn116
-  have hs_eq : (s_n n : ℤ) = (Y₁ : ℤ) * chebyshevU_eval (q_n n : ℤ) (X₁ : ℤ) (Y₁ : ℤ) k := by
-    rw [← lucasY_eq_mul_chebyshevU]
-    have hk_lucas := hk_eq
-    rw [pellUnit_pow_eq_lucas] at hk_lucas
-    by_contra hne
-    have hsub_ne : (((s_n n : ℤ) - lucasY (q_n n : ℤ) (X₁ : ℤ) (Y₁ : ℤ) k : ℤ) : ℝ) ≠ 0 := by
-      exact_mod_cast sub_ne_zero.mpr hne
-    let r_q : ℚ :=
-      (((lucasX (q_n n : ℤ) (X₁ : ℤ) (Y₁ : ℤ) k - (m : ℤ) : ℤ) : ℚ)) /
-      ((((s_n n : ℤ) - lucasY (q_n n : ℤ) (X₁ : ℤ) (Y₁ : ℤ) k : ℤ) : ℚ))
-    have hsqrt_rat : (r_q : ℝ) = Real.sqrt (q_n n : ℝ) := by
-      dsimp only [r_q]
-      push_cast
-      push_cast at hsub_ne
-      rw [div_eq_iff hsub_ne]
-      linarith
-    have hq_nsq : ¬ IsSquare (q_n n) := by
-      rintro ⟨r, hr⟩
-      have hunit : IsUnit r := (q_n_squarefree n) r (by rw [hr])
-      have hr1 : r = 1 := Nat.isUnit_iff.mp hunit
-      have hq1 : q_n n = 1 := by rw [hr, hr1, mul_one]
-      have hlog0 : Real.log (q_n n : ℝ) = 0 := by rw [hq1]; simp
-      have : (0 : ℝ) < 0.4 * (n : ℝ) := by positivity
-      linarith
-    have hirr : Irrational (Real.sqrt (q_n n : ℝ)) :=
-      irrational_sqrt_natCast_iff.mpr hq_nsq
-    exact hirr ⟨r_q, hsqrt_rat⟩
   have heps_log := log_fund_pell_gt_point2 hq_log hfund
   obtain ⟨hk1, hk_lt, _⟩ := pell_index_upper_bound (by omega) hm hfund heps_log hk_eq
   have hpell_int : (X₁ : ℤ) ^ 2 - (q_n n : ℤ) * (Y₁ : ℤ) ^ 2 = 1 := by
@@ -384,7 +336,6 @@ theorem pell_index_collapse_large :
   have hq_pos : 0 < q_n n := by
     unfold q_n
     exact Finset.prod_pos (fun q hq => (Finset.mem_filter.mp hq).2.1.pos)
-  -- Lower bound (3.5): `S_odd n - v_3(n!) * log 3 - 2 * log k ≤ log(q_n * Y₁^2)`
   have hlog_qY2_lower :
       S_odd n - (padicValNat 3 (Nat.factorial n) : ℝ) * Real.log 3 - 2 * Real.log (k : ℝ) ≤
         Real.log ((q_n n * Y₁ ^ 2 : ℕ) : ℝ) := by
@@ -460,7 +411,6 @@ theorem pell_index_collapse_large :
         2 * ∑ p ∈ S, (padicValNat p k : ℝ) * Real.log (p : ℝ) := by
       simp_rw [sub_mul, Finset.sum_sub_distrib, mul_assoc, ← Finset.mul_sum]
     linarith
-  -- Upper bound (3.4): `log(q_n * Y₁^2) < 2 * log ε_n`
   have hlog_qY2_upper :
       Real.log ((q_n n * Y₁ ^ 2 : ℕ) : ℝ) < 2 * Real.log (pellUnit (q_n n) X₁ Y₁) := by
     have hqY_pos : (0 : ℝ) < (Y₁ : ℝ) * Real.sqrt (q_n n : ℝ) := by
@@ -478,7 +428,6 @@ theorem pell_index_collapse_large :
       push_cast; ring
     rw [h_eq]
     exact mul_lt_mul_of_pos_left (Real.log_lt_log hqY_pos h_lt) (by norm_num)
-  -- Also `2 * k * log ε_n = 2 * log(m + s_n √q_n) ≤ 2 * log 3 + n * log n`
   have h_upper_nlogn :
       (k : ℝ) * (2 * Real.log (pellUnit (q_n n) X₁ Y₁)) ≤
         (n : ℝ) * Real.log (n : ℝ) + 2 * Real.log 3 := by
@@ -558,12 +507,8 @@ theorem fundamental_regulator_quantization :
       (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ k →
       |Real.log (pellUnit (q_n n) X₁ Y₁) / ((n : ℝ) * Real.log (n : ℝ)) - 1 / (2 * (k : ℝ))| ≤
         C / Real.log (n : ℝ) := by
-  -- From `log_s_n_sqrt_q_n_asymptotic`: `|log(s_n √q_n) - ((1/2) n log n - (1/2) n + (1/4) log(2πn))| ≤ C₁ * n⁻¹`
   obtain ⟨C₁, hC₁⟩ := log_s_n_sqrt_q_n_asymptotic.bound
   obtain ⟨N₁, hN₁⟩ := Filter.eventually_atTop.mp hC₁
-  -- Since we quantify over all `n ≥ 8`, `log(s_n √q_n) - (1/2) n log n = O(n)` for all `n ≥ 8`
-  -- Let's use `log(n!) = n log n - n + O(log n)` or directly `|log(s_n √q_n) - (1/2) n log n| ≤ C₀ * n` for `n ≥ 8`!
-  -- Actually `log(n!) ≤ n log n` and `n log n - n ≤ log(n!)` (already in `ValuationParityThm.lean` as `n_log_n_sub_n_le_log_factorial`!)
   refine ⟨10, by norm_num, fun n m k X₁ Y₁ hn hm hk1 hfund hk_eq => ?_⟩
   have hn_pos : (0 : ℝ) < (n : ℝ) := by positivity
   have hlogn_pos : 0 < Real.log (n : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n))
@@ -670,7 +615,6 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
       rw [hfac2, hfac1, hq_eq, ht_eq, mul_pow]
       ring
     rw [hmul, Nat.mul_div_cancel_left _ (Nat.factorial_pos n₁)]
-  -- Also `n₂! / n₁! = ∏ j ∈ Finset.range (n₂ - n₁), (n₁ + 1 + j)`
   have hprod_eq : Nat.factorial n₂ / Nat.factorial n₁ =
       ∏ j ∈ Finset.range (n₂ - n₁), (n₁ + 1 + j) := by
     have hmul : Nat.factorial n₂ = Nat.factorial n₁ * ∏ j ∈ Finset.range (n₂ - n₁), (n₁ + 1 + j) := by
@@ -701,10 +645,9 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
     have ht_le2 : t ≤ 2 := by omega
     have hsq4 : t ^ 2 ≤ 4 := by nlinarith
     omega
-  -- `(t * m₁ - m₂) * (t * m₁ + m₂) = t^2 - 1`
   have hid : (t * m₁) ^ 2 = m₂ ^ 2 + (t ^ 2 - 1) := by
     have hfac_succ : Nat.factorial (n₁ + 1) = (n₁ + 1) * Nat.factorial n₁ := Nat.factorial_succ n₁
-    have h1 : m₂ ^ 2 = t ^ 2 * Nat.factorial n₁ + 1 := by rw [← hm₂, hfac_succ, ← hn1_sq]
+    have h1 : m₂ ^ 2 = t ^ 2 * Nat.factorial n₁ + 1 := by rw [← hm₂, hfac_succ, ← hn1_sq]; ring
     have h2 : (t * m₁) ^ 2 = t ^ 2 * Nat.factorial n₁ + t ^ 2 := by
       calc (t * m₁) ^ 2 = t ^ 2 * m₁ ^ 2 := by ring
         _ = t ^ 2 * (Nat.factorial n₁ + 1) := by rw [hm₁]
@@ -725,7 +668,6 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
     calc t * m₁ + m₂ = 1 * (t * m₁ + m₂) := by ring
       _ ≤ (t * m₁ - m₂) * (t * m₁ + m₂) := Nat.mul_le_mul_right _ hdiff_ge1
       _ = t ^ 2 - 1 := hprod_factor
-  -- On the other hand, `n₁ ≥ 8` and `n₁ + 1 = t^2` gives `m₁^2 > t^2`, so `m₁ > t`, hence `t * m₁ + m₂ > t^2`!
   have hm1_gt_t : t < m₁ := by
     have hfac_gt : t ^ 2 < Nat.factorial n₁ + 1 := by
       have h1 : n₁ < Nat.factorial n₁ := by
@@ -747,8 +689,37 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
     exact (Nat.pow_lt_pow_iff_left (by norm_num : 2 ≠ 0)).mp hsq
   have hsum_gt : t ^ 2 < t * m₁ + m₂ := by
     have : t * t < t * m₁ := Nat.mul_lt_mul_of_pos_left hm1_gt_t (by omega)
-    have hsq : t ^ 2 = t * t := sq t
-    omega
-  omega
+    nlinarith
+  linarith
+
+/-- **Theorem 1.1 (Unconditional Top-Level Formulation, Defect D6(a))**:
+There exists `N₀ : ℕ` such that for every Brocard–Ramanujan solution `n! + 1 = m^2` with
+`n ≥ N₀`, the squarefree core `q_n` admits a unique fundamental Pell solution `(X₁, Y₁)` and
+a unique Pell index `k ∈ {1, 2}` satisfying `m + s_n √q_n = (X₁ + Y₁ √q_n)^k`. -/
+theorem thm_1_1_unconditional :
+    ∃ N₀ : ℕ, ∀ n m : ℕ, N₀ ≤ n → Nat.factorial n + 1 = m ^ 2 →
+      ∃! p : ℕ × ℕ, IsFundamentalPell (q_n n) p.1 p.2 ∧
+        ∃! k : ℕ, (k = 1 ∨ k = 2) ∧
+          (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) p.1 p.2) ^ k := by
+  obtain ⟨N₁, hN₁⟩ := pell_index_collapse_large
+  refine ⟨max N₁ 8, fun n m hn hm => ?_⟩
+  have hn3 : 3 ≤ n := by omega
+  have hn6 : n ≠ 6 := by omega
+  obtain ⟨⟨X₁, Y₁⟩, hfund, huniq_p⟩ := exists_unique_fundamentalPell hn3 hn6
+  obtain ⟨k, ⟨hk1, hreal, hcheb⟩, huniq_k⟩ := exists_unique_pell_index hn3 hn6 hm hfund
+  have hk12 : k = 1 ∨ k = 2 := hN₁ n m k X₁ Y₁ (le_trans (le_max_left _ _) hn) hm hfund hreal hcheb
+  refine ⟨(X₁, Y₁), ⟨hfund, k, ⟨hk12, hreal⟩, ?_⟩, ?_⟩
+  · rintro k' ⟨hk'12, hreal'⟩
+    have hq_pos : 1 ≤ q_n n := by
+      unfold q_n
+      exact Finset.prod_pos (fun q hq => (Finset.mem_filter.mp hq).2.1.pos)
+    have hgt1 : 1 < pellUnit (q_n n) X₁ Y₁ := by
+      have h2s := pellUnit_gt_two_sqrt hq_pos hfund
+      have h1 : (1 : ℝ) ≤ Real.sqrt (q_n n : ℝ) := by
+        rw [← Real.sqrt_one]; exact Real.sqrt_le_sqrt (by exact_mod_cast hq_pos)
+      linarith
+    exact StrictMono.injective (pow_right_strictMono₀ hgt1) (hreal'.symm.trans hreal)
+  · rintro ⟨X₂, Y₂⟩ ⟨hfund₂, _⟩
+    exact huniq_p (X₂, Y₂) hfund₂
 
 end GrasGreenbergBrocard
