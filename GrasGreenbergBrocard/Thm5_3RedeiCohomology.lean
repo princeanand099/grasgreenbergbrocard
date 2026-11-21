@@ -819,12 +819,14 @@ directly from the Pell equation), there is an exact sequence of `𝔽₂`-vector
 and consequently `dim_{𝔽₂} ker_{𝔽₂}(R_n^{ram}) = 1 + rank₄ Cl^+(q_n)`. -/
 theorem thm_5_3_part1_cohomology_4rank {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     (hfund : IsFundamentalPell (q_n n) X₁ Y₁) :
+    letI : Fact (¬ IsSquare (q_n n : ℚ)) := ⟨q_n_not_isSquare_rat hn⟩
     let yMid : redeiKernel n := ⟨yMidVec n X₁, yMidVec_mem_redeiKernel hn hfund⟩
-    ∃ psiPlus : redeiKernel n →ₗ[ZMod 2] (canonicalRealQuadRedei n).Cl4Rank,
+    ∃ psiPlus : redeiKernel n →ₗ[ZMod 2] Cl4RankVec (q_n n),
       Function.Surjective psiPlus ∧
       LinearMap.ker psiPlus = Submodule.span (ZMod 2) {yMid} ∧
-      Module.finrank (ZMod 2) (redeiKernel n) = 1 + (canonicalRealQuadRedei n).rank4 := by
+      Module.finrank (ZMod 2) (redeiKernel n) = 1 + narrow4Rank n := by
   dsimp only
+  haveI : Fact (¬ IsSquare (q_n n : ℚ)) := ⟨q_n_not_isSquare_rat hn⟩
   have hyMid_mem := yMidVec_mem_redeiKernel hn hfund
   have hyMid_ne := yMidVec_ne_zero hn hfund
   set yMid : redeiKernel n := ⟨yMidVec n X₁, hyMid_mem⟩
@@ -837,8 +839,11 @@ theorem thm_5_3_part1_cohomology_4rank {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
       Module.finrank (ZMod 2) (LinearMap.ker psiPlus) =
       Module.finrank (ZMod 2) (redeiKernel n) :=
     LinearMap.finrank_range_add_finrank_ker psiPlus
-  have h_range : Module.finrank (ZMod 2) (LinearMap.range psiPlus) = (canonicalRealQuadRedei n).rank4 := by
-    rw [LinearMap.range_eq_top.mpr hsurj, finrank_top, (canonicalRealQuadRedei n).h_rank4]
+  have h_rank_eq : Module.finrank (ZMod 2) (Cl4RankVec (q_n n)) = narrow4Rank n := by
+    unfold narrow4Rank
+    rw [dif_pos (q_n_not_isSquare_rat hn)]
+  have h_range : Module.finrank (ZMod 2) (LinearMap.range psiPlus) = narrow4Rank n := by
+    rw [LinearMap.range_eq_top.mpr hsurj, finrank_top, h_rank_eq]
   have h_ker : Module.finrank (ZMod 2) (LinearMap.ker psiPlus) = 1 := by
     rw [hker, finrank_span_singleton hyMid_sub_ne]
   refine ⟨psiPlus, hsurj, hker, ?_⟩

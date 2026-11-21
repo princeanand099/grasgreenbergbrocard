@@ -1,6 +1,7 @@
 import Mathlib
 import GrasGreenbergBrocard.Basic
 import GrasGreenbergBrocard.PellFundamental
+import GrasGreenbergBrocard.RealQuadField
 
 /-!
 # External Axioms and Core Definitions for Section 5
@@ -171,33 +172,48 @@ from `ℚ(√q_n)`, is supported inside `ramPrimes n`, and satisfies `c_mid > 1`
 def yMidVec (n X₁ : ℕ) : ramPrimes n → ZMod 2 :=
   fun p => if p.1 ∣ coreNat (2 * (X₁ + 1)) then 1 else 0
 
-/-- Canonical narrow 4-rank `𝔽₂`-vector space `Cl^+(q_n)[2] ∩ 2 Cl^+(q_n)` attached to `ℚ(√q_n)`.
-Fixing this canonical object per `n` (independent of any candidate kernel vector) prevents
-vacuous quotient instantiation. -/
-structure CanonicalNarrowCl4Rank (n : ℕ) where
-  Cl4Rank : Type
-  [instAdd : AddCommGroup Cl4Rank]
-  [instMod : Module (ZMod 2) Cl4Rank]
-  [instFin : Module.Finite (ZMod 2) Cl4Rank]
-  rank4 : ℕ
-  h_rank4 : Module.finrank (ZMod 2) Cl4Rank = rank4
+/-- For `n ≥ 8`, `q_n n` is not a rational square (since `q_n n` is squarefree and `≥ 2`, as
+there is a prime `p ∈ (n/2, n]` dividing `q_n n` by Bertrand's postulate). -/
+lemma q_n_not_isSquare_rat {n : ℕ} (hn : 8 ≤ n) : ¬ IsSquare (q_n n : ℚ) := by
+  obtain ⟨p, hp, hp_lo, hp_hi2⟩ := Nat.exists_prime_lt_and_le_two_mul (n / 2) (by omega)
+  have hpn : p ≤ n := by omega
+  haveI : Fact p.Prime := ⟨hp⟩
+  have hv1 : padicValNat p (Nat.factorial n) = 1 := by
+    have hlt_sq : n < p ^ 2 := by nlinarith
+    have hlog : Nat.log p n < 2 := Nat.log_lt_of_lt_pow (by omega) hlt_sq
+    rw [padicValNat_factorial (b := 2) hlog, Finset.sum_Ico_succ_top (le_refl 1),
+      Finset.Ico_self, Finset.sum_empty, zero_add, pow_one]
+    exact Nat.div_eq_of_lt_le (by omega) (by omega)
+  have hp_q : p ∣ q_n n := by
+    unfold q_n
+    refine Finset.dvd_prod_of_mem _ (Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hpn⟩, hp, ?_⟩)
+    rw [hv1]; omega
+  have hq_pos : 0 < q_n n := by
+    unfold q_n; exact Finset.prod_pos (fun r hr => (Finset.mem_filter.mp hr).2.1.pos)
+  have hq2 : 2 ≤ q_n n := le_trans hp.two_le (Nat.le_of_dvd hq_pos hp_q)
+  exact not_isSquare_rat_of_squarefree hq2 (q_n_squarefree n)
 
-attribute [instance] CanonicalNarrowCl4Rank.instAdd CanonicalNarrowCl4Rank.instMod CanonicalNarrowCl4Rank.instFin
+/-- Concrete narrow 4-rank `rank₄ Cl^+(ℚ(√q_n)) = dim_{𝔽₂}(Cl^+(ℚ(√q_n))[2] ∩ 2 Cl^+(ℚ(√q_n)))`,
+anchored directly to `Cl4RankVec (q_n n)` in `RealQuadField.lean` (eliminating `canonicalRealQuadRedei`). -/
+def narrow4Rank (n : ℕ) : ℕ :=
+  if h : ¬ IsSquare (q_n n : ℚ) then
+    haveI : Fact (¬ IsSquare (q_n n : ℚ)) := ⟨h⟩
+    Module.finrank (ZMod 2) (Cl4RankVec (q_n n))
+  else 0
 
-axiom canonicalRealQuadRedei (n : ℕ) : CanonicalNarrowCl4Rank n
-
-/-- **Gauss (1801) / Hasse (1930) / Rédei–Reichardt (1934)**:
+/-- **Gauss (1801) / Hasse (1930) / Rédei–Reichardt (1934)** (Defect D4 anchored to `Cl4RankVec`):
 Exact sequence of `𝔽₂`-vector spaces
-`0 → span_{𝔽₂}{y^{mid}(n, X₁)} → ker_{𝔽₂}(R_n^{ram}) → Cl^+(q_n)[2] ∩ 2 Cl^+(q_n) → 0`
-for `n ≥ 8`, scoped specifically to the fundamental Pell solution `(X₁, Y₁)`, the concrete
-midpoint vector `yMidVec n X₁` constructed from `δ₂^{mid}(n) = coreNat (X₁ + 1)`, and the
-canonical narrow 4-rank space `(canonicalRealQuadRedei n).Cl4Rank`. -/
+`0 → span_{𝔽₂}{y^{mid}(n, X₁)} → ker_{𝔽₂}(R_n^{ram}) → Cl^+(ℚ(√q_n))[2] ∩ 2 Cl^+(ℚ(√q_n)) → 0`
+for `n ≥ 8`, scoped directly to the concrete Mathlib-anchored narrow 4-rank space
+`Cl4RankVec (q_n n)` (constructed from `NumberField.RingOfIntegers` and `FractionalIdeal` in
+`RealQuadField.lean`), the fundamental Pell solution `(X₁, Y₁)`, and `yMidVec n X₁`. -/
 axiom redei_reichardt_exact_sequence (n X₁ Y₁ : ℕ) (hn : 8 ≤ n)
     (hfund : IsFundamentalPell (q_n n) X₁ Y₁)
     (hyMid_mem : yMidVec n X₁ ∈ redeiKernel n)
     (hyMid_ne : yMidVec n X₁ ≠ 0) :
+    letI : Fact (¬ IsSquare (q_n n : ℚ)) := ⟨q_n_not_isSquare_rat hn⟩
     let yMid : redeiKernel n := ⟨yMidVec n X₁, hyMid_mem⟩
-    ∃ psiPlus : redeiKernel n →ₗ[ZMod 2] (canonicalRealQuadRedei n).Cl4Rank,
+    ∃ psiPlus : redeiKernel n →ₗ[ZMod 2] Cl4RankVec (q_n n),
       Function.Surjective psiPlus ∧
       LinearMap.ker psiPlus = Submodule.span (ZMod 2) {yMid}
 
