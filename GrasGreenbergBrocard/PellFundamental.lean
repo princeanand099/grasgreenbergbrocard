@@ -8,13 +8,13 @@ import GrasGreenbergBrocard.ChebyshevLucas
 # Lemma 3.1: Fundamental Unit Norm and Growth of `q_n`, `s_n`
 
 Formalizes Section 3.1 (Lemma 3.1(i)–(ii)) of the manuscript:
+- `IsFundamentalPell`: fundamental positive solution `(X₁, Y₁)` to `x^2 - D y^2 = 1`
 - `q_n_has_prime_mod4`: for `n ≥ 3` with `n ≠ 6`, `q_n` has a prime divisor `p ≡ 3 [MOD 4]`
 - `neg_pell_no_int_sol`, `neg_pell_no_rat_sol`: `x^2 - q_n y^2 = -1` has no integer or rational solutions
 - `log_q_n_gt_point4`: `log q_n > 0.4 * n` for `n ≥ 116`
 - `log_fund_pell_gt_point2`: `log ε_n > 0.2 * n` when `log q_n > 0.4 * n`
 - `pell_index_upper_bound`: `1 ≤ k < 2.5 * log n < n / 5` for `n ≥ 116`
 - `log_s_n_sqrt_q_n_asymptotic`, `log_s_n_asymptotic`: Lemma 3.1(ii) asymptotics
-- `exists_unique_fundamentalPell`, `exists_unique_pell_index`: existence & uniqueness (Defect D6(a))
 -/
 
 noncomputable section
@@ -171,6 +171,7 @@ theorem neg_pell_no_rat_sol {n : ℕ} (hn : 3 ≤ n) (hn6 : n ≠ 6) (x y : ℚ)
     simpa [sq] using this
   haveI : Fact p.Prime := ⟨hp⟩
   intro hxy
+  -- Clear denominators: `x = a / d`, `y = b / d` with `d ≥ 1`
   let d : ℕ := x.den * y.den
   have hd_pos : 0 < d := Nat.mul_pos x.pos y.pos
   let a : ℤ := x.num * (y.den : ℤ)
@@ -196,6 +197,7 @@ theorem neg_pell_no_rat_sol {n : ℕ} (hn : 3 ≤ n) (hn6 : n ≠ 6) (x y : ℚ)
       field_simp [hd_q] at hxy
       linarith
     exact_mod_cast hq_rat
+  -- Strong induction on `d`
   suffices h : ∀ d0 : ℕ, 0 < d0 → ∀ a0 b0 : ℤ, a0 ^ 2 + (d0 : ℤ) ^ 2 ≠ (q_n n : ℤ) * b0 ^ 2 from
     h d hd_pos a b hint
   intro d0
@@ -318,6 +320,7 @@ private lemma twelve_point_five_log_lt {n : ℕ} (hn : 116 ≤ n) :
     (12.5 : ℝ) * Real.log (n : ℝ) < (n : ℝ) := by
   have hn_pos : (0 : ℝ) < (n : ℝ) := by positivity
   have hn_ge : (116 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
+  -- `log(n / 20) ≤ n / 20 - 1`, and `log 20 < 3` since `20 < e^3`
   have hlog_div : Real.log ((n : ℝ) / 20) ≤ (n : ℝ) / 20 - 1 :=
     Real.log_le_sub_one_of_pos (by positivity)
   have hlog20 : Real.log 20 < 3 := by
@@ -467,6 +470,7 @@ theorem log_s_n_asymptotic :
   refine ⟨c₀, hc₀, ?_⟩
   have hlog_n_le : (fun n : ℕ => (n : ℝ)⁻¹) =O[atTop]
       (fun n : ℕ => (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ)))) := by
+    -- `n⁻¹ = n * n⁻²`, and `n⁻² ≤ exp(-c₀ √(log n))` eventually since `c₀ √(log n) ≤ 2 log n`
     have hsqrt_le : ∀ᶠ n : ℕ in atTop,
         c₀ * Real.sqrt (Real.log (n : ℝ)) ≤ 2 * Real.log (n : ℝ) := by
       have ht : Tendsto (fun n : ℕ => Real.sqrt (Real.log (n : ℝ)) / Real.log (n : ℝ)) atTop (nhds 0) := by
@@ -596,7 +600,7 @@ theorem q_n_not_isSquare {n : ℕ} (hn : 3 ≤ n) (hn6 : n ≠ 6) : ¬ IsSquare 
   obtain ⟨p, hp, hpq, _⟩ := q_n_has_prime_mod4 hn hn6
   have hr_nat : q_n n = r.natAbs ^ 2 := by
     zify
-    rw [sq, Int.natAbs_mul_self']
+    rw [sq, abs_mul_abs_self]
     exact hr
   have hp_r : p ∣ r.natAbs := hp.dvd_of_dvd_pow (hr_nat ▸ hpq)
   have hp2 : p * p ∣ q_n n := by
@@ -609,13 +613,38 @@ theorem q_n_not_isSquare {n : ℕ} (hn : 3 ≤ n) (hn6 : n ≠ 6) : ¬ IsSquare 
 a unique pair `(X₁, Y₁) : ℕ × ℕ` satisfying `IsFundamentalPell (q_n n) X₁ Y₁`. -/
 theorem exists_unique_fundamentalPell {n : ℕ} (hn : 3 ≤ n) (hn6 : n ≠ 6) :
     ∃! p : ℕ × ℕ, IsFundamentalPell (q_n n) p.1 p.2 := by
-  have hq_ge2 : 2 ≤ q_n n := by
-    obtain ⟨p, hp, hpq, _⟩ := q_n_has_prime_mod4 hn hn6
-    have hq_pos : 0 < q_n n := by
-      unfold q_n
-      exact Finset.prod_pos (fun q hq => (Finset.mem_filter.mp hq).2.1.pos)
-    exact le_trans hp.two_le (Nat.le_of_dvd hq_pos hpq)
-  exact exists_unique_fundamentalPell_of_not_isSquare hq_ge2 (q_n_not_isSquare hn hn6)
+  classical
+  have hq_pos : 0 < q_n n := by
+    unfold q_n
+    exact Finset.prod_pos (fun q hq => (Finset.mem_filter.mp hq).2.1.pos)
+  have hnsq := q_n_not_isSquare hn hn6
+  obtain ⟨x, y, hxy, hy0⟩ := Pell.exists_of_not_isSquare (d := (q_n n : ℤ)) (by exact_mod_cast hq_pos) hnsq
+  have hex : ∃ Y : ℕ, 0 < Y ∧ ∃ X : ℕ, X ^ 2 = q_n n * Y ^ 2 + 1 := by
+    refine ⟨y.natAbs, Int.natAbs_pos.mpr hy0, x.natAbs, ?_⟩
+    zify
+    rw [sq_abs, sq_abs]
+    linarith
+  let Y₁ := Nat.find hex
+  have hY₁_spec := Nat.find_spec hex
+  have hY₁_pos : 0 < Y₁ := hY₁_spec.1
+  obtain ⟨X₁, hX₁_eq⟩ := hY₁_spec.2
+  have hX₁_pos : 0 < X₁ := by
+    by_contra h0
+    have hX0 : X₁ = 0 := by omega
+    rw [hX0] at hX₁_eq
+    nlinarith
+  have hfund : IsFundamentalPell (q_n n) X₁ Y₁ := by
+    refine ⟨hX₁_pos, hY₁_pos, hX₁_eq, ?_⟩
+    intro x' y' hy' hx'
+    exact Nat.find_min' hex ⟨hy', x', hx'⟩
+  refine ⟨(X₁, Y₁), hfund, ?_⟩
+  rintro ⟨X₂, Y₂⟩ hfund₂
+  have hY_le₁ : Y₁ ≤ Y₂ := hfund.2.2.2 X₂ Y₂ hfund₂.2.1 hfund₂.2.2.1
+  have hY_le₂ : Y₂ ≤ Y₁ := hfund₂.2.2.2 X₁ Y₁ hfund.2.1 hfund.2.2.1
+  have hY_eq : Y₂ = Y₁ := le_antisymm hY_le₂ hY_le₁
+  have hX_sq : X₂ ^ 2 = X₁ ^ 2 := by rw [hfund₂.2.2.1, hfund.2.2.1, hY_eq]
+  have hX_eq : X₂ = X₁ := by nlinarith
+  exact Prod.ext hX_eq hY_eq
 
 private lemma zsqrtd_real_embed_pow (D : ℕ) (X₁ Y₁ : ℕ) (k : ℕ) :
     ((((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (D : ℤ)) ^ k).re : ℝ) +
@@ -634,7 +663,7 @@ private lemma zsqrtd_real_embed_pow (D : ℕ) (X₁ Y₁ : ℕ) (k : ℕ) :
     push_cast
     unfold pellUnit
     have hsq : Real.sqrt (D : ℝ) * Real.sqrt (D : ℝ) = (D : ℝ) := Real.mul_self_sqrt (by positivity)
-    nlinarith [hsq]
+    linear_combination -(u.im : ℝ) * (Y₁ : ℝ) * hsq
 
 private lemma pell_positive_sol_is_pow {D X₁ Y₁ : ℕ} (hD : 1 ≤ D)
     (hfund : IsFundamentalPell D X₁ Y₁) :
@@ -650,7 +679,7 @@ private lemma pell_positive_sol_is_pow {D X₁ Y₁ : ℕ} (hD : 1 ≤ D)
     have hEq1 := hfund.2.2.1
     have hY_le : Y₁ ≤ y := hfund.2.2.2 x y hy hxy
     have hx_pos : 0 < x := by
-      by_contra h0; have : x = 0 := by omega; rw [this] at hxy; nlinarith
+      by_contra h0; have hx0 : x = 0 := by omega; rw [hx0] at hxy; simp at hxy
     have hX1_gt1 : 1 < X₁ := by nlinarith [hEq1, hD, hY1_pos]
     set x' : ℤ := (x : ℤ) * (X₁ : ℤ) - (D : ℤ) * (y : ℤ) * (Y₁ : ℤ)
     set y' : ℤ := (y : ℤ) * (X₁ : ℤ) - (x : ℤ) * (Y₁ : ℤ)
@@ -658,35 +687,68 @@ private lemma pell_positive_sol_is_pow {D X₁ Y₁ : ℕ} (hD : 1 ≤ D)
     have hEq1_z : (X₁ : ℤ) ^ 2 = (D : ℤ) * (Y₁ : ℤ) ^ 2 + 1 := by exact_mod_cast hEq1
     have hx'_pos : 0 < x' := by
       have hsq_diff : ((x : ℤ) * (X₁ : ℤ)) ^ 2 - ((D : ℤ) * (y : ℤ) * (Y₁ : ℤ)) ^ 2 =
-          (D : ℤ) * ((y : ℤ) ^ 2 + (Y₁ : ℤ) ^ 2) + 1 := by nlinarith [hEq_z, hEq1_z]
+          (D : ℤ) * ((y : ℤ) ^ 2 + (Y₁ : ℤ) ^ 2) + 1 := by
+        linear_combination (X₁ : ℤ) ^ 2 * hEq_z + (D : ℤ) * (y : ℤ) ^ 2 * hEq1_z
       have hD_z : (0 : ℤ) < (D : ℤ) := by exact_mod_cast hD
-      have hgt : ((D : ℤ) * (y : ℤ) * (Y₁ : ℤ)) ^ 2 < ((x : ℤ) * (X₁ : ℤ)) ^ 2 := by nlinarith
-      have hlt : (D : ℤ) * (y : ℤ) * (Y₁ : ℤ) < (x : ℤ) * (X₁ : ℤ) := by nlinarith
+      have hgt : ((D : ℤ) * (y : ℤ) * (Y₁ : ℤ)) ^ 2 < ((x : ℤ) * (X₁ : ℤ)) ^ 2 := by
+        have hnn : (0 : ℤ) ≤ (D : ℤ) * ((y : ℤ) ^ 2 + (Y₁ : ℤ) ^ 2) := by positivity
+        linarith
+      have hxX_nn : (0 : ℤ) ≤ (x : ℤ) * (X₁ : ℤ) := by positivity
+      have hDyY_nn : (0 : ℤ) ≤ (D : ℤ) * (y : ℤ) * (Y₁ : ℤ) := by positivity
+      have hlt : (D : ℤ) * (y : ℤ) * (Y₁ : ℤ) < (x : ℤ) * (X₁ : ℤ) := by
+        by_contra hge
+        have : ((x : ℤ) * (X₁ : ℤ)) ^ 2 ≤ ((D : ℤ) * (y : ℤ) * (Y₁ : ℤ)) ^ 2 :=
+          pow_le_pow_left₀ hxX_nn (not_lt.mp hge) 2
+        linarith
       dsimp only [x']; linarith
     have hy'_nn : 0 ≤ y' := by
       have hsq_diff : ((y : ℤ) * (X₁ : ℤ)) ^ 2 - ((x : ℤ) * (Y₁ : ℤ)) ^ 2 =
-          (y : ℤ) ^ 2 - (Y₁ : ℤ) ^ 2 := by nlinarith [hEq_z, hEq1_z]
+          (y : ℤ) ^ 2 - (Y₁ : ℤ) ^ 2 := by
+        linear_combination (y : ℤ) ^ 2 * hEq1_z - (Y₁ : ℤ) ^ 2 * hEq_z
       have hY_z : (Y₁ : ℤ) ≤ (y : ℤ) := by exact_mod_cast hY_le
-      have hge : ((x : ℤ) * (Y₁ : ℤ)) ^ 2 ≤ ((y : ℤ) * (X₁ : ℤ)) ^ 2 := by nlinarith
-      have hle : (x : ℤ) * (Y₁ : ℤ) ≤ (y : ℤ) * (X₁ : ℤ) := by nlinarith
+      have hge : ((x : ℤ) * (Y₁ : ℤ)) ^ 2 ≤ ((y : ℤ) * (X₁ : ℤ)) ^ 2 := by
+        have hsq : (Y₁ : ℤ) ^ 2 ≤ (y : ℤ) ^ 2 := pow_le_pow_left₀ (by positivity) hY_z 2
+        linarith
+      have hyX_nn : (0 : ℤ) ≤ (y : ℤ) * (X₁ : ℤ) := by positivity
+      have hxY_nn : (0 : ℤ) ≤ (x : ℤ) * (Y₁ : ℤ) := by positivity
+      have hle : (x : ℤ) * (Y₁ : ℤ) ≤ (y : ℤ) * (X₁ : ℤ) := by
+        by_contra hgt
+        have : ((y : ℤ) * (X₁ : ℤ)) ^ 2 < ((x : ℤ) * (Y₁ : ℤ)) ^ 2 :=
+          pow_lt_pow_left₀ (not_le.mp hgt) hyX_nn (by norm_num)
+        linarith
       dsimp only [y']; linarith
     have hy'_lt : y' < (y : ℤ) := by
       have hsq_diff : ((x : ℤ) * (Y₁ : ℤ)) ^ 2 - ((y : ℤ) * ((X₁ : ℤ) - 1)) ^ 2 =
-          (Y₁ : ℤ) ^ 2 + 2 * (y : ℤ) ^ 2 * ((X₁ : ℤ) - 1) := by nlinarith [hEq_z, hEq1_z]
+          (Y₁ : ℤ) ^ 2 + 2 * (y : ℤ) ^ 2 * ((X₁ : ℤ) - 1) := by
+        linear_combination (Y₁ : ℤ) ^ 2 * hEq_z - (y : ℤ) ^ 2 * hEq1_z
       have hX1_z : (1 : ℤ) < (X₁ : ℤ) := by exact_mod_cast hX1_gt1
       have hY1_z : (0 : ℤ) < (Y₁ : ℤ) := by exact_mod_cast hY1_pos
-      have hgt : ((y : ℤ) * ((X₁ : ℤ) - 1)) ^ 2 < ((x : ℤ) * (Y₁ : ℤ)) ^ 2 := by nlinarith
-      have hlt : (y : ℤ) * ((X₁ : ℤ) - 1) < (x : ℤ) * (Y₁ : ℤ) := by nlinarith
+      have hgt : ((y : ℤ) * ((X₁ : ℤ) - 1)) ^ 2 < ((x : ℤ) * (Y₁ : ℤ)) ^ 2 := by
+        have h1 : (0 : ℤ) < (Y₁ : ℤ) ^ 2 := by positivity
+        have h2 : (0 : ℤ) ≤ 2 * (y : ℤ) ^ 2 * ((X₁ : ℤ) - 1) := by
+          have : (0 : ℤ) ≤ (X₁ : ℤ) - 1 := by linarith
+          positivity
+        linarith
+      have hxY_nn : (0 : ℤ) ≤ (x : ℤ) * (Y₁ : ℤ) := by positivity
+      have hyX_nn : (0 : ℤ) ≤ (y : ℤ) * ((X₁ : ℤ) - 1) := by
+        have : (0 : ℤ) ≤ (X₁ : ℤ) - 1 := by linarith
+        positivity
+      have hlt : (y : ℤ) * ((X₁ : ℤ) - 1) < (x : ℤ) * (Y₁ : ℤ) := by
+        by_contra hge
+        have : ((x : ℤ) * (Y₁ : ℤ)) ^ 2 ≤ ((y : ℤ) * ((X₁ : ℤ) - 1)) ^ 2 :=
+          pow_le_pow_left₀ hxY_nn (not_lt.mp hge) 2
+        linarith
       dsimp only [y']; linarith
     have hnorm' : x' ^ 2 = (D : ℤ) * y' ^ 2 + 1 := by
-      dsimp only [x', y']; nlinarith [hEq_z, hEq1_z]
+      dsimp only [x', y']
+      linear_combination (X₁ : ℤ) ^ 2 * hEq_z - (D : ℤ) * (Y₁ : ℤ) ^ 2 * hEq_z + hEq1_z
     have hstep : (⟨(x : ℤ), (y : ℤ)⟩ : Zsqrtd (D : ℤ)) =
         (⟨x', y'⟩ : Zsqrtd (D : ℤ)) * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ := by
       ext
       · change (x : ℤ) = x' * (X₁ : ℤ) + (D : ℤ) * y' * (Y₁ : ℤ)
-        dsimp only [x', y']; nlinarith [hEq1_z]
+        dsimp only [x', y']; linear_combination -(x : ℤ) * hEq1_z
       · change (y : ℤ) = x' * (Y₁ : ℤ) + y' * (X₁ : ℤ)
-        dsimp only [x', y']; nlinarith [hEq1_z]
+        dsimp only [x', y']; linear_combination -(y : ℤ) * hEq1_z
     by_cases hy0 : y' = 0
     · have hx1 : x' = 1 := by rw [hy0] at hnorm'; nlinarith [hx'_pos]
       refine ⟨1, le_rfl, ?_⟩
@@ -716,7 +778,9 @@ theorem exists_unique_pell_index {n m X₁ Y₁ : ℕ} (hn : 3 ≤ n) (hn6 : n �
       (s_n n : ℤ) = (Y₁ : ℤ) * chebyshevU_eval (q_n n : ℤ) (X₁ : ℤ) (Y₁ : ℤ) k := by
   have hq_pos : 1 ≤ q_n n := by
     unfold q_n
-    exact Finset.prod_pos (fun q hq => (Finset.mem_filter.mp hq).2.1.pos)
+    exact Nat.succ_le_of_lt (Finset.prod_pos (fun q hq => by
+      unfold Podd at hq
+      exact (Finset.mem_filter.mp hq).2.1.pos))
   have hs_pos : 0 < s_n n := by
     unfold s_n
     exact Finset.prod_pos (fun q hq => pow_pos (Finset.mem_filter.mp hq).2.pos _)
