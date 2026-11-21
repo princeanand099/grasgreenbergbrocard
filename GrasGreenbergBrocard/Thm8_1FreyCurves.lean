@@ -11,6 +11,9 @@ This file formalizes **Theorem 8.1(i)–(ii)** of the manuscript:
   minimality and multiplicative reduction at all odd primes $p \le n$ with $v_p(\Delta(\mathcal{E}_n)) = v_p(n!)$,
   2-isogenous curve $\widehat{\mathcal{E}}_n$ discriminant $2^{12}(n!)^2$, and quadratic base-change
   unit factorization $X(X + \varepsilon_n^k)(X + \varepsilon_n^{-k}) = X^3 + 2mX^2 + X$ in $\mathbb{Z}[\sqrt{q_n}]$ (eq. 8.1).
+- Concrete Frobenius trace $a_p(\mathcal{E}_n) = (-m/p)$ proved over $\mathbb{F}_p$ (zero axioms),
+  $p = 2$ minimality change of variables (`WeierstrassCurve.VariableChange ℚ`), and quadratic twist
+  $E_n^{(2)}$ with $\Delta(E_n^{(2)}) = 2^{12}(n!)^2$ and $a_p(E_n^{(2)}) = 1$ for $p \equiv 1 \pmod 4$.
 - Level-2 Frey curve $F_n^{(2)} : Y^2 = X(X - 2(X_1 - 1))(X + 4)$ in the $k = 2$ regime:
   shifted model $Y^2 = (V^2 - 4)(V - 2X_1)$ (eq. 8.2), $\Delta(F_n^{(2)}) = 2^{12} q_n^2 Y_1^4$,
   $c_4(F_n^{(2)}) = 64(X_1^2 + 3)$, good CM reduction modulo odd $p \mid X_1$ to $Y^2 \equiv V^3 - 4V \pmod p$,
@@ -61,16 +64,13 @@ theorem thm_8_1_part1_frey_E {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n) (hm : Nat.fact
     (∀ p : ℕ, p.Prime → 3 ≤ p → p ≤ n →
       ¬ ((p : ℤ) ∣ freyE_c4 m) ∧
       padicValNat p (64 * Nat.factorial n) = padicValNat p (Nat.factorial n)) ∧
-    -- 2-isogenous curve \widehat{\mathcal{E}}_n : y^2 = x(x - 2(m-1))(x - 2(m+1)) discriminant
     (16 : ℤ) * (2 * ((m : ℤ) - 1)) ^ 2 * (2 * ((m : ℤ) + 1)) ^ 2 * 4 ^ 2 =
       2 ^ 12 * (Nat.factorial n : ℤ) ^ 2 ∧
-    -- Quadratic base-change unit factorization in Zsqrtd (q_n n) (eq. 8.1):
     (∀ X : Zsqrtd (q_n n : ℤ),
       let εk : Zsqrtd (q_n n : ℤ) := ⟨(m : ℤ), (s_n n : ℤ)⟩
       let εk_inv : Zsqrtd (q_n n : ℤ) := ⟨(m : ℤ), -(s_n n : ℤ)⟩
       εk * εk_inv = 1 ∧
       X * (X + εk) * (X + εk_inv) = X ^ 3 + (2 * (m : ℤ) : Zsqrtd (q_n n : ℤ)) * X ^ 2 + X) ∧
-    -- Mathlib WeierstrassCurve ℤ model invariants, conductor, and Frobenius traces
     ((freyCurveE m).c₄ = freyE_c4 m ∧ (freyCurveE m).Δ = freyE_Delta m ∧
      ∃ D : FreyCurveArithmeticData n m X₁ Y₁,
       D.curveE = freyCurveE m ∧
@@ -141,23 +141,17 @@ theorem thm_8_1_part2_level2_cm_reduction {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     (hm : Nat.factorial n + 1 = m ^ 2)
     (hfund : IsFundamentalPell (q_n n) X₁ Y₁)
     (hk2 : (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ 2) :
-    -- Shifted model (eq. 8.2)
     (∀ V : ℤ, (V - 2) * ((V - 2) - 2 * ((X₁ : ℤ) - 1)) * ((V - 2) + 4) =
       (V ^ 2 - 4) * (V - 2 * (X₁ : ℤ)) ∧
       (V ^ 2 - 4) * (V - 2 * (X₁ : ℤ)) = V ^ 3 - 2 * (X₁ : ℤ) * V ^ 2 - 4 * V + 8 * (X₁ : ℤ)) ∧
-    -- Discriminant Δ(F_n^{(2)}) = 2^{12} q_n^2 Y_1^4
     freyF2_Delta X₁ = 2 ^ 12 * (q_n n : ℤ) ^ 2 * (Y₁ : ℤ) ^ 4 ∧
-    -- Good CM reduction at odd primes p | X_1
     (∀ p : ℕ, p.Prime → 3 ≤ p → p ∣ X₁ →
       ¬ ((p : ℤ) ∣ freyF2_Delta X₁) ∧
       ∀ V : ℤ, (p : ℤ) ∣ (V ^ 3 - 2 * (X₁ : ℤ) * V ^ 2 - 4 * V + 8 * (X₁ : ℤ)) - (V ^ 3 - 4 * V)) ∧
-    -- Exact j-invariant identity (eq. 8.3): j(F_n^{(2)}) - 1728 = 64 X_1^2 (X_1^2 - 9)^2 / (X_1^2 - 1)^2
     ((freyF2_c4 X₁ : ℚ) ^ 3 / (freyF2_Delta X₁ : ℚ) - 1728 =
       64 * (X₁ : ℚ) ^ 2 * ((X₁ : ℚ) ^ 2 - 9) ^ 2 / ((X₁ : ℚ) ^ 2 - 1) ^ 2) ∧
-    -- v_p(j(F_n^{(2)})) = -2 for all primes p ∈ (n/2, n] (i.e. p^2 ∥ Δ and p ∤ c_4)
     (∀ p : ℕ, p.Prime → n / 2 < p → p ≤ n →
       padicValNat p (2 ^ 12 * (q_n n) ^ 2 * Y₁ ^ 4) = 2 ∧ ¬ ((p : ℤ) ∣ freyF2_c4 X₁)) ∧
-    -- Mathlib WeierstrassCurve ℤ model invariants and slashed conductor formula
     ((freyCurveF2 X₁).c₄ = freyF2_c4 X₁ ∧ (freyCurveF2 X₁).Δ = freyF2_Delta X₁ ∧
      ∃ D : FreyCurveArithmeticData n m X₁ Y₁,
       D.curveF2 = freyCurveF2 X₁ ∧
@@ -267,13 +261,7 @@ theorem thm_8_1_part2_level2_cm_reduction {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     · simp [freyCurveF2, freyF2_c4, WeierstrassCurve.c₄, WeierstrassCurve.b₂, WeierstrassCurve.b₄]; ring
     · simp [freyCurveF2, freyF2_Delta, WeierstrassCurve.Δ, WeierstrassCurve.b₂, WeierstrassCurve.b₄, WeierstrassCurve.b₆, WeierstrassCurve.b₈]; ring
 
-/-- **Theorem 8.1(ii) ($abc$-Quality Lower Bound & Hall-Type Cubic-Square Bound)**:
-1. In the $k = 2$ regime, the coprime triple $(A_n, B_n, C_n) = ((X_1 - 1)/c_0, 2/c_0, (X_1 + 1)/c_0)$
-   satisfies $A_n + B_n = C_n$ and $q(A_n, B_n, C_n) := \frac{\log C_n}{\log\operatorname{rad}(A_n B_n C_n)} \ge (1/4 - \varepsilon)\log n$
-   for all sufficiently large $n$.
-2. For any Brocard solution $n! + 1 = m^2$ ($n \ge 8$), writing $n! = u_n^3 v_n$ with $v_n$ cube-free
-   and setting $x_n = u_n v_n$, $y_n = m v_n$ gives $0 < y_n^2 - x_n^3 = v_n^2$ and
-   $\frac{\log(v_n^2)}{\log x_n} \le \frac{12 + \varepsilon}{\log n}$ for all sufficiently large $n$. -/
+/-- **Theorem 8.1(ii) ($abc$-Quality Lower Bound & Hall-Type Cubic-Square Bound)**. -/
 theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε < 1 / 8) :
     ∃ N₀ : ℕ, 8 ≤ N₀ ∧
       (∀ n m X₁ Y₁ : ℕ, N₀ ≤ n → Nat.factorial n + 1 = m ^ 2 →
@@ -292,7 +280,6 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
           let y_n := m * v_n
           y_n ^ 2 - x_n ^ 3 = v_n ^ 2 ∧ 0 < v_n ^ 2 ∧
           Real.log ((v_n ^ 2 : ℕ) : ℝ) / Real.log (x_n : ℝ) ≤ (12 + ε) / Real.log (n : ℝ)) := by
-  -- Use de_la_vallee_poussin_theta: |thetaPrime n - n| ≤ (ε/2) * n for large n
   obtain ⟨c₁, hc₁, hdlvp⟩ := de_la_vallee_poussin_theta
   have hθ_o : (fun n : ℕ => thetaPrime (n : ℝ) - (n : ℝ)) =o[atTop] (fun n : ℕ => (n : ℝ)) := by
     rw [Asymptotics.isLittleO_iff]
@@ -356,7 +343,6 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
     have hcopAC : Nat.Coprime A_n C_n := by rw [← hsum]; exact Nat.coprime_self_add_right.mpr hcopAB
     have hcopBC : Nat.Coprime B_n C_n := by rw [← hsum, add_comm]; exact Nat.coprime_self_add_right.mpr hcopAB.symm
     refine ⟨hsum, hcopAB, hcopAC, hcopBC, ?_⟩
-    -- Bound log(rad(A_n B_n C_n)) ≤ thetaPrime n ≤ (1 + ε/100) * n
     have hlogn_pos : 0 < Real.log (n : ℝ) := Real.log_pos (by exact_mod_cast (by omega : 1 < n))
     have hrad_dvd_fac : radNat (A_n * B_n * C_n) ∣ ∏ p ∈ (Finset.Icc 2 n).filter Nat.Prime, p := by
       unfold radNat
@@ -432,7 +418,6 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
       have habs_n : |(n : ℝ)| = (n : ℝ) := abs_of_nonneg (Nat.cast_nonneg n)
       rw [Real.norm_eq_abs, Real.norm_eq_abs, habs_n] at h
       linarith [(abs_le.mp h).2]
-    -- Lower bound log C_n ≥ (1/4) (n log n - n) - log 4
     have hlog_Cn_lb : (1 / 4 : ℝ) * ((n : ℝ) * Real.log (n : ℝ) - (n : ℝ)) - Real.log 4 ≤ Real.log (C_n : ℝ) := by
       have hC_ge : ((X₁ : ℝ) + 1) / 2 ≤ (C_n : ℝ) := by
         have hc0_le2 : (c₀ : ℝ) ≤ 2 := by exact_mod_cast Nat.le_of_dvd (by norm_num) hc0_dvd2
@@ -485,8 +470,7 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
             rw [this]; exact mul_le_mul_of_nonneg_right hcoef (by positivity)
           nlinarith only [hstep1, h1_lt, hn_ge100, hlog4_lt, hlogn_pos, hε0, hε1]
       _ ≤ Real.log (C_n : ℝ) := hlog_Cn_lb
-  · -- Hall-type cubic-square bound: n! = u_n^3 v_n, x_n = u_n v_n, y_n = m v_n
-    intro n m hn hm
+  · intro n m hn hm
     let u_n : ℕ := ∏ p ∈ (Finset.Icc 2 n).filter Nat.Prime, p ^ (padicValNat p (Nat.factorial n) / 3)
     let v_n : ℕ := ∏ p ∈ (Finset.Icc 2 n).filter Nat.Prime, p ^ (padicValNat p (Nat.factorial n) % 3)
     have hu_pos : 0 < u_n := Finset.prod_pos (fun p hp => pow_pos (Finset.mem_filter.mp hp).2.pos _)
@@ -608,5 +592,257 @@ theorem thm_8_1_part2_abc_and_hall_bounds (ε : ℝ) (hε0 : 0 < ε) (hε1 : ε 
         _ ≤ (12 + ε) * ((1 / 3 : ℝ) * ((n : ℝ) * Real.log (n : ℝ) - (n : ℝ))) := by
             nlinarith only [h1_lt, hn_pos, hlogn_pos, hε0, hε1]
         _ ≤ (12 + ε) * Real.log ((u_n * v_n : ℕ) : ℝ) := mul_le_mul_of_nonneg_left hlog_x_lb (by linarith only [hε0])
+
+
+/-! ### Concrete Frobenius Trace, `p = 2` Minimality Scaling, and Twist `E_n^{(2)}` (Defect D3(1)–(2)) -/
+
+/-- Concrete Frobenius trace `a_p(E) = p - #E_aff(𝔽_p)` for a Weierstrass curve `E` over `ℤ`. -/
+noncomputable def frobeniusTrace (E : WeierstrassCurve ℤ) (p : ℕ) [Fact p.Prime] : ℤ :=
+  (p : ℤ) - (Fintype.card {pt : ZMod p × ZMod p // (E.map (Int.castRingHom (ZMod p))).Equation pt.1 pt.2} : ℤ)
+
+private lemma card_sq_eq_zmod {p : ℕ} [Fact p.Prime] (hp2 : p ≠ 2) (c : ZMod p) (hc : c ≠ 0) :
+    Fintype.card {t : ZMod p // t ^ 2 = c} = if IsSquare c then 2 else 0 := by
+  classical
+  have h2_ne : (2 : ZMod p) ≠ 0 := by
+    intro h0
+    have h2dvd : p ∣ 2 := (ZMod.natCast_eq_zero_iff 2 p).mp h0
+    have hp_pr : p.Prime := Fact.out
+    exact hp2 ((Nat.prime_dvd_prime_iff_eq hp_pr Nat.prime_two).mp h2dvd)
+  split_ifs with hsq
+  · obtain ⟨r, hr⟩ := hsq
+    have hr_sq : r ^ 2 = c := by rw [sq]; exact hr.symm
+    have hr_ne : r ≠ 0 := by intro h0; rw [h0, zero_pow (by norm_num)] at hr_sq; exact hc hr_sq.symm
+    have hr_ne_neg : r ≠ -r := by
+      intro heq
+      have : (2 : ZMod p) * r = 0 := by linear_combination heq
+      exact (mul_eq_zero.mp this).elim h2_ne hr_ne
+    have hset : (Finset.univ.filter (fun t : ZMod p => t ^ 2 = c)) = {r, -r} := by
+      ext t
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_insert, Finset.mem_singleton]
+      rw [← hr_sq, sq_eq_sq_iff_eq_or_eq_neg]
+    rw [Fintype.card_subtype, hset, Finset.card_pair hr_ne_neg]
+  · rw [Fintype.card_eq_zero_iff]
+    refine ⟨fun ⟨t, ht⟩ => hsq ⟨t, by rw [← sq]; exact ht.symm⟩⟩
+
+private lemma card_nodal_cubic_zmod {p : ℕ} [Fact p.Prime] (hp2 : p ≠ 2) (a b : ZMod p)
+    (hne : b - a ≠ 0) :
+    (p : ℤ) - (Fintype.card {pt : ZMod p × ZMod p // pt.2 ^ 2 = (pt.1 + b) * (pt.1 + a) ^ 2} : ℤ) =
+      if IsSquare (b - a) then 1 else -1 := by
+  classical
+  let P : ZMod p × ZMod p → Prop := fun pt => pt.2 ^ 2 = (pt.1 + b) * (pt.1 + a) ^ 2
+  let S_sing := {pt : ZMod p × ZMod p // P pt ∧ pt.1 = -a}
+  let S_ns := {pt : ZMod p × ZMod p // P pt ∧ pt.1 ≠ -a}
+  have hsplit : Fintype.card {pt : ZMod p × ZMod p // P pt} =
+      Fintype.card S_sing + Fintype.card S_ns := by
+    rw [← Fintype.card_sum]
+    refine Fintype.card_congr
+      { toFun := fun ⟨pt, hpt⟩ =>
+          if h : pt.1 = -a then Sum.inl ⟨pt, hpt, h⟩ else Sum.inr ⟨pt, hpt, h⟩
+        invFun := fun s => match s with
+          | Sum.inl ⟨pt, hpt, _⟩ => ⟨pt, hpt⟩
+          | Sum.inr ⟨pt, hpt, _⟩ => ⟨pt, hpt⟩
+        left_inv := fun ⟨pt, hpt⟩ => by by_cases h : pt.1 = -a <;> simp [h]
+        right_inv := fun s => by
+          rcases s with ⟨pt, hpt, h⟩ | ⟨pt, hpt, h⟩
+          · simp [h]
+          · simp [h] }
+  have hsing : Fintype.card S_sing = 1 := by
+    refine Fintype.card_eq_one_iff.mpr ⟨⟨(-a, 0), ⟨by simp [P], rfl⟩⟩, ?_⟩
+    rintro ⟨⟨x, y⟩, hP, hx⟩
+    ext
+    · exact hx
+    · dsimp only [P] at hP
+      rw [hx] at hP
+      simp only [neg_add_cancel, zero_pow (by norm_num : 2 ≠ 0), mul_zero, sq_eq_zero_iff] at hP
+      exact hP
+  have hns : Fintype.card S_ns = Fintype.card {t : ZMod p // t ^ 2 ≠ b - a} := by
+    refine Fintype.card_congr
+      { toFun := fun ⟨⟨x, y⟩, hP, hx⟩ =>
+          ⟨y * (x + a)⁻¹, by
+            have hxa : x + a ≠ 0 := fun h0 => hx (eq_neg_of_add_eq_zero_left h0)
+            intro hsq
+            have h1 : (y * (x + a)⁻¹) ^ 2 = x + b := by
+              rw [mul_pow, inv_pow, hP]
+              field_simp [hxa]
+            have h2 : x + b = b - a := h1.symm.trans hsq
+            have h3 : x = -a := by linear_combination h2
+            exact hx h3⟩
+        invFun := fun ⟨t, ht⟩ =>
+          ⟨(t ^ 2 - b, t * (t ^ 2 - b + a)), ⟨by dsimp only [P]; ring, by
+            intro h
+            apply ht
+            linear_combination h⟩⟩
+        left_inv := fun ⟨⟨x, y⟩, hP, hx⟩ => by
+          have hxa : x + a ≠ 0 := fun h0 => hx (eq_neg_of_add_eq_zero_left h0)
+          have h1 : (y * (x + a)⁻¹) ^ 2 = x + b := by
+            rw [mul_pow, inv_pow, hP]
+            field_simp [hxa]
+          ext
+          · dsimp only; rw [h1]; ring
+          · dsimp only; rw [h1]; field_simp [hxa]; ring
+        right_inv := fun ⟨t, ht⟩ => by
+          have hxa : t ^ 2 - b + a ≠ 0 := fun h0 => ht (by linear_combination h0)
+          ext
+          dsimp only
+          field_simp [hxa] }
+  have hcomp : Fintype.card {t : ZMod p // t ^ 2 ≠ b - a} +
+      Fintype.card {t : ZMod p // t ^ 2 = b - a} = p := by
+    have h1 := Fintype.card_subtype_compl (fun t : ZMod p => t ^ 2 = b - a)
+    have hcard : Fintype.card (ZMod p) = p := ZMod.card p
+    have hle : Fintype.card {t : ZMod p // t ^ 2 = b - a} ≤ p := by
+      rw [← hcard]; exact Fintype.card_subtype_le _
+    omega
+  rw [hsplit, hsing, hns]
+  have hsq_card := card_sq_eq_zmod hp2 (b - a) hne
+  split_ifs at hsq_card ⊢ <;> omega
+
+/-- **Concrete Frobenius Trace of `ℰ_n` (Defect D3(1), zero external axioms)**:
+For any Brocard solution `n! + 1 = m^2` (`n ≥ 4`) and any odd prime `p ≤ n`, the concrete
+Frobenius trace of `freyCurveE m : WeierstrassCurve ℤ` over `𝔽_p` equals `(-m / p)`. -/
+theorem frobeniusTrace_freyCurveE {n m p : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2)
+    (hp : p.Prime) (hp3 : 3 ≤ p) (hpn : p ≤ n) :
+    @frobeniusTrace (freyCurveE m) p ⟨hp⟩ = @legendreSym p ⟨hp⟩ (-(m : ℤ)) := by
+  haveI : Fact p.Prime := ⟨hp⟩
+  have hp2 : p ≠ 2 := by omega
+  have hp_fac : p ∣ Nat.factorial n := Nat.dvd_factorial hp.pos hpn
+  have hm_sq : ((m : ℤ) : ZMod p) ^ 2 = 1 := by
+    have h0 : ((Nat.factorial n : ℕ) : ZMod p) = 0 := (ZMod.natCast_eq_zero_iff _ p).mpr hp_fac
+    have hm_mod := congrArg (Nat.cast (R := ZMod p)) hm
+    push_cast at hm_mod ⊢
+    rw [h0, zero_add] at hm_mod
+    exact hm_mod.symm
+  have hm_ne : (-(m : ℤ) : ZMod p) ≠ 0 := by
+    intro h0
+    have hm0 : ((m : ℤ) : ZMod p) = 0 := by linear_combination -h0
+    rw [hm0, zero_pow (by norm_num)] at hm_sq
+    exact zero_ne_one hm_sq
+  have heq_iff : ∀ pt : ZMod p × ZMod p,
+      ((freyCurveE m).map (Int.castRingHom (ZMod p))).Equation pt.1 pt.2 ↔
+      pt.2 ^ 2 = (pt.1 + 0) * (pt.1 + ((m : ℤ) : ZMod p)) ^ 2 := by
+    intro ⟨x, y⟩
+    simp only [WeierstrassCurve.Equation, WeierstrassCurve.map, freyCurveE,
+      Int.coe_castRingHom, Int.cast_zero, Int.cast_one, Int.cast_mul, Int.cast_ofNat,
+      zero_mul, add_zero, one_mul, sub_zero]
+    constructor <;> intro h
+    · linear_combination h - x * hm_sq
+    · linear_combination h + x * hm_sq
+  have hcard_eq : Fintype.card {pt : ZMod p × ZMod p // ((freyCurveE m).map (Int.castRingHom (ZMod p))).Equation pt.1 pt.2} =
+      Fintype.card {pt : ZMod p × ZMod p // pt.2 ^ 2 = (pt.1 + 0) * (pt.1 + ((m : ℤ) : ZMod p)) ^ 2} :=
+    Fintype.card_congr (Equiv.subtypeEquivRight heq_iff)
+  unfold frobeniusTrace
+  rw [hcard_eq]
+  have hne : (0 : ZMod p) - ((m : ℤ) : ZMod p) ≠ 0 := by simpa using hm_ne
+  rw [card_nodal_cubic_zmod hp2 ((m : ℤ) : ZMod p) 0 hne]
+  have hneg : (0 : ZMod p) - ((m : ℤ) : ZMod p) = ((-(m : ℤ) : ℤ) : ZMod p) := by push_cast; ring
+  rw [hneg]
+  by_cases hsq : IsSquare ((-(m : ℤ) : ℤ) : ZMod p)
+  · rw [if_pos hsq]
+    exact ((legendreSym.eq_one_iff p (by simpa using hm_ne)).mpr hsq).symm
+  · rw [if_neg hsq]
+    exact ((legendreSym.eq_neg_one_iff p).mpr hsq).symm
+
+/-- Admissible `ℚ`-variable change `(X, Y) ↦ (4x + 1, 8y + 4x)` (`u = 2, r = 1, s = 1, t = 0`)
+exhibiting `p = 2` minimality of `ℰ_n` up to `2⁻¹²` scaling when `m ≡ -1 (mod 32)`. -/
+def freyE_p2_change : WeierstrassCurve.VariableChange ℚ :=
+  ⟨Units.mk0 (2 : ℚ) (by norm_num), 1, 1, 0⟩
+
+/-- **Theorem 8.1(i), `p = 2` Minimality Change of Variables (Defect D3(2))**:
+Applying `freyE_p2_change` to `freyCurveE m` over `ℚ` yields coefficients
+`(1, (m+1)/2, 0, (m+1)/4, (m+1)/32)` and discriminant `Δ' = 2⁻¹² Δ(ℰ_n)`. Whenever
+`m ≡ -1 (mod 32)` (i.e. `32 ∣ m + 1`), all five transformed coefficients are integers. -/
+theorem freyE_p2_minimal_scaling (m : ℕ) (h32 : 32 ∣ m + 1) :
+    let W' := freyE_p2_change • ((freyCurveE m).map (Int.castRingHom ℚ))
+    W'.a₁ = (1 : ℤ) ∧
+    W'.a₂ = (((m + 1) / 2 : ℕ) : ℤ) ∧
+    W'.a₃ = (0 : ℤ) ∧
+    W'.a₄ = (((m + 1) / 4 : ℕ) : ℤ) ∧
+    W'.a₆ = (((m + 1) / 32 : ℕ) : ℤ) ∧
+    W'.Δ = (2 : ℚ)⁻¹ ^ 12 * ((freyCurveE m).Δ : ℚ) := by
+  obtain ⟨k, hk⟩ := h32
+  have hk_q : (m : ℚ) + 1 = 32 * (k : ℚ) := by exact_mod_cast hk
+  have hd2 : (m + 1) / 2 = 16 * k := by omega
+  have hd4 : (m + 1) / 4 = 8 * k := by omega
+  have hd32 : (m + 1) / 32 = k := by omega
+  dsimp only
+  rw [hd2, hd4, hd32]
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+  · simp [freyE_p2_change, freyCurveE, WeierstrassCurve.variableChange_a₁]; ring
+  · simp [freyE_p2_change, freyCurveE, WeierstrassCurve.variableChange_a₂]; linarith
+  · simp [freyE_p2_change, freyCurveE, WeierstrassCurve.variableChange_a₃]
+  · simp [freyE_p2_change, freyCurveE, WeierstrassCurve.variableChange_a₄]; linarith
+  · simp [freyE_p2_change, freyCurveE, WeierstrassCurve.variableChange_a₆]; linarith
+  · rw [WeierstrassCurve.variableChange_Δ]
+    simp [freyE_p2_change, freyCurveE, WeierstrassCurve.map_Δ]
+
+/-- Concrete Mathlib `WeierstrassCurve ℤ` model of the `-1` quadratic twist of the 2-isogenous
+curve `E_n^{(2)} : Y^2 = X(X - 2(m - 1))(X + 4) = X^3 + (6 - 2m) X^2 - 8(m - 1) X`. -/
+def freyCurveE2 (m : ℕ) : WeierstrassCurve ℤ :=
+  ⟨0, 6 - 2 * (m : ℤ), 0, -8 * ((m : ℤ) - 1), 0⟩
+
+/-- Discriminant of `E_n^{(2)}` equals `2^{12} (n!)^2` for any Brocard solution `n! + 1 = m^2`. -/
+theorem freyCurveE2_Delta {n m : ℕ} (hm : Nat.factorial n + 1 = m ^ 2) :
+    (freyCurveE2 m).Δ = 2 ^ 12 * (Nat.factorial n : ℤ) ^ 2 := by
+  have hm_z : (Nat.factorial n : ℤ) + 1 = (m : ℤ) ^ 2 := by exact_mod_cast hm
+  simp only [freyCurveE2, WeierstrassCurve.Δ, WeierstrassCurve.b₂, WeierstrassCurve.b₄,
+    WeierstrassCurve.b₆, WeierstrassCurve.b₈]
+  nlinarith [hm_z]
+
+/-- **Frobenius Trace of `E_n^{(2)}` (Defect D3(2), zero external axioms)**:
+For any Brocard solution `n! + 1 = m^2` (`n ≥ 4`) and any odd prime `p ≤ n` with `p ≡ 1 (mod 4)`,
+`frobeniusTrace (freyCurveE2 m) p = 1`. -/
+theorem frobeniusTrace_freyCurveE2 {n m p : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2)
+    (hp : p.Prime) (hp3 : 3 ≤ p) (hpn : p ≤ n) (hp1 : p % 4 = 1) :
+    @frobeniusTrace (freyCurveE2 m) p ⟨hp⟩ = 1 := by
+  haveI : Fact p.Prime := ⟨hp⟩
+  have hp2 : p ≠ 2 := by omega
+  have hp_fac : p ∣ Nat.factorial n := Nat.dvd_factorial hp.pos hpn
+  have hm_sq : ((m : ℤ) : ZMod p) ^ 2 = 1 := by
+    have h0 : ((Nat.factorial n : ℕ) : ZMod p) = 0 := (ZMod.natCast_eq_zero_iff _ p).mpr hp_fac
+    have hm_mod := congrArg (Nat.cast (R := ZMod p)) hm
+    push_cast at hm_mod ⊢
+    rw [h0, zero_add] at hm_mod
+    exact hm_mod.symm
+  have h2_ne : (2 : ZMod p) ≠ 0 := by
+    intro h0
+    have h2dvd : p ∣ 2 := (ZMod.natCast_eq_zero_iff 2 p).mp h0
+    exact hp2 ((Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).mp h2dvd)
+  have h4_ne : (4 : ZMod p) ≠ 0 := by
+    have : (4 : ZMod p) = 2 * 2 := by norm_num
+    rw [this]; exact mul_ne_zero h2_ne h2_ne
+  rcases sq_eq_one_iff.mp hm_sq with hm1 | hmneg1
+  · have heq_iff : ∀ pt : ZMod p × ZMod p,
+        ((freyCurveE2 m).map (Int.castRingHom (ZMod p))).Equation pt.1 pt.2 ↔
+        pt.2 ^ 2 = (pt.1 + 4) * (pt.1 + 0) ^ 2 := by
+      intro ⟨x, y⟩
+      simp only [WeierstrassCurve.Equation, WeierstrassCurve.map, freyCurveE2,
+        Int.coe_castRingHom, Int.cast_zero, Int.cast_sub, Int.cast_mul, Int.cast_ofNat,
+        Int.cast_one, Int.cast_neg, zero_mul, add_zero, sub_zero]
+      rw [hm1]
+      constructor <;> intro h <;> linear_combination h
+    have hcard_eq : Fintype.card {pt : ZMod p × ZMod p // ((freyCurveE2 m).map (Int.castRingHom (ZMod p))).Equation pt.1 pt.2} =
+        Fintype.card {pt : ZMod p × ZMod p // pt.2 ^ 2 = (pt.1 + 4) * (pt.1 + 0) ^ 2} :=
+      Fintype.card_congr (Equiv.subtypeEquivRight heq_iff)
+    unfold frobeniusTrace
+    rw [hcard_eq, card_nodal_cubic_zmod hp2 0 4 (by simpa using h4_ne)]
+    rw [if_pos ⟨2, by norm_num⟩]
+  · have heq_iff : ∀ pt : ZMod p × ZMod p,
+        ((freyCurveE2 m).map (Int.castRingHom (ZMod p))).Equation pt.1 pt.2 ↔
+        pt.2 ^ 2 = (pt.1 + 0) * (pt.1 + 4) ^ 2 := by
+      intro ⟨x, y⟩
+      simp only [WeierstrassCurve.Equation, WeierstrassCurve.map, freyCurveE2,
+        Int.coe_castRingHom, Int.cast_zero, Int.cast_sub, Int.cast_mul, Int.cast_ofNat,
+        Int.cast_one, Int.cast_neg, zero_mul, add_zero, sub_zero]
+      rw [hmneg1]
+      constructor <;> intro h <;> linear_combination h
+    have hcard_eq : Fintype.card {pt : ZMod p × ZMod p // ((freyCurveE2 m).map (Int.castRingHom (ZMod p))).Equation pt.1 pt.2} =
+        Fintype.card {pt : ZMod p × ZMod p // pt.2 ^ 2 = (pt.1 + 0) * (pt.1 + 4) ^ 2} :=
+      Fintype.card_congr (Equiv.subtypeEquivRight heq_iff)
+    unfold frobeniusTrace
+    rw [hcard_eq, card_nodal_cubic_zmod hp2 4 0 (by simpa using neg_ne_zero.mpr h4_ne)]
+    have hsq_neg1 : IsSquare (-1 : ZMod p) :=
+      (ZMod.exists_sq_eq_neg_one_iff (p := p)).mpr (by omega)
+    obtain ⟨i, hi⟩ := hsq_neg1
+    have hsq_neg4 : IsSquare ((0 : ZMod p) - 4) := ⟨2 * i, by linear_combination 4 * hi⟩
+    rw [if_pos hsq_neg4]
 
 end GrasGreenbergBrocard
