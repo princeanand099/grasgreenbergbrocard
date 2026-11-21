@@ -299,8 +299,8 @@ theorem thm_1_2_part1_valuation_law {n m p X₁ Y₁ k : ℕ}
     (hk_eq : (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = (pellUnit (q_n n) X₁ Y₁) ^ k)
     (hpk : ¬ p ∣ k) :
     let inv := canonicalRealQuadIwasawa (q_n n) p
-    inv.v_Lp = padicValNat p inv.classNumber + (padicValNat p (Nat.factorial n) + 1) / 2 - 1 ∧
-    inv.v_T = padicValNat p inv.classNumber + (padicValNat p (Nat.factorial n) + 1) / 2 - 1 ∧
+    inv.v_Lp = padicValNat p (realQuadClassNumber (q_n n)) + (padicValNat p (Nat.factorial n) + 1) / 2 - 1 ∧
+    inv.v_T = padicValNat p (realQuadClassNumber (q_n n)) + (padicValNat p (Nat.factorial n) + 1) / 2 - 1 ∧
     (p ≤ n / 3 →
       1 ≤ inv.v_T ∧ inv.is_p_rational = false ∧
       inv.lambda_star = inv.lambda_chi ∧ 1 ≤ inv.lambda_star) := by
@@ -313,7 +313,7 @@ theorem thm_1_2_part1_valuation_law {n m p X₁ Y₁ k : ℕ}
   have hpn : p ≤ n := by omega
   have hp_dvd_q_iff := p_dvd_q_n_iff hp hpn
   have hLp_eq : (canonicalRealQuadIwasawa (q_n n) p).v_Lp =
-      padicValNat p (canonicalRealQuadIwasawa (q_n n) p).classNumber +
+      padicValNat p (realQuadClassNumber (q_n n)) +
       (padicValNat p (Nat.factorial n) + 1) / 2 - 1 := by
     by_cases hpd : p ∣ q_n n
     · have hodd := hp_dvd_q_iff.mp hpd
@@ -325,7 +325,7 @@ theorem thm_1_2_part1_valuation_law {n m p X₁ Y₁ k : ℕ}
       rw [(h_unram hpd).1, h_reg]
       omega
   have hT_eq : (canonicalRealQuadIwasawa (q_n n) p).v_T =
-      padicValNat p (canonicalRealQuadIwasawa (q_n n) p).classNumber +
+      padicValNat p (realQuadClassNumber (q_n n)) +
       (padicValNat p (Nat.factorial n) + 1) / 2 - 1 := by
     by_cases hpd : p ∣ q_n n
     · have hodd := hp_dvd_q_iff.mp hpd

@@ -1,6 +1,7 @@
 import Mathlib
 import GrasGreenbergBrocard.Basic
 import GrasGreenbergBrocard.PadicRegulator
+import GrasGreenbergBrocard.RealQuadField
 
 /-!
 # External Analytic and Iwasawa-Theoretic Axioms for Section 3
@@ -14,7 +15,8 @@ are axiomatized here.
 The normalized `p`-adic regulator valuation `realQuadPadicRegVal q p` is now defined concretely
 in `PadicRegulator.lean` inside Mathlib's `ℚ_[p]`, and manuscript equation (3.6) is proved
 directly without axioms via `realQuadPadicRegVal_pell_power`. Similarly, the splitting
-condition `realQuadSplits q p` is defined concretely via Mathlib's `legendreSym p (q : ℤ) = 1`.
+condition `realQuadSplits q p` is defined concretely via Mathlib's `legendreSym p (q : ℤ) = 1`,
+and the class number `realQuadClassNumber q` is anchored to Mathlib's `NumberField.classNumber`.
 
 Every remaining external axiom is documented in `EXTERNAL_AXIOMS.md` with its exact published source.
 -/
@@ -71,15 +73,13 @@ def realQuadSplits (q p : ℕ) : Bool :=
   else false
 
 /-- Algebraic and Iwasawa-theoretic invariants for the real quadratic field `K = ℚ(√q)` at an
-odd prime `p ≥ 5`. The normalized `p`-adic regulator valuation `realQuadPadicRegVal q p` and
-splitting predicate `realQuadSplits q p` are defined concretely (not opaque fields). -/
+odd prime `p ≥ 5`. The class number `realQuadClassNumber q`, normalized `p`-adic regulator
+valuation `realQuadPadicRegVal q p`, and splitting predicate `realQuadSplits q p` are defined
+concretely (not opaque fields). -/
 structure RealQuadIwasawaInvariants (q p : ℕ) where
   /-- Fundamental discriminant `D ∈ {q, 4q}`. -/
   D : ℕ
   hD : D = q ∨ D = 4 * q
-  /-- Class number `h(q)` of `ℚ(√q)`. -/
-  classNumber : ℕ
-  hClass_pos : 0 < classNumber
   /-- `p`-adic valuation of `L_p(1, χ_D)`. -/
   v_Lp : ℕ
   /-- `p`-adic valuation of `#T_{K, p}` (order of the abelian `p`-ramification torsion group). -/
@@ -109,18 +109,19 @@ axiom canonicalRealQuadIwasawa (q p : ℕ) : RealQuadIwasawaInvariants q p
 
 /-- **Leopoldt's `p`-Adic Class Number Formula (Washington 1997, Theorem 5.24)** and
 **Coates's Formula (Coates 1977, Appendix Lemma 8; Taya 1996, Prop. 1)** for `K = ℚ(√q)` at `p ≥ 5`,
-anchored directly to the concrete normalized `p`-adic regulator valuation `realQuadPadicRegVal q p`. -/
+anchored directly to the concrete class number `realQuadClassNumber q` and normalized `p`-adic
+regulator valuation `realQuadPadicRegVal q p`. -/
 axiom leopoldt_coates_valuation_law :
     ∀ {q p : ℕ},
       let inv := canonicalRealQuadIwasawa q p
       let v_reg := realQuadPadicRegVal q p
       p.Prime → 5 ≤ p → Squarefree q → 1 ≤ v_reg →
       ((¬ p ∣ q →
-          inv.v_Lp = padicValNat p inv.classNumber + v_reg - 1 ∧
-          inv.v_T = padicValNat p inv.classNumber + v_reg - 1) ∧
+          inv.v_Lp = padicValNat p (realQuadClassNumber q) + v_reg - 1 ∧
+          inv.v_T = padicValNat p (realQuadClassNumber q) + v_reg - 1) ∧
        (p ∣ q →
-          inv.v_Lp = padicValNat p inv.classNumber + v_reg ∧
-          inv.v_T = padicValNat p inv.classNumber + v_reg))
+          inv.v_Lp = padicValNat p (realQuadClassNumber q) + v_reg ∧
+          inv.v_T = padicValNat p (realQuadClassNumber q) + v_reg))
 
 /-- **Ferrero–Washington (1979), Mazur–Wiles (1984), and Greenberg (1978, Prop. 3)**:
 For the real quadratic field `K = ℚ(√q)` at `p ≥ 5`, `μ_p(χ_D) = 0`, `X_p(K_∞)` is a free
