@@ -629,7 +629,8 @@ theorem padic_regulator_valuation_pell_power {q p m s X₁ Y₁ k : ℕ} [Fact p
   have hcheb_e_ne : chebyshevU_eval (q : ℤ) (m : ℤ) (s : ℤ) e ≠ 0 := by
     intro h0
     have hm_pos : 0 < m := by
-      by_contra h0'; have hm0 : m = 0 := by omega; subst hm0; simp at hms
+      have hsq_pos : 0 < m ^ 2 := by rw [← hms]; positivity
+      exact Nat.pos_of_ne_zero (fun hm0 => by simp [hm0] at hsq_pos)
     have hne := (pell_pow_padicRegExp_props hp hp5 (by omega) hm_pos (Nat.pos_of_ne_zero hs0) hms).2.2.2
     rw [hlhs, h0, mul_zero] at hne
     exact hne rfl

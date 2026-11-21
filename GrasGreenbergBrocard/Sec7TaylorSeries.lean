@@ -205,6 +205,7 @@ theorem factorial_dvd_r_pow_mul_pochhammer (e r k : ℕ) (hr : 1 ≤ r) :
     · -- Case 1: p ∣ r ⇒ v_p(r^k) ≥ k ≥ v_p(k!)
       have hpoch_pos : 0 < pochhammerInt e r k := Finset.prod_pos (fun u _ => by omega)
       have hpow_v : padicValNat p (r ^ k) = k * padicValNat p r := by
+        clear hprod_pos hpoch_pos
         induction k with
         | zero => simp
         | succ k' ihk =>
@@ -212,7 +213,8 @@ theorem factorial_dvd_r_pow_mul_pochhammer (e r k : ℕ) (hr : 1 ≤ r) :
       rw [padicValNat.mul (pow_ne_zero k (by omega)) hpoch_pos.ne', hpow_v]
       have hvr : 1 ≤ padicValNat p r := one_le_padicValNat_of_dvd (by omega) hpr
       have hfac := padicValNat_factorial_le_self (k := k) hp
-      nlinarith
+      have hk_le : k ≤ k * padicValNat p r := Nat.le_mul_of_pos_right k hvr
+      omega
     · -- Case 2: p ∤ r ⇒ invert r mod p^v where v = v_p(k!)
       set v := padicValNat p (Nat.factorial k)
       have hcop : Nat.Coprime r (p ^ v) := (hp.coprime_iff_not_dvd.mpr hpr).symm.pow_right v
@@ -423,7 +425,6 @@ private lemma powerSeries_prod_coeff_bound {ι : Type*} (s : Finset ι) (f : ι 
                 rw [Finset.sum_range_succ, ihk,
                   show k + 1 + (s.card + 1) = (k + (s.card + 1)) + 1 by omega,
                   Nat.choose_succ_succ, show k + 1 + s.card = k + (s.card + 1) by omega]
-                ring
             exact_mod_cast (hsum_ref.trans hhockey)
 
 /-- **Exact Coefficient Bound for `clearedMonomialSeries`**:
