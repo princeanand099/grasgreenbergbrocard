@@ -125,21 +125,13 @@ lemma two_mul_padicValNat_two_mul_add_one_le {p j : ℕ} (hp : p.Prime) (hp5 : 5
 private lemma padic_norm_intCast_eq {p : ℕ} [Fact p.Prime] {z : ℤ} (hz : z ≠ 0) :
     ‖(z : ℚ_[p])‖ = (p : ℝ) ^ (-(padicValInt p z : ℤ)) := by
   have hz_q : (z : ℚ_[p]) ≠ 0 := Int.cast_ne_zero.mpr hz
-  rw [Padic.norm_eq_zpow_neg_valuation hz_q]
-  congr 2
-  have hnat : z.natAbs ≠ 0 := Int.natAbs_ne_zero.mpr hz
-  rcases Int.natAbs_eq z with h | h
-  · rw [h, Int.cast_natCast, Padic.valuation_natCast hnat]
-    unfold padicValInt
-    simp [Int.natAbs_natCast]
-  · rw [h, Int.cast_neg, Int.cast_natCast, Padic.valuation_neg, Padic.valuation_natCast hnat]
-    unfold padicValInt
-    simp [Int.natAbs_neg, Int.natAbs_natCast]
+  rw [Padic.norm_eq_zpow_neg_valuation hz_q, Padic.valuation_intCast]
 
 private lemma padic_norm_natCast_eq {p : ℕ} [Fact p.Prime] {n : ℕ} (hn : n ≠ 0) :
     ‖(n : ℚ_[p])‖ = (p : ℝ) ^ (-(padicValNat p n : ℤ)) := by
-  have hn_q : (n : ℚ_[p]) ≠ 0 := Nat.cast_ne_zero.mpr hn
-  rw [Padic.norm_eq_zpow_neg_valuation hn_q, Padic.valuation_natCast hn]
+  have hz : (n : ℤ) ≠ 0 := Nat.cast_ne_zero.mpr hn
+  have h1 := padic_norm_intCast_eq (p := p) hz
+  simpa [padicValInt] using h1
 
 private lemma padic_norm_tsum_le {p : ℕ} [Fact p.Prime] {f : ℕ → ℚ_[p]} {C : ℝ}
     (hC : 0 ≤ C) (hsum : Summable f) (hb : ∀ n : ℕ, ‖f n‖ ≤ C) :
@@ -327,8 +319,8 @@ private lemma zsqrtd_pow_re_im_norm (D X₁ Y₁ : ℤ) (hnorm : X₁ ^ 2 - D * 
   | succ k ih =>
     rw [pow_succ]
     set u : Zsqrtd D := (⟨X₁, Y₁⟩ : Zsqrtd D) ^ k
-    have hre : (u * ⟨X₁, Y₁⟩).re = u.re * X₁ + D * u.im * Y₁ := by ring_nf; rfl
-    have him : (u * ⟨X₁, Y₁⟩).im = u.re * Y₁ + u.im * X₁ := by ring_nf; rfl
+    have hre : (u * ⟨X₁, Y₁⟩).re = u.re * X₁ + D * u.im * Y₁ := by simp [Zsqrtd.mul_re]; ring
+    have him : (u * ⟨X₁, Y₁⟩).im = u.re * Y₁ + u.im * X₁ := by simp [Zsqrtd.mul_im]; ring
     rw [hre, him]
     nlinarith [ih, hnorm]
 
@@ -412,7 +404,9 @@ lemma pell_pow_padicRegExp_props {q p X₁ Y₁ : ℕ} (hp : p.Prime) (hp5 : 5 �
   haveI : Fact p.Prime := ⟨hp⟩
   set e := padicRegExp q p
   set u : Zsqrtd (q : ℤ) := (⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ e
-  have hpell_z : (X₁ : ℤ) ^ 2 - (q : ℤ) * (Y₁ : ℤ) ^ 2 = 1 := by exact_mod_cast (by omega : X₁ ^ 2 - q * Y₁ ^ 2 = 1)
+  have hpell_z : (X₁ : ℤ) ^ 2 - (q : ℤ) * (Y₁ : ℤ) ^ 2 = 1 := by
+    have : (X₁ : ℤ) ^ 2 = (q : ℤ) * (Y₁ : ℤ) ^ 2 + 1 := by exact_mod_cast hpell
+    linarith
   have hnorm : u.re ^ 2 - (q : ℤ) * u.im ^ 2 = 1 := zsqrtd_pow_re_im_norm _ _ _ hpell_z e
   have him_pos : 0 < u.im := by
     have he1 : 1 ≤ e := padicRegExp_pos hp
@@ -427,8 +421,8 @@ lemma pell_pow_padicRegExp_props {q p X₁ Y₁ : ℕ} (hp : p.Prime) (hp5 : 5 �
         · obtain ⟨hre, him⟩ := ih (Nat.pos_of_ne_zero hk0)
           rw [pow_succ]
           set w : Zsqrtd (q : ℤ) := (⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ k
-          have h1 : (w * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).re = w.re * (X₁ : ℤ) + (q : ℤ) * w.im * (Y₁ : ℤ) := by ring_nf; rfl
-          have h2 : (w * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).im = w.re * (Y₁ : ℤ) + w.im * (X₁ : ℤ) := by ring_nf; rfl
+          have h1 : (w * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).re = w.re * (X₁ : ℤ) + (q : ℤ) * w.im * (Y₁ : ℤ) := by simp [Zsqrtd.mul_re]; ring
+          have h2 : (w * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).im = w.re * (Y₁ : ℤ) + w.im * (X₁ : ℤ) := by simp [Zsqrtd.mul_im]; ring
           rw [h1, h2]
           have hq_z : (0 : ℤ) < (q : ℤ) := by exact_mod_cast hq
           have hX_z : (0 : ℤ) < (X₁ : ℤ) := by exact_mod_cast hX1
@@ -461,8 +455,8 @@ lemma pell_pow_padicRegExp_props {q p X₁ Y₁ : ℕ} (hp : p.Prime) (hp5 : 5 �
         | zero => simp
         | succ m ih =>
           rw [pow_succ]
-          have h1 : (z ^ m * z).re = (z ^ m).re * z.re + (q : ℤ) * (z ^ m).im * z.im := by ring_nf; rfl
-          have h2 : (z ^ m * z).im = (z ^ m).re * z.im + (z ^ m).im * z.re := by ring_nf; rfl
+          have h1 : (z ^ m * z).re = (z ^ m).re * z.re + (q : ℤ) * (z ^ m).im * z.im := by simp [Zsqrtd.mul_re]; ring
+          have h2 : (z ^ m * z).im = (z ^ m).re * z.im + (z ^ m).im * z.re := by simp [Zsqrtd.mul_im]; ring
           rw [h1, h2]; push_cast; rw [ih.1, ih.2, hzr, hzi]; simp
       rcases sq_eq_one_iff.mp hq_half_sq with hleg1 | hlegneg1
       · have hpm1 : ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ (p - 1)) =
@@ -473,16 +467,21 @@ lemma pell_pow_padicRegExp_props {q p X₁ Y₁ : ℕ} (hp : p.Prime) (hp5 : 5 �
           rw [hpm1]
           have h1 : ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p * ⟨(X₁ : ℤ), -(Y₁ : ℤ)⟩).re =
               ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p).re * (X₁ : ℤ) +
-              (q : ℤ) * ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p).im * (-(Y₁ : ℤ)) := by ring_nf; rfl
+              (q : ℤ) * ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p).im * (-(Y₁ : ℤ)) := by
+            simp [Zsqrtd.mul_re]; ring
           rw [h1]; push_cast; rw [hfp_re, hfp_im, hleg1, mul_one]
           have hmod := congrArg (Int.cast (R := ZMod p)) hpell_z
-          push_cast at hmod; linear_combination hmod
+          push_cast at hmod
+          simp only [Int.cast_natCast] at hmod ⊢
+          linear_combination hmod
         have h1_im : (((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ (p - 1)).im : ZMod p) = 0 := by
           rw [hpm1]
           have h2 : ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p * ⟨(X₁ : ℤ), -(Y₁ : ℤ)⟩).im =
               ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p).re * (-(Y₁ : ℤ)) +
-              ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p).im * (X₁ : ℤ) := by ring_nf; rfl
-          rw [h2]; push_cast; rw [hfp_re, hfp_im, hleg1, mul_one]; ring
+              ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p).im * (X₁ : ℤ) := by
+            simp [Zsqrtd.mul_im]; ring
+          rw [h2]; push_cast; rw [hfp_re, hfp_im, hleg1, mul_one]
+          simp only [Int.cast_natCast]; ring
         have hfac : e = (p - 1) * (p + 1) := by
           rw [he_eq]; zify [show 1 ≤ p by omega, show 1 ≤ p ^ 2 by nlinarith]; ring
         change (((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ e).im : ZMod p) = 0
@@ -492,16 +491,21 @@ lemma pell_pow_padicRegExp_props {q p X₁ Y₁ : ℕ} (hp : p.Prime) (hp5 : 5 �
           rw [pow_succ]
           have h1 : ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).re =
               ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p).re * (X₁ : ℤ) +
-              (q : ℤ) * ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p).im * (Y₁ : ℤ) := by ring_nf; rfl
+              (q : ℤ) * ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p).im * (Y₁ : ℤ) := by
+            simp [Zsqrtd.mul_re]; ring
           rw [h1]; push_cast; rw [hfp_re, hfp_im, hlegneg1]
           have hmod := congrArg (Int.cast (R := ZMod p)) hpell_z
-          push_cast at hmod; linear_combination hmod
+          push_cast at hmod
+          simp only [Int.cast_natCast] at hmod ⊢
+          linear_combination hmod
         have h1_im : (((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ (p + 1)).im : ZMod p) = 0 := by
           rw [pow_succ]
           have h2 : ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).im =
               ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p).re * (Y₁ : ℤ) +
-              ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p).im * (X₁ : ℤ) := by ring_nf; rfl
-          rw [h2]; push_cast; rw [hfp_re, hfp_im, hlegneg1]; ring
+              ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p).im * (X₁ : ℤ) := by
+            simp [Zsqrtd.mul_im]; ring
+          rw [h2]; push_cast; rw [hfp_re, hfp_im, hlegneg1]
+          simp only [Int.cast_natCast]; ring
         have hfac : e = (p + 1) * (p - 1) := by
           rw [he_eq]; zify [show 1 ≤ p by omega, show 1 ≤ p ^ 2 by nlinarith]; ring
         change (((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ e).im : ZMod p) = 0
@@ -545,8 +549,10 @@ theorem normalizedPadicRegulator_valuation {q p X₁ Y₁ : ℕ} [Fact p.Prime]
   have he_pos : 0 < e := padicRegExp_pos hp
   have he_ne : ((e : ℕ) : ℚ_[p]) ≠ 0 := Nat.cast_ne_zero.mpr he_pos.ne'
   have he_val : ((e : ℕ) : ℚ_[p]).valuation = 0 := by
-    rw [Padic.valuation_natCast he_pos.ne', padicValNat.eq_zero_of_not_dvd (not_dvd_padicRegExp hp)]
-    rfl
+    have h1 : (((e : ℤ) : ℚ_[p])).valuation = (padicValInt p (e : ℤ) : ℤ) := Padic.valuation_intCast (e : ℤ)
+    have h2 : padicValInt p (e : ℤ) = 0 := by
+      unfold padicValInt; simp [padicValNat.eq_zero_of_not_dvd (not_dvd_padicRegExp hp)]
+    simpa [h2] using h1
   have hreg_ne : normalizedPadicRegulator q p X₁ Y₁ ≠ 0 := by
     unfold normalizedPadicRegulator
     exact mul_ne_zero (inv_ne_zero he_ne) hlog_ne
@@ -580,7 +586,7 @@ theorem padic_regulator_valuation_pell_power {q p m s X₁ Y₁ k : ℕ} [Fact p
   set e := padicRegExp q p
   have he1 : 1 ≤ e := padicRegExp_pos hp
   have he_nd : ¬ p ∣ e := not_dvd_padicRegExp hp
-  have hs0 : s ≠ 0 := by intro h0; rw [h0, padicValNat.zero] at hs_dvd; omega
+  have hs0 : s ≠ 0 := by intro h0; rw [h0] at hs_dvd; simp at hs_dvd
   have hps : (p : ℤ) ∣ (s : ℤ) :=
     Int.natCast_dvd_natCast.mpr (by simpa using dvd_trans (pow_dvd_pow p hs_dvd) pow_padicValNat_dvd)
   have hpm_nd : ¬ (p : ℤ) ∣ (m : ℤ) := fun h => hm_nd (Int.natCast_dvd_natCast.mp h)
@@ -603,13 +609,15 @@ theorem padic_regulator_valuation_pell_power {q p m s X₁ Y₁ k : ℕ} [Fact p
     conv_lhs => rw [hu_eta]
     exact lucasY_eq_mul_chebyshevU (q : ℤ) u.re u.im k
   rw [hlhs, hrhs] at him_eq
-  have hms_z : (m : ℤ) ^ 2 - (q : ℤ) * (s : ℤ) ^ 2 = 1 := by exact_mod_cast (by omega : m ^ 2 - q * s ^ 2 = 1)
+  have hms_z : (m : ℤ) ^ 2 - (q : ℤ) * (s : ℤ) ^ 2 = 1 := by
+    have : (m : ℤ) ^ 2 = (q : ℤ) * (s : ℤ) ^ 2 + 1 := by exact_mod_cast hms
+    linarith
   have hcheb_e := padicValInt_chebyshevU he1 hp hms_z (dvd_mul_of_dvd_right hps _) (Or.inl (by omega))
   have hcheb_k := padicValInt_chebyshevU hk hp hu_norm hu_dvd (Or.inl (by omega))
   have hcheb_e_ne : chebyshevU_eval (q : ℤ) (m : ℤ) (s : ℤ) e ≠ 0 := by
     intro h0
     have hm_pos : 0 < m := by
-      by_contra h0'; have : m = 0 := by omega; rw [this] at hms; nlinarith
+      by_contra h0'; have : m = 0 := by omega; rw [this] at hms; simp at hms
     have hne := (pell_pow_padicRegExp_props hp hp5 (by omega) hm_pos (Nat.pos_of_ne_zero hs0) hms).2.2.2
     rw [hlhs, h0, mul_zero] at hne
     exact hne rfl
@@ -672,11 +680,15 @@ lemma zsqrtd_pow_eq_of_real_eq {q m s X₁ Y₁ k : ℕ} (hq : 2 ≤ q) (hnsq : 
     | succ j ih =>
       rw [pow_succ, pow_succ, ← ih]
       set w : Zsqrtd (q : ℤ) := (⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ j
-      have h1 : (w * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).re = w.re * (X₁ : ℤ) + (q : ℤ) * w.im * (Y₁ : ℤ) := by ring_nf; rfl
-      have h2 : (w * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).im = w.re * (Y₁ : ℤ) + w.im * (X₁ : ℤ) := by ring_nf; rfl
+      have h1 : (w * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).re = w.re * (X₁ : ℤ) + (q : ℤ) * w.im * (Y₁ : ℤ) := by simp [Zsqrtd.mul_re]; ring
+      have h2 : (w * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).im = w.re * (Y₁ : ℤ) + w.im * (X₁ : ℤ) := by simp [Zsqrtd.mul_im]; ring
       rw [h1, h2]; push_cast
       have hsq : Real.sqrt (q : ℝ) ^ 2 = (q : ℝ) := Real.sq_sqrt (by positivity)
-      nlinarith
+      calc (w.re : ℝ) * (X₁ : ℝ) + (q : ℝ) * (w.im : ℝ) * (Y₁ : ℝ) +
+            ((w.re : ℝ) * (Y₁ : ℝ) + (w.im : ℝ) * (X₁ : ℝ)) * Real.sqrt (q : ℝ)
+          = (w.re : ℝ) * (X₁ : ℝ) + (w.im : ℝ) * (Y₁ : ℝ) * Real.sqrt (q : ℝ) ^ 2 +
+            ((w.re : ℝ) * (Y₁ : ℝ) + (w.im : ℝ) * (X₁ : ℝ)) * Real.sqrt (q : ℝ) := by rw [hsq]; ring
+        _ = ((w.re : ℝ) + (w.im : ℝ) * Real.sqrt (q : ℝ)) * ((X₁ : ℝ) + (Y₁ : ℝ) * Real.sqrt (q : ℝ)) := by ring
   have heq_r : (m : ℝ) + (s : ℝ) * Real.sqrt (q : ℝ) = (u.re : ℝ) + (u.im : ℝ) * Real.sqrt (q : ℝ) := by
     rw [hk_eq, ← hreal_pow k]
   have hsqrt_irr : Irrational (Real.sqrt (q : ℝ)) := by
@@ -702,16 +714,19 @@ lemma zsqrtd_pow_eq_of_real_eq {q m s X₁ Y₁ k : ℕ} (hq : 2 ≤ q) (hnsq : 
     exact hnsq ⟨c, by rw [hq_sq, sq]⟩
   have him_eq : (s : ℤ) = u.im := by
     by_contra hne
-    have hne_r : ((s : ℤ) - u.im : ℝ) ≠ 0 := by
+    have hne_r : (s : ℝ) - (u.im : ℝ) ≠ 0 := by
       have : ((s : ℤ) - u.im : ℤ) ≠ 0 := sub_ne_zero.mpr hne
       exact_mod_cast this
-    have hrat : Real.sqrt (q : ℝ) = (((u.re - (m : ℤ) : ℤ) : ℚ) / (((s : ℤ) - u.im : ℤ) : ℚ) : ℝ) := by
+    let r : ℚ := ((u.re - (m : ℤ) : ℤ) : ℚ) / (((s : ℤ) - u.im : ℤ) : ℚ)
+    have hrat : (r : ℝ) = Real.sqrt (q : ℝ) := by
+      dsimp only [r]
       push_cast
-      field_simp [hne_r]
+      rw [div_eq_iff hne_r]
       linarith
-    exact hsqrt_irr ⟨_, hrat.symm⟩
+    exact hsqrt_irr ⟨r, hrat⟩
   have hre_eq : (m : ℤ) = u.re := by
     have him_r : (s : ℝ) = (u.im : ℝ) := by exact_mod_cast him_eq
+    rw [him_r] at heq_r
     have hre_r : (m : ℝ) = (u.re : ℝ) := by linarith
     exact_mod_cast hre_r
   ext <;> assumption
@@ -756,8 +771,9 @@ theorem real_quad_unit_order_index_dvd_three {q : ℕ} {a b : ℤ} (hq : Squaref
       by_contra hbodd
       have hb1 : b % 2 = 1 := by omega
       have hb_sq_odd : b ^ 2 % 4 = 1 := by
-        have : b = 2 * (b / 2) + 1 := by omega
-        have : b ^ 2 = 4 * ((b / 2) ^ 2 + b / 2) + 1 := by rw [this]; ring
+        set kb := b / 2
+        have hbeq : b = 2 * kb + 1 := by omega
+        have hsq : b ^ 2 = 4 * (kb ^ 2 + kb) + 1 := by rw [hbeq]; ring
         omega
       have h4_dvd_qb2 : (4 : ℤ) ∣ (q : ℤ) * b ^ 2 := by
         rcases hnorm with h | h
@@ -773,26 +789,27 @@ theorem real_quad_unit_order_index_dvd_three {q : ℕ} {a b : ℤ} (hq : Squaref
     rcases hnorm with h | h
     · have hq4 : (q : ℤ) * (2 * b') ^ 2 = 4 * (a' ^ 2 - 1) := by linarith
       refine ⟨⟨a' * (4 * a' ^ 2 - 3), ?_⟩, ⟨b' * (4 * a' ^ 2 - 1), ?_⟩⟩
-      · rw [hq4]; ring
-      · rw [hq4]; ring
+      · linear_combination 6 * a' * hq4
+      · linear_combination 2 * b' * hq4
     · have hq4 : (q : ℤ) * (2 * b') ^ 2 = 4 * (a' ^ 2 + 1) := by linarith
       refine ⟨⟨a' * (4 * a' ^ 2 + 3), ?_⟩, ⟨b' * (4 * a' ^ 2 + 1), ?_⟩⟩
-      · rw [hq4]; ring
-      · rw [hq4]; ring
+      · linear_combination 6 * a' * hq4
+      · linear_combination 2 * b' * hq4
   · have ha_sq : a ^ 2 % 2 = 1 := by
-      have : a = 2 * (a / 2) + 1 := by omega
-      have : a ^ 2 = 4 * (a / 2) ^ 2 + 4 * (a / 2) + 1 := by rw [this]; ring
+      set ka := a / 2
+      have haeq : a = 2 * ka + 1 := by omega
+      have hsq : a ^ 2 = 4 * ka ^ 2 + 4 * ka + 1 := by rw [haeq]; ring
       omega
     rcases hnorm with h | h
-    · refine ⟨⟨a * (a ^ 2 - 3) / 2, ?_⟩, ⟨b * (a ^ 2 - 1) / 2, ?_⟩⟩
-      · have hsq : (a ^ 2 - 3) % 2 = 0 := by omega
-        rw [h1, h]; omega
-      · have hsq : (a ^ 2 - 1) % 2 = 0 := by omega
-        rw [h2, h]; omega
-    · refine ⟨⟨a * (a ^ 2 + 3) / 2, ?_⟩, ⟨b * (a ^ 2 + 1) / 2, ?_⟩⟩
-      · have hsq : (a ^ 2 + 3) % 2 = 0 := by omega
-        rw [h1, h]; omega
-      · have hsq : (a ^ 2 + 1) % 2 = 0 := by omega
-        rw [h2, h]; omega
+    · obtain ⟨t1, ht1⟩ : ∃ t : ℤ, a ^ 2 - 3 = 2 * t := ⟨(a ^ 2 - 3) / 2, by omega⟩
+      obtain ⟨t2, ht2⟩ : ∃ t : ℤ, a ^ 2 - 1 = 2 * t := ⟨(a ^ 2 - 1) / 2, by omega⟩
+      refine ⟨⟨a * t1, ?_⟩, ⟨b * t2, ?_⟩⟩
+      · rw [h1, h]; linear_combination 4 * a * ht1
+      · rw [h2, h]; linear_combination 4 * b * ht2
+    · obtain ⟨t1, ht1⟩ : ∃ t : ℤ, a ^ 2 + 3 = 2 * t := ⟨(a ^ 2 + 3) / 2, by omega⟩
+      obtain ⟨t2, ht2⟩ : ∃ t : ℤ, a ^ 2 + 1 = 2 * t := ⟨(a ^ 2 + 1) / 2, by omega⟩
+      refine ⟨⟨a * t1, ?_⟩, ⟨b * t2, ?_⟩⟩
+      · rw [h1, h]; linear_combination 4 * a * ht1
+      · rw [h2, h]; linear_combination 4 * b * ht2
 
 end GrasGreenbergBrocard
