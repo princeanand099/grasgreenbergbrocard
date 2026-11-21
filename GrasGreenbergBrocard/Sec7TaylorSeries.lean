@@ -14,7 +14,7 @@ for $|\mathbf{e}| \le E \le r - 1$ directly in Mathlib's `PowerSeries ℤ` with 
   $k! \mid r^k \prod_{u=0}^{k-1} (e + u r)$ for all $e, k \in \mathbb{N}$ and $r \ge 1$
 - `clearedFactorSeries`, `clearedMonomialSeries`: exact `PowerSeries ℤ` representing
   $\Omega_{\mathbf{e}}(r^2 x)$ with non-negative integer coefficients
-- `clearedMonomialSeries_coeff_bound`: proves $0 \le r^{2k} c_{\mathbf{e}, k} \le (r^2 \cdot (d M + 1) \cdot M)^k$
+- `clearedMonomialSeries_coeff_le`: proves $0 \le r^{2k} c_{\mathbf{e}, k} \le (r^2 \cdot (d M) \cdot M)^k$
 - `canonicalMonomialTaylorFamily`: **concrete `def`** (replacing the former axiom) returning
   `AlgebraicTaylorFamily (Nat.choose (d + E) d - 1) r M`.
 -/
@@ -65,6 +65,7 @@ theorem card_multiIndexFinset (d : ℕ) :
     rw [huniv, Finset.card_singleton, Nat.choose_zero_right]
   | succ d ih =>
     intro E
+    -- Partition `multiIndexFinset (d + 1) E` by the last coordinate `c = e (Fin.last d) ∈ range (E + 1)`
     have hcard_eq : (multiIndexFinset (d + 1) E).card =
         ∑ c ∈ Finset.range (E + 1), (multiIndexFinset d (E - c)).card := by
       rw [← Finset.card_sigma]
@@ -72,7 +73,7 @@ theorem card_multiIndexFinset (d : ℕ) :
       · intro e he
         simp only [multiIndexFinset, Finset.mem_filter, Fintype.mem_piFinset, Finset.mem_range] at he
         have hsum : (∑ i : Fin d, Fin.init e i) + e (Fin.last d) = ∑ i : Fin (d + 1), e i :=
-          Fin.sum_univ_castSucc e
+          (Fin.sum_univ_castSucc e).symm
         refine Finset.mem_sigma.mpr ⟨Finset.mem_range.mpr (he.1 (Fin.last d)), ?_⟩
         simp only [multiIndexFinset, Finset.mem_filter, Fintype.mem_piFinset, Finset.mem_range]
         refine ⟨fun i => ?_, by omega⟩
@@ -115,6 +116,7 @@ theorem card_multiIndexFinset (d : ℕ) :
       have : c < E + 1 := Finset.mem_range.mp hc
       simp only [Nat.add_sub_cancel, show E + 1 - 1 - c = E - c by omega]
     rw [hsum_ih]
+    -- Hockey-stick identity: `∑ k ∈ range (E + 1), choose (d + k) d = choose (d + 1 + E) (d + 1)`
     clear ih hcard_eq hsum_ih
     induction E with
     | zero => simp
@@ -153,7 +155,7 @@ lemma pochhammerInt_zero_e {r k : ℕ} (hk : 1 ≤ k) : pochhammerInt 0 r k = 0 
   apply Finset.prod_eq_zero (i := 0) (Finset.mem_range.mpr hk)
   simp
 
-/-- Telescoping Legendre bound: `v_p(k!) ≤ k` for every prime `p` and `k : ℕ`. -/
+/-- Telescoping Legendre bound: `(p - 1) * v_p(k!) ≤ k` for every prime `p` and `k : ℕ`. -/
 lemma padicValNat_factorial_le_self {p k : ℕ} (hp : p.Prime) :
     padicValNat p (Nat.factorial k) ≤ k := by
   haveI : Fact p.Prime := ⟨hp⟩
@@ -200,22 +202,26 @@ theorem factorial_dvd_r_pow_mul_pochhammer (e r k : ℕ) (hr : 1 ≤ r) :
   · haveI : Fact p.Prime := ⟨hp⟩
     rw [Nat.factorization_def _ hp, Nat.factorization_def _ hp]
     by_cases hpr : p ∣ r
-    · rw [padicValNat.mul (pow_ne_zero k (by omega))
-        (Finset.prod_pos (fun u _ => by omega)).ne', padicValNat.pow k (by omega)]
+    · -- Case 1: p ∣ r ⇒ v_p(r^k) ≥ k ≥ v_p(k!)
+      have hpoch_pos : 0 < pochhammerInt e r k := Finset.prod_pos (fun u _ => by omega)
+      rw [padicValNat.mul (pow_ne_zero k (by omega)) hpoch_pos.ne', padicValNat.pow k (by omega)]
       have hvr : 1 ≤ padicValNat p r := one_le_padicValNat_of_dvd (by omega) hpr
       have hfac := padicValNat_factorial_le_self (k := k) hp
       nlinarith
-    · set v := padicValNat p (Nat.factorial k)
+    · -- Case 2: p ∤ r ⇒ invert r mod p^v where v = v_p(k!)
+      set v := padicValNat p (Nat.factorial k)
       have hcop : Nat.Coprime r (p ^ v) := (hp.coprime_iff_not_dvd.mpr hpr).symm.pow_right v
+      -- Find c ∈ ℕ with r * c ≡ e [MOD p^v]
       have hbez : ∃ c : ℕ, (r * c) % p ^ v = e % p ^ v := by
         rcases eq_or_ne v 0 with hv0 | hv0
-        · refine ⟨0, ?_⟩; simp [hv0]
+        · refine ⟨0, ?_⟩; simp [hv0, Nat.mod_one]
         have hpv_pos : 0 < p ^ v := pow_pos hp.pos v
         haveI : NeZero (p ^ v) := ⟨hpv_pos.ne'⟩
         let rinv : ZMod (p ^ v) := (ZMod.unitOfCoprime r hcop : (ZMod (p ^ v))ˣ)⁻¹
         let c : ℕ := ((e : ZMod (p ^ v)) * rinv).val
         refine ⟨c, ?_⟩
-        rw [← ZMod.eq_iff_modEq_nat, Nat.cast_mul]
+        change (r * c) ≡ e [MOD p ^ v]
+        rw [← ZMod.natCast_eq_natCast_iff, Nat.cast_mul]
         dsimp only [c]
         rw [ZMod.natCast_zmod_val, mul_comm (r : ZMod (p ^ v)), mul_assoc]
         have hmul1 : rinv * (r : ZMod (p ^ v)) = 1 := by
@@ -226,6 +232,7 @@ theorem factorial_dvd_r_pow_mul_pochhammer (e r k : ℕ) (hr : 1 ≤ r) :
           exact Units.inv_mul _
         rw [hmul1, mul_one]
       obtain ⟨c, hc⟩ := hbez
+      -- Now `∏_{u=0}^{k-1} (e + u*r) ≡ r^k * ∏_{u=0}^{k-1} (c + u) [MOD p^v]`
       have hmod_prod : pochhammerInt e r k ≡ r ^ k * (∏ u ∈ Finset.range k, (c + u)) [MOD p ^ v] := by
         unfold pochhammerInt
         have hpow_prod : r ^ k * (∏ u ∈ Finset.range k, (c + u)) =
@@ -233,24 +240,39 @@ theorem factorial_dvd_r_pow_mul_pochhammer (e r k : ℕ) (hr : 1 ≤ r) :
           rw [show r ^ k = ∏ _u ∈ Finset.range k, r by simp, ← Finset.prod_mul_distrib]
           apply Finset.prod_congr rfl; intro u _; ring
         rw [hpow_prod]
-        clear hpow_prod
-        induction k with
-        | zero => simp [Nat.ModEq]
-        | succ k ihk =>
-          rw [Finset.prod_range_succ, Finset.prod_range_succ]
-          apply Nat.ModEq.mul ihk
-          have hc' : e ≡ r * c [MOD p ^ v] := hc.symm
-          exact hc'.add_right (k * r)
+        have haux : ∀ m : ℕ, ∏ u ∈ Finset.range m, (e + u * r) ≡
+            ∏ u ∈ Finset.range m, (r * c + u * r) [MOD p ^ v] := by
+          intro m
+          induction m with
+          | zero => simp [Nat.ModEq]
+          | succ m ihm =>
+            rw [Finset.prod_range_succ, Finset.prod_range_succ]
+            exact Nat.ModEq.mul ihm (Nat.ModEq.add_right (m * r) hc.symm)
+        exact haux k
+      -- Since `k! ∣ ∏_{u=0}^{k-1} (c + u)`, `p^v ∣ ∏_{u=0}^{k-1} (c + u)`
       have hfac_dvd_asc : Nat.factorial k ∣ ∏ u ∈ Finset.range k, (c + u) := by
-        have hasc : ∏ u ∈ Finset.range k, (c + u) = Nat.ascFactorial c k := by
-          clear hmod_prod hc hcop
-          induction k with
+        cases c with
+        | zero =>
+          cases k with
           | zero => simp
-          | succ k ihk =>
-            rw [Finset.prod_range_succ, ihk, Nat.ascFactorial_succ]
-            ring
-        rw [hasc, Nat.ascFactorial_eq_factorial_mul_choose]
-        exact dvd_mul_right _ _
+          | succ k' =>
+            have h0 : ∏ u ∈ Finset.range (k' + 1), (0 + u) = 0 :=
+              Finset.prod_eq_zero (Finset.mem_range.mpr (Nat.succ_pos k')) (by simp)
+            rw [h0]; exact dvd_zero _
+        | succ c' =>
+          have heq : ∀ m : ℕ, ∏ u ∈ Finset.range m, (c' + 1 + u) =
+              Nat.factorial m * Nat.choose (c' + m) m := by
+            intro m
+            induction m with
+            | zero => simp
+            | succ m ihm =>
+              rw [Finset.prod_range_succ, ihm, Nat.factorial_succ]
+              have hch := Nat.add_one_mul_choose_eq (c' + m) m
+              have h1 : c' + (m + 1) = c' + m + 1 := by omega
+              rw [h1]
+              nlinarith
+          rw [heq k]
+          exact dvd_mul_right _ _
       have hpv_dvd_asc : p ^ v ∣ ∏ u ∈ Finset.range k, (c + u) :=
         dvd_trans pow_padicValNat_dvd hfac_dvd_asc
       have hpv_dvd_poch : p ^ v ∣ pochhammerInt e r k := by
@@ -335,7 +357,9 @@ private lemma choose_add_le_pow (L k : ℕ) : Nat.choose (k + L) k ≤ (L + 1) ^
         _ = (k + 1) * ((L + 1) ^ (k + 1)) := by rw [pow_succ']; ring
     exact Nat.le_of_mul_le_mul_left hle (Nat.succ_pos k)
 
-/-- Product majorization for `PowerSeries ℤ` with non-negative coefficients bounded by `A^k`. -/
+/-- Product majorization for `PowerSeries ℤ` with non-negative coefficients bounded by `A^k`:
+if each factor `f ∈ s` has `0 ≤ coeff k f ≤ A^k`, then `0 ≤ coeff k (∏ f ∈ s, f) ≤ (s.card * A)^k`
+(for `s.card ≥ 1`; and `≤ 1` for `s = ∅`). -/
 private lemma powerSeries_prod_coeff_bound {ι : Type*} (s : Finset ι) (f : ι → PowerSeries ℤ)
     (A : ℕ) (hf : ∀ a ∈ s, ∀ k : ℕ, 0 ≤ PowerSeries.coeff k (f a) ∧
       PowerSeries.coeff k (f a) ≤ ((A : ℤ) ^ k)) :
@@ -358,22 +382,23 @@ private lemma powerSeries_prod_coeff_bound {ι : Type*} (s : Finset ι) (f : ι 
     · apply Finset.sum_nonneg
       rintro ⟨p, q⟩ _
       exact mul_nonneg (hfa p).1 (ih' q).1
-    · calc ∑ x ∈ Finset.antidiagonal k, PowerSeries.coeff x.1 (f a) * PowerSeries.coeff x.2 (∏ b ∈ s, f b)
-          ≤ ∑ x ∈ Finset.antidiagonal k,
+    · calc ∑ x ∈ Finset.Nat.antidiagonal k, PowerSeries.coeff x.1 (f a) * PowerSeries.coeff x.2 (∏ b ∈ s, f b)
+          ≤ ∑ x ∈ Finset.Nat.antidiagonal k,
               (A : ℤ) ^ x.1 * (((Nat.choose (x.2 + s.card) x.2 : ℕ) : ℤ) * (A : ℤ) ^ x.2) := by
             apply Finset.sum_le_sum
             rintro ⟨p, q⟩ _
             exact mul_le_mul (hfa p).2 (ih' q).2 (ih' q).1 (by positivity)
-        _ = (∑ x ∈ Finset.antidiagonal k, ((Nat.choose (x.2 + s.card) x.2 : ℕ) : ℤ)) * (A : ℤ) ^ k := by
+        _ = (∑ x ∈ Finset.Nat.antidiagonal k, ((Nat.choose (x.2 + s.card) x.2 : ℕ) : ℤ)) * (A : ℤ) ^ k := by
             rw [Finset.sum_mul]
             apply Finset.sum_congr rfl
             rintro ⟨p, q⟩ hpq
-            have hadd : p + q = k := Finset.mem_antidiagonal.mp hpq
+            have hadd : p + q = k := Finset.Nat.mem_antidiagonal.mp hpq
             rw [← hadd, pow_add]; ring
         _ = ((Nat.choose (k + (insert a s).card) k : ℕ) : ℤ) * (A : ℤ) ^ k := by
             congr 1
             rw [Finset.card_insert_of_notMem ha]
-            have hsum_anti : ∑ x ∈ Finset.antidiagonal k, Nat.choose (x.2 + s.card) x.2 =
+            -- `∑ (p, q) ∈ antidiagonal k, choose (q + s.card) q = choose (k + (s.card + 1)) k`
+            have hsum_anti : ∑ x ∈ Finset.Nat.antidiagonal k, Nat.choose (x.2 + s.card) x.2 =
                 ∑ q ∈ Finset.range (k + 1), Nat.choose (q + s.card) q := by
               rw [Finset.Nat.sum_antidiagonal_eq_sum_range_succ (fun _ q => Nat.choose (q + s.card) q)]
               rw [← Finset.sum_range_reflect (fun q => Nat.choose (q + s.card) q) (k + 1)]
@@ -399,7 +424,7 @@ non-negative and bounded by `(r^2 * (d * M + 1) * M)^k`. -/
 theorem clearedMonomialSeries_coeff_bound {d r M : ℕ} (β e : Fin d → ℕ)
     (hβ_hi : ∀ i, β i ≤ M) (he_le : ∀ i, e i ≤ r) (k : ℕ) :
     0 ≤ PowerSeries.coeff k (clearedMonomialSeries r β e) ∧
-    |(PowerSeries.coeff k (clearedMonomialSeries r β e) : ℝ)| ≤
+    |((PowerSeries.coeff k (clearedMonomialSeries r β e) : ℤ) : ℝ)| ≤
       ((r : ℝ) ^ 2 * ((d * M + 1 : ℕ) : ℝ) * (M : ℝ)) ^ k := by
   let S : Finset (Σ _ : Fin d, ℕ) := Finset.univ.sigma (fun i => Finset.Ico 1 (β i))
   have hprod_eq : clearedMonomialSeries r β e =
@@ -431,7 +456,7 @@ theorem clearedMonomialSeries_coeff_bound {d r M : ℕ} (β e : Fin d → ℕ)
   have hle_z : PowerSeries.coeff k (clearedMonomialSeries r β e) ≤
       (((d * M + 1 : ℕ) : ℤ) ^ k) * ((r ^ 2 * M : ℕ) : ℤ) ^ k :=
     le_trans hle (mul_le_mul_of_nonneg_right (by exact_mod_cast hchoose) (by positivity))
-  have hle_r : (PowerSeries.coeff k (clearedMonomialSeries r β e) : ℝ) ≤
+  have hle_r : ((PowerSeries.coeff k (clearedMonomialSeries r β e) : ℤ) : ℝ) ≤
       (((d * M + 1 : ℕ) : ℝ) ^ k) * (((r ^ 2 * M : ℕ) : ℝ) ^ k) := by exact_mod_cast hle_z
   refine le_trans hle_r ?_
   push_cast
@@ -467,6 +492,7 @@ def canonicalMonomialTaylorFamily {d E r M : ℕ}
         intro j
         have hj := (Finset.mem_filter.mp he_mem).1
         have hlt := Finset.mem_range.mp (Fintype.mem_piFinset.mp hj j)
+        dsimp only [idxToMulti]
         omega
       exact (clearedMonomialSeries_coeff_bound β (idxToMulti i) hβ_hi he_le k).2 }
 

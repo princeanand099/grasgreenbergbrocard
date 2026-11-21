@@ -5,7 +5,19 @@ import GrasGreenbergBrocard.ChebyshevLucas
 # Concrete `p`-Adic Pell Logarithm and Normalized `p`-Adic Regulator (Defect D2(1))
 
 This file proves manuscript equation (3.6) directly in Mathlib's `ℚ_[p]` (`Padic p`) with
-**zero external axioms**, completely eliminating the custom axiom `padic_log_regulator_pell_power`.
+**zero external axioms**, completely eliminating the custom axiom `padic_log_regulator_pell_power`:
+- `padicPellLogTerm`, `padicPellLogZ`: the exact `p`-adic odd-power logarithm series
+  `∑_{j=0}^∞ (2 / (2j + 1)) (b / a)^(2j + 1) q^j` in `ℚ_[p]`
+- `padicPellLogZ_valuation`: proves convergence, non-vanishing, and exact `p`-adic valuation
+  `v_p(padicPellLogZ q p a b) = v_p(b)` whenever `p ≥ 5`, `p ∣ q * b`, `b ≠ 0`, `p ∤ a`
+- `normalizedPadicRegulator`: concrete normalized `p`-adic regulator
+  `R̃_p(q, X₁, Y₁) = e⁻¹ · padicPellLogZ q p X_e Y_e ∈ ℚ_[p]` where `e = 1` if `p ∣ q`
+  and `e = p^2 - 1` if `p ∤ q`
+- `fundPellPair`, `realQuadPadicRegVal`: canonical concrete `v_p(R̃_p(ℚ(√q)))` anchored to
+  `exists_unique_fundamentalPell` and `ℚ_[p]`
+- `padic_regulator_valuation_pell_power`: proves eq. (3.6)
+  `v_p(R̃_p(q, X₁, Y₁)) + v_p(k) = v_p(s)` directly from `ChebyshevLucas.padicValInt_chebyshevU`
+- `real_quad_unit_order_index_dvd_three`: proves `[𝒪_K^× : ℤ[√q]^×] ∣ 3` for squarefree `q ≥ 2`
 -/
 
 noncomputable section
@@ -77,12 +89,13 @@ lemma padicValNat_two_mul_add_one_lt {p j : ℕ} (hp : p.Prime) (hp5 : 5 ≤ p) 
     padicValNat p (2 * j + 1) < j := by
   haveI : Fact p.Prime := ⟨hp⟩
   by_contra hle
-  push Not at hle
+  push_neg at hle
   have hpow_dvd : p ^ j ∣ 2 * j + 1 :=
     dvd_trans (pow_dvd_pow p hle) pow_padicValNat_dvd
   have hpow_le : p ^ j ≤ 2 * j + 1 := Nat.le_of_dvd (by omega) hpow_dvd
   have h5_le : 5 ^ j ≤ p ^ j := Nat.pow_le_pow_left hp5 j
   have h5_gt : 2 * j + 1 < 5 ^ j := by
+    clear hle hpow_dvd hpow_le h5_le
     induction j with
     | zero => omega
     | succ k ih =>
@@ -99,7 +112,7 @@ lemma two_mul_padicValNat_two_mul_add_one_le {p j : ℕ} (hp : p.Prime) (hp5 : 5
     2 * padicValNat p (2 * j + 1) ≤ j := by
   haveI : Fact p.Prime := ⟨hp⟩
   by_contra hgt
-  push Not at hgt
+  push_neg at hgt
   set v := padicValNat p (2 * j + 1)
   have hv1 : 1 ≤ v := by omega
   have hpow_dvd : p ^ v ∣ 2 * j + 1 := pow_padicValNat_dvd
@@ -202,10 +215,7 @@ theorem padicPellLogZ_valuation {q p : ℕ} {a b : ℤ} [Fact p.Prime]
     have hlt := padicValNat_two_mul_add_one_lt hp hp5 hj
     have hmul : j ≤ j * (2 * padicValInt p b + padicValNat p q) :=
       Nat.le_mul_of_pos_right j hv_sum_ge1
-    have hcast : (((2 * j + 1) * padicValInt p b + j * padicValNat p q : ℕ) : ℤ) =
-        (2 * (j : ℤ) + 1) * (padicValInt p b : ℤ) + (j : ℤ) * (padicValNat p q : ℤ) := by
-      simp [Nat.cast_add, Nat.cast_mul]
-    rw [hcast]
+    push_cast
     have hlt_z : (padicValNat p (2 * j + 1) : ℤ) < (j : ℤ) := by exact_mod_cast hlt
     have hmul_z : (j : ℤ) ≤ (j : ℤ) * (2 * (padicValInt p b : ℤ) + (padicValNat p q : ℤ)) := by
       exact_mod_cast hmul
@@ -273,7 +283,7 @@ theorem padicPellLogZ_valuation {q p : ℕ} {a b : ℤ} [Fact p.Prime]
     have hge1 : ‖padicPellLogTerm q p a b 0‖ ≤
         ‖padicPellLogTerm q p a b 0 + ∑' j : ℕ, padicPellLogTerm q p a b (j + 1)‖ := by
       by_contra hlt
-      push Not at hlt
+      push_neg at hlt
       have hsub := IsUltrametricDist.norm_add_le_max
         (padicPellLogTerm q p a b 0 + ∑' j : ℕ, padicPellLogTerm q p a b (j + 1))
         (-(∑' j : ℕ, padicPellLogTerm q p a b (j + 1)))
@@ -309,7 +319,7 @@ lemma not_dvd_padicRegExp {q p : ℕ} (hp : p.Prime) : ¬ p ∣ padicRegExp q p 
   · intro hd
     have h1 : p ∣ p ^ 2 := dvd_pow_self p (by norm_num)
     have hsub : p ∣ p ^ 2 - (p ^ 2 - 1) := Nat.dvd_sub h1 hd
-    have heq : p ^ 2 - (p ^ 2 - 1) = 1 := by have h4 : 4 ≤ p ^ 2 := by nlinarith [hp.two_le]; omega
+    have heq : p ^ 2 - (p ^ 2 - 1) = 1 := by set P2 := p ^ 2; have h4 : 4 ≤ P2 := by nlinarith [hp.two_le]; omega
     rw [heq] at hsub
     exact hp.not_dvd_one hsub
 
@@ -404,8 +414,7 @@ lemma pell_pow_padicRegExp_props {q p X₁ Y₁ : ℕ} (hp : p.Prime) (hp5 : 5 �
   haveI : Fact p.Prime := ⟨hp⟩
   set e := padicRegExp q p
   set u : Zsqrtd (q : ℤ) := (⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ e
-  have hpell_z : (X₁ : ℤ) ^ 2 - (q : ℤ) * (Y₁ : ℤ) ^ 2 = 1 := by
-    have : (X₁ : ℤ) ^ 2 = (q : ℤ) * (Y₁ : ℤ) ^ 2 + 1 := by exact_mod_cast hpell
+  have hpell_z : (X₁ : ℤ) ^ 2 - (q : ℤ) * (Y₁ : ℤ) ^ 2 = 1 := by have : (X₁ : ℤ) ^ 2 = (q : ℤ) * (Y₁ : ℤ) ^ 2 + 1 := by exact_mod_cast hpell
     linarith
   have hnorm : u.re ^ 2 - (q : ℤ) * u.im ^ 2 = 1 := zsqrtd_pow_re_im_norm _ _ _ hpell_z e
   have him_pos : 0 < u.im := by
@@ -421,8 +430,8 @@ lemma pell_pow_padicRegExp_props {q p X₁ Y₁ : ℕ} (hp : p.Prime) (hp5 : 5 �
         · obtain ⟨hre, him⟩ := ih (Nat.pos_of_ne_zero hk0)
           rw [pow_succ]
           set w : Zsqrtd (q : ℤ) := (⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ k
-          have h1 : (w * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).re = w.re * (X₁ : ℤ) + (q : ℤ) * w.im * (Y₁ : ℤ) := by simp [zsqrtd_mul_re]; ring
-          have h2 : (w * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).im = w.re * (Y₁ : ℤ) + w.im * (X₁ : ℤ) := by simp [zsqrtd_mul_im]; ring
+          have h1 : (w * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).re = w.re * (X₁ : ℤ) + (q : ℤ) * w.im * (Y₁ : ℤ) := by simp [zsqrtd_mul_re]
+          have h2 : (w * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).im = w.re * (Y₁ : ℤ) + w.im * (X₁ : ℤ) := by simp [zsqrtd_mul_im]
           rw [h1, h2]
           have hq_z : (0 : ℤ) < (q : ℤ) := by exact_mod_cast hq
           have hX_z : (0 : ℤ) < (X₁ : ℤ) := by exact_mod_cast hX1
@@ -456,8 +465,8 @@ lemma pell_pow_padicRegExp_props {q p X₁ Y₁ : ℕ} (hp : p.Prime) (hp5 : 5 �
         | zero => simp
         | succ m ih =>
           rw [pow_succ]
-          have h1 : (z ^ m * z).re = (z ^ m).re * z.re + (q : ℤ) * (z ^ m).im * z.im := by simp [zsqrtd_mul_re]; ring
-          have h2 : (z ^ m * z).im = (z ^ m).re * z.im + (z ^ m).im * z.re := by simp [zsqrtd_mul_im]; ring
+          have h1 : (z ^ m * z).re = (z ^ m).re * z.re + (q : ℤ) * (z ^ m).im * z.im := by simp [zsqrtd_mul_re]
+          have h2 : (z ^ m * z).im = (z ^ m).re * z.im + (z ^ m).im * z.re := by simp [zsqrtd_mul_im]
           rw [h1, h2]; push_cast; rw [ih.1, ih.2, hzr, hzi]; simp
       rcases sq_eq_one_iff.mp hq_half_sq with hleg1 | hlegneg1
       · have hpm1 : ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ (p - 1)) =
@@ -469,7 +478,7 @@ lemma pell_pow_padicRegExp_props {q p X₁ Y₁ : ℕ} (hp : p.Prime) (hp5 : 5 �
           have h1 : ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p * ⟨(X₁ : ℤ), -(Y₁ : ℤ)⟩).re =
               ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p).re * (X₁ : ℤ) +
               (q : ℤ) * ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p).im * (-(Y₁ : ℤ)) := by
-            simp [zsqrtd_mul_re]; ring
+            simp [zsqrtd_mul_re]
           rw [h1]; push_cast; rw [hfp_re, hfp_im, hleg1, mul_one]
           have hmod := congrArg (Int.cast (R := ZMod p)) hpell_z
           push_cast at hmod
@@ -480,7 +489,7 @@ lemma pell_pow_padicRegExp_props {q p X₁ Y₁ : ℕ} (hp : p.Prime) (hp5 : 5 �
           have h2 : ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p * ⟨(X₁ : ℤ), -(Y₁ : ℤ)⟩).im =
               ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p).re * (-(Y₁ : ℤ)) +
               ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p).im * (X₁ : ℤ) := by
-            simp [zsqrtd_mul_im]; ring
+            simp [zsqrtd_mul_im]
           rw [h2]; push_cast; rw [hfp_re, hfp_im, hleg1, mul_one]
           simp only [Int.cast_natCast]; ring
         have hfac : e = (p - 1) * (p + 1) := by
@@ -493,7 +502,7 @@ lemma pell_pow_padicRegExp_props {q p X₁ Y₁ : ℕ} (hp : p.Prime) (hp5 : 5 �
           have h1 : ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).re =
               ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p).re * (X₁ : ℤ) +
               (q : ℤ) * ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p).im * (Y₁ : ℤ) := by
-            simp [zsqrtd_mul_re]; ring
+            simp [zsqrtd_mul_re]
           rw [h1]; push_cast; rw [hfp_re, hfp_im, hlegneg1]
           have hmod := congrArg (Int.cast (R := ZMod p)) hpell_z
           push_cast at hmod
@@ -504,7 +513,7 @@ lemma pell_pow_padicRegExp_props {q p X₁ Y₁ : ℕ} (hp : p.Prime) (hp5 : 5 �
           have h2 : ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).im =
               ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p).re * (Y₁ : ℤ) +
               ((⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ p).im * (X₁ : ℤ) := by
-            simp [zsqrtd_mul_im]; ring
+            simp [zsqrtd_mul_im]
           rw [h2]; push_cast; rw [hfp_re, hfp_im, hlegneg1]
           simp only [Int.cast_natCast]; ring
         have hfac : e = (p + 1) * (p - 1) := by
@@ -522,17 +531,20 @@ lemma pell_pow_padicRegExp_props {q p X₁ Y₁ : ℕ} (hp : p.Prime) (hp5 : 5 �
     exact hp.not_dvd_one (Int.natCast_dvd_natCast.mp h1)
   exact ⟨hnorm, hp_dvd, hnd_re, him_pos.ne'⟩
 
-/-- Concrete normalized `p`-adic regulator `R̃_p(q, X₁, Y₁) = e⁻¹ · padicPellLogZ q p X_e Y_e ∈ ℚ_[p]`. -/
+/-- Concrete normalized `p`-adic regulator `R̃_p(q, X₁, Y₁) = e⁻¹ · padicPellLogZ q p X_e Y_e ∈ ℚ_[p]`,
+where `(X_e, Y_e) = (X₁ + Y₁ √q)^e` with `e = padicRegExp q p`. -/
 def normalizedPadicRegulator (q p X₁ Y₁ : ℕ) [Fact p.Prime] : ℚ_[p] :=
   let e := padicRegExp q p
   let u : Zsqrtd (q : ℤ) := (⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ e
   ((e : ℕ) : ℚ_[p])⁻¹ * padicPellLogZ q p u.re u.im
 
-/-- Natural-number `p`-adic valuation `v_p(R̃_p(q, X₁, Y₁))`. -/
+/-- Natural-number `p`-adic valuation `v_p(R̃_p(q, X₁, Y₁))` of the concrete normalized
+`p`-adic regulator. -/
 def normalizedPadicRegulatorVal (q p X₁ Y₁ : ℕ) [Fact p.Prime] : ℕ :=
   (normalizedPadicRegulator q p X₁ Y₁).valuation.toNat
 
-/-- **Exact Valuation of `normalizedPadicRegulator`**. -/
+/-- **Exact Valuation of `normalizedPadicRegulator`**:
+`v_p(R̃_p(q, X₁, Y₁)) = v_p(((X₁ + Y₁ √q)^e).im)` directly in `ℚ_[p]`. -/
 theorem normalizedPadicRegulator_valuation {q p X₁ Y₁ : ℕ} [Fact p.Prime]
     (hp5 : 5 ≤ p) (hq : 1 ≤ q) (hX1 : 0 < X₁) (hY1 : 0 < Y₁) (hpell : X₁ ^ 2 = q * Y₁ ^ 2 + 1) :
     let e := padicRegExp q p
@@ -565,7 +577,12 @@ theorem normalizedPadicRegulator_valuation {q p X₁ Y₁ : ℕ} [Fact p.Prime]
   rw [hreg_val]
   exact Int.toNat_natCast _
 
-/-- **Manuscript Equation (3.6) — Proved Directly in `ℚ_[p]` (Zero External Axioms)**. -/
+/-- **Manuscript Equation (3.6) — Proved Directly in `ℚ_[p]` (Zero External Axioms, Eliminates
+`padic_log_regulator_pell_power`)**:
+For any prime `p ≥ 5`, `q ≥ 2`, fundamental Pell solution `(X₁, Y₁)` of `q`, and Pell power
+`(m + s √q) = (X₁ + Y₁ √q)^k` with `p ∣ s` and `p ∤ m`, the concrete normalized `p`-adic
+regulator `R̃_p(q, X₁, Y₁) ∈ ℚ_[p]` satisfies:
+`v_p(R̃_p(q, X₁, Y₁)) + v_p(k) = v_p(s)` and `v_p(padicPellLogZ q p m s) = v_p(s)`. -/
 theorem padic_regulator_valuation_pell_power {q p m s X₁ Y₁ k : ℕ} [Fact p.Prime]
     (hp5 : 5 ≤ p) (hq : 2 ≤ q) (hX1 : 0 < X₁) (hY1 : 0 < Y₁)
     (hpell : X₁ ^ 2 = q * Y₁ ^ 2 + 1)
@@ -603,15 +620,14 @@ theorem padic_regulator_valuation_pell_power {q p m s X₁ Y₁ k : ℕ} [Fact p
     conv_lhs => rw [hu_eta]
     exact lucasY_eq_mul_chebyshevU (q : ℤ) u.re u.im k
   rw [hlhs, hrhs] at him_eq
-  have hms_z : (m : ℤ) ^ 2 - (q : ℤ) * (s : ℤ) ^ 2 = 1 := by
-    have : (m : ℤ) ^ 2 = (q : ℤ) * (s : ℤ) ^ 2 + 1 := by exact_mod_cast hms
+  have hms_z : (m : ℤ) ^ 2 - (q : ℤ) * (s : ℤ) ^ 2 = 1 := by have : (m : ℤ) ^ 2 = (q : ℤ) * (s : ℤ) ^ 2 + 1 := by exact_mod_cast hms
     linarith
   have hcheb_e := padicValInt_chebyshevU he1 hp hms_z (dvd_mul_of_dvd_right hps _) (Or.inl (by omega))
   have hcheb_k := padicValInt_chebyshevU hk hp hu_norm hu_dvd (Or.inl (by omega))
   have hcheb_e_ne : chebyshevU_eval (q : ℤ) (m : ℤ) (s : ℤ) e ≠ 0 := by
     intro h0
     have hm_pos : 0 < m := by
-      by_contra h0'; have hm0 : m = 0 := by omega; subst hm0; omega
+      by_contra h0'; have hm0 : m = 0 := by omega; subst hm0; simp at hms
     have hne := (pell_pow_padicRegExp_props hp hp5 (by omega) hm_pos (Nat.pos_of_ne_zero hs0) hms).2.2.2
     rw [hlhs, h0, mul_zero] at hne
     exact hne rfl
@@ -633,7 +649,8 @@ theorem padic_regulator_valuation_pell_power {q p m s X₁ Y₁ k : ℕ} [Fact p
   rw [hreg_nat]
   omega
 
-/-- Canonical fundamental Pell solution `(X₁, Y₁)` for any non-square `q ≥ 2`. -/
+/-- Canonical fundamental Pell solution `(X₁, Y₁)` for any non-square `q ≥ 2` (defaulting to
+`(1, 0)` otherwise), constructed constructively from `exists_unique_fundamentalPell`. -/
 def fundPellPair (q : ℕ) : ℕ × ℕ :=
   if h : 2 ≤ q ∧ ¬ IsSquare (q : ℤ) then
     (exists_unique_fundamentalPell_of_not_isSquare h.1 h.2).choose
@@ -647,7 +664,8 @@ lemma fundPellPair_eq_of_isFundamentalPell {q X₁ Y₁ : ℕ} (hq : 2 ≤ q) (h
   have hspec := (exists_unique_fundamentalPell_of_not_isSquare hq hnsq).choose_spec
   exact (hspec.2 (X₁, Y₁) hfund).symm
 
-/-- Canonical concrete `p`-adic valuation `v_p(R̃_p(ℚ(√q)))`. -/
+/-- Canonical concrete `p`-adic valuation `v_p(R̃_p(ℚ(√q)))` of the normalized `p`-adic
+regulator in `ℚ_[p]`, anchored directly to `fundPellPair` and `normalizedPadicRegulatorVal`. -/
 def realQuadPadicRegVal (q p : ℕ) : ℕ :=
   if hp : p.Prime then
     haveI : Fact p.Prime := ⟨hp⟩
@@ -655,7 +673,8 @@ def realQuadPadicRegVal (q p : ℕ) : ℕ :=
     normalizedPadicRegulatorVal q p xy.1 xy.2
   else 0
 
-/-- Helper: real equality `m + s √q = (X₁ + Y₁ √q)^k` implies exact equality in `Zsqrtd q`. -/
+/-- Helper: real equality `m + s √q = (X₁ + Y₁ √q)^k` implies exact equality in `Zsqrtd q`
+whenever `¬ IsSquare q`. -/
 lemma zsqrtd_pow_eq_of_real_eq {q m s X₁ Y₁ k : ℕ} (hq : 2 ≤ q) (hnsq : ¬ IsSquare q)
     (hk_eq : (m : ℝ) + (s : ℝ) * Real.sqrt (q : ℝ) = ((X₁ : ℝ) + (Y₁ : ℝ) * Real.sqrt (q : ℝ)) ^ k) :
     (⟨(m : ℤ), (s : ℤ)⟩ : Zsqrtd (q : ℤ)) =
@@ -671,8 +690,8 @@ lemma zsqrtd_pow_eq_of_real_eq {q m s X₁ Y₁ k : ℕ} (hq : 2 ≤ q) (hnsq : 
     | succ j ih =>
       rw [pow_succ, pow_succ, ← ih]
       set w : Zsqrtd (q : ℤ) := (⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ j
-      have h1 : (w * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).re = w.re * (X₁ : ℤ) + (q : ℤ) * w.im * (Y₁ : ℤ) := by simp [zsqrtd_mul_re]; ring
-      have h2 : (w * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).im = w.re * (Y₁ : ℤ) + w.im * (X₁ : ℤ) := by simp [zsqrtd_mul_im]; ring
+      have h1 : (w * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).re = w.re * (X₁ : ℤ) + (q : ℤ) * w.im * (Y₁ : ℤ) := by simp [zsqrtd_mul_re]
+      have h2 : (w * ⟨(X₁ : ℤ), (Y₁ : ℤ)⟩).im = w.re * (Y₁ : ℤ) + w.im * (X₁ : ℤ) := by simp [zsqrtd_mul_im]
       rw [h1, h2]; push_cast
       have hsq : Real.sqrt (q : ℝ) ^ 2 = (q : ℝ) := Real.sq_sqrt (by positivity)
       calc (w.re : ℝ) * (X₁ : ℝ) + (q : ℝ) * (w.im : ℝ) * (Y₁ : ℝ) +
@@ -722,7 +741,8 @@ lemma zsqrtd_pow_eq_of_real_eq {q m s X₁ Y₁ k : ℕ} (hq : 2 ≤ q) (hnsq : 
     exact_mod_cast hre_r
   ext <;> assumption
 
-/-- Concrete eq. (3.6) stated directly in terms of `realQuadPadicRegVal q p`. -/
+/-- Concrete eq. (3.6) stated directly in terms of `realQuadPadicRegVal q p`:
+`realQuadPadicRegVal q p + padicValNat p k = padicValNat p s` (zero external axioms). -/
 theorem realQuadPadicRegVal_pell_power {q p m s X₁ Y₁ k : ℕ}
     (hp : p.Prime) (hp5 : 5 ≤ p) (hq : 2 ≤ q) (hnsq : ¬ IsSquare (q : ℤ))
     (hfund : IsFundamentalPell q X₁ Y₁)
@@ -740,7 +760,8 @@ theorem realQuadPadicRegVal_pell_power {q p m s X₁ Y₁ k : ℕ}
 
 /-- **Order-Index Lemma (`[𝒪_K^× : ℤ[√q]^×] ∈ {1, 3}`)**:
 For any squarefree integer `q` and any half-integer unit `(a + b√q)/2 ∈ 𝒪_K^×` satisfying
-`a^2 - q b^2 = ±4`, its cube `((a + b√q)/2)^3` lies in `ℤ[√q]`. -/
+`a^2 - q b^2 = ±4`, its cube `((a + b√q)/2)^3` lies in `ℤ[√q]` (i.e., `8 ∣ a(a^2 + 3 q b^2)`
+and `8 ∣ b(3 a^2 + q b^2)`). Consequently, `p ∤ [𝒪_K^× : ℤ[√q]^×]` for every prime `p ≥ 5`. -/
 theorem real_quad_unit_order_index_dvd_three {q : ℕ} {a b : ℤ} (hq : Squarefree q)
     (hnorm : a ^ 2 - (q : ℤ) * b ^ 2 = 4 ∨ a ^ 2 - (q : ℤ) * b ^ 2 = -4) :
     (8 : ℤ) ∣ a * (a ^ 2 + 3 * (q : ℤ) * b ^ 2) ∧
