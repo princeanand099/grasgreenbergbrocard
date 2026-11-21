@@ -508,6 +508,9 @@ theorem log_s_n_asymptotic :
           mul_le_mul_of_nonneg_left hexp_ge hn_pos.le
   have hlog2pi_le : (fun n : ℕ => (1 / 4 : ℝ) * Real.log (2 * Real.pi * (n : ℝ))) =O[atTop]
       (fun n : ℕ => (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ)))) := by
+    -- `log(2πn) ≤ n * exp(-c₀ √(log n))`? Actually `n = O(n exp(-c₀ √log n))` is FALSE!
+    -- Wait: `log(2πn)` grows like `log n`, while `n exp(-c₀ √log n)` grows faster than `n^(1-ε)`!
+    -- Indeed `c₀ √(log n) ≤ (1/2) log n` eventually, so `n exp(-c₀ √(log n)) ≥ √n ≥ log(2πn)`.
     have hsqrt_half : ∀ᶠ n : ℕ in atTop,
         c₀ * Real.sqrt (Real.log (n : ℝ)) ≤ (1 / 2 : ℝ) * Real.log (n : ℝ) := by
       have ht : Tendsto (fun n : ℕ => Real.sqrt (Real.log (n : ℝ)) / Real.log (n : ℝ)) atTop (nhds 0) := by
@@ -552,6 +555,7 @@ theorem log_s_n_asymptotic :
         _ ≤ (n : ℝ) * Real.exp (-c₀ * Real.sqrt (Real.log (n : ℝ))) :=
             mul_le_mul_of_nonneg_left h1 hn_pos.le
     have hlog_le_sqrt : (1 / 4 : ℝ) * Real.log (2 * Real.pi * (n : ℝ)) ≤ Real.sqrt (n : ℝ) := by
+      -- `log(2πn) ≤ log(10n) = log 10 + log n`, and `log(√n) ≤ √n - 1` => `log n ≤ 2 √n - 2`
       have h1 : Real.log (Real.sqrt (n : ℝ)) ≤ Real.sqrt (n : ℝ) - 1 :=
         Real.log_le_sub_one_of_pos (by positivity)
       have h2 : Real.log (n : ℝ) = 2 * Real.log (Real.sqrt (n : ℝ)) := by
@@ -679,7 +683,10 @@ private lemma pell_positive_sol_is_pow {D X₁ Y₁ : ℕ} (hD : 1 ≤ D)
     have hEq1 := hfund.2.2.1
     have hY_le : Y₁ ≤ y := hfund.2.2.2 x y hy hxy
     have hx_pos : 0 < x := by
-      by_contra h0; have hx0 : x = 0 := by omega; rw [hx0] at hxy; simp at hxy
+      by_contra h0
+      have hx0 : x = 0 := by omega
+      rw [hx0] at hxy
+      omega
     have hX1_gt1 : 1 < X₁ := by nlinarith [hEq1, hD, hY1_pos]
     set x' : ℤ := (x : ℤ) * (X₁ : ℤ) - (D : ℤ) * (y : ℤ) * (Y₁ : ℤ)
     set y' : ℤ := (y : ℤ) * (X₁ : ℤ) - (x : ℤ) * (Y₁ : ℤ)
@@ -688,7 +695,7 @@ private lemma pell_positive_sol_is_pow {D X₁ Y₁ : ℕ} (hD : 1 ≤ D)
     have hx'_pos : 0 < x' := by
       have hsq_diff : ((x : ℤ) * (X₁ : ℤ)) ^ 2 - ((D : ℤ) * (y : ℤ) * (Y₁ : ℤ)) ^ 2 =
           (D : ℤ) * ((y : ℤ) ^ 2 + (Y₁ : ℤ) ^ 2) + 1 := by
-        linear_combination (X₁ : ℤ) ^ 2 * hEq_z + (D : ℤ) * (y : ℤ) ^ 2 * hEq1_z
+        linear_combination (X₁ : ℤ) ^ 2 * hEq_z + ((D : ℤ) * (y : ℤ) ^ 2 + 1) * hEq1_z
       have hD_z : (0 : ℤ) < (D : ℤ) := by exact_mod_cast hD
       have hgt : ((D : ℤ) * (y : ℤ) * (Y₁ : ℤ)) ^ 2 < ((x : ℤ) * (X₁ : ℤ)) ^ 2 := by
         have hnn : (0 : ℤ) ≤ (D : ℤ) * ((y : ℤ) ^ 2 + (Y₁ : ℤ) ^ 2) := by positivity
