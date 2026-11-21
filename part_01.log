@@ -1,0 +1,150 @@
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_3Part2Counting.lean:441:23: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+⚠ [9074/9095] Built GrasGreenbergBrocard.PellFundamental (12s)
+warning: GrasGreenbergBrocard/PellFundamental.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/PellFundamental.lean:76:6: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+✖ [9075/9095] Building GrasGreenbergBrocard.ExternalAxiomsSec5 (14s)
+warning: GrasGreenbergBrocard/ExternalAxiomsSec5.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+trace: .> LEAN_PATH=/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/Cli/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/batteries/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/Qq/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/aesop/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/importGraph/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/plausible/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/mathlib/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean /home/runner/.elan/toolchains/leanprover--lean4---v4.35.0/bin/lean /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/GrasGreenbergBrocard/ExternalAxiomsSec5.lean -o /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean/GrasGreenbergBrocard/ExternalAxiomsSec5.olean -i /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean/GrasGreenbergBrocard/ExternalAxiomsSec5.ilean -c /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/ir/GrasGreenbergBrocard/ExternalAxiomsSec5.c --setup /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/ir/GrasGreenbergBrocard/ExternalAxiomsSec5.setup.json --json
+error: GrasGreenbergBrocard/ExternalAxiomsSec5.lean:182:34: linarith failed to find a contradiction
+n : ℕ
+hn : 8 ≤ n
+p : ℕ
+hp : Nat.Prime p
+hp_lo : n / 2 < p
+hp_hi2 : p ≤ 2 * (n / 2)
+hpn : p ≤ n
+this : Fact (Nat.Prime p)
+a✝ : p ^ 2 ≤ n
+⊢ False
+failed
+⚠ [9076/9095] Built GrasGreenbergBrocard.Prop4_1SmoothBiquad (40s)
+warning: GrasGreenbergBrocard/Prop4_1SmoothBiquad.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9077/9095] Ran GrasGreenbergBrocard.Prop5_1MidpointBias
+warning: GrasGreenbergBrocard/Prop5_1MidpointBias.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+✖ [9078/9095] Building GrasGreenbergBrocard.Thm1_2Iwasawa (32s)
+warning: GrasGreenbergBrocard/Thm1_2Iwasawa.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+trace: .> LEAN_PATH=/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/Cli/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/batteries/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/Qq/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/aesop/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/importGraph/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/plausible/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/mathlib/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean /home/runner/.elan/toolchains/leanprover--lean4---v4.35.0/bin/lean /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/GrasGreenbergBrocard/Thm1_2Iwasawa.lean -o /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean/GrasGreenbergBrocard/Thm1_2Iwasawa.olean -i /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean/GrasGreenbergBrocard/Thm1_2Iwasawa.ilean -c /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/ir/GrasGreenbergBrocard/Thm1_2Iwasawa.c --setup /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/ir/GrasGreenbergBrocard/Thm1_2Iwasawa.setup.json --json
+warning: GrasGreenbergBrocard/Thm1_2Iwasawa.lean:66:4: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_2Iwasawa.lean:94:4: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+error: GrasGreenbergBrocard/Thm1_2Iwasawa.lean:261:20: Tactic `rewrite` failed: Did not find an occurrence of the pattern
+  ↑(Int.natAbs ?a) * ↑(Int.natAbs ?a)
+in the target expression
+  ↑(q_n n) = |r| * |r|
+
+n m p X₁ Y₁ k : ℕ
+hm : n.factorial + 1 = m ^ 2
+hp : Nat.Prime p
+hp5 : 5 ≤ p
+hp_half : p ≤ n / 2
+hfund : IsFundamentalPell (q_n n) X₁ Y₁
+hk_eq : ↑m + ↑(s_n n) * √↑(q_n n) = pellUnit (q_n n) X₁ Y₁ ^ k
+hpk : ¬p ∣ k
+this : Fact (Nat.Prime p)
+left✝ : 2 ≤ padicValNat p n.factorial
+hs_val : padicValNat p (s_n n) = padicValNat p n.factorial / 2
+hs_ge1 : 1 ≤ padicValNat p (s_n n)
+hq2 : 2 ≤ q_n n
+r : ℤ
+hr : ↑(q_n n) = r * r
+⊢ ↑(q_n n) = |r| * |r|
+error: GrasGreenbergBrocard/Thm1_2Iwasawa.lean:275:16: Unknown constant `padicValNat.zero`
+warning: GrasGreenbergBrocard/Thm1_2Iwasawa.lean:496:6: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_2Iwasawa.lean:541:18: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_2Iwasawa.lean:550:19: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+✖ [9079/9095] Building GrasGreenbergBrocard.Picard2Torsion (58s)
+warning: GrasGreenbergBrocard/Picard2Torsion.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+trace: .> LEAN_PATH=/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/Cli/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/batteries/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/Qq/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/aesop/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/importGraph/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/plausible/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/mathlib/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean /home/runner/.elan/toolchains/leanprover--lean4---v4.35.0/bin/lean /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/GrasGreenbergBrocard/Picard2Torsion.lean -o /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean/GrasGreenbergBrocard/Picard2Torsion.olean -i /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean/GrasGreenbergBrocard/Picard2Torsion.ilean -c /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/ir/GrasGreenbergBrocard/Picard2Torsion.c --setup /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/ir/GrasGreenbergBrocard/Picard2Torsion.setup.json --json
+error: GrasGreenbergBrocard/Picard2Torsion.lean:46:75: Type mismatch
+  rfl
+has type
+  ?m.146 = ?m.146
+but is expected to have type
+  z.norm = z.re * z.re - -↑D * (z.im * z.im)
+error: GrasGreenbergBrocard/Picard2Torsion.lean:81:28: Unknown constant `Zsqrtd.one_re`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:81:43: Unknown constant `Zsqrtd.one_im`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:82:4: Type mismatch: After simplification, term
+  h1
+ has type
+  ((↑w).re * (↑w).re + (↑w).im * ((↑w).im * ↑D)) * ((↑w').re * (↑w').re + (↑w').im * (↑D * (↑w').im)) = 1
+but is expected to have type
+  ((↑w).re ^ 2 + ↑D * (↑w).im ^ 2) * ((↑w').re ^ 2 + ↑D * (↑w').im ^ 2) = 1
+error: GrasGreenbergBrocard/Picard2Torsion.lean:90:31: linarith failed to find a contradiction
+D : ℕ
+hD : 2 ≤ D
+w : (ℤ√(-↑D))ˣ
+a : ℤ := (↑w).re
+b : ℤ := (↑w).im
+w' : (ℤ√(-↑D))ˣ := w⁻¹
+hmul : ↑w * ↑w' = 1
+hnorm : (a ^ 2 + ↑D * b ^ 2) * ((↑w').re ^ 2 + ↑D * (↑w').im ^ 2) = 1
+hnn1 : 0 ≤ a ^ 2 + ↑D * b ^ 2
+hnorm_one : a ^ 2 + ↑D * b ^ 2 = 1
+hb : ¬b = 0
+a✝ : b ^ 2 < 1
+⊢ False
+failed
+error: GrasGreenbergBrocard/Picard2Torsion.lean:116:8: mod_cast has type
+  q_n n * s_n n ^ 2 + 1 = m ^ 2
+but is expected to have type
+  m ^ 2 = q_n n * s_n n ^ 2 + 1
+error: GrasGreenbergBrocard/Picard2Torsion.lean:117:6: linarith failed to find a contradiction
+case re.h1
+n m : ℕ
+hn : 4 ≤ n
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+α : R := { re := 1, im := ↑(s_n n) }
+β : R := { re := 1, im := -↑(s_n n) }
+hfac : n.factorial = q_n n * s_n n ^ 2
+h1 : ↑m ^ 2 = ↑(q_n n) * ↑(s_n n) ^ 2 + 1
+a✝ : ({ re := 1, im := ↑(s_n n) } * { re := 1, im := -↑(s_n n) }).re < (↑m ^ 2).re
+⊢ False
+failed
+info: GrasGreenbergBrocard/Picard2Torsion.lean:119:6: Try this:

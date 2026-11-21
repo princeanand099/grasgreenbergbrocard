@@ -1,0 +1,150 @@
+COMMIT=a01042d954f02e0d7a479939f327b5e9f0172af5
+TIMESTAMP=2026-11-21T13:03:06Z
+⚠ [9047/9095] Replayed GrasGreenbergBrocard.Basic
+warning: GrasGreenbergBrocard/Basic.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9048/9095] Replayed GrasGreenbergBrocard.ChebyshevLucas
+warning: GrasGreenbergBrocard/ChebyshevLucas.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/ChebyshevLucas.lean:46:17: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: GrasGreenbergBrocard/ChebyshevLucas.lean:471:4: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/ChebyshevLucas.lean:567:8: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+⚠ [9049/9095] Replayed GrasGreenbergBrocard.PadicRegulator
+warning: GrasGreenbergBrocard/PadicRegulator.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/PadicRegulator.lean:92:2: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/PadicRegulator.lean:115:2: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/PadicRegulator.lean:286:6: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/PadicRegulator.lean:378:41: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+⚠ [9050/9095] Replayed GrasGreenbergBrocard.RealQuadField
+warning: GrasGreenbergBrocard/RealQuadField.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9051/9095] Replayed GrasGreenbergBrocard.ExternalAxiomsSec3
+warning: GrasGreenbergBrocard/ExternalAxiomsSec3.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9052/9095] Replayed GrasGreenbergBrocard.ExternalAxiomsAnalytic
+warning: GrasGreenbergBrocard/ExternalAxiomsAnalytic.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9053/9095] Replayed GrasGreenbergBrocard.ValuationParityLayer
+warning: GrasGreenbergBrocard/ValuationParityLayer.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9054/9095] Replayed GrasGreenbergBrocard.ValuationParityDigits
+warning: GrasGreenbergBrocard/ValuationParityDigits.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9055/9095] Replayed GrasGreenbergBrocard.ValuationParityVaaler
+warning: GrasGreenbergBrocard/ValuationParityVaaler.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/ValuationParityVaaler.lean:195:22: this tactic is never executed
+
+Note: This linter can be disabled with `set_option linter.unreachableTactic false`
+warning: GrasGreenbergBrocard/ValuationParityVaaler.lean:195:36: this tactic is never executed
+
+Note: This linter can be disabled with `set_option linter.unreachableTactic false`
+warning: GrasGreenbergBrocard/ValuationParityVaaler.lean:288:22: this tactic is never executed
+
+Note: This linter can be disabled with `set_option linter.unreachableTactic false`
+warning: GrasGreenbergBrocard/ValuationParityVaaler.lean:288:36: this tactic is never executed
+
+Note: This linter can be disabled with `set_option linter.unreachableTactic false`
+⚠ [9056/9095] Replayed GrasGreenbergBrocard.ExpSumBounds
+warning: GrasGreenbergBrocard/ExpSumBounds.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9057/9095] Replayed GrasGreenbergBrocard.ValuationParityThmHelpers
+warning: GrasGreenbergBrocard/ValuationParityThmHelpers.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/ValuationParityThmHelpers.lean:435:33: this tactic is never executed
+
+Note: This linter can be disabled with `set_option linter.unreachableTactic false`
+warning: GrasGreenbergBrocard/ValuationParityThmHelpers.lean:458:40: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+⚠ [9058/9095] Replayed GrasGreenbergBrocard.ValuationParityThmPart1
+warning: GrasGreenbergBrocard/ValuationParityThmPart1.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/ValuationParityThmPart1.lean:551:10: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/ValuationParityThmPart1.lean:744:36: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+⚠ [9059/9095] Replayed GrasGreenbergBrocard.ValuationParityThmCollar
+warning: GrasGreenbergBrocard/ValuationParityThmCollar.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/ValuationParityThmCollar.lean:472:24: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+⚠ [9060/9095] Replayed GrasGreenbergBrocard.ValuationParityThmInterCollar
+warning: GrasGreenbergBrocard/ValuationParityThmInterCollar.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/ValuationParityThmInterCollar.lean:329:26: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+⚠ [9061/9095] Replayed GrasGreenbergBrocard.ValuationParityThm
+warning: GrasGreenbergBrocard/ValuationParityThm.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9062/9095] Replayed GrasGreenbergBrocard.ExpSumBoundsMod
+warning: GrasGreenbergBrocard/ExpSumBoundsMod.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9063/9095] Replayed GrasGreenbergBrocard.VaalerMod
+warning: GrasGreenbergBrocard/VaalerMod.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9064/9095] Replayed GrasGreenbergBrocard.ValuationParityModWeight
+warning: GrasGreenbergBrocard/ValuationParityModWeight.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9065/9095] Replayed GrasGreenbergBrocard.ValuationParityModCollar
+warning: GrasGreenbergBrocard/ValuationParityModCollar.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9066/9095] Replayed GrasGreenbergBrocard.ValuationParityModInterCollar
+warning: GrasGreenbergBrocard/ValuationParityModInterCollar.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9067/9095] Replayed GrasGreenbergBrocard.ValuationParityMod
+warning: GrasGreenbergBrocard/ValuationParityMod.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/ValuationParityMod.lean:120:10: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+info: GrasGreenbergBrocard/ValuationParityMod.lean:644:35: Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+⚠ [9068/9095] Replayed GrasGreenbergBrocard.ExternalAxiomsSec4
+warning: GrasGreenbergBrocard/ExternalAxiomsSec4.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9069/9095] Replayed GrasGreenbergBrocard.Sec7TaylorSeries
+warning: GrasGreenbergBrocard/Sec7TaylorSeries.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9070/9095] Replayed GrasGreenbergBrocard.ExternalAxiomsSec7
+warning: GrasGreenbergBrocard/ExternalAxiomsSec7.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9072/9095] Replayed GrasGreenbergBrocard.Sec7ClusterReduction
+warning: GrasGreenbergBrocard/Sec7ClusterReduction.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9073/9095] Replayed GrasGreenbergBrocard.Thm1_3Part2Counting
+warning: GrasGreenbergBrocard/Thm1_3Part2Counting.lean:254:19: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_3Part2Counting.lean:346:4: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:

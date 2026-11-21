@@ -1,0 +1,904 @@
+COMMIT=a01042d954f02e0d7a479939f327b5e9f0172af5
+TIMESTAMP=2026-11-21T13:03:06Z
+⚠ [9047/9095] Replayed GrasGreenbergBrocard.Basic
+warning: GrasGreenbergBrocard/Basic.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9048/9095] Replayed GrasGreenbergBrocard.ChebyshevLucas
+warning: GrasGreenbergBrocard/ChebyshevLucas.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/ChebyshevLucas.lean:46:17: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: GrasGreenbergBrocard/ChebyshevLucas.lean:471:4: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/ChebyshevLucas.lean:567:8: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+⚠ [9049/9095] Replayed GrasGreenbergBrocard.PadicRegulator
+warning: GrasGreenbergBrocard/PadicRegulator.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/PadicRegulator.lean:92:2: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/PadicRegulator.lean:115:2: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/PadicRegulator.lean:286:6: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/PadicRegulator.lean:378:41: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+⚠ [9050/9095] Replayed GrasGreenbergBrocard.RealQuadField
+warning: GrasGreenbergBrocard/RealQuadField.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9051/9095] Replayed GrasGreenbergBrocard.ExternalAxiomsSec3
+warning: GrasGreenbergBrocard/ExternalAxiomsSec3.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9052/9095] Replayed GrasGreenbergBrocard.ExternalAxiomsAnalytic
+warning: GrasGreenbergBrocard/ExternalAxiomsAnalytic.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9053/9095] Replayed GrasGreenbergBrocard.ValuationParityLayer
+warning: GrasGreenbergBrocard/ValuationParityLayer.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9054/9095] Replayed GrasGreenbergBrocard.ValuationParityDigits
+warning: GrasGreenbergBrocard/ValuationParityDigits.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9055/9095] Replayed GrasGreenbergBrocard.ValuationParityVaaler
+warning: GrasGreenbergBrocard/ValuationParityVaaler.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/ValuationParityVaaler.lean:195:22: this tactic is never executed
+
+Note: This linter can be disabled with `set_option linter.unreachableTactic false`
+warning: GrasGreenbergBrocard/ValuationParityVaaler.lean:195:36: this tactic is never executed
+
+Note: This linter can be disabled with `set_option linter.unreachableTactic false`
+warning: GrasGreenbergBrocard/ValuationParityVaaler.lean:288:22: this tactic is never executed
+
+Note: This linter can be disabled with `set_option linter.unreachableTactic false`
+warning: GrasGreenbergBrocard/ValuationParityVaaler.lean:288:36: this tactic is never executed
+
+Note: This linter can be disabled with `set_option linter.unreachableTactic false`
+⚠ [9056/9095] Replayed GrasGreenbergBrocard.ExpSumBounds
+warning: GrasGreenbergBrocard/ExpSumBounds.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9057/9095] Replayed GrasGreenbergBrocard.ValuationParityThmHelpers
+warning: GrasGreenbergBrocard/ValuationParityThmHelpers.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/ValuationParityThmHelpers.lean:435:33: this tactic is never executed
+
+Note: This linter can be disabled with `set_option linter.unreachableTactic false`
+warning: GrasGreenbergBrocard/ValuationParityThmHelpers.lean:458:40: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+⚠ [9058/9095] Replayed GrasGreenbergBrocard.ValuationParityThmPart1
+warning: GrasGreenbergBrocard/ValuationParityThmPart1.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/ValuationParityThmPart1.lean:551:10: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/ValuationParityThmPart1.lean:744:36: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+⚠ [9059/9095] Replayed GrasGreenbergBrocard.ValuationParityThmCollar
+warning: GrasGreenbergBrocard/ValuationParityThmCollar.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/ValuationParityThmCollar.lean:472:24: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+⚠ [9060/9095] Replayed GrasGreenbergBrocard.ValuationParityThmInterCollar
+warning: GrasGreenbergBrocard/ValuationParityThmInterCollar.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/ValuationParityThmInterCollar.lean:329:26: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+⚠ [9061/9095] Replayed GrasGreenbergBrocard.ValuationParityThm
+warning: GrasGreenbergBrocard/ValuationParityThm.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9062/9095] Replayed GrasGreenbergBrocard.ExpSumBoundsMod
+warning: GrasGreenbergBrocard/ExpSumBoundsMod.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9063/9095] Replayed GrasGreenbergBrocard.VaalerMod
+warning: GrasGreenbergBrocard/VaalerMod.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9064/9095] Replayed GrasGreenbergBrocard.ValuationParityModWeight
+warning: GrasGreenbergBrocard/ValuationParityModWeight.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9065/9095] Replayed GrasGreenbergBrocard.ValuationParityModCollar
+warning: GrasGreenbergBrocard/ValuationParityModCollar.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9066/9095] Replayed GrasGreenbergBrocard.ValuationParityModInterCollar
+warning: GrasGreenbergBrocard/ValuationParityModInterCollar.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9067/9095] Replayed GrasGreenbergBrocard.ValuationParityMod
+warning: GrasGreenbergBrocard/ValuationParityMod.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/ValuationParityMod.lean:120:10: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+info: GrasGreenbergBrocard/ValuationParityMod.lean:644:35: Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+⚠ [9068/9095] Replayed GrasGreenbergBrocard.ExternalAxiomsSec4
+warning: GrasGreenbergBrocard/ExternalAxiomsSec4.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9069/9095] Replayed GrasGreenbergBrocard.Sec7TaylorSeries
+warning: GrasGreenbergBrocard/Sec7TaylorSeries.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9070/9095] Replayed GrasGreenbergBrocard.ExternalAxiomsSec7
+warning: GrasGreenbergBrocard/ExternalAxiomsSec7.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9072/9095] Replayed GrasGreenbergBrocard.Sec7ClusterReduction
+warning: GrasGreenbergBrocard/Sec7ClusterReduction.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9073/9095] Replayed GrasGreenbergBrocard.Thm1_3Part2Counting
+warning: GrasGreenbergBrocard/Thm1_3Part2Counting.lean:254:19: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_3Part2Counting.lean:346:4: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_3Part2Counting.lean:441:23: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+⚠ [9074/9095] Built GrasGreenbergBrocard.PellFundamental (12s)
+warning: GrasGreenbergBrocard/PellFundamental.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/PellFundamental.lean:76:6: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+✖ [9075/9095] Building GrasGreenbergBrocard.ExternalAxiomsSec5 (14s)
+warning: GrasGreenbergBrocard/ExternalAxiomsSec5.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+trace: .> LEAN_PATH=/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/Cli/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/batteries/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/Qq/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/aesop/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/importGraph/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/plausible/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/mathlib/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean /home/runner/.elan/toolchains/leanprover--lean4---v4.35.0/bin/lean /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/GrasGreenbergBrocard/ExternalAxiomsSec5.lean -o /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean/GrasGreenbergBrocard/ExternalAxiomsSec5.olean -i /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean/GrasGreenbergBrocard/ExternalAxiomsSec5.ilean -c /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/ir/GrasGreenbergBrocard/ExternalAxiomsSec5.c --setup /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/ir/GrasGreenbergBrocard/ExternalAxiomsSec5.setup.json --json
+error: GrasGreenbergBrocard/ExternalAxiomsSec5.lean:182:34: linarith failed to find a contradiction
+n : ℕ
+hn : 8 ≤ n
+p : ℕ
+hp : Nat.Prime p
+hp_lo : n / 2 < p
+hp_hi2 : p ≤ 2 * (n / 2)
+hpn : p ≤ n
+this : Fact (Nat.Prime p)
+a✝ : p ^ 2 ≤ n
+⊢ False
+failed
+⚠ [9076/9095] Built GrasGreenbergBrocard.Prop4_1SmoothBiquad (40s)
+warning: GrasGreenbergBrocard/Prop4_1SmoothBiquad.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9077/9095] Ran GrasGreenbergBrocard.Prop5_1MidpointBias
+warning: GrasGreenbergBrocard/Prop5_1MidpointBias.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+✖ [9078/9095] Building GrasGreenbergBrocard.Thm1_2Iwasawa (32s)
+warning: GrasGreenbergBrocard/Thm1_2Iwasawa.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+trace: .> LEAN_PATH=/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/Cli/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/batteries/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/Qq/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/aesop/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/importGraph/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/plausible/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/mathlib/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean /home/runner/.elan/toolchains/leanprover--lean4---v4.35.0/bin/lean /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/GrasGreenbergBrocard/Thm1_2Iwasawa.lean -o /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean/GrasGreenbergBrocard/Thm1_2Iwasawa.olean -i /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean/GrasGreenbergBrocard/Thm1_2Iwasawa.ilean -c /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/ir/GrasGreenbergBrocard/Thm1_2Iwasawa.c --setup /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/ir/GrasGreenbergBrocard/Thm1_2Iwasawa.setup.json --json
+warning: GrasGreenbergBrocard/Thm1_2Iwasawa.lean:66:4: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_2Iwasawa.lean:94:4: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+error: GrasGreenbergBrocard/Thm1_2Iwasawa.lean:261:20: Tactic `rewrite` failed: Did not find an occurrence of the pattern
+  ↑(Int.natAbs ?a) * ↑(Int.natAbs ?a)
+in the target expression
+  ↑(q_n n) = |r| * |r|
+
+n m p X₁ Y₁ k : ℕ
+hm : n.factorial + 1 = m ^ 2
+hp : Nat.Prime p
+hp5 : 5 ≤ p
+hp_half : p ≤ n / 2
+hfund : IsFundamentalPell (q_n n) X₁ Y₁
+hk_eq : ↑m + ↑(s_n n) * √↑(q_n n) = pellUnit (q_n n) X₁ Y₁ ^ k
+hpk : ¬p ∣ k
+this : Fact (Nat.Prime p)
+left✝ : 2 ≤ padicValNat p n.factorial
+hs_val : padicValNat p (s_n n) = padicValNat p n.factorial / 2
+hs_ge1 : 1 ≤ padicValNat p (s_n n)
+hq2 : 2 ≤ q_n n
+r : ℤ
+hr : ↑(q_n n) = r * r
+⊢ ↑(q_n n) = |r| * |r|
+error: GrasGreenbergBrocard/Thm1_2Iwasawa.lean:275:16: Unknown constant `padicValNat.zero`
+warning: GrasGreenbergBrocard/Thm1_2Iwasawa.lean:496:6: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_2Iwasawa.lean:541:18: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_2Iwasawa.lean:550:19: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+✖ [9079/9095] Building GrasGreenbergBrocard.Picard2Torsion (58s)
+warning: GrasGreenbergBrocard/Picard2Torsion.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+trace: .> LEAN_PATH=/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/Cli/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/batteries/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/Qq/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/aesop/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/importGraph/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/plausible/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/mathlib/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean /home/runner/.elan/toolchains/leanprover--lean4---v4.35.0/bin/lean /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/GrasGreenbergBrocard/Picard2Torsion.lean -o /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean/GrasGreenbergBrocard/Picard2Torsion.olean -i /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean/GrasGreenbergBrocard/Picard2Torsion.ilean -c /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/ir/GrasGreenbergBrocard/Picard2Torsion.c --setup /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/ir/GrasGreenbergBrocard/Picard2Torsion.setup.json --json
+error: GrasGreenbergBrocard/Picard2Torsion.lean:46:75: Type mismatch
+  rfl
+has type
+  ?m.146 = ?m.146
+but is expected to have type
+  z.norm = z.re * z.re - -↑D * (z.im * z.im)
+error: GrasGreenbergBrocard/Picard2Torsion.lean:81:28: Unknown constant `Zsqrtd.one_re`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:81:43: Unknown constant `Zsqrtd.one_im`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:82:4: Type mismatch: After simplification, term
+  h1
+ has type
+  ((↑w).re * (↑w).re + (↑w).im * ((↑w).im * ↑D)) * ((↑w').re * (↑w').re + (↑w').im * (↑D * (↑w').im)) = 1
+but is expected to have type
+  ((↑w).re ^ 2 + ↑D * (↑w).im ^ 2) * ((↑w').re ^ 2 + ↑D * (↑w').im ^ 2) = 1
+error: GrasGreenbergBrocard/Picard2Torsion.lean:90:31: linarith failed to find a contradiction
+D : ℕ
+hD : 2 ≤ D
+w : (ℤ√(-↑D))ˣ
+a : ℤ := (↑w).re
+b : ℤ := (↑w).im
+w' : (ℤ√(-↑D))ˣ := w⁻¹
+hmul : ↑w * ↑w' = 1
+hnorm : (a ^ 2 + ↑D * b ^ 2) * ((↑w').re ^ 2 + ↑D * (↑w').im ^ 2) = 1
+hnn1 : 0 ≤ a ^ 2 + ↑D * b ^ 2
+hnorm_one : a ^ 2 + ↑D * b ^ 2 = 1
+hb : ¬b = 0
+a✝ : b ^ 2 < 1
+⊢ False
+failed
+error: GrasGreenbergBrocard/Picard2Torsion.lean:116:8: mod_cast has type
+  q_n n * s_n n ^ 2 + 1 = m ^ 2
+but is expected to have type
+  m ^ 2 = q_n n * s_n n ^ 2 + 1
+error: GrasGreenbergBrocard/Picard2Torsion.lean:117:6: linarith failed to find a contradiction
+case re.h1
+n m : ℕ
+hn : 4 ≤ n
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+α : R := { re := 1, im := ↑(s_n n) }
+β : R := { re := 1, im := -↑(s_n n) }
+hfac : n.factorial = q_n n * s_n n ^ 2
+h1 : ↑m ^ 2 = ↑(q_n n) * ↑(s_n n) ^ 2 + 1
+a✝ : ({ re := 1, im := ↑(s_n n) } * { re := 1, im := -↑(s_n n) }).re < (↑m ^ 2).re
+⊢ False
+failed
+info: GrasGreenbergBrocard/Picard2Torsion.lean:119:6: Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+error: GrasGreenbergBrocard/Picard2Torsion.lean:118:4: unsolved goals
+case im
+n m : ℕ
+hn : 4 ≤ n
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+α : R := { re := 1, im := ↑(s_n n) }
+β : R := { re := 1, im := -↑(s_n n) }
+hfac : n.factorial = q_n n * s_n n ^ 2
+⊢ ({ re := 1, im := ↑(s_n n) } * { re := 1, im := -↑(s_n n) }).im = (↑m ^ 2).im
+error: GrasGreenbergBrocard/Picard2Torsion.lean:120:35: unsolved goals
+case re
+n m : ℕ
+hn : 4 ≤ n
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+α : R := { re := 1, im := ↑(s_n n) }
+β : R := { re := 1, im := -↑(s_n n) }
+hfac : n.factorial = q_n n * s_n n ^ 2
+hαβ : α * β = ↑m ^ 2
+⊢ ({ re := 1, im := ↑(s_n n) } + { re := 1, im := -↑(s_n n) }).re = 2
+
+case im
+n m : ℕ
+hn : 4 ≤ n
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+α : R := { re := 1, im := ↑(s_n n) }
+β : R := { re := 1, im := -↑(s_n n) }
+hfac : n.factorial = q_n n * s_n n ^ 2
+hαβ : α * β = ↑m ^ 2
+⊢ ({ re := 1, im := ↑(s_n n) } + { re := 1, im := -↑(s_n n) }).im = 0
+error: GrasGreenbergBrocard/Picard2Torsion.lean:125:4: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  c ≥ 0
+  b ≥ 0
+  a ≥ 4
+where
+ a := ↑n
+ b := ↑(q_n n) * ↑(s_n n ^ 2)
+ c := ↑m / 2
+error: GrasGreenbergBrocard/Picard2Torsion.lean:141:55: unsolved goals
+case re
+n m : ℕ
+hn : 4 ≤ n
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+α : R := { re := 1, im := ↑(s_n n) }
+β : R := { re := 1, im := -↑(s_n n) }
+hfac : n.factorial = q_n n * s_n n ^ 2
+hαβ : α * β = ↑m ^ 2
+hsum_2 : α + β = 2
+hm_odd : m % 2 = 1
+t : ℤ
+ht : 1 - ↑m ^ 2 = 2 * t
+this : 1 = t * 2 + ↑m ^ 2
+⊢ t * 2 + ↑m ^ 2 = (↑t * 2 + ↑m ^ 2).re
+
+case im
+n m : ℕ
+hn : 4 ≤ n
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+α : R := { re := 1, im := ↑(s_n n) }
+β : R := { re := 1, im := -↑(s_n n) }
+hfac : n.factorial = q_n n * s_n n ^ 2
+hαβ : α * β = ↑m ^ 2
+hsum_2 : α + β = 2
+hm_odd : m % 2 = 1
+t : ℤ
+ht : 1 - ↑m ^ 2 = 2 * t
+this : 1 = t * 2 + ↑m ^ 2
+⊢ 0 = (↑t * 2 + ↑m ^ 2).im
+error: GrasGreenbergBrocard/Picard2Torsion.lean:153:39: Application type mismatch: The argument
+  hα_in
+has type
+  α ∈ Ideal.span {↑m, α}
+but is expected to have type
+  npowRec 1 α ∈ Ideal.span {↑m, α}
+in the application
+  Ideal.mul_mem_mul hα_in
+error: GrasGreenbergBrocard/Picard2Torsion.lean:155:39: Application type mismatch: The argument
+  hm_in
+has type
+  ↑m ∈ Ideal.span {↑m, α}
+but is expected to have type
+  npowRec 1 ↑m ∈ Ideal.span {↑m, α}
+in the application
+  Ideal.mul_mem_mul hm_in
+error: GrasGreenbergBrocard/Picard2Torsion.lean:156:50: Application type mismatch: The argument
+  hα2_in
+has type
+  α ^ 2 ∈ Ideal.span {↑m, α} ^ 2
+but is expected to have type
+  α ^ 2 ∈ Ideal.span {↑m, ↑t * α ^ 2 + (↑t + α) * ↑m ^ 2} ^ 2
+in the application
+  Ideal.mul_mem_left (Ideal.span {↑m, ↑t * α ^ 2 + (↑t + α) * ↑m ^ 2} ^ 2) (↑t) hα2_in
+error: GrasGreenbergBrocard/Picard2Torsion.lean:156:82: Application type mismatch: The argument
+  hm2_in
+has type
+  ↑m ^ 2 ∈ Ideal.span {↑m, α} ^ 2
+but is expected to have type
+  ↑m ^ 2 ∈ Ideal.span {↑m, ↑t * α ^ 2 + (↑t + α) * ↑m ^ 2} ^ 2
+in the application
+  Ideal.mul_mem_left (Ideal.span {↑m, ↑t * α ^ 2 + (↑t + α) * ↑m ^ 2} ^ 2) (↑t + α) hm2_in
+error: GrasGreenbergBrocard/Picard2Torsion.lean:173:8: mod_cast has type
+  q_n n * s_n n ^ 2 + 1 = m ^ 2
+but is expected to have type
+  m ^ 2 = q_n n * s_n n ^ 2 + 1
+error: GrasGreenbergBrocard/Picard2Torsion.lean:174:6: linarith failed to find a contradiction
+case re.h1
+n m : ℕ
+hn : 4 ≤ n
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+α : R := { re := 1, im := ↑(s_n n) }
+β : R := { re := 1, im := -↑(s_n n) }
+hfac : n.factorial = q_n n * s_n n ^ 2
+h1 : ↑m ^ 2 = ↑(q_n n) * ↑(s_n n) ^ 2 + 1
+a✝ : ({ re := 1, im := ↑(s_n n) } * { re := 1, im := -↑(s_n n) }).re < (↑m ^ 2).re
+⊢ False
+failed
+info: GrasGreenbergBrocard/Picard2Torsion.lean:176:6: Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+error: GrasGreenbergBrocard/Picard2Torsion.lean:175:4: unsolved goals
+case im
+n m : ℕ
+hn : 4 ≤ n
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+α : R := { re := 1, im := ↑(s_n n) }
+β : R := { re := 1, im := -↑(s_n n) }
+hfac : n.factorial = q_n n * s_n n ^ 2
+⊢ ({ re := 1, im := ↑(s_n n) } * { re := 1, im := -↑(s_n n) }).im = (↑m ^ 2).im
+error: GrasGreenbergBrocard/Picard2Torsion.lean:177:35: unsolved goals
+case re
+n m : ℕ
+hn : 4 ≤ n
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+α : R := { re := 1, im := ↑(s_n n) }
+β : R := { re := 1, im := -↑(s_n n) }
+hfac : n.factorial = q_n n * s_n n ^ 2
+hαβ : α * β = ↑m ^ 2
+⊢ ({ re := 1, im := ↑(s_n n) } + { re := 1, im := -↑(s_n n) }).re = 2
+
+case im
+n m : ℕ
+hn : 4 ≤ n
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+α : R := { re := 1, im := ↑(s_n n) }
+β : R := { re := 1, im := -↑(s_n n) }
+hfac : n.factorial = q_n n * s_n n ^ 2
+hαβ : α * β = ↑m ^ 2
+⊢ ({ re := 1, im := ↑(s_n n) } + { re := 1, im := -↑(s_n n) }).im = 0
+error: GrasGreenbergBrocard/Picard2Torsion.lean:181:4: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  c ≥ 0
+  b ≥ 0
+  a ≥ 4
+where
+ a := ↑n
+ b := ↑(q_n n) * ↑(s_n n ^ 2)
+ c := ↑m / 2
+error: GrasGreenbergBrocard/Picard2Torsion.lean:195:53: unsolved goals
+case re
+n m : ℕ
+hn : 4 ≤ n
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+α : R := { re := 1, im := ↑(s_n n) }
+β : R := { re := 1, im := -↑(s_n n) }
+hfac : n.factorial = q_n n * s_n n ^ 2
+hαβ : α * β = ↑m ^ 2
+hsum_2 : α + β = 2
+hm_odd : m % 2 = 1
+t : ℤ
+ht : 1 - ↑m ^ 2 = 2 * t
+this : 1 = t * 2 + ↑m ^ 2
+⊢ t * 2 + ↑m ^ 2 = (↑t * 2 + ↑m ^ 2).re
+
+case im
+n m : ℕ
+hn : 4 ≤ n
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+α : R := { re := 1, im := ↑(s_n n) }
+β : R := { re := 1, im := -↑(s_n n) }
+hfac : n.factorial = q_n n * s_n n ^ 2
+hαβ : α * β = ↑m ^ 2
+hsum_2 : α + β = 2
+hm_odd : m % 2 = 1
+t : ℤ
+ht : 1 - ↑m ^ 2 = 2 * t
+this : 1 = t * 2 + ↑m ^ 2
+⊢ 0 = (↑t * 2 + ↑m ^ 2).im
+error: GrasGreenbergBrocard/Picard2Torsion.lean:210:51: Application type mismatch: The argument
+  hα_J
+has type
+  α ∈ Ideal.span {↑m, α}
+but is expected to have type
+  α ∈ Ideal.span {↑t * (α * ↑m) + ↑t * (↑m * β) + ↑m * (α * β), α}
+in the application
+  Ideal.mul_mem_mul hα_J
+error: GrasGreenbergBrocard/Picard2Torsion.lean:211:51: Application type mismatch: The argument
+  hm_J
+has type
+  ↑m ∈ Ideal.span {↑m, α}
+but is expected to have type
+  ↑m ∈ Ideal.span {↑t * (α * ↑m) + ↑t * (↑m * β) + ↑m * (α * β), α}
+in the application
+  Ideal.mul_mem_mul hm_J
+error: GrasGreenbergBrocard/Picard2Torsion.lean:212:49: Application type mismatch: The argument
+  hα_J
+has type
+  α ∈ Ideal.span {↑m, α}
+but is expected to have type
+  α ∈ Ideal.span {↑t * (α * ↑m) + ↑t * (↑m * β) + ↑m * (α * β), α}
+in the application
+  Ideal.mul_mem_mul hα_J
+error: GrasGreenbergBrocard/Picard2Torsion.lean:235:22: failed to synthesize instance of type class
+  IsDomain (ℤ√(-↑(q_n n)))
+
+Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
+error: GrasGreenbergBrocard/Picard2Torsion.lean:245:50: Unknown constant `Zsqrtd.one_re`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:245:65: Unknown constant `Zsqrtd.neg_im`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:245:80: Unknown constant `Zsqrtd.one_im`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:247:8: linarith failed to find a contradiction
+case h1
+n m : ℕ
+hn : 4 ≤ n
+hn6 : n ≠ 6
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+hq_ge2 : 2 ≤ q_n n
+z : ℤ√(-↑(q_n n))
+hz : Ideal.span {↑m, { re := 1, im := ↑(s_n n) }} = Ideal.span {z}
+hsq : Ideal.span {z ^ 2} = Ideal.span {{ re := 1, im := ↑(s_n n) }}
+w : (ℤ√(-↑(q_n n)))ˣ
+hw : z ^ 2 * ↑w = { re := 1, im := ↑(s_n n) }
+hunit : w = 1 ∨ w = -1
+heq : z ^ 2 * -1 = { re := 1, im := ↑(s_n n) }
+this : (z * z * -1).re = 1
+a✝ : -(z.re ^ 2 - ↑(q_n n) * z.im ^ 2) < 1
+⊢ False
+failed
+error: GrasGreenbergBrocard/Picard2Torsion.lean:286:8: mod_cast has type
+  @Nat.cast ℤ Int.instSemiring.toNonAssocSemiring.toAddCommMonoidWithOne.toNatCast (z.re.natAbs * z.im.natAbs) =
+    z.re * z.im
+but is expected to have type
+  @Nat.cast ℝ Real.semiring.toNonAssocSemiring.toAddCommMonoidWithOne.toNatCast (z.re.natAbs * z.im.natAbs) =
+    ↑(z.re * z.im)
+error: GrasGreenbergBrocard/Picard2Torsion.lean:292:16: Tactic `rewrite` failed: Did not find an occurrence of the pattern
+  ↑z.re ^ 2
+in the target expression
+  ↑z.re.natAbs ^ 2 - ↑(q_n n) * ↑z.im.natAbs ^ 2 = 1
+
+n m : ℕ
+hn : 4 ≤ n
+hn6 : n ≠ 6
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+hq_ge2 : 2 ≤ q_n n
+z : ℤ√(-↑(q_n n))
+hz : Ideal.span {↑m, { re := 1, im := ↑(s_n n) }} = Ideal.span {z}
+hsq : Ideal.span {z ^ 2} = Ideal.span {{ re := 1, im := ↑(s_n n) }}
+w : (ℤ√(-↑(q_n n)))ˣ
+hw : z ^ 2 * ↑w = { re := 1, im := ↑(s_n n) }
+hunit : w = 1 ∨ w = -1
+hneg_impossible : z ^ 2 * -1 ≠ { re := 1, im := ↑(s_n n) }
+hz2_eq : z ^ 2 = { re := 1, im := ↑(s_n n) }
+hre : z.re ^ 2 - ↑(q_n n) * z.im ^ 2 = 1
+him : 2 * z.re * z.im = ↑(s_n n)
+hsign : ↑z.re.natAbs * ↑z.im.natAbs = ↑z.re * ↑z.im
+hsq_q : √↑(q_n n) ^ 2 = ↑(q_n n)
+this : ↑z.re ^ 2 - ↑(q_n n) * ↑z.im ^ 2 = 1
+⊢ ↑z.re.natAbs ^ 2 - ↑(q_n n) * ↑z.im.natAbs ^ 2 = 1
+error: GrasGreenbergBrocard/Picard2Torsion.lean:350:6: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  r ≤ -1
+  q ≥ 1
+  o ≥ 0
+  l ≥ 0
+  k ≥ 0
+  j ≥ 1
+  i ≥ 0
+  h ≥ 0
+  g ≥ 1
+  f ≥ 1
+  e ≥ 2
+  d ≥ 1
+  4 ≤ c ≤ 5
+where
+ c := ↑n
+ d := ↑(m ^ 2)
+ e := ↑(q_n n)
+ f := ↑u
+ g := ↑v
+ h := ↑(q_n n) * ↑(v ^ 2)
+ i := ↑p / 4
+ j := ↑(q_n n) % ↑(p ^ 2)
+ k := ↑(q_n n) * ↑(b.natAbs ^ 2)
+ l := ↑(padicValNat p a.natAbs)
+ o := ↑(padicValNat p b.natAbs)
+ q := a
+ r := b
+error: GrasGreenbergBrocard/Picard2Torsion.lean:371:10: linarith failed to find a contradiction
+case h1
+n m : ℕ
+hn : 4 ≤ n
+hn6 : n ≠ 6
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+hq_ge2 : 2 ≤ q_n n
+u v : ℕ
+left✝¹ : 0 < u
+left✝ : 0 < v
+huv : u ^ 2 = q_n n * v ^ 2 + 1
+hms : ↑m + ↑(s_n n) * √↑(q_n n) = (↑u + ↑v * √↑(q_n n)) ^ 2
+hsqrt_irr : Irrational √↑(q_n n)
+hsq : √↑(q_n n) ^ 2 = ↑(q_n n)
+h_lin : ↑m - (↑u ^ 2 + ↑(q_n n) * ↑v ^ 2) = (2 * ↑u * ↑v - ↑(s_n n)) * √↑(q_n n)
+hne : ¬2 * ↑u * ↑v - ↑(s_n n) = 0
+a✝ : √↑(q_n n) < (↑m - (↑u ^ 2 + ↑(q_n n) * ↑v ^ 2)) / (↑u * ↑v * 2 - ↑(s_n n))
+⊢ False
+failed
+error: GrasGreenbergBrocard/Picard2Torsion.lean:372:28: Application type mismatch: The argument
+  Eq.symm hrat
+has type
+  ↑↑(↑m - (↑u ^ 2 + ↑(q_n n) * ↑v ^ 2)) / ↑↑(2 * ↑u * ↑v - ↑(s_n n)) = √↑(q_n n)
+but is expected to have type
+  ↑?m.2486 = √↑(q_n n)
+in the application
+  Exists.intro ?m.2486 (Eq.symm hrat)
+info: GrasGreenbergBrocard/Picard2Torsion.lean:430:31: Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+info: GrasGreenbergBrocard/Picard2Torsion.lean:430:31: Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+error: GrasGreenbergBrocard/Picard2Torsion.lean:429:72: unsolved goals
+case re
+n m : ℕ
+hn : 4 ≤ n
+hn6 : n ≠ 6
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+hq_ge2 : 2 ≤ q_n n
+u v : ℕ
+left✝¹ : 0 < u
+left✝ : 0 < v
+huv : u ^ 2 = q_n n * v ^ 2 + 1
+hms : ↑m + ↑(s_n n) * √↑(q_n n) = (↑u + ↑v * √↑(q_n n)) ^ 2
+hsqrt_irr : Irrational √↑(q_n n)
+hm_eq : m = u ^ 2 + q_n n * v ^ 2
+hs_eq : s_n n = 2 * u * v
+z : R := { re := ↑u, im := ↑v }
+hz_conj : z * { re := ↑u, im := -↑v } = ↑m
+hz_sq : z ^ 2 = { re := 1, im := ↑(s_n n) }
+c₁ c₂ : ℤ
+hc : c₁ * (2 * ↑u) + c₂ * ↑m = 1
+⊢ ({ re := ↑u, im := ↑v } + { re := ↑u, im := -↑v }).re = (↑(↑u * 2)).re
+
+case im
+n m : ℕ
+hn : 4 ≤ n
+hn6 : n ≠ 6
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+hq_ge2 : 2 ≤ q_n n
+u v : ℕ
+left✝¹ : 0 < u
+left✝ : 0 < v
+huv : u ^ 2 = q_n n * v ^ 2 + 1
+hms : ↑m + ↑(s_n n) * √↑(q_n n) = (↑u + ↑v * √↑(q_n n)) ^ 2
+hsqrt_irr : Irrational √↑(q_n n)
+hm_eq : m = u ^ 2 + q_n n * v ^ 2
+hs_eq : s_n n = 2 * u * v
+z : R := { re := ↑u, im := ↑v }
+hz_conj : z * { re := ↑u, im := -↑v } = ↑m
+hz_sq : z ^ 2 = { re := 1, im := ↑(s_n n) }
+c₁ c₂ : ℤ
+hc : c₁ * (2 * ↑u) + c₂ * ↑m = 1
+⊢ ({ re := ↑u, im := ↑v } + { re := ↑u, im := -↑v }).im = (↑(↑u * 2)).im
+info: GrasGreenbergBrocard/Picard2Torsion.lean:432:30: Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+info: GrasGreenbergBrocard/Picard2Torsion.lean:432:30: Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+error: GrasGreenbergBrocard/Picard2Torsion.lean:428:90: unsolved goals
+case re
+n m : ℕ
+hn : 4 ≤ n
+hn6 : n ≠ 6
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+hq_ge2 : 2 ≤ q_n n
+u v : ℕ
+left✝¹ : 0 < u
+left✝ : 0 < v
+huv : u ^ 2 = q_n n * v ^ 2 + 1
+hms : ↑m + ↑(s_n n) * √↑(q_n n) = (↑u + ↑v * √↑(q_n n)) ^ 2
+hsqrt_irr : Irrational √↑(q_n n)
+hm_eq : m = u ^ 2 + q_n n * v ^ 2
+hs_eq : s_n n = 2 * u * v
+z : R := { re := ↑u, im := ↑v }
+hz_conj : z * { re := ↑u, im := -↑v } = ↑m
+hz_sq : z ^ 2 = { re := 1, im := ↑(s_n n) }
+c₁ c₂ : ℤ
+hc : c₁ * (2 * ↑u) + c₂ * ↑m = 1
+h2u : z + { re := ↑u, im := -↑v } = ↑(2 * ↑u)
+⊢ 1 = (↑c₁ * ↑(↑u * 2) + ↑c₂ * ↑m).re
+
+case im
+n m : ℕ
+hn : 4 ≤ n
+hn6 : n ≠ 6
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+hq_ge2 : 2 ≤ q_n n
+u v : ℕ
+left✝¹ : 0 < u
+left✝ : 0 < v
+huv : u ^ 2 = q_n n * v ^ 2 + 1
+hms : ↑m + ↑(s_n n) * √↑(q_n n) = (↑u + ↑v * √↑(q_n n)) ^ 2
+hsqrt_irr : Irrational √↑(q_n n)
+hm_eq : m = u ^ 2 + q_n n * v ^ 2
+hs_eq : s_n n = 2 * u * v
+z : R := { re := ↑u, im := ↑v }
+hz_conj : z * { re := ↑u, im := -↑v } = ↑m
+hz_sq : z ^ 2 = { re := 1, im := ↑(s_n n) }
+c₁ c₂ : ℤ
+hc : c₁ * (2 * ↑u) + c₂ * ↑m = 1
+h2u : z + { re := ↑u, im := -↑v } = ↑(2 * ↑u)
+⊢ 0 = (↑c₁ * ↑(↑u * 2) + ↑c₂ * ↑m).im
+info: GrasGreenbergBrocard/Picard2Torsion.lean:436:92: Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+error: GrasGreenbergBrocard/Picard2Torsion.lean:436:89: unsolved goals
+n m : ℕ
+hn : 4 ≤ n
+hn6 : n ≠ 6
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+hq_ge2 : 2 ≤ q_n n
+u v : ℕ
+left✝¹ : 0 < u
+left✝ : 0 < v
+huv : u ^ 2 = q_n n * v ^ 2 + 1
+hms : ↑m + ↑(s_n n) * √↑(q_n n) = (↑u + ↑v * √↑(q_n n)) ^ 2
+hsqrt_irr : Irrational √↑(q_n n)
+hm_eq : m = u ^ 2 + q_n n * v ^ 2
+hs_eq : s_n n = 2 * u * v
+z : R := { re := ↑u, im := ↑v }
+hz_conj : z * { re := ↑u, im := -↑v } = ↑m
+hz_sq : z ^ 2 = { re := 1, im := ↑(s_n n) }
+c₁ c₂ : ℤ
+hc : c₁ * (2 * ↑u) + c₂ * ↑m = 1
+h1_eq : 1 = ↑c₁ * (z + { re := ↑u, im := -↑v }) + ↑c₂ * ↑m
+⊢ z * (↑c₁ * (z + { re := ↑u, im := -↑v }) + ↑c₂ * ↑m) = ↑c₁ * (z ^ 2 + z * { re := ↑u, im := -↑v }) + ↑c₂ * (z * ↑m)
+error: GrasGreenbergBrocard/Picard2Torsion.lean:540:10: Unknown constant `FractionalIdeal.spanSingleton_mul_spanSingleton_inv`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:550:4: failed to synthesize instance of type class
+  Field ↥↑↑(invertibleIdealToFracUnit I J d hd hIJ)
+
+Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
+error: GrasGreenbergBrocard/Picard2Torsion.lean:592:39: (deterministic) timeout at `isDefEq`, maximum number of heartbeats (200000) has been reached
+
+Note: Use `set_option maxHeartbeats <num>` to set the limit.
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: GrasGreenbergBrocard/Picard2Torsion.lean:598:47: Unknown identifier `J_n_class`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:604:5: Unknown identifier `J_n_class`
+
+Note: It is not possible to treat `J_n_class` as an implicitly bound variable here because it has multiple characters while the `relaxedAutoImplicit` option is set to `false`.
+error: GrasGreenbergBrocard/Picard2Torsion.lean:607:15: Unknown identifier `J_n_class`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:608:11: Unknown identifier `J_n_class`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:629:9: Unknown identifier `J_n_class`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:647:29: failed to synthesize instance of type class
+  Field ↥↑↑(invertibleIdealToFracUnit Iδ Iδ (↑δ₂) hδ2 hsq)
+
+Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
+error: GrasGreenbergBrocard/Picard2Torsion.lean:654:49: No goals to be solved
+error: GrasGreenbergBrocard/Picard2Torsion.lean:653:27: unsolved goals
+n m δ₁ δ₂ z₁ z₂ : ℕ
+hn : 4 ≤ n
+hm : n.factorial + 1 = m ^ 2
+h1 : ↑m - 1 = 2 * ↑δ₁ * ↑z₁ ^ 2
+h2 : ↑m + 1 = 2 * ↑δ₂ * ↑z₂ ^ 2
+hq : δ₁ * δ₂ = q_n n
+hs : 2 * z₁ * z₂ = s_n n
+this✝ : IsDomain (ℤ√(-↑(q_n n))) := zsqrtd_neg_isDomain (one_le_q_n n)
+R : Type := ℤ√(-↑(q_n n))
+Iδ : Ideal R := Ideal.span {↑δ₂, { re := 0, im := 1 }}
+hq_pos : 0 < q_n n
+h0 : ¬0 < δ₂
+this : δ₂ = 0
+⊢ False
+error: GrasGreenbergBrocard/Picard2Torsion.lean:656:59: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  f ≥ 1
+  e ≥ 0
+  d ≥ 1
+  c ≥ 1
+  b ≥ 1
+  a ≥ 4
+where
+ a := ↑n
+ b := ↑(m ^ 2)
+ c := 2 * ↑δ₂ * ↑z₂ ^ 2
+ d := ↑(q_n n)
+ e := ↑(s_n n)
+ f := ↑δ₂
+error: GrasGreenbergBrocard/Picard2Torsion.lean:661:12: Unknown constant `Nat.coprime_of_mul_squarefree`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:684:10: 'change' tactic failed, pattern
+  ↑δ₂ = c₂ * (↑δ₂ * ↑δ₂) - c₁ * -↑(q_n n)
+is not definitionally equal to target
+  (↑δ₂).re = (↑c₂ * (↑δ₂ * ↑δ₂) - ↑c₁ * ({ re := 0, im := 1 } * { re := 0, im := 1 })).re
+error: GrasGreenbergBrocard/Picard2Torsion.lean:687:10: `simp` made no progress
+error: GrasGreenbergBrocard/Picard2Torsion.lean:697:2: No goals to be solved
+✖ [9080/9095] Building GrasGreenbergBrocard.Thm1_1Collapse (68s)
+warning: GrasGreenbergBrocard/Thm1_1Collapse.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+trace: .> LEAN_PATH=/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/Cli/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/batteries/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/Qq/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/aesop/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/importGraph/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/plausible/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/mathlib/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean /home/runner/.elan/toolchains/leanprover--lean4---v4.35.0/bin/lean /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/GrasGreenbergBrocard/Thm1_1Collapse.lean -o /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean/GrasGreenbergBrocard/Thm1_1Collapse.olean -i /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean/GrasGreenbergBrocard/Thm1_1Collapse.ilean -c /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/ir/GrasGreenbergBrocard/Thm1_1Collapse.c --setup /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/ir/GrasGreenbergBrocard/Thm1_1Collapse.setup.json --json
+warning: GrasGreenbergBrocard/Thm1_1Collapse.lean:79:44: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: GrasGreenbergBrocard/Thm1_1Collapse.lean:379:8: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_1Collapse.lean:484:4: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_1Collapse.lean:637:4: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+error: GrasGreenbergBrocard/Thm1_1Collapse.lean:650:91: No goals to be solved
+error: GrasGreenbergBrocard/Thm1_1Collapse.lean:692:4: (deterministic) timeout at `isDefEq`, maximum number of heartbeats (200000) has been reached
+
+Note: Use `set_option maxHeartbeats <num>` to set the limit.
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: GrasGreenbergBrocard/Thm1_1Collapse.lean:592:0: (deterministic) timeout at `whnf`, maximum number of heartbeats (200000) has been reached
+
+Note: Use `set_option maxHeartbeats <num>` to set the limit.
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: GrasGreenbergBrocard/Thm1_1Collapse.lean:715:41: Invalid projection: Type of
+  (mem_filter.mp hq).right
+is not known; cannot resolve projection `1`
+error: GrasGreenbergBrocard/Thm1_1Collapse.lean:715:6: Type mismatch
+  prod_pos fun q hq ↦ ?m.232
+has type
+  0 < ∏ i ∈ ?m.243 with ?m.241 i, ?m.228 i
+but is expected to have type
+  1 ≤ ∏ p ∈ Podd n, p
+⚠ [9081/9095] Ran GrasGreenbergBrocard.Thm5_2EffectiveCores
+warning: GrasGreenbergBrocard/Thm5_2EffectiveCores.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9082/9095] Ran GrasGreenbergBrocard.Thm5_3RedeiCohomology
+warning: GrasGreenbergBrocard/Thm5_3RedeiCohomology.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9091/9095] Built GrasGreenbergBrocard.Thm4_2QuarticCores (109s)
+warning: GrasGreenbergBrocard/Thm4_2QuarticCores.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+Some required targets logged failures:
+- GrasGreenbergBrocard.ExternalAxiomsSec5
+- GrasGreenbergBrocard.Thm1_2Iwasawa
+- GrasGreenbergBrocard.Picard2Torsion
+- GrasGreenbergBrocard.Thm1_1Collapse
+error: build failed

@@ -1,0 +1,150 @@
+β : R := { re := 1, im := -↑(s_n n) }
+hfac : n.factorial = q_n n * s_n n ^ 2
+hαβ : α * β = ↑m ^ 2
+⊢ ({ re := 1, im := ↑(s_n n) } + { re := 1, im := -↑(s_n n) }).re = 2
+
+case im
+n m : ℕ
+hn : 4 ≤ n
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+α : R := { re := 1, im := ↑(s_n n) }
+β : R := { re := 1, im := -↑(s_n n) }
+hfac : n.factorial = q_n n * s_n n ^ 2
+hαβ : α * β = ↑m ^ 2
+⊢ ({ re := 1, im := ↑(s_n n) } + { re := 1, im := -↑(s_n n) }).im = 0
+error: GrasGreenbergBrocard/Picard2Torsion.lean:181:4: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  c ≥ 0
+  b ≥ 0
+  a ≥ 4
+where
+ a := ↑n
+ b := ↑(q_n n) * ↑(s_n n ^ 2)
+ c := ↑m / 2
+error: GrasGreenbergBrocard/Picard2Torsion.lean:195:53: unsolved goals
+case re
+n m : ℕ
+hn : 4 ≤ n
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+α : R := { re := 1, im := ↑(s_n n) }
+β : R := { re := 1, im := -↑(s_n n) }
+hfac : n.factorial = q_n n * s_n n ^ 2
+hαβ : α * β = ↑m ^ 2
+hsum_2 : α + β = 2
+hm_odd : m % 2 = 1
+t : ℤ
+ht : 1 - ↑m ^ 2 = 2 * t
+this : 1 = t * 2 + ↑m ^ 2
+⊢ t * 2 + ↑m ^ 2 = (↑t * 2 + ↑m ^ 2).re
+
+case im
+n m : ℕ
+hn : 4 ≤ n
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+α : R := { re := 1, im := ↑(s_n n) }
+β : R := { re := 1, im := -↑(s_n n) }
+hfac : n.factorial = q_n n * s_n n ^ 2
+hαβ : α * β = ↑m ^ 2
+hsum_2 : α + β = 2
+hm_odd : m % 2 = 1
+t : ℤ
+ht : 1 - ↑m ^ 2 = 2 * t
+this : 1 = t * 2 + ↑m ^ 2
+⊢ 0 = (↑t * 2 + ↑m ^ 2).im
+error: GrasGreenbergBrocard/Picard2Torsion.lean:210:51: Application type mismatch: The argument
+  hα_J
+has type
+  α ∈ Ideal.span {↑m, α}
+but is expected to have type
+  α ∈ Ideal.span {↑t * (α * ↑m) + ↑t * (↑m * β) + ↑m * (α * β), α}
+in the application
+  Ideal.mul_mem_mul hα_J
+error: GrasGreenbergBrocard/Picard2Torsion.lean:211:51: Application type mismatch: The argument
+  hm_J
+has type
+  ↑m ∈ Ideal.span {↑m, α}
+but is expected to have type
+  ↑m ∈ Ideal.span {↑t * (α * ↑m) + ↑t * (↑m * β) + ↑m * (α * β), α}
+in the application
+  Ideal.mul_mem_mul hm_J
+error: GrasGreenbergBrocard/Picard2Torsion.lean:212:49: Application type mismatch: The argument
+  hα_J
+has type
+  α ∈ Ideal.span {↑m, α}
+but is expected to have type
+  α ∈ Ideal.span {↑t * (α * ↑m) + ↑t * (↑m * β) + ↑m * (α * β), α}
+in the application
+  Ideal.mul_mem_mul hα_J
+error: GrasGreenbergBrocard/Picard2Torsion.lean:235:22: failed to synthesize instance of type class
+  IsDomain (ℤ√(-↑(q_n n)))
+
+Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
+error: GrasGreenbergBrocard/Picard2Torsion.lean:245:50: Unknown constant `Zsqrtd.one_re`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:245:65: Unknown constant `Zsqrtd.neg_im`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:245:80: Unknown constant `Zsqrtd.one_im`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:247:8: linarith failed to find a contradiction
+case h1
+n m : ℕ
+hn : 4 ≤ n
+hn6 : n ≠ 6
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+hq_ge2 : 2 ≤ q_n n
+z : ℤ√(-↑(q_n n))
+hz : Ideal.span {↑m, { re := 1, im := ↑(s_n n) }} = Ideal.span {z}
+hsq : Ideal.span {z ^ 2} = Ideal.span {{ re := 1, im := ↑(s_n n) }}
+w : (ℤ√(-↑(q_n n)))ˣ
+hw : z ^ 2 * ↑w = { re := 1, im := ↑(s_n n) }
+hunit : w = 1 ∨ w = -1
+heq : z ^ 2 * -1 = { re := 1, im := ↑(s_n n) }
+this : (z * z * -1).re = 1
+a✝ : -(z.re ^ 2 - ↑(q_n n) * z.im ^ 2) < 1
+⊢ False
+failed
+error: GrasGreenbergBrocard/Picard2Torsion.lean:286:8: mod_cast has type
+  @Nat.cast ℤ Int.instSemiring.toNonAssocSemiring.toAddCommMonoidWithOne.toNatCast (z.re.natAbs * z.im.natAbs) =
+    z.re * z.im
+but is expected to have type
+  @Nat.cast ℝ Real.semiring.toNonAssocSemiring.toAddCommMonoidWithOne.toNatCast (z.re.natAbs * z.im.natAbs) =
+    ↑(z.re * z.im)
+error: GrasGreenbergBrocard/Picard2Torsion.lean:292:16: Tactic `rewrite` failed: Did not find an occurrence of the pattern
+  ↑z.re ^ 2
+in the target expression
+  ↑z.re.natAbs ^ 2 - ↑(q_n n) * ↑z.im.natAbs ^ 2 = 1
+
+n m : ℕ
+hn : 4 ≤ n
+hn6 : n ≠ 6
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+hq_ge2 : 2 ≤ q_n n
+z : ℤ√(-↑(q_n n))
+hz : Ideal.span {↑m, { re := 1, im := ↑(s_n n) }} = Ideal.span {z}
+hsq : Ideal.span {z ^ 2} = Ideal.span {{ re := 1, im := ↑(s_n n) }}
+w : (ℤ√(-↑(q_n n)))ˣ
+hw : z ^ 2 * ↑w = { re := 1, im := ↑(s_n n) }
+hunit : w = 1 ∨ w = -1
+hneg_impossible : z ^ 2 * -1 ≠ { re := 1, im := ↑(s_n n) }
+hz2_eq : z ^ 2 = { re := 1, im := ↑(s_n n) }
+hre : z.re ^ 2 - ↑(q_n n) * z.im ^ 2 = 1
+him : 2 * z.re * z.im = ↑(s_n n)
+hsign : ↑z.re.natAbs * ↑z.im.natAbs = ↑z.re * ↑z.im
+hsq_q : √↑(q_n n) ^ 2 = ↑(q_n n)
+this : ↑z.re ^ 2 - ↑(q_n n) * ↑z.im ^ 2 = 1
+⊢ ↑z.re.natAbs ^ 2 - ↑(q_n n) * ↑z.im.natAbs ^ 2 = 1
+error: GrasGreenbergBrocard/Picard2Torsion.lean:350:6: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  r ≤ -1
+  q ≥ 1
+  o ≥ 0
+  l ≥ 0
+  k ≥ 0
+  j ≥ 1
+  i ≥ 0
+  h ≥ 0
+  g ≥ 1
+  f ≥ 1
+  e ≥ 2

@@ -1,0 +1,150 @@
+hs_eq : s_n n = 2 * u * v
+z : R := { re := ↑u, im := ↑v }
+hz_conj : z * { re := ↑u, im := -↑v } = ↑m
+hz_sq : z ^ 2 = { re := 1, im := ↑(s_n n) }
+c₁ c₂ : ℤ
+hc : c₁ * (2 * ↑u) + c₂ * ↑m = 1
+h2u : z + { re := ↑u, im := -↑v } = ↑(2 * ↑u)
+⊢ 0 = (↑c₁ * ↑(↑u * 2) + ↑c₂ * ↑m).im
+info: GrasGreenbergBrocard/Picard2Torsion.lean:436:92: Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+error: GrasGreenbergBrocard/Picard2Torsion.lean:436:89: unsolved goals
+n m : ℕ
+hn : 4 ≤ n
+hn6 : n ≠ 6
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+hq_ge2 : 2 ≤ q_n n
+u v : ℕ
+left✝¹ : 0 < u
+left✝ : 0 < v
+huv : u ^ 2 = q_n n * v ^ 2 + 1
+hms : ↑m + ↑(s_n n) * √↑(q_n n) = (↑u + ↑v * √↑(q_n n)) ^ 2
+hsqrt_irr : Irrational √↑(q_n n)
+hm_eq : m = u ^ 2 + q_n n * v ^ 2
+hs_eq : s_n n = 2 * u * v
+z : R := { re := ↑u, im := ↑v }
+hz_conj : z * { re := ↑u, im := -↑v } = ↑m
+hz_sq : z ^ 2 = { re := 1, im := ↑(s_n n) }
+c₁ c₂ : ℤ
+hc : c₁ * (2 * ↑u) + c₂ * ↑m = 1
+h1_eq : 1 = ↑c₁ * (z + { re := ↑u, im := -↑v }) + ↑c₂ * ↑m
+⊢ z * (↑c₁ * (z + { re := ↑u, im := -↑v }) + ↑c₂ * ↑m) = ↑c₁ * (z ^ 2 + z * { re := ↑u, im := -↑v }) + ↑c₂ * (z * ↑m)
+error: GrasGreenbergBrocard/Picard2Torsion.lean:540:10: Unknown constant `FractionalIdeal.spanSingleton_mul_spanSingleton_inv`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:550:4: failed to synthesize instance of type class
+  Field ↥↑↑(invertibleIdealToFracUnit I J d hd hIJ)
+
+Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
+error: GrasGreenbergBrocard/Picard2Torsion.lean:592:39: (deterministic) timeout at `isDefEq`, maximum number of heartbeats (200000) has been reached
+
+Note: Use `set_option maxHeartbeats <num>` to set the limit.
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: GrasGreenbergBrocard/Picard2Torsion.lean:598:47: Unknown identifier `J_n_class`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:604:5: Unknown identifier `J_n_class`
+
+Note: It is not possible to treat `J_n_class` as an implicitly bound variable here because it has multiple characters while the `relaxedAutoImplicit` option is set to `false`.
+error: GrasGreenbergBrocard/Picard2Torsion.lean:607:15: Unknown identifier `J_n_class`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:608:11: Unknown identifier `J_n_class`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:629:9: Unknown identifier `J_n_class`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:647:29: failed to synthesize instance of type class
+  Field ↥↑↑(invertibleIdealToFracUnit Iδ Iδ (↑δ₂) hδ2 hsq)
+
+Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
+error: GrasGreenbergBrocard/Picard2Torsion.lean:654:49: No goals to be solved
+error: GrasGreenbergBrocard/Picard2Torsion.lean:653:27: unsolved goals
+n m δ₁ δ₂ z₁ z₂ : ℕ
+hn : 4 ≤ n
+hm : n.factorial + 1 = m ^ 2
+h1 : ↑m - 1 = 2 * ↑δ₁ * ↑z₁ ^ 2
+h2 : ↑m + 1 = 2 * ↑δ₂ * ↑z₂ ^ 2
+hq : δ₁ * δ₂ = q_n n
+hs : 2 * z₁ * z₂ = s_n n
+this✝ : IsDomain (ℤ√(-↑(q_n n))) := zsqrtd_neg_isDomain (one_le_q_n n)
+R : Type := ℤ√(-↑(q_n n))
+Iδ : Ideal R := Ideal.span {↑δ₂, { re := 0, im := 1 }}
+hq_pos : 0 < q_n n
+h0 : ¬0 < δ₂
+this : δ₂ = 0
+⊢ False
+error: GrasGreenbergBrocard/Picard2Torsion.lean:656:59: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  f ≥ 1
+  e ≥ 0
+  d ≥ 1
+  c ≥ 1
+  b ≥ 1
+  a ≥ 4
+where
+ a := ↑n
+ b := ↑(m ^ 2)
+ c := 2 * ↑δ₂ * ↑z₂ ^ 2
+ d := ↑(q_n n)
+ e := ↑(s_n n)
+ f := ↑δ₂
+error: GrasGreenbergBrocard/Picard2Torsion.lean:661:12: Unknown constant `Nat.coprime_of_mul_squarefree`
+error: GrasGreenbergBrocard/Picard2Torsion.lean:684:10: 'change' tactic failed, pattern
+  ↑δ₂ = c₂ * (↑δ₂ * ↑δ₂) - c₁ * -↑(q_n n)
+is not definitionally equal to target
+  (↑δ₂).re = (↑c₂ * (↑δ₂ * ↑δ₂) - ↑c₁ * ({ re := 0, im := 1 } * { re := 0, im := 1 })).re
+error: GrasGreenbergBrocard/Picard2Torsion.lean:687:10: `simp` made no progress
+error: GrasGreenbergBrocard/Picard2Torsion.lean:697:2: No goals to be solved
+✖ [9080/9095] Building GrasGreenbergBrocard.Thm1_1Collapse (68s)
+warning: GrasGreenbergBrocard/Thm1_1Collapse.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+trace: .> LEAN_PATH=/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/Cli/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/batteries/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/Qq/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/aesop/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/importGraph/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/plausible/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/mathlib/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean /home/runner/.elan/toolchains/leanprover--lean4---v4.35.0/bin/lean /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/GrasGreenbergBrocard/Thm1_1Collapse.lean -o /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean/GrasGreenbergBrocard/Thm1_1Collapse.olean -i /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean/GrasGreenbergBrocard/Thm1_1Collapse.ilean -c /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/ir/GrasGreenbergBrocard/Thm1_1Collapse.c --setup /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/ir/GrasGreenbergBrocard/Thm1_1Collapse.setup.json --json
+warning: GrasGreenbergBrocard/Thm1_1Collapse.lean:79:44: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: GrasGreenbergBrocard/Thm1_1Collapse.lean:379:8: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_1Collapse.lean:484:4: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_1Collapse.lean:637:4: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+error: GrasGreenbergBrocard/Thm1_1Collapse.lean:650:91: No goals to be solved
+error: GrasGreenbergBrocard/Thm1_1Collapse.lean:692:4: (deterministic) timeout at `isDefEq`, maximum number of heartbeats (200000) has been reached
+
+Note: Use `set_option maxHeartbeats <num>` to set the limit.
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: GrasGreenbergBrocard/Thm1_1Collapse.lean:592:0: (deterministic) timeout at `whnf`, maximum number of heartbeats (200000) has been reached
+
+Note: Use `set_option maxHeartbeats <num>` to set the limit.
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: GrasGreenbergBrocard/Thm1_1Collapse.lean:715:41: Invalid projection: Type of
+  (mem_filter.mp hq).right
+is not known; cannot resolve projection `1`
+error: GrasGreenbergBrocard/Thm1_1Collapse.lean:715:6: Type mismatch
+  prod_pos fun q hq ↦ ?m.232
+has type
+  0 < ∏ i ∈ ?m.243 with ?m.241 i, ?m.228 i
+but is expected to have type
+  1 ≤ ∏ p ∈ Podd n, p
+⚠ [9081/9095] Ran GrasGreenbergBrocard.Thm5_2EffectiveCores
+warning: GrasGreenbergBrocard/Thm5_2EffectiveCores.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9082/9095] Ran GrasGreenbergBrocard.Thm5_3RedeiCohomology
+warning: GrasGreenbergBrocard/Thm5_3RedeiCohomology.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9091/9095] Built GrasGreenbergBrocard.Thm4_2QuarticCores (109s)
+warning: GrasGreenbergBrocard/Thm4_2QuarticCores.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+Some required targets logged failures:
+- GrasGreenbergBrocard.ExternalAxiomsSec5

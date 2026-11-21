@@ -1,0 +1,150 @@
+  d ≥ 1
+  4 ≤ c ≤ 5
+where
+ c := ↑n
+ d := ↑(m ^ 2)
+ e := ↑(q_n n)
+ f := ↑u
+ g := ↑v
+ h := ↑(q_n n) * ↑(v ^ 2)
+ i := ↑p / 4
+ j := ↑(q_n n) % ↑(p ^ 2)
+ k := ↑(q_n n) * ↑(b.natAbs ^ 2)
+ l := ↑(padicValNat p a.natAbs)
+ o := ↑(padicValNat p b.natAbs)
+ q := a
+ r := b
+error: GrasGreenbergBrocard/Picard2Torsion.lean:371:10: linarith failed to find a contradiction
+case h1
+n m : ℕ
+hn : 4 ≤ n
+hn6 : n ≠ 6
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+hq_ge2 : 2 ≤ q_n n
+u v : ℕ
+left✝¹ : 0 < u
+left✝ : 0 < v
+huv : u ^ 2 = q_n n * v ^ 2 + 1
+hms : ↑m + ↑(s_n n) * √↑(q_n n) = (↑u + ↑v * √↑(q_n n)) ^ 2
+hsqrt_irr : Irrational √↑(q_n n)
+hsq : √↑(q_n n) ^ 2 = ↑(q_n n)
+h_lin : ↑m - (↑u ^ 2 + ↑(q_n n) * ↑v ^ 2) = (2 * ↑u * ↑v - ↑(s_n n)) * √↑(q_n n)
+hne : ¬2 * ↑u * ↑v - ↑(s_n n) = 0
+a✝ : √↑(q_n n) < (↑m - (↑u ^ 2 + ↑(q_n n) * ↑v ^ 2)) / (↑u * ↑v * 2 - ↑(s_n n))
+⊢ False
+failed
+error: GrasGreenbergBrocard/Picard2Torsion.lean:372:28: Application type mismatch: The argument
+  Eq.symm hrat
+has type
+  ↑↑(↑m - (↑u ^ 2 + ↑(q_n n) * ↑v ^ 2)) / ↑↑(2 * ↑u * ↑v - ↑(s_n n)) = √↑(q_n n)
+but is expected to have type
+  ↑?m.2486 = √↑(q_n n)
+in the application
+  Exists.intro ?m.2486 (Eq.symm hrat)
+info: GrasGreenbergBrocard/Picard2Torsion.lean:430:31: Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+info: GrasGreenbergBrocard/Picard2Torsion.lean:430:31: Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+error: GrasGreenbergBrocard/Picard2Torsion.lean:429:72: unsolved goals
+case re
+n m : ℕ
+hn : 4 ≤ n
+hn6 : n ≠ 6
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+hq_ge2 : 2 ≤ q_n n
+u v : ℕ
+left✝¹ : 0 < u
+left✝ : 0 < v
+huv : u ^ 2 = q_n n * v ^ 2 + 1
+hms : ↑m + ↑(s_n n) * √↑(q_n n) = (↑u + ↑v * √↑(q_n n)) ^ 2
+hsqrt_irr : Irrational √↑(q_n n)
+hm_eq : m = u ^ 2 + q_n n * v ^ 2
+hs_eq : s_n n = 2 * u * v
+z : R := { re := ↑u, im := ↑v }
+hz_conj : z * { re := ↑u, im := -↑v } = ↑m
+hz_sq : z ^ 2 = { re := 1, im := ↑(s_n n) }
+c₁ c₂ : ℤ
+hc : c₁ * (2 * ↑u) + c₂ * ↑m = 1
+⊢ ({ re := ↑u, im := ↑v } + { re := ↑u, im := -↑v }).re = (↑(↑u * 2)).re
+
+case im
+n m : ℕ
+hn : 4 ≤ n
+hn6 : n ≠ 6
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+hq_ge2 : 2 ≤ q_n n
+u v : ℕ
+left✝¹ : 0 < u
+left✝ : 0 < v
+huv : u ^ 2 = q_n n * v ^ 2 + 1
+hms : ↑m + ↑(s_n n) * √↑(q_n n) = (↑u + ↑v * √↑(q_n n)) ^ 2
+hsqrt_irr : Irrational √↑(q_n n)
+hm_eq : m = u ^ 2 + q_n n * v ^ 2
+hs_eq : s_n n = 2 * u * v
+z : R := { re := ↑u, im := ↑v }
+hz_conj : z * { re := ↑u, im := -↑v } = ↑m
+hz_sq : z ^ 2 = { re := 1, im := ↑(s_n n) }
+c₁ c₂ : ℤ
+hc : c₁ * (2 * ↑u) + c₂ * ↑m = 1
+⊢ ({ re := ↑u, im := ↑v } + { re := ↑u, im := -↑v }).im = (↑(↑u * 2)).im
+info: GrasGreenbergBrocard/Picard2Torsion.lean:432:30: Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+info: GrasGreenbergBrocard/Picard2Torsion.lean:432:30: Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+error: GrasGreenbergBrocard/Picard2Torsion.lean:428:90: unsolved goals
+case re
+n m : ℕ
+hn : 4 ≤ n
+hn6 : n ≠ 6
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+hq_ge2 : 2 ≤ q_n n
+u v : ℕ
+left✝¹ : 0 < u
+left✝ : 0 < v
+huv : u ^ 2 = q_n n * v ^ 2 + 1
+hms : ↑m + ↑(s_n n) * √↑(q_n n) = (↑u + ↑v * √↑(q_n n)) ^ 2
+hsqrt_irr : Irrational √↑(q_n n)
+hm_eq : m = u ^ 2 + q_n n * v ^ 2
+hs_eq : s_n n = 2 * u * v
+z : R := { re := ↑u, im := ↑v }
+hz_conj : z * { re := ↑u, im := -↑v } = ↑m
+hz_sq : z ^ 2 = { re := 1, im := ↑(s_n n) }
+c₁ c₂ : ℤ
+hc : c₁ * (2 * ↑u) + c₂ * ↑m = 1
+h2u : z + { re := ↑u, im := -↑v } = ↑(2 * ↑u)
+⊢ 1 = (↑c₁ * ↑(↑u * 2) + ↑c₂ * ↑m).re
+
+case im
+n m : ℕ
+hn : 4 ≤ n
+hn6 : n ≠ 6
+hm : n.factorial + 1 = m ^ 2
+R : Type := ℤ√(-↑(q_n n))
+hq_ge2 : 2 ≤ q_n n
+u v : ℕ
+left✝¹ : 0 < u
+left✝ : 0 < v
+huv : u ^ 2 = q_n n * v ^ 2 + 1
+hms : ↑m + ↑(s_n n) * √↑(q_n n) = (↑u + ↑v * √↑(q_n n)) ^ 2
+hsqrt_irr : Irrational √↑(q_n n)
+hm_eq : m = u ^ 2 + q_n n * v ^ 2
