@@ -1,5 +1,6 @@
 import Mathlib
 import GrasGreenbergBrocard.Basic
+import GrasGreenbergBrocard.PadicRegulator
 
 /-!
 # External Analytic and Iwasawa-Theoretic Axioms for Section 3
@@ -9,7 +10,13 @@ external to the manuscript's own contributions, where Mathlib v4.35.0 does not y
 contain a formalization. Zero manuscript-owned lemmas, propositions, or theorems
 are axiomatized here.
 
-Every axiom is documented in `EXTERNAL_AXIOMS.md` with its exact published source.
+**Defect D2(1) resolved**: `padic_log_regulator_pell_power` has been **completely eliminated**.
+The normalized `p`-adic regulator valuation `realQuadPadicRegVal q p` is now defined concretely
+in `PadicRegulator.lean` inside Mathlib's `ℚ_[p]`, and manuscript equation (3.6) is proved
+directly without axioms via `realQuadPadicRegVal_pell_power`. Similarly, the splitting
+condition `realQuadSplits q p` is defined concretely via Mathlib's `legendreSym p (q : ℤ) = 1`.
+
+Every remaining external axiom is documented in `EXTERNAL_AXIOMS.md` with its exact published source.
 -/
 
 noncomputable section
@@ -56,8 +63,16 @@ Proc. Japan Acad. 28 (1952), 177–181. -/
 axiom nagura_prime_in_interval :
     ∀ x : ℝ, 25 ≤ x → ∃ p : ℕ, p.Prime ∧ x < (p : ℝ) ∧ (p : ℝ) < (6 / 5 : ℝ) * x
 
-/-- Abstract package of algebraic and Iwasawa-theoretic invariants for the real quadratic field
-`K = ℚ(√q)` at an odd prime `p ≥ 5`. -/
+/-- Concrete splitting predicate for an odd prime `p` in `ℚ(√q)`: `legendreSym p (q : ℤ) = 1`. -/
+def realQuadSplits (q p : ℕ) : Bool :=
+  if hp : p.Prime then
+    haveI : Fact p.Prime := ⟨hp⟩
+    decide (legendreSym p (q : ℤ) = 1)
+  else false
+
+/-- Algebraic and Iwasawa-theoretic invariants for the real quadratic field `K = ℚ(√q)` at an
+odd prime `p ≥ 5`. The normalized `p`-adic regulator valuation `realQuadPadicRegVal q p` and
+splitting predicate `realQuadSplits q p` are defined concretely (not opaque fields). -/
 structure RealQuadIwasawaInvariants (q p : ℕ) where
   /-- Fundamental discriminant `D ∈ {q, 4q}`. -/
   D : ℕ
@@ -65,8 +80,6 @@ structure RealQuadIwasawaInvariants (q p : ℕ) where
   /-- Class number `h(q)` of `ℚ(√q)`. -/
   classNumber : ℕ
   hClass_pos : 0 < classNumber
-  /-- `p`-adic valuation of the normalized `p`-adic regulator `R̃_p(K)`. -/
-  v_reg : ℕ
   /-- `p`-adic valuation of `L_p(1, χ_D)`. -/
   v_Lp : ℕ
   /-- `p`-adic valuation of `#T_{K, p}` (order of the abelian `p`-ramification torsion group). -/
@@ -78,8 +91,6 @@ structure RealQuadIwasawaInvariants (q p : ℕ) where
   lambda_star : ℕ
   /-- Kubota–Leopoldt `λ`-invariant `λ_p(χ_D)`. -/
   lambda_chi : ℕ
-  /-- Whether `p` splits in `K` (`χ_D(p) = +1`). -/
-  splits : Bool
   /-- `p`-adic valuation of `|X(K_∞)_Γ|` and `|A_m^Γ|`. -/
   v_X_Gamma : ℕ
   v_A_m_Gamma : ℕ → ℕ
@@ -92,52 +103,24 @@ structure RealQuadIwasawaInvariants (q p : ℕ) where
   X_trivial : Bool
   h_X_triv : X_trivial = true ↔ lambda_p = 0 ∧ nu_p = 0
 
-/- **Leopoldt's `p`-Adic Class Number Formula (Washington 1997, Theorem 5.24)** and
-**Coates's Formula (Coates 1977, Appendix Lemma 8; Taya 1996, Prop. 1)** for `K = ℚ(√q)` at `p ≥ 5`:
-- In the unramified case (`p ∤ q`, i.e., `2 ∣ v_p(n!)`), `v_p(1 - χ_D(p)p⁻¹) = -1` and
-  `v_p(∏_{𝔭∣p}(1 - N(𝔭)⁻¹)) = -2`.
-- In the ramified case (`p ∣ q`, i.e., `2 ∤ v_p(n!)`), `v_p(1 - χ_D(p)p⁻¹) = 0` and
-  `v_p(∏_{𝔭∣p}(1 - N(𝔭)⁻¹)) = -1`.
-In both cases, `v_p(w_1(K(μ_p))) = 1` for `p ≥ 5`, giving the exact valuation formulas for
-`L_p(1, χ_D)` and `#T_{K, p}` whenever `v_reg ≥ 1`. -/
 /-- Canonical algebraic and Iwasawa-theoretic invariants of the real quadratic field
-`K = ℚ(√q)` at an odd prime `p ≥ 5`. Scoping the external Iwasawa axioms strictly to this
-canonical object (rather than quantifying universally over arbitrary unconstrained records)
-prevents inconsistency from adversarial dummy instances. -/
+`K = ℚ(√q)` at an odd prime `p ≥ 5`. -/
 axiom canonicalRealQuadIwasawa (q p : ℕ) : RealQuadIwasawaInvariants q p
 
-/-- **Washington (1997, §5.5, Lemma 5.3 & Theorem 5.24) — `p`-Adic Logarithm of a Pell Unit**:
-For a squarefree integer `q ≥ 2` and an odd prime `p ≥ 5`, let `ε_q = X₁ + Y₁ √q` be the
-fundamental Pell unit of `ℚ(√q)` (`X₁² - q Y₁² = 1`, `Y₁ ≥ 1`, minimal) and let
-`m + s √q = ε_q^k` (`m² - q s² = 1`) with `p ∣ s` (`v_p(s) ≥ 1`) and `p ∤ m`.
-Since `v_p(2j + 1) < 2 j · v_p(s)` for every `j ≥ 1`, the ultrametric `p`-adic logarithm series
-`log_p((1 + u)/(1 - u)) = 2 ∑_{j ≥ 0} u^(2j+1)/(2j+1)` (with `u = s √q / m`) in `ℚ_p(√q)`
-has exact valuation `v_p(s) + (1/2) v_p(q)`, whence the normalized `p`-adic regulator
-`R̃_p(ℚ(√q)) = log_p(ε_q) / √q` satisfies `v_p(R̃_p(ℚ(√q))) + v_p(k) = v_p(s)`. -/
-axiom padic_log_regulator_pell_power :
-    ∀ {q p m s X₁ Y₁ k : ℕ},
-      let inv := canonicalRealQuadIwasawa q p
-      p.Prime → 5 ≤ p →
-      2 ≤ q → Squarefree q →
-      X₁ ^ 2 = q * Y₁ ^ 2 + 1 → 0 < Y₁ →
-      (∀ x y : ℕ, 0 < y → x ^ 2 = q * y ^ 2 + 1 → Y₁ ≤ y) →
-      m ^ 2 = q * s ^ 2 + 1 →
-      (m : ℝ) + (s : ℝ) * Real.sqrt (q : ℝ) = ((X₁ : ℝ) + (Y₁ : ℝ) * Real.sqrt (q : ℝ)) ^ k →
-      1 ≤ padicValNat p s →
-      ¬ p ∣ m →
-      (∀ j : ℕ, 1 ≤ j → padicValNat p (2 * j + 1) < 2 * j * padicValNat p s) →
-      inv.v_reg + padicValNat p k = padicValNat p s
-
+/-- **Leopoldt's `p`-Adic Class Number Formula (Washington 1997, Theorem 5.24)** and
+**Coates's Formula (Coates 1977, Appendix Lemma 8; Taya 1996, Prop. 1)** for `K = ℚ(√q)` at `p ≥ 5`,
+anchored directly to the concrete normalized `p`-adic regulator valuation `realQuadPadicRegVal q p`. -/
 axiom leopoldt_coates_valuation_law :
     ∀ {q p : ℕ},
       let inv := canonicalRealQuadIwasawa q p
-      p.Prime → 5 ≤ p → Squarefree q → 1 ≤ inv.v_reg →
+      let v_reg := realQuadPadicRegVal q p
+      p.Prime → 5 ≤ p → Squarefree q → 1 ≤ v_reg →
       ((¬ p ∣ q →
-          inv.v_Lp = padicValNat p inv.classNumber + inv.v_reg - 1 ∧
-          inv.v_T = padicValNat p inv.classNumber + inv.v_reg - 1) ∧
+          inv.v_Lp = padicValNat p inv.classNumber + v_reg - 1 ∧
+          inv.v_T = padicValNat p inv.classNumber + v_reg - 1) ∧
        (p ∣ q →
-          inv.v_Lp = padicValNat p inv.classNumber + inv.v_reg ∧
-          inv.v_T = padicValNat p inv.classNumber + inv.v_reg))
+          inv.v_Lp = padicValNat p inv.classNumber + v_reg ∧
+          inv.v_T = padicValNat p inv.classNumber + v_reg))
 
 /-- **Ferrero–Washington (1979), Mazur–Wiles (1984), and Greenberg (1978, Prop. 3)**:
 For the real quadratic field `K = ℚ(√q)` at `p ≥ 5`, `μ_p(χ_D) = 0`, `X_p(K_∞)` is a free
@@ -150,17 +133,18 @@ axiom iwasawa_main_conjecture_free_rank :
       inv.lambda_star = inv.lambda_chi ∧ 1 ≤ inv.lambda_star
 
 /-- **Ozaki (1997, Prop. 1), Yanagisawa (2026, Lemmas 6.1–6.2), and Taya (1996, Cor. 2–3, Thm. 4)**:
-For a split prime `p ≥ 5` (`¬ p ∣ q`, `inv.splits = true`) with `2 ≤ inv.v_reg`:
-- `|X(K_∞)_Γ| = |A_m^Γ| = |T_{K, p}|` for all `m ≥ inv.v_reg - 1`,
-- `λ_p(K) + ν_p(K) ≥ inv.v_reg - 1`,
+For a split prime `p ≥ 5` (`¬ p ∣ q`, `realQuadSplits q p = true`) with `2 ≤ realQuadPadicRegVal q p`:
+- `|X(K_∞)_Γ| = |A_m^Γ| = |T_{K, p}|` for all `m ≥ v_reg - 1`,
+- `λ_p(K) + ν_p(K) ≥ v_reg - 1`,
 - If `n_0^{(r)}(K) > r + 1` for all `r ≥ 0`, then `λ_p(K) ≥ 1`. -/
 axiom ozaki_taya_split_prime_iwasawa :
     ∀ {q p : ℕ},
       let inv := canonicalRealQuadIwasawa q p
-      p.Prime → 5 ≤ p → ¬ p ∣ q → inv.splits = true → 2 ≤ inv.v_reg →
-      (∀ m : ℕ, inv.v_reg - 1 ≤ m →
+      let v_reg := realQuadPadicRegVal q p
+      p.Prime → 5 ≤ p → ¬ p ∣ q → realQuadSplits q p = true → 2 ≤ v_reg →
+      (∀ m : ℕ, v_reg - 1 ≤ m →
         inv.v_X_Gamma = inv.v_T ∧ inv.v_A_m_Gamma m = inv.v_T) ∧
-      inv.v_reg - 1 ≤ inv.lambda_p + inv.nu_p ∧
+      v_reg - 1 ≤ inv.lambda_p + inv.nu_p ∧
       ((∀ r : ℕ, r + 1 < inv.n0_r r) → 1 ≤ inv.lambda_p)
 
 end GrasGreenbergBrocard
