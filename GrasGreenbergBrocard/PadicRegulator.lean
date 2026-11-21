@@ -319,7 +319,7 @@ lemma not_dvd_padicRegExp {q p : ℕ} (hp : p.Prime) : ¬ p ∣ padicRegExp q p 
   · intro hd
     have h1 : p ∣ p ^ 2 := dvd_pow_self p (by norm_num)
     have hsub : p ∣ p ^ 2 - (p ^ 2 - 1) := Nat.dvd_sub h1 hd
-    have heq : p ^ 2 - (p ^ 2 - 1) = 1 := by set P2 := p ^ 2; have h4 : 4 ≤ P2 := by nlinarith [hp.two_le]; omega
+    have heq : p ^ 2 - (p ^ 2 - 1) = 1 := Nat.sub_sub_self (Nat.one_le_pow 2 p hp.pos)
     rw [heq] at hsub
     exact hp.not_dvd_one hsub
 
@@ -414,7 +414,8 @@ lemma pell_pow_padicRegExp_props {q p X₁ Y₁ : ℕ} (hp : p.Prime) (hp5 : 5 �
   haveI : Fact p.Prime := ⟨hp⟩
   set e := padicRegExp q p
   set u : Zsqrtd (q : ℤ) := (⟨(X₁ : ℤ), (Y₁ : ℤ)⟩ : Zsqrtd (q : ℤ)) ^ e
-  have hpell_z : (X₁ : ℤ) ^ 2 - (q : ℤ) * (Y₁ : ℤ) ^ 2 = 1 := by have : (X₁ : ℤ) ^ 2 = (q : ℤ) * (Y₁ : ℤ) ^ 2 + 1 := by exact_mod_cast hpell
+  have hpell_z : (X₁ : ℤ) ^ 2 - (q : ℤ) * (Y₁ : ℤ) ^ 2 = 1 := by
+    have : (X₁ : ℤ) ^ 2 = (q : ℤ) * (Y₁ : ℤ) ^ 2 + 1 := by exact_mod_cast hpell
     linarith
   have hnorm : u.re ^ 2 - (q : ℤ) * u.im ^ 2 = 1 := zsqrtd_pow_re_im_norm _ _ _ hpell_z e
   have him_pos : 0 < u.im := by
@@ -620,7 +621,8 @@ theorem padic_regulator_valuation_pell_power {q p m s X₁ Y₁ k : ℕ} [Fact p
     conv_lhs => rw [hu_eta]
     exact lucasY_eq_mul_chebyshevU (q : ℤ) u.re u.im k
   rw [hlhs, hrhs] at him_eq
-  have hms_z : (m : ℤ) ^ 2 - (q : ℤ) * (s : ℤ) ^ 2 = 1 := by have : (m : ℤ) ^ 2 = (q : ℤ) * (s : ℤ) ^ 2 + 1 := by exact_mod_cast hms
+  have hms_z : (m : ℤ) ^ 2 - (q : ℤ) * (s : ℤ) ^ 2 = 1 := by
+    have : (m : ℤ) ^ 2 = (q : ℤ) * (s : ℤ) ^ 2 + 1 := by exact_mod_cast hms
     linarith
   have hcheb_e := padicValInt_chebyshevU he1 hp hms_z (dvd_mul_of_dvd_right hps _) (Or.inl (by omega))
   have hcheb_k := padicValInt_chebyshevU hk hp hu_norm hu_dvd (Or.inl (by omega))

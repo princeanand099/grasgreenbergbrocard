@@ -204,7 +204,12 @@ theorem factorial_dvd_r_pow_mul_pochhammer (e r k : ℕ) (hr : 1 ≤ r) :
     by_cases hpr : p ∣ r
     · -- Case 1: p ∣ r ⇒ v_p(r^k) ≥ k ≥ v_p(k!)
       have hpoch_pos : 0 < pochhammerInt e r k := Finset.prod_pos (fun u _ => by omega)
-      rw [padicValNat.mul (pow_ne_zero k (by omega)) hpoch_pos.ne', padicValNat.pow k (by omega)]
+      have hpow_v : padicValNat p (r ^ k) = k * padicValNat p r := by
+        induction k with
+        | zero => simp
+        | succ k' ihk =>
+          rw [pow_succ, padicValNat.mul (pow_ne_zero k' (by omega)) (by omega), ihk]; ring
+      rw [padicValNat.mul (pow_ne_zero k (by omega)) hpoch_pos.ne', hpow_v]
       have hvr : 1 ≤ padicValNat p r := one_le_padicValNat_of_dvd (by omega) hpr
       have hfac := padicValNat_factorial_le_self (k := k) hp
       nlinarith
@@ -217,7 +222,8 @@ theorem factorial_dvd_r_pow_mul_pochhammer (e r k : ℕ) (hr : 1 ≤ r) :
         · refine ⟨0, ?_⟩; simp [hv0, Nat.mod_one]
         have hpv_pos : 0 < p ^ v := pow_pos hp.pos v
         haveI : NeZero (p ^ v) := ⟨hpv_pos.ne'⟩
-        let rinv : ZMod (p ^ v) := (ZMod.unitOfCoprime r hcop : (ZMod (p ^ v))ˣ)⁻¹
+        let u : (ZMod (p ^ v))ˣ := ZMod.unitOfCoprime r hcop
+        let rinv : ZMod (p ^ v) := ((u⁻¹ : (ZMod (p ^ v))ˣ) : ZMod (p ^ v))
         let c : ℕ := ((e : ZMod (p ^ v)) * rinv).val
         refine ⟨c, ?_⟩
         change (r * c) ≡ e [MOD p ^ v]
@@ -226,10 +232,9 @@ theorem factorial_dvd_r_pow_mul_pochhammer (e r k : ℕ) (hr : 1 ≤ r) :
         rw [ZMod.natCast_zmod_val, mul_comm (r : ZMod (p ^ v)), mul_assoc]
         have hmul1 : rinv * (r : ZMod (p ^ v)) = 1 := by
           dsimp only [rinv]
-          have h1 : ((ZMod.unitOfCoprime r hcop : (ZMod (p ^ v))ˣ) : ZMod (p ^ v)) = (r : ZMod (p ^ v)) :=
-            ZMod.coe_unitOfCoprime r hcop
+          have h1 : (u : ZMod (p ^ v)) = (r : ZMod (p ^ v)) := ZMod.coe_unitOfCoprime r hcop
           rw [← h1]
-          exact Units.inv_mul _
+          exact Units.inv_mul u
         rw [hmul1, mul_one]
       obtain ⟨c, hc⟩ := hbez
       -- Now `∏_{u=0}^{k-1} (e + u*r) ≡ r^k * ∏_{u=0}^{k-1} (c + u) [MOD p^v]`
@@ -375,32 +380,35 @@ private lemma powerSeries_prod_coeff_bound {ι : Type*} (s : Finset ι) (f : ι 
     | succ k => simp
   | @insert a s ha ih =>
     intro k
-    rw [Finset.prod_insert ha, PowerSeries.coeff_mul]
+    rw [Finset.prod_insert ha, PowerSeries.coeff_mul,
+      Finset.Nat.sum_antidiagonal_eq_sum_range_succ (fun p q =>
+        PowerSeries.coeff p (f a) * PowerSeries.coeff q (∏ b ∈ s, f b))]
     have hfa := hf a (Finset.mem_insert_self a s)
     have ih' := ih (fun b hb => hf b (Finset.mem_insert_of_mem hb))
     constructor
     · apply Finset.sum_nonneg
-      rintro ⟨p, q⟩ _
-      exact mul_nonneg (hfa p).1 (ih' q).1
-    · calc ∑ x ∈ Finset.Nat.antidiagonal k, PowerSeries.coeff x.1 (f a) * PowerSeries.coeff x.2 (∏ b ∈ s, f b)
-          ≤ ∑ x ∈ Finset.Nat.antidiagonal k,
-              (A : ℤ) ^ x.1 * (((Nat.choose (x.2 + s.card) x.2 : ℕ) : ℤ) * (A : ℤ) ^ x.2) := by
+      intro p _
+      exact mul_nonneg (hfa p).1 (ih' (k - p)).1
+    · calc ∑ p ∈ Finset.range (k + 1), PowerSeries.coeff p (f a) * PowerSeries.coeff (k - p) (∏ b ∈ s, f b)
+          ≤ ∑ p ∈ Finset.range (k + 1),
+              (A : ℤ) ^ p * (((Nat.choose ((k - p) + s.card) (k - p) : ℕ) : ℤ) * (A : ℤ) ^ (k - p)) := by
             apply Finset.sum_le_sum
-            rintro ⟨p, q⟩ _
-            exact mul_le_mul (hfa p).2 (ih' q).2 (ih' q).1 (by positivity)
-        _ = (∑ x ∈ Finset.Nat.antidiagonal k, ((Nat.choose (x.2 + s.card) x.2 : ℕ) : ℤ)) * (A : ℤ) ^ k := by
+            intro p _
+            exact mul_le_mul (hfa p).2 (ih' (k - p)).2 (ih' (k - p)).1 (by positivity)
+        _ = (∑ p ∈ Finset.range (k + 1), ((Nat.choose ((k - p) + s.card) (k - p) : ℕ) : ℤ)) * (A : ℤ) ^ k := by
             rw [Finset.sum_mul]
             apply Finset.sum_congr rfl
-            rintro ⟨p, q⟩ hpq
-            have hadd : p + q = k := Finset.Nat.mem_antidiagonal.mp hpq
-            rw [← hadd, pow_add]; ring
+            intro p hp
+            have hle : p ≤ k := Nat.lt_succ_iff.mp (Finset.mem_range.mp hp)
+            have hpow : (A : ℤ) ^ p * (A : ℤ) ^ (k - p) = (A : ℤ) ^ k := by
+              rw [← pow_add, Nat.add_sub_of_le hle]
+            rw [show (A : ℤ) ^ p * (((Nat.choose ((k - p) + s.card) (k - p) : ℕ) : ℤ) * (A : ℤ) ^ (k - p)) =
+              ((Nat.choose ((k - p) + s.card) (k - p) : ℕ) : ℤ) * ((A : ℤ) ^ p * (A : ℤ) ^ (k - p)) by ring, hpow]
         _ = ((Nat.choose (k + (insert a s).card) k : ℕ) : ℤ) * (A : ℤ) ^ k := by
             congr 1
             rw [Finset.card_insert_of_notMem ha]
-            -- `∑ (p, q) ∈ antidiagonal k, choose (q + s.card) q = choose (k + (s.card + 1)) k`
-            have hsum_anti : ∑ x ∈ Finset.Nat.antidiagonal k, Nat.choose (x.2 + s.card) x.2 =
+            have hsum_ref : ∑ p ∈ Finset.range (k + 1), Nat.choose ((k - p) + s.card) (k - p) =
                 ∑ q ∈ Finset.range (k + 1), Nat.choose (q + s.card) q := by
-              rw [Finset.Nat.sum_antidiagonal_eq_sum_range_succ (fun _ q => Nat.choose (q + s.card) q)]
               rw [← Finset.sum_range_reflect (fun q => Nat.choose (q + s.card) q) (k + 1)]
               apply Finset.sum_congr rfl
               intro i hi
@@ -408,7 +416,7 @@ private lemma powerSeries_prod_coeff_bound {ι : Type*} (s : Finset ι) (f : ι 
               simp [show k + 1 - 1 - i = k - i by omega]
             have hhockey : ∑ q ∈ Finset.range (k + 1), Nat.choose (q + s.card) q =
                 Nat.choose (k + (s.card + 1)) k := by
-              clear hsum_anti ih ih' hfa hf ha f A a
+              clear hsum_ref ih ih' hfa hf ha f A a
               induction k with
               | zero => simp
               | succ k ihk =>
@@ -416,7 +424,7 @@ private lemma powerSeries_prod_coeff_bound {ι : Type*} (s : Finset ι) (f : ι 
                   show k + 1 + (s.card + 1) = (k + (s.card + 1)) + 1 by omega,
                   Nat.choose_succ_succ, show k + 1 + s.card = k + (s.card + 1) by omega]
                 ring
-            exact_mod_cast (hsum_anti.trans hhockey)
+            exact_mod_cast (hsum_ref.trans hhockey)
 
 /-- **Exact Coefficient Bound for `clearedMonomialSeries`**:
 For `e i ≤ r` and `β i ≤ M`, every Taylor coefficient of `clearedMonomialSeries r β e` is
