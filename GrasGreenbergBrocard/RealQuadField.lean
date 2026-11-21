@@ -158,6 +158,7 @@ def totallyPositiveUnits (q : ℕ) [Fact (¬ IsSquare (q : ℚ))] : Subgroup (Re
     rw [Units.val_mul, map_mul]
     exact mul_pos ha hb
   inv_mem' {a} ha := by
+    change 0 < Algebra.norm ℚ ((a : (RealQuadK q)ˣ) : RealQuadK q) at ha
     change 0 < Algebra.norm ℚ ((a⁻¹ : (RealQuadK q)ˣ) : RealQuadK q)
     have hmul : Algebra.norm ℚ ((a⁻¹ : (RealQuadK q)ˣ) : RealQuadK q) *
         Algebra.norm ℚ ((a : (RealQuadK q)ˣ) : RealQuadK q) = 1 := by
@@ -213,9 +214,9 @@ instance narrowToOrdinary_ker_finite (q : ℕ) [Fact (¬ IsSquare (q : ℚ))] :
     simp only [narrowToOrdinary, MonoidHom.comp_apply, MulEquiv.toMonoidHom_eq_coe,
       MonoidHom.coe_coe, QuotientGroup.map_mk, MonoidHom.id_apply, map_eq_one_iff] at hx' hy'
     have hI : I ∈ (toPrincipalIdeal (NumberField.RingOfIntegers (RealQuadK q)) (RealQuadK q)).range :=
-      (QuotientGroup.eq_one_iff I).mp hx'
+      (QuotientGroup.eq_one_iff I).mp ((ClassGroup.equiv (RealQuadK q)).symm.map_eq_one_iff.mp hx')
     have hJ : J ∈ (toPrincipalIdeal (NumberField.RingOfIntegers (RealQuadK q)) (RealQuadK q)).range :=
-      (QuotientGroup.eq_one_iff J).mp hy'
+      (QuotientGroup.eq_one_iff J).mp ((ClassGroup.equiv (RealQuadK q)).symm.map_eq_one_iff.mp hy')
     rcases hI with ⟨u, hu⟩
     rcases hJ with ⟨v, hv⟩
     have hu_not_pos : ¬ 0 < Algebra.norm ℚ (u : RealQuadK q) := by
@@ -302,22 +303,29 @@ def cl4Smul {q : ℕ} [Fact (¬ IsSquare (q : ℚ))] (a : ZMod 2) (x : Cl4RankVe
 instance cl4RankVec_smul (q : ℕ) [Fact (¬ IsSquare (q : ℚ))] : SMul (ZMod 2) (Cl4RankVec q) :=
   ⟨cl4Smul⟩
 
+private lemma zmod2_eq_zero_or_one (a : ZMod 2) : a = 0 ∨ a = 1 := by
+  fin_cases a
+  · left; rfl
+  · right; rfl
+
 instance cl4RankVec_module (q : ℕ) [Fact (¬ IsSquare (q : ℚ))] :
     Module (ZMod 2) (Cl4RankVec q) where
   smul := cl4Smul
   one_smul x := by change cl4Smul 1 x = x; simp [cl4Smul]
   mul_smul a b x := by
     change cl4Smul (a * b) x = cl4Smul a (cl4Smul b x)
-    fin_cases a <;> fin_cases b <;> simp [cl4Smul]
+    rcases zmod2_eq_zero_or_one a with rfl | rfl <;> rcases zmod2_eq_zero_or_one b with rfl | rfl <;> simp [cl4Smul]
   smul_zero a := by
     change cl4Smul a 0 = 0
-    fin_cases a <;> simp [cl4Smul]
+    rcases zmod2_eq_zero_or_one a with rfl | rfl <;> simp [cl4Smul]
   smul_add a x y := by
     change cl4Smul a (x + y) = cl4Smul a x + cl4Smul a y
-    fin_cases a <;> simp [cl4Smul]
+    rcases zmod2_eq_zero_or_one a with rfl | rfl <;> simp [cl4Smul]
   add_smul a b x := by
     change cl4Smul (a + b) x = cl4Smul a x + cl4Smul b x
-    fin_cases a <;> fin_cases b <;> simp [cl4Smul, cl4RankVec_two_nsmul]
+    have h11 : (1 : ZMod 2) + 1 = 0 := by decide
+    rcases zmod2_eq_zero_or_one a with rfl | rfl <;> rcases zmod2_eq_zero_or_one b with rfl | rfl <;>
+      simp [cl4Smul, h11, cl4RankVec_two_nsmul]
   zero_smul x := by change cl4Smul 0 x = 0; simp [cl4Smul]
 
 instance cl4RankVec_finite (q : ℕ) [Fact (¬ IsSquare (q : ℚ))] :
