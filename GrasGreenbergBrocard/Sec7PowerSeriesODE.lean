@@ -312,6 +312,8 @@ lemma unscaledFactorSeries_ode {e r j : ℕ} (hr : 1 ≤ r) :
     push_cast; ring
   | succ k =>
     rw [PowerSeries.coeff_succ_X_mul, coeff_psDeriv, coeff_psDeriv, hstep (k + 1)]
+    have hk_eq : PowerSeries.coeff k (psDeriv (unscaledFactorSeries e r j)) =
+        ((k + 1 : ℕ) : ℚ) * PowerSeries.coeff (k + 1) (unscaledFactorSeries e r j) := rfl
     rw [show PowerSeries.coeff k (psDeriv (unscaledFactorSeries e r j)) =
       ((k + 1 : ℕ) : ℚ) * PowerSeries.coeff (k + 1) (unscaledFactorSeries e r j) from rfl]
     push_cast
@@ -687,8 +689,8 @@ theorem monomial_series_linear_indep_poly {d E r M : ℕ}
           have hjStar_mem : jStar ∈ Finset.Ico 1 M := Finset.mem_Ico.mpr ⟨hjStar_pos, hjStar_lt_M⟩
           let α : ℚ := ((jStar : ℚ))⁻¹
           have hjStar_q_ne : (jStar : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
-          let Π_rest : Polynomial ℚ := ∏ ℓ ∈ (Finset.Ico 1 M).erase jStar, (1 - Polynomial.C (ℓ : ℚ) * Polynomial.X)
-          have hT_fac : T_rat r M = Polynomial.C (-(r : ℚ) * (jStar : ℚ)) * (Polynomial.X - Polynomial.C α) * Π_rest := by
+          let P_rest : Polynomial ℚ := ∏ ℓ ∈ (Finset.Ico 1 M).erase jStar, (1 - Polynomial.C (ℓ : ℚ) * Polynomial.X)
+          have hT_fac : T_rat r M = Polynomial.C (-(r : ℚ) * (jStar : ℚ)) * (Polynomial.X - Polynomial.C α) * P_rest := by
             rw [T_rat_eq, ← Finset.mul_prod_erase (Finset.Ico 1 M) _ hjStar_mem]
             have hlin : (1 - Polynomial.C (jStar : ℚ) * Polynomial.X : Polynomial ℚ) =
                 Polynomial.C (-(jStar : ℚ)) * (Polynomial.X - Polynomial.C α) := by
@@ -697,8 +699,8 @@ theorem monomial_series_linear_indep_poly {d E r M : ℕ}
               rw [this, Polynomial.C_neg, Polynomial.C_1, Polynomial.C_neg]; ring
             rw [hlin, Polynomial.C_mul, Polynomial.C_neg]
             ring
-          have hΠ_eval_ne : Π_rest.eval α ≠ 0 := by
-            dsimp only [Π_rest]
+          have hΠ_eval_ne : P_rest.eval α ≠ 0 := by
+            dsimp only [P_rest]
             rw [Polynomial.eval_prod]
             apply Finset.prod_ne_zero_iff.mpr
             intro ℓ hℓ
@@ -711,7 +713,7 @@ theorem monomial_series_linear_indep_poly {d E r M : ℕ}
               field_simp [hjStar_q_ne] at this; linarith
             exact hℓ_ne (Nat.cast_injective h1)
           have hTA_eval : (TA_rat M β e₀ - TA_rat M β e₁).eval α =
-              ((e₀ iStar : ℚ) - (e₁ iStar : ℚ)) * (jStar : ℚ) * Π_rest.eval α := by
+              ((e₀ iStar : ℚ) - (e₁ iStar : ℚ)) * (jStar : ℚ) * P_rest.eval α := by
             rw [Polynomial.eval_sub, TA_rat_eq, TA_rat_eq, Polynomial.eval_finset_sum,
               Polynomial.eval_finset_sum, ← Finset.sum_sub_distrib]
             have hterm : ∀ i : Fin d,
@@ -719,7 +721,7 @@ theorem monomial_series_linear_indep_poly {d E r M : ℕ}
                   ∏ ℓ ∈ (Finset.Ico 1 M).erase j, (1 - Polynomial.C (ℓ : ℚ) * Polynomial.X)).eval α -
                 (Polynomial.C (e₁ i : ℚ) * ∑ j ∈ Finset.Ico 1 (β i), Polynomial.C (j : ℚ) *
                   ∏ ℓ ∈ (Finset.Ico 1 M).erase j, (1 - Polynomial.C (ℓ : ℚ) * Polynomial.X)).eval α =
-                if i = iStar then ((e₀ iStar : ℚ) - (e₁ iStar : ℚ)) * (jStar : ℚ) * Π_rest.eval α else 0 := by
+                if i = iStar then ((e₀ iStar : ℚ) - (e₁ iStar : ℚ)) * (jStar : ℚ) * P_rest.eval α else 0 := by
               intro i
               simp only [Polynomial.eval_mul, Polynomial.eval_C, Polynomial.eval_finset_sum]
               split_ifs with hi
@@ -728,11 +730,11 @@ theorem monomial_series_linear_indep_poly {d E r M : ℕ}
                 have hinner : ∑ j ∈ Finset.Ico 1 (β iStar),
                     (Polynomial.C (j : ℚ) * ∏ ℓ ∈ (Finset.Ico 1 M).erase j,
                       (1 - Polynomial.C (ℓ : ℚ) * Polynomial.X)).eval α =
-                    (jStar : ℚ) * Π_rest.eval α := by
+                    (jStar : ℚ) * P_rest.eval α := by
                   have hj_in : jStar ∈ Finset.Ico 1 (β iStar) :=
                     Finset.mem_Ico.mpr ⟨hjStar_pos, by have := hβ_lo iStar; omega⟩
                   rw [Finset.sum_eq_single jStar]
-                  · simp [Π_rest]
+                  · simp [P_rest]
                   · intro j hj hne
                     simp only [Polynomial.eval_mul, Polynomial.eval_C, Polynomial.eval_prod]
                     have hzero_prod : ∏ ℓ ∈ (Finset.Ico 1 M).erase j,
@@ -772,14 +774,14 @@ theorem monomial_series_linear_indep_poly {d E r M : ℕ}
           set L : Polynomial ℚ := Polynomial.X - Polynomial.C α
           have hL_pow_ne : L ^ (k₀ + k₁) ≠ 0 := pow_ne_zero _ (Polynomial.X_sub_C_ne_zero α)
           have hcancel : L ^ (k₀ + k₁) *
-              (Polynomial.C (-(r : ℚ) * (jStar : ℚ)) * Π_rest *
+              (Polynomial.C (-(r : ℚ) * (jStar : ℚ)) * P_rest *
                 (Polynomial.C ((k₁ : ℚ) - (k₀ : ℚ)) * R₀ * R₁ + L * W)) =
               L ^ (k₀ + k₁) * ((TA_rat M β e₀ - TA_rat M β e₁) * R₀ * R₁) := by
-            calc L ^ (k₀ + k₁) * (Polynomial.C (-(r : ℚ) * (jStar : ℚ)) * Π_rest *
+            calc L ^ (k₀ + k₁) * (Polynomial.C (-(r : ℚ) * (jStar : ℚ)) * P_rest *
                   (Polynomial.C ((k₁ : ℚ) - (k₀ : ℚ)) * R₀ * R₁ + L * W))
-                = Polynomial.C (-(r : ℚ) * (jStar : ℚ)) * Π_rest *
+                = Polynomial.C (-(r : ℚ) * (jStar : ℚ)) * P_rest *
                     (L ^ (k₀ + k₁) * (Polynomial.C ((k₁ : ℚ) - (k₀ : ℚ)) * R₀ * R₁ + L * W)) := by ring
-              _ = Polynomial.C (-(r : ℚ) * (jStar : ℚ)) * Π_rest *
+              _ = Polynomial.C (-(r : ℚ) * (jStar : ℚ)) * P_rest *
                     (L * (Polynomial.derivative (P e₁) * P e₀ - P e₁ * Polynomial.derivative (P e₀))) := by
                   rw [← hW]
               _ = T_rat r M * (Polynomial.derivative (P e₁) * P e₀ - P e₁ * Polynomial.derivative (P e₀)) := by
@@ -791,7 +793,7 @@ theorem monomial_series_linear_indep_poly {d E r M : ℕ}
           have hev := congrArg (Polynomial.eval α) heq_poly
           simp only [Polynomial.eval_mul, Polynomial.eval_add, Polynomial.eval_C, L,
             Polynomial.eval_sub, Polynomial.eval_X, sub_self, zero_mul, add_zero, hTA_eval] at hev
-          have hprod_ne : (jStar : ℚ) * Π_rest.eval α * R₀.eval α * R₁.eval α ≠ 0 :=
+          have hprod_ne : (jStar : ℚ) * P_rest.eval α * R₀.eval α * R₁.eval α ≠ 0 :=
             mul_ne_zero (mul_ne_zero (mul_ne_zero hjStar_q_ne hΠ_eval_ne) hR₀_ev) hR₁_ev
           have hrat_eq : (r : ℚ) * ((k₀ : ℚ) - (k₁ : ℚ)) = (e₀ iStar : ℚ) - (e₁ iStar : ℚ) := by
             apply mul_right_cancel₀ hprod_ne
@@ -857,8 +859,8 @@ private def fracDeriv (x : FractionRing (PowerSeries ℚ)) : FractionRing (Power
 
 private lemma fracDeriv_mk (a : PowerSeries ℚ) (b : nonZeroDivisors (PowerSeries ℚ)) :
     fracDeriv (Localization.mk a b) =
-      Localization.mk (psDeriv a * (b : PowerSeries ℚ) - a * psDeriv (b : PowerSeries ℚ)) (b * b) := by
-  simp [fracDeriv]
+      Localization.mk (psDeriv a * (b : PowerSeries ℚ) - a * psDeriv (b : PowerSeries ℚ)) (b * b) :=
+  Localization.liftOn_mk _ _ _ _
 
 private lemma fracDeriv_algebraMap (a : PowerSeries ℚ) :
     fracDeriv (algebraMap (PowerSeries ℚ) (FractionRing (PowerSeries ℚ)) a) =
@@ -869,11 +871,11 @@ private lemma fracDeriv_algebraMap (a : PowerSeries ℚ) :
   simp [Localization.mk_one_eq_algebraMap]
 
 private lemma fracDeriv_zero : fracDeriv 0 = 0 := by
-  have h0 : (0 : FractionRing (PowerSeries ℚ)) = algebraMap (PowerSeries ℚ) _ 0 := map_zero _
+  have h0 : (0 : FractionRing (PowerSeries ℚ)) = algebraMap (PowerSeries ℚ) _ 0 := (map_zero _).symm
   rw [h0, fracDeriv_algebraMap, psDeriv_zero, map_zero]
 
 private lemma fracDeriv_one : fracDeriv 1 = 0 := by
-  have h1 : (1 : FractionRing (PowerSeries ℚ)) = algebraMap (PowerSeries ℚ) _ 1 := map_one _
+  have h1 : (1 : FractionRing (PowerSeries ℚ)) = algebraMap (PowerSeries ℚ) _ 1 := (map_one _).symm
   rw [h1, fracDeriv_algebraMap, psDeriv_one, map_zero]
 
 private lemma fracDeriv_add (x y : FractionRing (PowerSeries ℚ)) :
@@ -941,8 +943,7 @@ private lemma fracDeriv_eq_zero_iff (x : FractionRing (PowerSeries ℚ)) :
   · rintro ⟨c, rfl⟩
     rw [fracDeriv_algebraMap, psDeriv_C, map_zero]
 
-/-- Iterated Leibniz rule for `fracDeriv`:
-`fracDeriv^[k] (g * h) = ∑ r ∈ range (k + 1), C(k, r) * fracDeriv^[k - r] g * fracDeriv^[r] h`. -/
+/-- Iterated Leibniz rule for `fracDeriv`. -/
 private lemma fracDeriv_iter_mul (g h : FractionRing (PowerSeries ℚ)) :
     ∀ k : ℕ, fracDeriv^[k] (g * h) =
       ∑ r ∈ Finset.range (k + 1),
@@ -1051,11 +1052,11 @@ private theorem fracWronskian_ne_zero : ∀ (s : ℕ) (g : Fin s → FractionRin
         exact ⟨⟨r, lt_of_le_of_lt hr_le k.isLt⟩,
           Finset.mem_filter.mpr ⟨Finset.mem_univ _, hr_le⟩, rfl⟩
       · intro r _; rfl
-    have hL_tri : L.BlockTriangular id := by
+    have hL_tri : L.BlockTriangular OrderDual.toDual := by
       intro i j hij
-      simp only [id_eq] at hij
+      have hlt : i.val < j.val := hij
       dsimp only [L, Matrix.of_apply]
-      rw [if_neg (not_le.mpr hij)]
+      rw [if_neg (not_le.mpr hlt)]
     have hL_det : L.det = (g 0) ^ (s + 1) := by
       rw [Matrix.det_of_lowerTriangular L hL_tri]
       have hdiag : ∀ i : Fin (s + 1), L i i = g 0 := fun i => by
@@ -1081,7 +1082,8 @@ private theorem fracWronskian_ne_zero : ∀ (s : ℕ) (g : Fin s → FractionRin
       rw [Matrix.det_succ_column_zero Wh]
       rw [Finset.sum_eq_single (0 : Fin (s + 1))]
       · simp only [Fin.val_zero, pow_zero, one_mul, hWh_col0 0, ↓reduceIte]
-        congr 1; ext k j
+        apply congrArg Matrix.det
+        ext k j
         simp only [Matrix.submatrix_apply, Matrix.of_apply, Wh, Fin.succAbove_zero, Fin.val_succ,
           Function.iterate_succ_apply]
       · intro k _ hk0
@@ -1130,7 +1132,7 @@ theorem wronskian_ne_zero_of_linearIndependent {s : ℕ} (g : Fin s → PowerSer
   intro hdet0
   have hmap0 : Matrix.det (Matrix.of (fun k j : Fin s => fracDeriv^[k.val] (ι (g j)))) = 0 := by
     have hmat : Matrix.of (fun k j : Fin s => fracDeriv^[k.val] (ι (g j))) =
-        (Matrix.of (fun k j : Fin s => psDeriv^[k.val] (g j))).map ι := by
+        ι.mapMatrix (Matrix.of (fun k j : Fin s => psDeriv^[k.val] (g j))) := by
       ext k j; simp [hiter]
     rw [hmat, ← RingHom.map_det, hdet0, map_zero]
   apply fracWronskian_ne_zero s (fun j => ι (g j)) ?_ hmap0
@@ -1165,7 +1167,6 @@ private lemma iter_T_psDeriv_expand (T : PowerSeries ℚ) :
       apply Finset.sum_congr rfl; intro x _
       rw [psDeriv_mul, mul_add, Function.iterate_succ_apply']; ring
     rw [h1, h2]
-    congr 1
     have hsplit : ∑ r ∈ Finset.range (k + 1), c' r * psDeriv^[r] g =
         (∑ r ∈ Finset.range (k + 1), (if r = k then T * psDeriv (T ^ k) else 0) * psDeriv^[r] g) +
         (∑ r ∈ Finset.range (k + 1), (if r < k then T * psDeriv (c r) else 0) * psDeriv^[r] g) +
@@ -1230,7 +1231,7 @@ theorem weighted_wronskian_ne_zero {s : ℕ} (T : PowerSeries ℚ) (hT : T ≠ 0
         (Finset.mem_univ k)]
       simp
     rw [hsplit]
-    congr 1
+    apply congrArg (T ^ k.val * psDeriv^[k.val] (g j) + ·)
     symm
     refine Finset.sum_nbij (fun r : Fin s => r.val) ?_ ?_ ?_ ?_
     · intro r hr; exact Finset.mem_range.mpr (Finset.mem_filter.mp hr).2
@@ -1239,11 +1240,11 @@ theorem weighted_wronskian_ne_zero {s : ℕ} (T : PowerSeries ℚ) (hT : T ≠ 0
       have hrlt : r < k.val := Finset.mem_range.mp hr
       exact ⟨⟨r, lt_trans hrlt k.isLt⟩, Finset.mem_filter.mpr ⟨Finset.mem_univ _, hrlt⟩, rfl⟩
     · intro r _; rfl
-  have hL_tri : L.BlockTriangular id := by
+  have hL_tri : L.BlockTriangular OrderDual.toDual := by
     intro i j hij
-    simp only [id_eq] at hij
+    have hlt : i.val < j.val := hij
     dsimp only [L, Matrix.of_apply]
-    rw [if_neg (ne_of_gt hij), if_neg (not_lt.mpr (le_of_lt hij))]
+    rw [if_neg (ne_of_gt hlt), if_neg (not_lt.mpr (le_of_lt hlt))]
   have hL_det : L.det = ∏ k : Fin s, T ^ k.val := by
     rw [Matrix.det_of_lowerTriangular L hL_tri]
     apply Finset.prod_congr rfl; intro k _
