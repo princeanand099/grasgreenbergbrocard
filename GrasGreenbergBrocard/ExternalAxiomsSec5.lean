@@ -173,24 +173,12 @@ def yMidVec (n X₁ : ℕ) : ramPrimes n → ZMod 2 :=
   fun p => if p.1 ∣ coreNat (2 * (X₁ + 1)) then 1 else 0
 
 /-- For `n ≥ 8`, `q_n n` is not a rational square (since `q_n n` is squarefree and `≥ 2`, as
-there is a prime `p ∈ (n/2, n]` dividing `q_n n` by Bertrand's postulate). -/
+there is a prime `p ≡ 3 [MOD 4]` dividing `q_n n`). -/
 lemma q_n_not_isSquare_rat {n : ℕ} (hn : 8 ≤ n) : ¬ IsSquare (q_n n : ℚ) := by
-  obtain ⟨p, hp, hp_lo, hp_hi2⟩ := Nat.exists_prime_lt_and_le_two_mul (n / 2) (by omega)
-  have hpn : p ≤ n := by omega
-  haveI : Fact p.Prime := ⟨hp⟩
-  have hv1 : padicValNat p (Nat.factorial n) = 1 := by
-    have hlt_sq : n < p ^ 2 := by nlinarith
-    have hlog : Nat.log p n < 2 := Nat.log_lt_of_lt_pow (by omega) hlt_sq
-    rw [padicValNat_factorial (b := 2) hlog, Finset.sum_Ico_succ_top (le_refl 1),
-      Finset.Ico_self, Finset.sum_empty, zero_add, pow_one]
-    exact Nat.div_eq_of_lt_le (by omega) (by omega)
-  have hp_q : p ∣ q_n n := by
-    unfold q_n
-    refine Finset.dvd_prod_of_mem _ (Finset.mem_filter.mpr ⟨Finset.mem_Icc.mpr ⟨hp.two_le, hpn⟩, hp, ?_⟩)
-    rw [hv1]; omega
+  obtain ⟨p, hp, hpq, _⟩ := q_n_has_prime_mod4 (by omega) (by omega)
   have hq_pos : 0 < q_n n := by
     unfold q_n; exact Finset.prod_pos (fun r hr => (Finset.mem_filter.mp hr).2.1.pos)
-  have hq2 : 2 ≤ q_n n := le_trans hp.two_le (Nat.le_of_dvd hq_pos hp_q)
+  have hq2 : 2 ≤ q_n n := le_trans hp.two_le (Nat.le_of_dvd hq_pos hpq)
   exact not_isSquare_rat_of_squarefree hq2 (q_n_squarefree n)
 
 /-- Concrete narrow 4-rank `rank₄ Cl^+(ℚ(√q_n)) = dim_{𝔽₂}(Cl^+(ℚ(√q_n))[2] ∩ 2 Cl^+(ℚ(√q_n)))`,
@@ -211,9 +199,9 @@ axiom redei_reichardt_exact_sequence (n X₁ Y₁ : ℕ) (hn : 8 ≤ n)
     (hfund : IsFundamentalPell (q_n n) X₁ Y₁)
     (hyMid_mem : yMidVec n X₁ ∈ redeiKernel n)
     (hyMid_ne : yMidVec n X₁ ≠ 0) :
-    letI : Fact (¬ IsSquare (q_n n : ℚ)) := ⟨q_n_not_isSquare_rat hn⟩
+    haveI : Fact (¬ IsSquare (q_n n : ℚ)) := ⟨q_n_not_isSquare_rat hn⟩
     let yMid : redeiKernel n := ⟨yMidVec n X₁, hyMid_mem⟩
-    ∃ psiPlus : redeiKernel n →ₗ[ZMod 2] Cl4RankVec (q_n n),
+    ∃ psiPlus : redeiKernel n →ₗ[ZMod 2] @Cl4RankVec (q_n n) ⟨q_n_not_isSquare_rat hn⟩,
       Function.Surjective psiPlus ∧
       LinearMap.ker psiPlus = Submodule.span (ZMod 2) {yMid}
 

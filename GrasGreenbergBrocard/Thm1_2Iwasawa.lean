@@ -191,7 +191,7 @@ private lemma two_le_q_n {n : ℕ} (hn : 2 ≤ n) : 2 ≤ q_n n := by
   by_contra hlt
   have hq1 : q_n n = 1 := by omega
   have hfac : Nat.factorial n = s_n n * s_n n := by
-    have h := factorial_eq_q_mul_s_sq n
+    have h := factorial_eq_q_n_mul_s_n_sq n
     rw [hq1, one_mul, sq] at h
     exact h
   have hprod : ∏ j ∈ Finset.range n, (1 + j) = Nat.factorial n := by
@@ -255,16 +255,10 @@ theorem thm_1_2_eq_3_6_regulator_valuation {n m p X₁ Y₁ k : ℕ}
   haveI : Fact p.Prime := ⟨hp⟩
   obtain ⟨_, hs_val, hs_ge1⟩ := val_s_n_ge_one_on_half hp hp5 hp_half
   have hq2 : 2 ≤ q_n n := two_le_q_n (by omega)
-  have hnsq : ¬ IsSquare (q_n n : ℤ) := by
-    rintro ⟨r, hr⟩
-    have hr_nat : q_n n = r.natAbs ^ 2 := by
-      zify; rw [sq, Int.natAbs_mul_self']; exact hr
-    have hru : IsUnit r.natAbs := (q_n_squarefree n) r.natAbs ⟨1, by nlinarith⟩
-    rw [Nat.isUnit_iff] at hru
-    rw [hru] at hr_nat; omega
+  have hnsq : ¬ IsSquare (q_n n : ℤ) := q_n_not_isSquare (by omega) (by omega)
   have hpm : ¬ p ∣ m := brocard_p_not_dvd_m hm hp (by omega)
   have hm_pell : m ^ 2 = q_n n * (s_n n) ^ 2 + 1 := by
-    have hfac := factorial_eq_q_mul_s_sq n
+    have hfac := factorial_eq_q_n_mul_s_n_sq n
     omega
   have hk1 : 1 ≤ k := by
     by_contra h0
@@ -534,7 +528,7 @@ theorem thm_1_2_wieferich_congruence {n m p : ℕ}
     have h4 : 4 ≤ n / p := (Nat.le_div_iff_mul_le hp.pos).mpr (by omega)
     have h1 := padicValNat_factorial_ge_div hp (by omega : 1 ≤ n)
     exact le_trans h4 h1
-  have hfac_eq := factorial_eq_q_mul_s_sq n
+  have hfac_eq := factorial_eq_q_n_mul_s_n_sq n
   have hq_pos : 0 < q_n n := by
     unfold q_n; exact Finset.prod_pos (fun q hq => (Finset.mem_filter.mp hq).2.1.pos)
   have hs_pos : 0 < s_n n := by
