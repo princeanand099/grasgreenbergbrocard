@@ -54,9 +54,9 @@ verifying:
 #print axioms GrasGreenbergBrocard.neg_pell_no_rat_sol
 #print axioms GrasGreenbergBrocard.exists_unique_fundamentalPell
 #print axioms GrasGreenbergBrocard.exists_unique_pell_index
-#print axioms GrasGreenbergBrocard.log_q_n_gt_point4_ge8
-#print axioms GrasGreenbergBrocard.log_fund_pell_gt_point2_ge8
-#print axioms GrasGreenbergBrocard.pell_index_upper_bound_ge8
+#print axioms GrasGreenbergBrocard.log_q_n_gt_point4
+#print axioms GrasGreenbergBrocard.log_fund_pell_gt_point2
+#print axioms GrasGreenbergBrocard.pell_index_upper_bound
 #print axioms GrasGreenbergBrocard.pell_index_collapse_large
 #print axioms GrasGreenbergBrocard.fundamental_regulator_quantization
 #print axioms GrasGreenbergBrocard.q_n_ne_of_solutions
