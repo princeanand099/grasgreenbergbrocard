@@ -168,6 +168,7 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
   have hr1 : 1 ≤ r := by omega
   have hr_ne_z : (r : ℤ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
   have hr_ne_q : (r : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+  -- Cleared integer Padé polynomials `P_int i ∈ ℤ[X]` (scaled by `r^(2D)`)
   let P_int : Fin (m + 1) → ℤ[X] := fun i =>
     Fin.cases
       (∑ v : Fin (D + 1), Polynomial.C (padeP0Coeff fam P_coeff v * (r : ℤ) ^ (2 * (D - v.val))) * Polynomial.X ^ v.val)
@@ -226,6 +227,7 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
       have hall : ∀ j : Fin (D + 1), P_coeff i' j = 0 := by
         intro j; by_contra hne; exact his ((hS_eq i').mpr ⟨j, hne⟩)
       dsimp only [P_int]; simp [hall]
+  -- Differential iteration `P_iter k i ∈ ℤ[X]`
   let D_step : Fin (m + 1) → ℤ[X] → ℤ[X] := fun i Q =>
     T_int r M * Polynomial.derivative Q + TA_int M β (idxToMulti i) * Q
   let P_iter : ℕ → Fin (m + 1) → ℤ[X] := fun k i => (D_step i)^[k] (P_int i)
@@ -249,10 +251,12 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
         have h2 := ih i
         have : M + (D + k * M) = D + (k + 1) * M := by ring
         omega
+  -- Equivalence `eS : Fin S.card ≃ S` and Wronskian matrix `M_S`
   let s := S.card
   let eS : Fin s ≃ {i : Fin (m + 1) // i ∈ S} := (Fintype.equivFinOfCardEq (by simp [s])).symm
   let M_S : Matrix (Fin s) (Fin s) ℤ[X] := Matrix.of (fun k j => P_iter k.val (eS j).val)
   let Delta_S : ℤ[X] := M_S.det
+  -- Key power-series relation: `((P_iter k i).map ℚ) * Ω_i = (T_rat * psDeriv)^[k] (((P_int i).map ℚ) * Ω_i)`
   have hiter_ps : ∀ (k : ℕ) (i : Fin (m + 1)),
       (((P_iter k i).map (Int.castRingHom ℚ) : Polynomial ℚ) : PowerSeries ℚ) *
         unscaledMonomialSeries r β (idxToMulti i) =
@@ -285,6 +289,7 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
               unscaledMonomialSeries r β (idxToMulti i)) +
             (T_rat r M : PowerSeries ℚ) * ((((P_iter k i).map (Int.castRingHom ℚ) : Polynomial ℚ) : PowerSeries ℚ) *
               psDeriv (unscaledMonomialSeries r β (idxToMulti i))) := by rw [← hode]; ring
+  -- Linear form `L_0 = ∑ j : Fin s, P_int (eS j) * Ω_{eS j}` vanishes to order `≥ O + 1` at `0`
   let L_0 : PowerSeries ℚ := ∑ j : Fin s,
     (((P_int (eS j).val).map (Int.castRingHom ℚ) : Polynomial ℚ) : PowerSeries ℚ) *
       unscaledMonomialSeries r β (idxToMulti (eS j).val)
@@ -321,7 +326,7 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
               (fam.clearedCoeff i'.succ (n - j.val) : ℚ) * (r : ℚ) ^ (2 * j.val) * (P_coeff i' j : ℚ)
             else 0 := by
       intro i'
-      rw [PowerSeries.coeff_mul, Finset.Nat.sum_antidiagonal_eq_sum_range_succ]
+      rw [PowerSeries.coeff_mul, Finset.Nat.sum_antidiagonal_eq_sum_range_succ (fun u v => PowerSeries.coeff u (((P_int i'.succ).map (Int.castRingHom ℚ) : Polynomial ℚ) : PowerSeries ℚ) * PowerSeries.coeff v (unscaledMonomialSeries r β (idxToMulti i'.succ)))]
       have hsum_fin : ∑ u ∈ Finset.range (n + 1),
           PowerSeries.coeff u (((P_int i'.succ).map (Int.castRingHom ℚ) : Polynomial ℚ) : PowerSeries ℚ) *
             PowerSeries.coeff (n - u) (unscaledMonomialSeries r β (idxToMulti i'.succ)) =
@@ -348,6 +353,7 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
               have hdeg := hP_int_deg i'.succ
               rw [Polynomial.coeff_eq_zero_of_natDegree_lt (by omega)]; simp
           rw [Finset.sum_congr rfl h1]
+          -- Both sums equal sum over `u ∈ range (min n D + 1)`
           have hmin1 : ∑ u ∈ Finset.range (n + 1),
               (if h : u < D + 1 then (P_coeff i' ⟨u, h⟩ : ℚ) * (r : ℚ) ^ (2 * D) else 0) *
                 PowerSeries.coeff (n - u) (unscaledMonomialSeries r β (idxToMulti i'.succ)) =
@@ -432,6 +438,7 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
         apply Finset.sum_congr rfl; intro j _
         split_ifs <;> simp
       rw [hsum_eq, mul_zero]
+  -- Prove `2 ≤ s` (from `hP_nz`, `hO_gt`, and `hL_0_van`)
   have hs_ge2 : 2 ≤ s := by
     obtain ⟨i₀, j₀, hij₀⟩ := hP_nz
     have hi₀_mem : i₀.succ ∈ S := (hS_eq i₀).mpr ⟨j₀, hij₀⟩
@@ -450,6 +457,7 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
         have : i ∉ S := by rw [hS_sing, Finset.mem_singleton]; exact hi_ne
         rw [hP_int_eq_zero_of_notMem i this, Polynomial.map_zero, Polynomial.coe_zero, zero_mul]
       · intro habs; exact absurd (Finset.mem_univ _) habs
+    -- Since `P_int i₀.succ ≠ 0` and has `natDegree ≤ D`, its lowest nonzero coeff `k ≤ D` gives `coeff k L_0 ≠ 0`!
     have hne0 : (P_int i₀.succ).map (Int.castRingHom ℚ) ≠ 0 := by
       intro h0
       apply hP_int_ne_zero i₀.succ hi₀_mem
@@ -468,7 +476,7 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
       have hdeg := le_trans (Polynomial.natDegree_map_le (Int.castRingHom ℚ) (P_int i₀.succ)) (hP_int_deg i₀.succ)
       exact hk0_ne (Polynomial.coeff_eq_zero_of_natDegree_lt (by omega))
     have hcoeff_k0 : PowerSeries.coeff k0 L_0 = ((P_int i₀.succ).map (Int.castRingHom ℚ)).coeff k0 := by
-      rw [hL0_sing, PowerSeries.coeff_mul, Finset.Nat.sum_antidiagonal_eq_sum_range_succ]
+      rw [hL0_sing, PowerSeries.coeff_mul, Finset.Nat.sum_antidiagonal_eq_sum_range_succ (fun u v => PowerSeries.coeff u (((P_int i₀.succ).map (Int.castRingHom ℚ) : Polynomial ℚ) : PowerSeries ℚ) * PowerSeries.coeff v (unscaledMonomialSeries r β (idxToMulti i₀.succ)))]
       rw [Finset.sum_eq_single k0]
       · simp [Polynomial.coeff_coe, unscaledMonomialSeries_const]
       · intro u hu hne
@@ -478,6 +486,7 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
     have h0 := hL_0_van k0 (by omega)
     rw [hcoeff_k0] at h0
     exact hk0_ne h0
+  -- 1. Prove `Delta_S ≠ 0`
   have hDelta_ne_zero : Delta_S ≠ 0 := by
     intro hD0
     let g : Fin s → PowerSeries ℚ := fun j =>
@@ -544,6 +553,7 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
       have := congrArg (PowerSeries.coeff k) h0
       simpa [Polynomial.coeff_coe] using this
     have hG_ne := weighted_wronskian_ne_zero (T_rat r M : PowerSeries ℚ) hT_ps_ne g hli
+    -- Relate `det G` to `Delta_S * ∏ j, Ω_{eS j}`
     let ι_ps : ℤ[X] →+* PowerSeries ℚ := (Polynomial.coeToPowerSeries.ringHom (R := ℚ)).comp (Polynomial.mapRingHom (Int.castRingHom ℚ))
     have hG_fac : Matrix.of (fun k j : Fin s => (fun f => (T_rat r M : PowerSeries ℚ) * psDeriv f)^[k.val] (g j)) =
         M_S.map ι_ps * Matrix.diagonal (fun j : Fin s => unscaledMonomialSeries r β (idxToMulti (eS j).val)) := by
@@ -556,6 +566,7 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
       change ι_ps Delta_S = 0; rw [hD0, map_zero]
     rw [hD0_ps, zero_mul] at hG_ne
     exact hG_ne rfl
+  -- 2. Prove `deg_le : Delta_S.natDegree ≤ s * D + Nat.choose s 2 * M`
   have hdeg_le : Delta_S.natDegree ≤ s * D + Nat.choose s 2 * M := by
     dsimp only [Delta_S]
     rw [Matrix.det_apply]
@@ -579,6 +590,7 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
       | succ n ihn =>
         rw [Finset.sum_range_succ, ihn, Nat.choose_succ_succ, Nat.choose_one_right]; ring
     rw [hperm_sum]
+  -- 3. Prove `ord_zero_ge : O - (s - 1) ≤ Delta_S.rootMultiplicity 0` via `Matrix.adjugate_mul`
   have hord_zero_ge : O - (s - 1) ≤ Delta_S.rootMultiplicity 0 := by
     let ι_ps : ℤ[X] →+* PowerSeries ℚ :=
       (Polynomial.coeToPowerSeries.ringHom (R := ℚ)).comp (Polynomial.mapRingHom (Int.castRingHom ℚ))
@@ -615,7 +627,7 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
         | zero => intro f N hf t ht; exact hf t ht
         | succ n ihn =>
           intro f N hf t ht
-          rw [Function.iterate_succ_apply', PowerSeries.coeff_mul, Finset.Nat.sum_antidiagonal_eq_sum_range_succ]
+          rw [Function.iterate_succ_apply', PowerSeries.coeff_mul, Finset.Nat.sum_antidiagonal_eq_sum_range_succ (fun u v => PowerSeries.coeff u (T_rat r M : PowerSeries ℚ) * PowerSeries.coeff v (psDeriv ((fun g => (T_rat r M : PowerSeries ℚ) * psDeriv g)^[n] f)))]
           apply Finset.sum_eq_zero; intro u hu
           rw [coeff_psDeriv, ihn f N hf (t - u + 1) (by omega), mul_zero, mul_zero]
       intro k t ht
@@ -631,11 +643,11 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
         have hmul0 : PowerSeries.coeff t (M_ps.det * v j₀) = 0 := by
           rw [hcoord, map_sum]
           apply Finset.sum_eq_zero; intro k _
-          rw [PowerSeries.coeff_mul, Finset.Nat.sum_antidiagonal_eq_sum_range_succ]
+          rw [PowerSeries.coeff_mul, Finset.Nat.sum_antidiagonal_eq_sum_range_succ (fun u v => PowerSeries.coeff u (M_ps.adjugate j₀ k) * PowerSeries.coeff v (L_vec k))]
           apply Finset.sum_eq_zero; intro u hu
           have htu : t - u < O - (s - 1) := by omega
           rw [hL_vec_van k (t - u) htu, mul_zero]
-        rw [PowerSeries.coeff_mul, Finset.Nat.sum_antidiagonal_eq_sum_range_succ] at hmul0
+        rw [PowerSeries.coeff_mul, Finset.Nat.sum_antidiagonal_eq_sum_range_succ (fun u w => PowerSeries.coeff u M_ps.det * PowerSeries.coeff w (v j₀))] at hmul0
         rw [Finset.sum_eq_single t] at hmul0
         · have hv0 : PowerSeries.coeff 0 (v j₀) = 1 := by
             rw [PowerSeries.coeff_zero_eq_constantCoeff]; exact unscaledMonomialSeries_const _ _ _
@@ -658,6 +670,7 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
       rw [Polynomial.X_pow_dvd_iff]
       exact hDelta_van
     exact (Polynomial.le_rootMultiplicity_iff hDelta_ne_zero).mpr (by simpa using hX_dvd)
+  -- 4. Package `SupportWronskianData`
   let Delta_Q : Polynomial ℚ := Delta_S.map (Int.castRingHom ℚ)
   have hDelta_Q_ne : Delta_Q ≠ 0 := by
     intro h0; apply hDelta_ne_zero; ext k
@@ -670,7 +683,7 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
     apply le_antisymm
     · rw [Polynomial.le_rootMultiplicity_iff hDelta_ne_zero]
       have hdvd := Polynomial.pow_rootMultiplicity_dvd Delta_Q 0
-      simp only [sub_zero] at hdvd ⊢
+      simp only [map_zero, sub_zero] at hdvd ⊢
       rw [Polynomial.X_pow_dvd_iff] at hdvd ⊢
       intro k hk
       have h0 := hdvd k hk
@@ -678,7 +691,7 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
       exact h0
     · rw [Polynomial.le_rootMultiplicity_iff hDelta_Q_ne]
       have hdvd := Polynomial.pow_rootMultiplicity_dvd Delta_S 0
-      simp only [sub_zero] at hdvd ⊢
+      simp only [map_zero, sub_zero] at hdvd ⊢
       rw [Polynomial.X_pow_dvd_iff] at hdvd ⊢
       intro k hk
       simp only [Delta_Q, Polynomial.coeff_map, eq_intCast, hdvd k hk, Int.cast_zero]
@@ -688,7 +701,9 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
     deg_le := hdeg_le
     ord_zero := Delta_S.rootMultiplicity 0
     ord_zero_ge := hord_zero_ge
-    ord_zero_le_deg := Polynomial.rootMultiplicity_le_natDegree
+    ord_zero_le_deg := by
+      have h1 := rootMultiplicity_zero_add_sum_le hDelta_Q_ne ∅ (fun _ hn => absurd hn (Finset.notMem_empty _))
+      rw [hord_Q_eq, hDelta_Q_deg] at h1; simpa using h1
     multAt := fun n => Delta_Q.rootMultiplicity ((n : ℚ)⁻¹)
     sum_mult_le := fun T hT => by
       have h1 := rootMultiplicity_zero_add_sum_le hDelta_Q_ne T (fun n hn => by have := hT n hn; omega)
@@ -696,13 +711,18 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
       omega
     prod_linear_dvd := fun T hT => by
       let Q_T : ℤ[X] := ∏ n ∈ T, (Polynomial.C (n : ℤ) * Polynomial.X - 1) ^ (Delta_Q.rootMultiplicity ((n : ℚ)⁻¹))
+      have hpow_prim : ∀ (p : ℤ[X]), p.IsPrimitive → ∀ k : ℕ, (p ^ k).IsPrimitive := by
+        intro p hp k
+        induction k with
+        | zero => simp [Polynomial.isPrimitive_one]
+        | succ k ihk => rw [pow_succ]; exact ihk.mul hp
       have hQ_prim : Q_T.IsPrimitive := by
         dsimp only [Q_T]
         induction T using Finset.induction_on with
-        | empty => simpa using Polynomial.isPrimitive_one
+        | empty => simp [Polynomial.isPrimitive_one]
         | @insert a s has ih =>
           rw [Finset.prod_insert has]
-          exact Polynomial.IsPrimitive.mul ((isPrimitive_C_mul_X_sub_one a).pow _)
+          exact Polynomial.IsPrimitive.mul (hpow_prim _ (isPrimitive_C_mul_X_sub_one a) _)
             (ih (fun n hn => hT n (Finset.mem_insert_of_mem hn)))
       rw [Polynomial.IsPrimitive.dvd_iff_fraction_map_dvd_fraction_map (K := ℚ) hQ_prim]
       change (Q_T.map (Int.castRingHom ℚ)) ∣ Delta_Q
@@ -710,6 +730,7 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
           ∏ n ∈ T, (Polynomial.C (n : ℚ) * Polynomial.X - 1) ^ (Delta_Q.rootMultiplicity ((n : ℚ)⁻¹)) := by
         dsimp only [Q_T]; simp [Polynomial.map_prod]
       rw [hmap_Q]
+      -- Pairwise coprime factors in `Polynomial ℚ` each dividing `Delta_Q`
       clear hQ_prim hmap_Q Q_T
       induction T using Finset.induction_on with
       | empty => simp
@@ -725,20 +746,21 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
           apply IsCoprime.pow
           have hab : a ≠ b := fun heq => has (heq ▸ hbs)
           have hdiff_ne : ((b : ℚ) - (a : ℚ)) ≠ 0 := sub_ne_zero.mpr (by exact_mod_cast hab.symm)
-          refine ⟨Polynomial.C (((b : ℚ) - (a : ℚ))⁻¹ * (b : ℚ)),
-            Polynomial.C (-(((b : ℚ) - (a : ℚ))⁻¹ * (a : ℚ))), ?_⟩
-          have hc1 : (((b : ℚ) - (a : ℚ))⁻¹ * (b : ℚ)) * (a : ℚ) +
-              (-(((b : ℚ) - (a : ℚ))⁻¹ * (a : ℚ))) * (b : ℚ) = 0 := by ring
-          have hc0 : (((b : ℚ) - (a : ℚ))⁻¹ * (b : ℚ)) * (-1) +
-              (-(((b : ℚ) - (a : ℚ))⁻¹ * (a : ℚ))) * (-1) = 1 := by
+          refine ⟨Polynomial.C (-(((b : ℚ) - (a : ℚ))⁻¹ * (b : ℚ))),
+            Polynomial.C (((b : ℚ) - (a : ℚ))⁻¹ * (a : ℚ)), ?_⟩
+          have hc1 : (-(((b : ℚ) - (a : ℚ))⁻¹ * (b : ℚ))) * (a : ℚ) +
+              (((b : ℚ) - (a : ℚ))⁻¹ * (a : ℚ)) * (b : ℚ) = 0 := by ring
+          have hc0 : -(-(((b : ℚ) - (a : ℚ))⁻¹ * (b : ℚ))) -
+              (((b : ℚ) - (a : ℚ))⁻¹ * (a : ℚ)) = 1 := by
             field_simp [hdiff_ne]; ring
-          ext k
-          cases k with
-          | zero => simp [hc0]
-          | succ k =>
-            cases k with
-            | zero => simp [hc1]
-            | succ k => simp
+          calc Polynomial.C (-(((b : ℚ) - (a : ℚ))⁻¹ * (b : ℚ))) * (Polynomial.C (a : ℚ) * Polynomial.X - 1) +
+                Polynomial.C (((b : ℚ) - (a : ℚ))⁻¹ * (a : ℚ)) * (Polynomial.C (b : ℚ) * Polynomial.X - 1)
+              = Polynomial.C ((-(((b : ℚ) - (a : ℚ))⁻¹ * (b : ℚ))) * (a : ℚ) +
+                  (((b : ℚ) - (a : ℚ))⁻¹ * (a : ℚ)) * (b : ℚ)) * Polynomial.X +
+                Polynomial.C (-(-(((b : ℚ) - (a : ℚ))⁻¹ * (b : ℚ))) -
+                  (((b : ℚ) - (a : ℚ))⁻¹ * (a : ℚ))) := by
+                  simp only [Polynomial.C_add, Polynomial.C_sub, Polynomial.C_mul, Polynomial.C_neg]; ring
+            _ = 1 := by rw [hc1, hc0, map_zero, zero_mul, zero_add, map_one]
         exact hcop.mul_dvd hdvd_a hdvd_s
     C_Q := max 1 |(Delta_S.leadingCoeff : ℝ)|
     C_Q_ge_one := le_max_left 1 _
