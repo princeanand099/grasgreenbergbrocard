@@ -335,53 +335,60 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
               ((P_coeff i' j : ℚ) * (r : ℚ) ^ (2 * D)) *
                 PowerSeries.coeff (n - j.val) (unscaledMonomialSeries r β (idxToMulti i'.succ))
             else 0 := by
-        rw [Fin.sum_univ_eq_sum_range (fun j =>
-          if j ≤ n then
-            (if h : j < D + 1 then (P_coeff i' ⟨j, h⟩ : ℚ) * (r : ℚ) ^ (2 * D) else 0) *
-              PowerSeries.coeff (n - j) (unscaledMonomialSeries r β (idxToMulti i'.succ))
-          else 0) (D + 1)]
-        · have h1 : ∀ u ∈ Finset.range (n + 1),
-              PowerSeries.coeff u (((P_int i'.succ).map (Int.castRingHom ℚ) : Polynomial ℚ) : PowerSeries ℚ) *
-                PowerSeries.coeff (n - u) (unscaledMonomialSeries r β (idxToMulti i'.succ)) =
+        have hrhs_eq : (∑ j : Fin (D + 1),
+            if j.val ≤ n then
+              ((P_coeff i' j : ℚ) * (r : ℚ) ^ (2 * D)) *
+                PowerSeries.coeff (n - j.val) (unscaledMonomialSeries r β (idxToMulti i'.succ))
+            else 0) =
+          ∑ u ∈ Finset.range (D + 1),
+            if u ≤ n then
+              (if h : u < D + 1 then (P_coeff i' ⟨u, h⟩ : ℚ) * (r : ℚ) ^ (2 * D) else 0) *
+                PowerSeries.coeff (n - u) (unscaledMonomialSeries r β (idxToMulti i'.succ))
+            else 0 := by
+          rw [← Fin.sum_univ_eq_sum_range]
+          apply Finset.sum_congr rfl; intro j _
+          simp [j.isLt]
+        rw [hrhs_eq]
+        have h1 : ∀ u ∈ Finset.range (n + 1),
+            PowerSeries.coeff u (((P_int i'.succ).map (Int.castRingHom ℚ) : Polynomial ℚ) : PowerSeries ℚ) *
+              PowerSeries.coeff (n - u) (unscaledMonomialSeries r β (idxToMulti i'.succ)) =
+            (if h : u < D + 1 then (P_coeff i' ⟨u, h⟩ : ℚ) * (r : ℚ) ^ (2 * D) else 0) *
+              PowerSeries.coeff (n - u) (unscaledMonomialSeries r β (idxToMulti i'.succ)) := by
+          intro u _
+          rw [Polynomial.coeff_coe, Polynomial.coeff_map]
+          by_cases hu : u < D + 1
+          · rw [dif_pos hu, hP_int_coeff_succ i' ⟨u, hu⟩]; simp
+          · rw [dif_neg hu]
+            have hdeg := hP_int_deg i'.succ
+            rw [Polynomial.coeff_eq_zero_of_natDegree_lt (by omega)]; simp
+        rw [Finset.sum_congr rfl h1]
+        -- Both sums equal sum over `u ∈ range (min n D + 1)`
+        have hmin1 : ∑ u ∈ Finset.range (n + 1),
+            (if h : u < D + 1 then (P_coeff i' ⟨u, h⟩ : ℚ) * (r : ℚ) ^ (2 * D) else 0) *
+              PowerSeries.coeff (n - u) (unscaledMonomialSeries r β (idxToMulti i'.succ)) =
+            ∑ u ∈ Finset.range (min n D + 1),
               (if h : u < D + 1 then (P_coeff i' ⟨u, h⟩ : ℚ) * (r : ℚ) ^ (2 * D) else 0) *
                 PowerSeries.coeff (n - u) (unscaledMonomialSeries r β (idxToMulti i'.succ)) := by
-            intro u _
-            rw [Polynomial.coeff_coe, Polynomial.coeff_map]
-            by_cases hu : u < D + 1
-            · rw [dif_pos hu, hP_int_coeff_succ i' ⟨u, hu⟩]; simp
-            · rw [dif_neg hu]
-              have hdeg := hP_int_deg i'.succ
-              rw [Polynomial.coeff_eq_zero_of_natDegree_lt (by omega)]; simp
-          rw [Finset.sum_congr rfl h1]
-          -- Both sums equal sum over `u ∈ range (min n D + 1)`
-          have hmin1 : ∑ u ∈ Finset.range (n + 1),
+          symm; apply Finset.sum_subset (Finset.range_mono (by omega))
+          intro u hu hnot
+          have hu_gt : D + 1 ≤ u := by
+            have := Finset.mem_range.mp hu
+            have : ¬ u < min n D + 1 := fun h => hnot (Finset.mem_range.mpr h)
+            omega
+          rw [dif_neg (by omega), zero_mul]
+        have hmin2 : ∑ u ∈ Finset.range (D + 1),
+            (if u ≤ n then
               (if h : u < D + 1 then (P_coeff i' ⟨u, h⟩ : ℚ) * (r : ℚ) ^ (2 * D) else 0) *
-                PowerSeries.coeff (n - u) (unscaledMonomialSeries r β (idxToMulti i'.succ)) =
-              ∑ u ∈ Finset.range (min n D + 1),
-                (if h : u < D + 1 then (P_coeff i' ⟨u, h⟩ : ℚ) * (r : ℚ) ^ (2 * D) else 0) *
-                  PowerSeries.coeff (n - u) (unscaledMonomialSeries r β (idxToMulti i'.succ)) := by
-            symm; apply Finset.sum_subset (Finset.range_mono (by omega))
-            intro u hu hnot
-            have hu_gt : D + 1 ≤ u := by
-              have := Finset.mem_range.mp hu
-              have : ¬ u < min n D + 1 := fun h => hnot (Finset.mem_range.mpr h)
-              omega
-            rw [dif_neg (by omega), zero_mul]
-          have hmin2 : ∑ u ∈ Finset.range (D + 1),
-              (if u ≤ n then
-                (if h : u < D + 1 then (P_coeff i' ⟨u, h⟩ : ℚ) * (r : ℚ) ^ (2 * D) else 0) *
-                  PowerSeries.coeff (n - u) (unscaledMonomialSeries r β (idxToMulti i'.succ))
-               else 0) =
-              ∑ u ∈ Finset.range (min n D + 1),
-                (if h : u < D + 1 then (P_coeff i' ⟨u, h⟩ : ℚ) * (r : ℚ) ^ (2 * D) else 0) *
-                  PowerSeries.coeff (n - u) (unscaledMonomialSeries r β (idxToMulti i'.succ)) := by
-            rw [← Finset.sum_filter]
-            have hflt : (Finset.range (D + 1)).filter (· ≤ n) = Finset.range (min n D + 1) := by
-              ext u; simp only [Finset.mem_filter, Finset.mem_range]; omega
-            rw [hflt]
-          rw [hmin1, hmin2]
-        · apply Finset.sum_congr rfl; intro j _
-          simp [j.isLt]
+                PowerSeries.coeff (n - u) (unscaledMonomialSeries r β (idxToMulti i'.succ))
+             else 0) =
+            ∑ u ∈ Finset.range (min n D + 1),
+              (if h : u < D + 1 then (P_coeff i' ⟨u, h⟩ : ℚ) * (r : ℚ) ^ (2 * D) else 0) *
+                PowerSeries.coeff (n - u) (unscaledMonomialSeries r β (idxToMulti i'.succ)) := by
+          rw [← Finset.sum_filter]
+          have hflt : (Finset.range (D + 1)).filter (· ≤ n) = Finset.range (min n D + 1) := by
+            ext u; simp only [Finset.mem_filter, Finset.mem_range]; omega
+          rw [hflt]
+        rw [hmin1, hmin2]
       rw [hsum_fin, Finset.mul_sum]
       apply Finset.sum_congr rfl; intro j _
       split_ifs with hjle
@@ -392,8 +399,7 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
         have hpow : (r : ℚ) ^ (2 * (n - j.val)) * (r : ℚ) ^ (2 * j.val) = (r : ℚ) ^ (2 * n) := by
           rw [← pow_add, show 2 * (n - j.val) + 2 * j.val = 2 * n by omega]
         field_simp [pow_ne_zero (2 * n) hr_ne_q]
-        linear_combination (P_coeff i' j : ℚ) * (r : ℚ) ^ (2 * D) *
-          PowerSeries.coeff (n - j.val) (unscaledMonomialSeries r β (idxToMulti i'.succ)) * hpow.symm
+        rw [← hpow]; ring
       · simp
     simp_rw [hterm_succ, ← Finset.mul_sum]
     by_cases hnD : n ≤ D
@@ -433,10 +439,14 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
           if j.val ≤ n then
             (fam.clearedCoeff i.succ (n - j.val) : ℚ) * (r : ℚ) ^ (2 * j.val) * (P_coeff i j : ℚ)
           else 0) = 0 := by
-        rw [← hvan_q]
-        apply Finset.sum_congr rfl; intro i _
-        apply Finset.sum_congr rfl; intro j _
-        split_ifs <;> simp
+        trans (∑ i : Fin m, ∑ j : Fin (D + 1),
+          (if j.val ≤ n then
+            (fam.clearedCoeff i.succ (n - j.val) : ℚ) * (r : ℚ) ^ (2 * j.val)
+           else 0) * (P_coeff i j : ℚ))
+        · apply Finset.sum_congr rfl; intro i _
+          apply Finset.sum_congr rfl; intro j _
+          split_ifs <;> ring
+        · exact hvan_q
       rw [hsum_eq, mul_zero]
   -- Prove `2 ≤ s` (from `hP_nz`, `hO_gt`, and `hL_0_van`)
   have hs_ge2 : 2 ≤ s := by
@@ -473,7 +483,7 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
       by_contra hne; exact Nat.find_min hex_c hu hne
     have hk0_le_D : k0 ≤ D := by
       by_contra hgt
-      have hdeg := le_trans (Polynomial.natDegree_map_le (Int.castRingHom ℚ) (P_int i₀.succ)) (hP_int_deg i₀.succ)
+      have hdeg := le_trans Polynomial.natDegree_map_le (hP_int_deg i₀.succ)
       exact hk0_ne (Polynomial.coeff_eq_zero_of_natDegree_lt (by omega))
     have hcoeff_k0 : PowerSeries.coeff k0 L_0 = ((P_int i₀.succ).map (Int.castRingHom ℚ)).coeff k0 := by
       rw [hL0_sing, PowerSeries.coeff_mul, Finset.Nat.sum_antidiagonal_eq_sum_range_succ (fun u v => PowerSeries.coeff u (((P_int i₀.succ).map (Int.castRingHom ℚ) : Polynomial ℚ) : PowerSeries ℚ) * PowerSeries.coeff v (unscaledMonomialSeries r β (idxToMulti i₀.succ)))]
@@ -556,10 +566,10 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
     -- Relate `det G` to `Delta_S * ∏ j, Ω_{eS j}`
     let ι_ps : ℤ[X] →+* PowerSeries ℚ := (Polynomial.coeToPowerSeries.ringHom (R := ℚ)).comp (Polynomial.mapRingHom (Int.castRingHom ℚ))
     have hG_fac : Matrix.of (fun k j : Fin s => (fun f => (T_rat r M : PowerSeries ℚ) * psDeriv f)^[k.val] (g j)) =
-        M_S.map ι_ps * Matrix.diagonal (fun j : Fin s => unscaledMonomialSeries r β (idxToMulti (eS j).val)) := by
-      ext k j
-      simp only [Matrix.of_apply, Matrix.mul_diagonal, Matrix.map_apply, M_S, ι_ps, RingHom.comp_apply,
-        Polynomial.coe_mapRingHom, Polynomial.coeToPowerSeries.ringHom_apply]
+        ι_ps.mapMatrix M_S * Matrix.diagonal (fun j : Fin s => unscaledMonomialSeries r β (idxToMulti (eS j).val)) := by
+      apply Matrix.ext; intro k j
+      simp only [Matrix.of_apply, Matrix.mul_diagonal, RingHom.mapMatrix_apply, Matrix.map_apply, M_S,
+        ι_ps, RingHom.comp_apply, Polynomial.coe_mapRingHom, Polynomial.coeToPowerSeries.ringHom_apply]
       exact (hiter_ps k.val (eS j).val).symm
     rw [hG_fac, Matrix.det_mul, ← RingHom.map_det] at hG_ne
     have hD0_ps : ι_ps M_S.det = 0 := by
@@ -594,13 +604,14 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
   have hord_zero_ge : O - (s - 1) ≤ Delta_S.rootMultiplicity 0 := by
     let ι_ps : ℤ[X] →+* PowerSeries ℚ :=
       (Polynomial.coeToPowerSeries.ringHom (R := ℚ)).comp (Polynomial.mapRingHom (Int.castRingHom ℚ))
-    let M_ps : Matrix (Fin s) (Fin s) (PowerSeries ℚ) := M_S.map ι_ps
+    let M_ps : Matrix (Fin s) (Fin s) (PowerSeries ℚ) := ι_ps.mapMatrix M_S
     let v : Fin s → PowerSeries ℚ := fun j => unscaledMonomialSeries r β (idxToMulti (eS j).val)
     let L_vec : Fin s → PowerSeries ℚ := fun k => (fun f => (T_rat r M : PowerSeries ℚ) * psDeriv f)^[k.val] L_0
     have hMv : M_ps.mulVec v = L_vec := by
-      ext k
-      simp only [Matrix.mulVec, dotProduct, M_ps, Matrix.map_apply, M_S, Matrix.of_apply, v, L_vec,
-        ι_ps, RingHom.comp_apply, Polynomial.coe_mapRingHom, Polynomial.coeToPowerSeries.ringHom_apply]
+      funext k
+      simp only [Matrix.mulVec, dotProduct, M_ps, RingHom.mapMatrix_apply, Matrix.map_apply, M_S,
+        Matrix.of_apply, v, L_vec, ι_ps, RingHom.comp_apply, Polynomial.coe_mapRingHom,
+        Polynomial.coeToPowerSeries.ringHom_apply]
       have hlin_iter : ∀ (n : ℕ) (S_f : Finset (Fin s)) (F : Fin s → PowerSeries ℚ),
           (fun f => (T_rat r M : PowerSeries ℚ) * psDeriv f)^[n] (∑ j ∈ S_f, F j) =
           ∑ j ∈ S_f, (fun f => (T_rat r M : PowerSeries ℚ) * psDeriv f)^[n] (F j) := by
@@ -617,7 +628,9 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
       apply Finset.sum_congr rfl; intro j _
       exact hiter_ps k.val (eS j).val
     have hadj : M_ps.det • v = M_ps.adjugate.mulVec L_vec := by
-      rw [← hMv, Matrix.mulVec_mulVec, Matrix.adjugate_mul, Matrix.smul_mulVec_assoc, Matrix.one_mulVec]
+      have h1 : (M_ps.det • (1 : Matrix (Fin s) (Fin s) (PowerSeries ℚ))).mulVec v = M_ps.det • v := by
+        funext i; simp [Matrix.mulVec, dotProduct, Matrix.one_apply, smul_eq_mul]
+      rw [← h1, ← Matrix.adjugate_mul, ← Matrix.mulVec_mulVec, hMv]
     have hL_vec_van : ∀ (k : Fin s) (t : ℕ), t < O - (s - 1) → PowerSeries.coeff t (L_vec k) = 0 := by
       have hvan_step : ∀ (n : ℕ) (f : PowerSeries ℚ) (N : ℕ),
           (∀ t ≤ N, PowerSeries.coeff t f = 0) →
@@ -752,7 +765,7 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
               (((b : ℚ) - (a : ℚ))⁻¹ * (a : ℚ)) * (b : ℚ) = 0 := by ring
           have hc0 : -(-(((b : ℚ) - (a : ℚ))⁻¹ * (b : ℚ))) -
               (((b : ℚ) - (a : ℚ))⁻¹ * (a : ℚ)) = 1 := by
-            field_simp [hdiff_ne]; ring
+            field_simp [hdiff_ne]
           calc Polynomial.C (-(((b : ℚ) - (a : ℚ))⁻¹ * (b : ℚ))) * (Polynomial.C (a : ℚ) * Polynomial.X - 1) +
                 Polynomial.C (((b : ℚ) - (a : ℚ))⁻¹ * (a : ℚ)) * (Polynomial.C (b : ℚ) * Polynomial.X - 1)
               = Polynomial.C ((-(((b : ℚ) - (a : ℚ))⁻¹ * (b : ℚ))) * (a : ℚ) +
