@@ -468,7 +468,10 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
         rw [h2u]
         have hcast : ((c₁ * (2 * (u : ℤ)) + c₂ * (m : ℤ) : ℤ) : R) =
             (c₁ : R) * ((2 * (u : ℤ) : ℤ) : R) + (c₂ : R) * (m : R) := by
-          push_cast; ring
+          ext
+          · change c₁ * (2 * (u : ℤ)) + c₂ * (m : ℤ) =
+              c₁ * (2 * (u : ℤ)) + (-(q_n n : ℤ)) * 0 * 0 + (c₂ * (m : ℤ) + (-(q_n n : ℤ)) * 0 * 0); ring
+          · change 0 = c₁ * 0 + 0 * (2 * (u : ℤ)) + (c₂ * 0 + 0 * (m : ℤ)); ring
         rw [← hcast, hc]; simp
       have hz_eq : z = (c₁ : R) * (z ^ 2 + (m : R)) + (c₂ : R) * (z * (m : R)) := by
         calc z = z * 1 := (mul_one z).symm
@@ -853,7 +856,10 @@ lemma I_delta_mul_J_n_eq {n m δ₁ δ₂ z₁ z₂ : ℕ}
       rw [hsum]
       have hcast : ((c₁ * (2 * (δ₂ : ℤ) * (z₂ : ℤ)) + c₂ * (m : ℤ) : ℤ) : R) =
           (c₁ : R) * ((2 * (δ₂ : ℤ) * (z₂ : ℤ) : ℤ) : R) + (c₂ : R) * (m : R) := by
-        push_cast; ring
+        ext
+        · change c₁ * (2 * (δ₂ : ℤ) * (z₂ : ℤ)) + c₂ * (m : ℤ) =
+            c₁ * (2 * (δ₂ : ℤ) * (z₂ : ℤ)) + (-(q_n n : ℤ)) * 0 * 0 + (c₂ * (m : ℤ) + (-(q_n n : ℤ)) * 0 * 0); ring
+        · change 0 = c₁ * 0 + 0 * (2 * (δ₂ : ℤ) * (z₂ : ℤ)) + (c₂ * 0 + 0 * (m : ℤ)); ring
       rw [← hcast, hc]; simp
     have hw_eq : w = (c₁ : R) * (w ^ 2 + (δ₂ : R) * (m : R)) + (c₂ : R) * (w * (m : R)) := by
       calc w = w * 1 := (mul_one w).symm
