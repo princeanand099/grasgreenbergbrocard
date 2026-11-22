@@ -13,8 +13,6 @@ Formalizes Section 3.2 (Theorem 1.1, eqs. 1.6–1.7 and 3.4–3.5) of the manusc
 - `known_k4`, `known_k5`, `known_k7`: `k(4) = 1`, `k(5) = 1`, `k(7) = 2`
 - `pell_index_collapse_large`: for all sufficiently large solutions `(n, m)` to `n! + 1 = m^2`,
   the Pell index satisfies `k ∈ {1, 2}` (eq. 1.6)
-- `thm_1_1_unconditional`: unconditional top-level statement deriving existence/uniqueness of
-  `(X₁, Y₁)` and `k ∈ {1, 2}` directly from `n! + 1 = m^2` (Defect D6(a))
 - `fundamental_regulator_quantization`: `log ε_n / (n log n) = 1 / (2k) + O(1 / log n)` (eq. 1.7)
 - `q_n_ne_of_solutions`: no two solutions `4 ≤ n₁ < n₂` share `q_{n₁} = q_{n₂}`
 -/
@@ -336,6 +334,7 @@ theorem pell_index_collapse_large :
   have hq_pos : 0 < q_n n := by
     unfold q_n
     exact Finset.prod_pos (fun q hq => (Finset.mem_filter.mp hq).2.1.pos)
+  -- Lower bound (3.5): `S_odd n - v_3(n!) * log 3 - 2 * log k ≤ log(q_n * Y₁^2)`
   have hlog_qY2_lower :
       S_odd n - (padicValNat 3 (Nat.factorial n) : ℝ) * Real.log 3 - 2 * Real.log (k : ℝ) ≤
         Real.log ((q_n n * Y₁ ^ 2 : ℕ) : ℝ) := by
@@ -411,6 +410,7 @@ theorem pell_index_collapse_large :
         2 * ∑ p ∈ S, (padicValNat p k : ℝ) * Real.log (p : ℝ) := by
       simp_rw [sub_mul, Finset.sum_sub_distrib, mul_assoc, ← Finset.mul_sum]
     linarith
+  -- Upper bound (3.4): `log(q_n * Y₁^2) < 2 * log ε_n`
   have hlog_qY2_upper :
       Real.log ((q_n n * Y₁ ^ 2 : ℕ) : ℝ) < 2 * Real.log (pellUnit (q_n n) X₁ Y₁) := by
     have hqY_pos : (0 : ℝ) < (Y₁ : ℝ) * Real.sqrt (q_n n : ℝ) := by
@@ -428,6 +428,7 @@ theorem pell_index_collapse_large :
       push_cast; ring
     rw [h_eq]
     exact mul_lt_mul_of_pos_left (Real.log_lt_log hqY_pos h_lt) (by norm_num)
+  -- Also `2 * k * log ε_n = 2 * log(m + s_n √q_n) ≤ 2 * log 3 + n * log n`
   have h_upper_nlogn :
       (k : ℝ) * (2 * Real.log (pellUnit (q_n n) X₁ Y₁)) ≤
         (n : ℝ) * Real.log (n : ℝ) + 2 * Real.log 3 := by
@@ -643,7 +644,9 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
   have ht3 : 3 ≤ t := by
     by_contra hlt3
     have ht_le2 : t ≤ 2 := by omega
-    have hsq4 : t ^ 2 ≤ 4 := by nlinarith
+    have hsq4 : t ^ 2 ≤ 4 := by
+      have := Nat.mul_le_mul ht_le2 ht_le2
+      rw [← sq] at this; exact this
     omega
   have hid : (t * m₁) ^ 2 = m₂ ^ 2 + (t ^ 2 - 1) := by
     have hfac_succ : Nat.factorial (n₁ + 1) = (n₁ + 1) * Nat.factorial n₁ := Nat.factorial_succ n₁
@@ -657,13 +660,15 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
     have hsq_lt : m₂ ^ 2 < (t * m₁) ^ 2 := by omega
     exact (Nat.pow_lt_pow_iff_left (by norm_num : 2 ≠ 0)).mp hsq_lt
   have hdiff_ge1 : 1 ≤ t * m₁ - m₂ := by omega
+  have h1t : 1 ≤ t ^ 2 := by
+    have := Nat.mul_le_mul ht3 ht3; rw [← sq] at this; omega
   have hprod_factor : (t * m₁ - m₂) * (t * m₁ + m₂) = t ^ 2 - 1 := by
-    zify [hlt_tm.le, (by nlinarith : 1 ≤ t ^ 2)]
+    zify [hlt_tm.le, h1t]
     have hid_z : ((t : ℤ) * (m₁ : ℤ)) ^ 2 = (m₂ : ℤ) ^ 2 + ((t : ℤ) ^ 2 - 1) := by
-      zify [(by nlinarith : 1 ≤ t ^ 2)] at hid
+      zify [h1t] at hid
       push_cast at hid
       exact hid
-    linarith
+    linear_combination hid_z
   have hsum_le : t * m₁ + m₂ ≤ t ^ 2 - 1 := by
     calc t * m₁ + m₂ = 1 * (t * m₁ + m₂) := by ring
       _ ≤ (t * m₁ - m₂) * (t * m₁ + m₂) := Nat.mul_le_mul_right _ hdiff_ge1
@@ -679,18 +684,20 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
             rcases Nat.eq_or_lt_of_le hk with h4 | hk4
             · have hk3 : k = 3 := by omega
               subst hk3
-              norm_num [Nat.factorial]
-            · have := ihk (by omega)
+              decide
+            · have hih := ihk (by omega)
               rw [Nat.factorial_succ]
-              nlinarith
+              have hk2 : 2 ≤ Nat.factorial k := by omega
+              have hmul := Nat.mul_le_mul_left (k + 1) hk2
+              omega
         exact this n₁ hn₁
       omega
     have hsq : t ^ 2 < m₁ ^ 2 := by linarith [hm₁, hfac_gt]
     exact (Nat.pow_lt_pow_iff_left (by norm_num : 2 ≠ 0)).mp hsq
   have hsum_gt : t ^ 2 < t * m₁ + m₂ := by
     have : t * t < t * m₁ := Nat.mul_lt_mul_of_pos_left hm1_gt_t (by omega)
-    nlinarith
-  linarith
+    rw [sq]; omega
+  omega
 
 /-- **Theorem 1.1 (Unconditional Top-Level Formulation, Defect D6(a))**:
 There exists `N₀ : ℕ` such that for every Brocard–Ramanujan solution `n! + 1 = m^2` with
@@ -712,7 +719,9 @@ theorem thm_1_1_unconditional :
   · rintro k' ⟨hk'12, hreal'⟩
     have hq_pos : 1 ≤ q_n n := by
       unfold q_n
-      exact Finset.prod_pos (fun q hq => (Finset.mem_filter.mp hq).2.1.pos)
+      exact Nat.succ_le_of_lt (Finset.prod_pos (fun q hq => by
+        unfold Podd at hq
+        exact (Finset.mem_filter.mp hq).2.1.pos))
     have hgt1 : 1 < pellUnit (q_n n) X₁ Y₁ := by
       have h2s := pellUnit_gt_two_sqrt hq_pos hfund
       have h1 : (1 : ℝ) ≤ Real.sqrt (q_n n : ℝ) := by
