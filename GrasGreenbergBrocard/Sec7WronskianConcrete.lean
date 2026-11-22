@@ -245,11 +245,13 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
         have h1 := natDegree_T_int_le r M
         have h2 : (Polynomial.derivative ((D_step i)^[k] (P_int i))).natDegree ≤ D + k * M :=
           le_trans (le_trans (Polynomial.natDegree_derivative_le _) (Nat.sub_le _ _)) (ih i)
+        dsimp only [D_step] at h2
         have : M + (D + k * M) = D + (k + 1) * M := by ring
         omega
       · refine le_trans Polynomial.natDegree_mul_le ?_
         have h1 := natDegree_TA_int_le M β (idxToMulti i)
         have h2 : ((D_step i)^[k] (P_int i)).natDegree ≤ D + k * M := ih i
+        dsimp only [D_step] at h2
         have : M + (D + k * M) = D + (k + 1) * M := by ring
         omega
   -- Equivalence `eS : Fin S.card ≃ S` and Wronskian matrix `M_S`
