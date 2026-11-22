@@ -56,7 +56,7 @@ private lemma isPrimitive_C_mul_X_sub_one (n : ℕ) :
   have h0 := congrArg (fun P : ℤ[X] => P.coeff 0) hq
   simp only [Polynomial.coeff_sub, Polynomial.coeff_C_mul, Polynomial.coeff_X_zero, mul_zero,
     Polynomial.coeff_one_zero, zero_sub, Polynomial.coeff_C_mul] at h0
-  exact isUnit_of_mul_eq_one r (-q.coeff 0) (by linarith)
+  exact isUnit_iff_exists_inv.mpr ⟨-q.coeff 0, by linarith⟩
 
 /-- Helper: in `Polynomial ℚ`, `(C (n : ℚ) * X - 1)^a ∣ P` where `a = P.rootMultiplicity (n : ℚ)⁻¹`. -/
 private lemma pow_linear_dvd_of_rootMultiplicity {n : ℕ} (hn : 1 ≤ n) (P : Polynomial ℚ) :
@@ -69,7 +69,7 @@ private lemma pow_linear_dvd_of_rootMultiplicity {n : ℕ} (hn : 1 ≤ n) (P : P
   have hdvd := Polynomial.pow_rootMultiplicity_dvd P ((n : ℚ)⁻¹)
   rcases hdvd with ⟨q, hq⟩
   refine ⟨Polynomial.C (((n : ℚ) ^ (P.rootMultiplicity ((n : ℚ)⁻¹)))⁻¹) * q, ?_⟩
-  rw [hq, ← Polynomial.C_pow]
+  rw [← Polynomial.C_pow]
   calc P = (Polynomial.X - Polynomial.C (n : ℚ)⁻¹) ^ P.rootMultiplicity (n : ℚ)⁻¹ * q := hq
     _ = (Polynomial.C ((n : ℚ) ^ P.rootMultiplicity (n : ℚ)⁻¹) *
           Polynomial.C (((n : ℚ) ^ P.rootMultiplicity (n : ℚ)⁻¹)⁻¹)) *
@@ -125,7 +125,7 @@ private lemma rootMultiplicity_zero_add_sum_le {P : Polynomial ℚ} (hP : P ≠ 
         rw [h1]; exact Nat.zero_le _
     calc ∑ α ∈ S_roots, Multiset.count α P.roots
         = (S_roots.val.bind (fun α => Multiset.replicate (Multiset.count α P.roots) α)).card := by
-            rw [Multiset.card_bind]; simp; rfl
+            rw [Multiset.card_bind]; simp
       _ ≤ P.roots.card := Multiset.card_le_card hsub
   exact le_trans hle_card (Polynomial.card_roots' P)
 
@@ -180,11 +180,11 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
     · dsimp only [P_int]; simp only [Fin.cases_zero]
       refine le_trans (Polynomial.natDegree_sum_le _ _) ?_
       rw [Finset.fold_max_le]; refine ⟨Nat.zero_le D, fun v _ => ?_⟩
-      refine le_trans Polynomial.natDegree_C_mul_le ?_; rw [Polynomial.natDegree_X_pow]; omega
+      refine le_trans (Polynomial.natDegree_C_mul_le _ _) ?_; rw [Polynomial.natDegree_X_pow]; omega
     · dsimp only [P_int]; simp only [Fin.cases_succ]
       refine le_trans (Polynomial.natDegree_sum_le _ _) ?_
       rw [Finset.fold_max_le]; refine ⟨Nat.zero_le D, fun j _ => ?_⟩
-      refine le_trans Polynomial.natDegree_C_mul_le ?_; rw [Polynomial.natDegree_X_pow]; omega
+      refine le_trans (Polynomial.natDegree_C_mul_le _ _) ?_; rw [Polynomial.natDegree_X_pow]; omega
   have hP_int_coeff_zero : ∀ v : Fin (D + 1),
       (P_int 0).coeff v.val = padeP0Coeff fam P_coeff v * (r : ℤ) ^ (2 * (D - v.val)) := by
     intro v
@@ -243,12 +243,13 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
       refine le_trans (Polynomial.natDegree_add_le _ _) (max_le ?_ ?_)
       · refine le_trans Polynomial.natDegree_mul_le ?_
         have h1 := natDegree_T_int_le r M
-        have h2 := le_trans Polynomial.natDegree_derivative_le (ih i)
+        have h2 : (Polynomial.derivative ((D_step i)^[k] (P_int i))).natDegree ≤ D + k * M :=
+          le_trans (le_trans (Polynomial.natDegree_derivative_le _) (Nat.sub_le _ _)) (ih i)
         have : M + (D + k * M) = D + (k + 1) * M := by ring
         omega
       · refine le_trans Polynomial.natDegree_mul_le ?_
         have h1 := natDegree_TA_int_le M β (idxToMulti i)
-        have h2 := ih i
+        have h2 : ((D_step i)^[k] (P_int i)).natDegree ≤ D + k * M := ih i
         have : M + (D + k * M) = D + (k + 1) * M := by ring
         omega
   -- Equivalence `eS : Fin S.card ≃ S` and Wronskian matrix `M_S`
@@ -271,7 +272,7 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
       dsimp only [P_iter]
       rw [Function.iterate_succ_apply']
       dsimp only [D_step]
-      rw [Polynomial.map_add, Polynomial.map_mul, Polynomial.map_mul, Polynomial.derivative_map,
+      rw [Polynomial.map_add, Polynomial.map_mul, Polynomial.map_mul, ← Polynomial.derivative_map,
         Polynomial.coe_add, Polynomial.coe_mul, Polynomial.coe_mul,
         psDeriv_mul, psDeriv_coe_poly, mul_add]
       have hode := unscaledMonomialSeries_ode hr1 β (idxToMulti i) hβ_hi
@@ -305,7 +306,6 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
       rw [← Finset.sum_attach S]
       exact Fintype.sum_equiv eS _ _ (fun _ => rfl)
     rw [hbij]
-    symm
     apply Finset.sum_subset (Finset.subset_univ S)
     intro i _ hi
     rw [hP_int_eq_zero_of_notMem i hi, Polynomial.map_zero, Polynomial.coe_zero, zero_mul]
