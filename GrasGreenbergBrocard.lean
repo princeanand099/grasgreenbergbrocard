@@ -1,4 +1,6 @@
 import GrasGreenbergBrocard.Basic
+import GrasGreenbergBrocard.PadicRegulator
+import GrasGreenbergBrocard.RealQuadField
 import GrasGreenbergBrocard.PellFundamental
 import GrasGreenbergBrocard.ChebyshevLucas
 import GrasGreenbergBrocard.Thm1_1Collapse
@@ -21,6 +23,9 @@ import GrasGreenbergBrocard.Lem6_3ParityFlipOsc
 import GrasGreenbergBrocard.Lem6_3ParityFlip
 import GrasGreenbergBrocard.Thm6_4CapacityDiamond
 import GrasGreenbergBrocard.Thm6_4PolarizationConcentration
+import GrasGreenbergBrocard.Sec7TaylorSeries
+import GrasGreenbergBrocard.Sec7PowerSeriesODE
+import GrasGreenbergBrocard.Sec7WronskianConcrete
 import GrasGreenbergBrocard.ExternalAxiomsSec7
 import GrasGreenbergBrocard.Sec7PadeWronskian
 import GrasGreenbergBrocard.Thm1_3Part2Counting

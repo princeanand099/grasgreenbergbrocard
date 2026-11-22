@@ -1,3 +1,5 @@
+import GrasGreenbergBrocard.PadicRegulator
+import GrasGreenbergBrocard.RealQuadField
 import GrasGreenbergBrocard.ValuationParityLayer
 import GrasGreenbergBrocard.ValuationParityVaaler
 import GrasGreenbergBrocard.ExpSumBounds
@@ -16,13 +18,16 @@ import GrasGreenbergBrocard.Prop6_2ConsecutiveSquareShift
 import GrasGreenbergBrocard.Lem6_3ParityFlip
 import GrasGreenbergBrocard.Thm6_4CapacityDiamond
 import GrasGreenbergBrocard.Thm6_4PolarizationConcentration
+import GrasGreenbergBrocard.Sec7TaylorSeries
+import GrasGreenbergBrocard.Sec7PowerSeriesODE
+import GrasGreenbergBrocard.Sec7WronskianConcrete
 import GrasGreenbergBrocard.Sec7PadeWronskian
 import GrasGreenbergBrocard.Thm1_3Part2Counting
 import GrasGreenbergBrocard.Thm8_1FreyCurves
 import GrasGreenbergBrocard.Thm8_2TatuzawaClassGroup
 
 /-!
-# Machine-Checked `#print axioms` Audit for All Public Manuscript Theorems (78 Declarations)
+# Machine-Checked `#print axioms` Audit for All Public Manuscript Theorems (92 Declarations)
 
 Running `lake build GrasGreenbergBrocard.AuditAxioms` prints the exact Lean 4 kernel axiom
 closure of every public theorem, proposition, and lemma across Sections 1–8 of the manuscript,
@@ -47,16 +52,23 @@ verifying:
 #print axioms GrasGreenbergBrocard.known_k5
 #print axioms GrasGreenbergBrocard.known_k7
 #print axioms GrasGreenbergBrocard.neg_pell_no_rat_sol
+#print axioms GrasGreenbergBrocard.exists_unique_fundamentalPell
+#print axioms GrasGreenbergBrocard.exists_unique_pell_index
 #print axioms GrasGreenbergBrocard.log_q_n_gt_point4_ge8
 #print axioms GrasGreenbergBrocard.log_fund_pell_gt_point2_ge8
 #print axioms GrasGreenbergBrocard.pell_index_upper_bound_ge8
 #print axioms GrasGreenbergBrocard.pell_index_collapse_large
 #print axioms GrasGreenbergBrocard.fundamental_regulator_quantization
 #print axioms GrasGreenbergBrocard.q_n_ne_of_solutions
+#print axioms GrasGreenbergBrocard.thm_1_1_unconditional
 #print axioms GrasGreenbergBrocard.J_n_principal_iff_k_eq_2
 #print axioms GrasGreenbergBrocard.k_eq_1_picard_identity
 #print axioms GrasGreenbergBrocard.second_stage_nonprincipal_k_eq_2
+#print axioms GrasGreenbergBrocard.J_n_pic_sq_eq_one
+#print axioms GrasGreenbergBrocard.J_n_pic_eq_one_iff_k_eq_2
+#print axioms GrasGreenbergBrocard.k_eq_1_picard_class_eq
 #print axioms GrasGreenbergBrocard.nagura_prime_in_band
+#print axioms GrasGreenbergBrocard.realQuadPadicRegVal_pell_power
 #print axioms GrasGreenbergBrocard.thm_1_2_eq_3_6_regulator_valuation
 #print axioms GrasGreenbergBrocard.thm_1_2_wieferich_congruence
 #print axioms GrasGreenbergBrocard.brocard_small_solutions_lt_116
@@ -103,6 +115,10 @@ verifying:
 #print axioms GrasGreenbergBrocard.thm_6_4_polarization_concentration
 
 -- Section 7 & Theorem 1.3(ii)
+#print axioms GrasGreenbergBrocard.canonicalMonomialTaylorFamily
+#print axioms GrasGreenbergBrocard.monomial_series_linear_indep_poly
+#print axioms GrasGreenbergBrocard.weighted_wronskian_ne_zero
+#print axioms GrasGreenbergBrocard.canonicalSupportWronskian
 #print axioms GrasGreenbergBrocard.siegel_lemma_pigeonhole
 #print axioms GrasGreenbergBrocard.lem_7_1_initial_pade_polynomials
 #print axioms GrasGreenbergBrocard.lem_7_2_monomial_product_puiseux_indep
@@ -120,6 +136,9 @@ verifying:
 #print axioms GrasGreenbergBrocard.thm_1_3_part2_degree_gap_bounds
 
 -- Section 8
+#print axioms GrasGreenbergBrocard.frobeniusTrace_freyCurveE
+#print axioms GrasGreenbergBrocard.freyE_p2_minimal_scaling
+#print axioms GrasGreenbergBrocard.frobeniusTrace_freyCurveE2
 #print axioms GrasGreenbergBrocard.thm_8_1_part1_frey_E
 #print axioms GrasGreenbergBrocard.thm_8_1_part2_level2_cm_reduction
 #print axioms GrasGreenbergBrocard.thm_8_1_part2_abc_and_hall_bounds
