@@ -429,7 +429,6 @@ theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
         have hp2 : p ^ 2 ∣ q_n n := dvd_trans (pow_dvd_pow p (by omega : 2 ≤ padicValNat p (q_n n))) pow_padicValNat_dvd
         exact hp_pr.ne_one (Nat.isUnit_iff.mp ((q_n_squarefree n) p (by simpa [sq] using hp2)))
       omega
-    -- Rewrite redeiRowOdd as sum over S_c = (ramPrimes n).filter (· ∣ c)
     unfold redeiRowOdd yMidVec
     rw [Finset.sum_coe_sort (ramPrimes n) (fun x =>
       if x = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) * (if x ∣ c then 1 else 0)
@@ -444,8 +443,7 @@ theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
       split_ifs <;> simp
     rw [hsum_eq]
     by_cases hpc : p ∣ c
-    · -- Case p ∣ c: split off p from S_c
-      have hp_Sc : p ∈ (ramPrimes n).filter (· ∣ c) := Finset.mem_filter.mpr ⟨hp_ram, hpc⟩
+    · have hp_Sc : p ∈ (ramPrimes n).filter (· ∣ c) := Finset.mem_filter.mpr ⟨hp_ram, hpc⟩
       rw [← Finset.add_sum_erase _ _ hp_Sc, if_pos rfl]
       have hrest : ∑ x ∈ ((ramPrimes n).filter (· ∣ c)).erase p,
           (if x = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) else legendreIdx p (x : ℤ)) =
@@ -474,7 +472,6 @@ theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
         exact hp_pr.ne_one (Nat.isUnit_iff.mp ((coreNat_squarefree _) p (by simpa [sq] using hp2)))
       rw [← legendreIdx_mul hp_pr (by intro h; exact hnd_q' (Int.natCast_dvd_natCast.mp (dvd_neg.mp h)))
             (by intro h; exact hnd_c' (Int.natCast_dvd_natCast.mp h))]
-      -- From (X₁+1)^2 = q_n * Y₁^2 + c * v^2, p ∣ X₁+1, divide by p:
       have hp_X1p1 : p ∣ X₁ + 1 := hp_pr.dvd_of_dvd_pow (by
         rw [hnorm]; exact dvd_add (dvd_mul_of_dvd_left hp_dvd_q _) (dvd_mul_of_dvd_left hpc _))
       obtain ⟨A₁, hA₁⟩ := hp_X1p1
@@ -487,7 +484,6 @@ theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
                 rw [Nat.mul_div_cancel' hp_dvd_q, Nat.mul_div_cancel' hpc]
             _ = p * ((q_n n / p) * Y₁ ^ 2 + (c / p) * v ^ 2) := by ring
         exact Nat.eq_of_mul_eq_mul_left hp_pr.pos h1
-      -- Divide Y₁, v by p ^ min(v_p(Y₁), v_p(v))
       set k := min (padicValNat p Y₁) (padicValNat p v)
       have hpk_Y : p ^ k ∣ Y₁ := dvd_trans (pow_dvd_pow p (min_le_left _ _)) pow_padicValNat_dvd
       have hpk_v : p ^ k ∣ v := dvd_trans (pow_dvd_pow p (min_le_right _ _)) pow_padicValNat_dvd
@@ -548,15 +544,13 @@ theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
         intro h; rcases Int.Prime.dvd_mul' hp_pr h with h1 | h2
         · exact hnd_q' (Int.natCast_dvd_natCast.mp (dvd_neg.mp h1))
         · exact hnd_c' (Int.natCast_dvd_natCast.mp h2)) hp_nd_C' hcong
-    · -- Case ¬ p ∣ c
-      have h1 : ∑ x ∈ (ramPrimes n).filter (· ∣ c),
+    · have h1 : ∑ x ∈ (ramPrimes n).filter (· ∣ c),
           (if x = p then legendreIdx p (-(q_n n / p : ℕ) : ℤ) else legendreIdx p (x : ℤ)) =
           ∑ x ∈ (ramPrimes n).filter (· ∣ c), legendreIdx p (x : ℤ) :=
         Finset.sum_congr rfl fun x hx => if_neg (fun heq => by subst heq; exact hpc (Finset.mem_filter.mp hx).2)
       rw [h1, sum_legendreIdx_eq_prod hp_pr _ (fun q hq =>
         ⟨prime_mem_ramPrimes_prime (Finset.mem_filter.mp hq).1,
          fun heq => by subst heq; exact hpc (Finset.mem_filter.mp hq).2⟩), hc_prod]
-      -- Divide X₁+1, v by p ^ min(v_p(X₁+1), v_p(v))
       set k := min (padicValNat p (X₁ + 1)) (padicValNat p v)
       have hpk_A : p ^ k ∣ X₁ + 1 := dvd_trans (pow_dvd_pow p (min_le_left _ _)) pow_padicValNat_dvd
       have hpk_v : p ^ k ∣ v := dvd_trans (pow_dvd_pow p (min_le_right _ _)) pow_padicValNat_dvd
@@ -624,7 +618,6 @@ theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
       have := oddPartNat_not_dvd_two hq_pos; omega
     have hcodd_odd : codd % 2 = 1 := by
       have := oddPartNat_not_dvd_two hc_pos; omega
-    -- Compute redeiRowTwo in terms of (v2c, codd, v2q, qodd)
     dsimp only
     rw [Finset.sum_coe_sort (ramPrimes n) (fun x =>
       (if x = 2 then (((qodd ^ 2 - 1) / 8 : ℕ) : ZMod 2)
@@ -721,7 +714,6 @@ theorem yMidVec_mem_redeiKernel {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
         have heq_S : (ramPrimes n).filter (· ∣ c) = S_odd := (Finset.erase_eq_of_notMem h2nmem).symm
         rw [heq_S, hodd_part, hv2c_eq0]; push_cast; ring
     rw [hsum_val]
-    -- Reduce (X₁ + 1)^2 = q_n * Y₁^2 + c * v^2 by 2^k where k = min(v_2(X₁+1), v_2(Y₁), v_2(v))
     set k := min (padicValNat 2 (X₁ + 1)) (min (padicValNat 2 Y₁) (padicValNat 2 v))
     have h2k_A : 2 ^ k ∣ X₁ + 1 := dvd_trans (pow_dvd_pow 2 (min_le_left _ _)) pow_padicValNat_dvd
     have h2k_B : 2 ^ k ∣ Y₁ := dvd_trans (pow_dvd_pow 2 (le_trans (min_le_right _ _) (min_le_left _ _))) pow_padicValNat_dvd
@@ -818,15 +810,14 @@ directly from the Pell equation), there is an exact sequence of `𝔽₂`-vector
 `0 → span_{𝔽₂}{y^{mid}} → ker_{𝔽₂}(R_n^{ram}) → Cl^+(q_n)[2] ∩ 2 Cl^+(q_n) → 0`,
 and consequently `dim_{𝔽₂} ker_{𝔽₂}(R_n^{ram}) = 1 + rank₄ Cl^+(q_n)`. -/
 theorem thm_5_3_part1_cohomology_4rank {n X₁ Y₁ : ℕ} (hn : 8 ≤ n)
+    [Fact (¬ IsSquare (q_n n : ℚ))]
     (hfund : IsFundamentalPell (q_n n) X₁ Y₁) :
-    letI : Fact (¬ IsSquare (q_n n : ℚ)) := ⟨q_n_not_isSquare_rat hn⟩
     let yMid : redeiKernel n := ⟨yMidVec n X₁, yMidVec_mem_redeiKernel hn hfund⟩
     ∃ psiPlus : redeiKernel n →ₗ[ZMod 2] Cl4RankVec (q_n n),
       Function.Surjective psiPlus ∧
       LinearMap.ker psiPlus = Submodule.span (ZMod 2) {yMid} ∧
       Module.finrank (ZMod 2) (redeiKernel n) = 1 + narrow4Rank n := by
   dsimp only
-  haveI : Fact (¬ IsSquare (q_n n : ℚ)) := ⟨q_n_not_isSquare_rat hn⟩
   have hyMid_mem := yMidVec_mem_redeiKernel hn hfund
   have hyMid_ne := yMidVec_ne_zero hn hfund
   set yMid : redeiKernel n := ⟨yMidVec n X₁, hyMid_mem⟩
