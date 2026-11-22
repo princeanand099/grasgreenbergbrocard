@@ -12,24 +12,25 @@ Picard group `CommRing.Pic (Zsqrtd (-(q_n n : ℤ)))` (via `ClassGroup.equivPic`
 - `J_n_sq_eq`: in `O_n^- = ℤ[√(-q_n)]`, `(m, 1 + s_n √(-q_n))^2 = (1 + s_n √(-q_n))`
 - `J_n_mul_conj_eq`: `𝔍_n * 𝔍_n̄ = (m)`, establishing invertibility of `𝔍_n` as a fractional ideal
 - `J_n_class`, `J_n_pic`: genuine elements `[𝔍_n] ∈ ClassGroup O_n^-` and `CommRing.Pic O_n^-`
-- `J_n_pic_sq_eq_one`: `[𝔍_n]^2 = 1` in `ClassGroup O_n^-` and `Pic(O_n^-)`
-- `J_n_pic_eq_one_iff_k_eq_2`: `[𝔍_n] = 1 ⟺ k = 2`
+- `J_n_class_sq_eq_one`, `J_n_pic_sq_eq_one`: `[𝔍_n]^2 = 1` in `ClassGroup O_n^-` and `Pic(O_n^-)`
+- `J_n_class_eq_one_iff_k_eq_2`, `J_n_pic_eq_one_iff_k_eq_2`: `[𝔍_n] = 1 ⟺ k = 2`
 - `k_eq_1_picard_class_eq`: in the `k = 1` regime, `[𝔍_n] = [(δ₂, √(-q_n))]` in `Pic(O_n^-)`
-- `second_stage_nonprincipal_k_eq_2`: in the `k = 2` regime, `1 + Y₁ √(-q_n)` is not `±(u + v√(-q_n))^2`
+- `second_stage_nonprincipal_k_eq_2` & `second_stage_class_ne_one`: in the `k = 2` regime,
+  `1 + Y₁ √(-q_n)` is not `±(u + v√(-q_n))^2` and `[𝔍_n^(2)] ≠ 1` in `Pic(O_n^-)` (for odd `X₁`)
 -/
 
 namespace GrasGreenbergBrocard
 
-@[simp] private lemma zsqrtd_mul_re' (D : ℤ) (x y : Zsqrtd D) :
+@[simp] private lemma zsqrtd_mul_re' {D : ℤ} (x y : Zsqrtd D) :
     (x * y).re = x.re * y.re + D * x.im * y.im := by ring_nf; rfl
 
-@[simp] private lemma zsqrtd_natCast_re (D : ℤ) (a : ℕ) : ((a : Zsqrtd D)).re = (a : ℤ) := rfl
+@[simp] private lemma zsqrtd_natCast_re {D : ℤ} (a : ℕ) : ((a : Zsqrtd D)).re = (a : ℤ) := rfl
 
-@[simp] private lemma zsqrtd_natCast_im (D : ℤ) (a : ℕ) : ((a : Zsqrtd D)).im = 0 := rfl
+@[simp] private lemma zsqrtd_natCast_im {D : ℤ} (a : ℕ) : ((a : Zsqrtd D)).im = 0 := rfl
 
-@[simp] private lemma zsqrtd_neg_re (D : ℤ) (x : Zsqrtd D) : (-x).re = -x.re := rfl
+@[simp] private lemma zsqrtd_neg_re {D : ℤ} (x : Zsqrtd D) : (-x).re = -x.re := rfl
 
-@[simp] private lemma zsqrtd_mul_im' (D : ℤ) (x y : Zsqrtd D) :
+@[simp] private lemma zsqrtd_mul_im' {D : ℤ} (x y : Zsqrtd D) :
     (x * y).im = x.re * y.im + x.im * y.re := by ring_nf; rfl
 
 /-- For every `D ≥ 1`, `ℤ[√(-D)]` is an integral domain (`IsDomain`), proved directly from
@@ -112,11 +113,13 @@ theorem J_n_sq_eq {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2) 
   have hαβ : α * β = ((m : R) ^ 2) := by
     rw [sq]
     ext
-    · simp only [α, β, zsqrtd_mul_re', zsqrtd_natCast_re, zsqrtd_natCast_im]
+    · dsimp only [α, β, R]
+      rw [zsqrtd_mul_re', zsqrtd_mul_re', zsqrtd_natCast_re, zsqrtd_natCast_im]
       have h1 : (m : ℤ) ^ 2 = (q_n n : ℤ) * (s_n n : ℤ) ^ 2 + 1 := by
         exact_mod_cast (by linarith : m ^ 2 = q_n n * (s_n n) ^ 2 + 1)
-      linarith
-    · simp only [α, β, zsqrtd_mul_im', zsqrtd_natCast_re, zsqrtd_natCast_im]
+      nlinarith
+    · dsimp only [α, β, R]
+      rw [zsqrtd_mul_im', zsqrtd_mul_im', zsqrtd_natCast_re, zsqrtd_natCast_im]
       ring
   have hsum_2 : α + β = (2 : R) := by
     ext
@@ -177,11 +180,13 @@ theorem J_n_mul_conj_eq {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 = m
   have hαβ : α * β = ((m : R) ^ 2) := by
     rw [sq]
     ext
-    · simp only [α, β, zsqrtd_mul_re', zsqrtd_natCast_re, zsqrtd_natCast_im]
+    · dsimp only [α, β, R]
+      rw [zsqrtd_mul_re', zsqrtd_mul_re', zsqrtd_natCast_re, zsqrtd_natCast_im]
       have h1 : (m : ℤ) ^ 2 = (q_n n : ℤ) * (s_n n : ℤ) ^ 2 + 1 := by
         exact_mod_cast (by linarith : m ^ 2 = q_n n * (s_n n) ^ 2 + 1)
-      linarith
-    · simp only [α, β, zsqrtd_mul_im', zsqrtd_natCast_re, zsqrtd_natCast_im]
+      nlinarith
+    · dsimp only [α, β, R]
+      rw [zsqrtd_mul_im', zsqrtd_mul_im', zsqrtd_natCast_re, zsqrtd_natCast_im]
       ring
   have hsum_2 : α + β = (2 : R) := by
     ext
@@ -463,7 +468,7 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
         rw [h2u]
         have hcast : ((c₁ * (2 * (u : ℤ)) + c₂ * (m : ℤ) : ℤ) : R) =
             (c₁ : R) * ((2 * (u : ℤ) : ℤ) : R) + (c₂ : R) * (m : R) := by
-          rw [Int.cast_add, Int.cast_mul, Int.cast_mul, Int.cast_natCast]
+          simp only [Int.cast_add, Int.cast_mul, Int.cast_ofNat, Int.cast_natCast]
         rw [← hcast, hc]; simp
       have hz_eq : z = (c₁ : R) * (z ^ 2 + (m : R)) + (c₂ : R) * (z * (m : R)) := by
         calc z = z * 1 := (mul_one z).symm
@@ -563,8 +568,9 @@ lemma one_le_q_n (n : ℕ) : 1 ≤ q_n n := by
   exact Nat.succ_le_of_lt (Finset.prod_pos (fun q hq => by
     unfold Podd at hq; exact (Finset.mem_filter.mp hq).2.1.pos))
 
-/-- Top-level `IsDomain` instance for `ℤ[√(-q_n)]`. -/
-instance zsqrtd_neg_q_n_isDomain (n : ℕ) : IsDomain (Zsqrtd (-(q_n n : ℤ))) :=
+/-- `IsDomain` proof for `ℤ[√(-q_n)]` (kept as a lemma rather than a global instance to avoid
+typeclass-search unfolding of `q_n`). -/
+lemma zsqrtd_neg_q_n_isDomain (n : ℕ) : IsDomain (Zsqrtd (-(q_n n : ℤ))) :=
   zsqrtd_neg_isDomain (one_le_q_n n)
 
 /-- Generic helper: given integral ideals `I, J` of a domain `R` with `I * J = Ideal.span {d}`
@@ -601,8 +607,8 @@ def fracUnitToClass {R : Type*} [CommRing R] [IsDomain R] :
 
 lemma fracUnitToClass_eq_one_iff_mem {R : Type*} [CommRing R] [IsDomain R]
     (u : (FractionalIdeal (nonZeroDivisors R) (FractionRing R))ˣ) :
-    fracUnitToClass u = 1 ↔ u ∈ (toPrincipalIdeal R (FractionRing R)).range := by
-  rw [← MonoidHom.mem_ker, fracUnitToClass, QuotientGroup.ker_mk']
+    fracUnitToClass u = 1 ↔ u ∈ (toPrincipalIdeal R (FractionRing R)).range :=
+  QuotientGroup.eq_one_iff u
 
 /-- An integral ideal unit `u` (with `u.val = (I : FractionalIdeal S K)`) has trivial class in
 `ClassGroup R` if and only if `I` is a principal ideal of `R`. -/
@@ -614,17 +620,19 @@ lemma fracUnitToClass_eq_one_iff {R : Type*} [CommRing R] [IsDomain R]
   rw [fracUnitToClass_eq_one_iff_mem]
   constructor
   · rintro ⟨x, hx⟩
-    have hx_val : FractionalIdeal.spanSingleton S (x : K) = (I : FractionalIdeal S K) :=
-      congrArg Units.val hx
+    have hx_val : FractionalIdeal.spanSingleton S (x : K) = (I : FractionalIdeal S K) := by
+      have h := congrArg Units.val hx
+      simpa [coe_toPrincipalIdeal, invertibleIdealToFracUnit] using h
     have hx_mem : (x : K) ∈ (I : FractionalIdeal S K) := by
       rw [← hx_val]
       exact FractionalIdeal.mem_spanSingleton_self S (x : K)
     rcases (FractionalIdeal.mem_coeIdeal S).mp hx_mem with ⟨z, hzI, hzx⟩
-    refine ⟨z, le_antisymm ?_ (Ideal.span_singleton_le_iff_mem.mpr hzI)⟩
+    refine ⟨z, le_antisymm ?_ (by rwa [Ideal.span_singleton_le_iff_mem])⟩
     intro r hr
     have hr_mem : algebraMap R K r ∈ FractionalIdeal.spanSingleton S (x : K) := by
       rw [hx_val]; exact (FractionalIdeal.mem_coeIdeal S).mpr ⟨r, hr, rfl⟩
-    rcases FractionalIdeal.mem_spanSingleton.mp hr_mem with ⟨c, hc⟩
+    rw [FractionalIdeal.mem_spanSingleton] at hr_mem
+    rcases hr_mem with ⟨c, hc⟩
     rw [← hzx, Algebra.smul_def, ← map_mul] at hc
     have hrz : c * z = r := IsFractionRing.injective R K hc
     exact Ideal.mem_span_singleton.mpr ⟨c, by rw [mul_comm, hrz]⟩
@@ -638,17 +646,17 @@ lemma fracUnitToClass_eq_one_iff {R : Type*} [CommRing R] [IsDomain R]
       intro h0; exact hz_ne (IsFractionRing.injective R K (by simpa using h0))
     refine ⟨Units.mk0 (algebraMap R K z) hzK, ?_⟩
     apply Units.ext
-    change FractionalIdeal.spanSingleton S (algebraMap R K z) = (I : FractionalIdeal S K)
-    rw [hz, FractionalIdeal.coeIdeal_span_singleton]
+    simpa [coe_toPrincipalIdeal, invertibleIdealToFracUnit, hz, FractionalIdeal.coeIdeal_span_singleton]
 
 /-- The genuine ideal class `[𝔍_n] ∈ ClassGroup (ℤ[√(-q_n)])` of `𝔍_n = (m, 1 + s_n √(-q_n))`. -/
 def J_n_class {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2) :
     ClassGroup (Zsqrtd (-(q_n n : ℤ))) :=
+  letI : IsDomain (Zsqrtd (-(q_n n : ℤ))) := zsqrtd_neg_q_n_isDomain n
   have hm_ne : (m : Zsqrtd (-(q_n n : ℤ))) ≠ 0 := by
     intro h0
     have hm0 : m = 0 := by
       have := congrArg Zsqrtd.re h0
-      rw [zsqrtd_natCast_re, Zsqrtd.zero_re] at this
+      change (m : ℤ) = 0 at this
       exact_mod_cast this
     rw [hm0] at hm; simp at hm
   fracUnitToClass (invertibleIdealToFracUnit
@@ -659,13 +667,14 @@ def J_n_class {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2) :
 /-- The genuine Picard class `[𝔍_n] ∈ CommRing.Pic (ℤ[√(-q_n)])` via `ClassGroup.equivPic`. -/
 def J_n_pic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2) :
     CommRing.Pic (Zsqrtd (-(q_n n : ℤ))) :=
-  ClassGroup.equivPic (Zsqrtd (-(q_n n : ℤ))) (J_n_class hn hm)
+  @ClassGroup.equivPic (Zsqrtd (-(q_n n : ℤ))) _ (zsqrtd_neg_q_n_isDomain n) (J_n_class hn hm)
 
 /-- **Proposition 3.3 (Picard 2-Torsion)**: `[𝔍_n]^2 = 1` in `ClassGroup (ℤ[√(-q_n)])`
 and in `CommRing.Pic (ℤ[√(-q_n)])`. -/
 theorem J_n_pic_sq_eq_one {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2) :
     (J_n_class hn hm) ^ 2 = 1 ∧ (J_n_pic hn hm) ^ 2 = 1 := by
   set R := Zsqrtd (-(q_n n : ℤ))
+  letI : IsDomain R := zsqrtd_neg_q_n_isDomain n
   have hcls : (J_n_class hn hm) ^ 2 = 1 := by
     unfold J_n_class
     rw [← map_pow, fracUnitToClass_eq_one_iff_mem]
@@ -676,9 +685,8 @@ theorem J_n_pic_sq_eq_one {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 =
     refine ⟨Units.mk0 (algebraMap R (FractionRing R) ⟨1, (s_n n : ℤ)⟩) hαK, ?_⟩
     apply Units.ext
     rw [Units.val_pow_eq_pow_val]
-    change FractionalIdeal.spanSingleton (nonZeroDivisors R) (algebraMap R (FractionRing R) ⟨1, (s_n n : ℤ)⟩) =
-      ((Ideal.span {(m : R), ⟨1, (s_n n : ℤ)⟩} : FractionalIdeal (nonZeroDivisors R) (FractionRing R)) ^ 2)
-    rw [← FractionalIdeal.coeIdeal_pow, J_n_sq_eq hn hm, FractionalIdeal.coeIdeal_span_singleton]
+    simpa [coe_toPrincipalIdeal, invertibleIdealToFracUnit, ← FractionalIdeal.coeIdeal_pow,
+      J_n_sq_eq hn hm, FractionalIdeal.coeIdeal_span_singleton]
   refine ⟨hcls, ?_⟩
   unfold J_n_pic
   rw [← map_pow, hcls, map_one]
@@ -691,6 +699,7 @@ theorem J_n_pic_eq_one_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
     (J_n_pic hn hm = 1) ↔
       (∃ u v : ℕ, 0 < u ∧ 0 < v ∧ u ^ 2 = q_n n * v ^ 2 + 1 ∧
         (m : ℝ) + (s_n n : ℝ) * Real.sqrt (q_n n : ℝ) = ((u : ℝ) + (v : ℝ) * Real.sqrt (q_n n : ℝ)) ^ 2) := by
+  letI : IsDomain (Zsqrtd (-(q_n n : ℤ))) := zsqrtd_neg_q_n_isDomain n
   unfold J_n_pic
   rw [MulEquiv.map_eq_one_iff]
   unfold J_n_class
@@ -711,9 +720,10 @@ theorem k_eq_1_picard_class_eq {n m δ₁ δ₂ z₁ z₂ : ℕ} (hn : 4 ≤ n)
     let Iδ : Ideal R := Ideal.span {(δ₂ : R), ⟨0, 1⟩}
     Iδ * Iδ = Ideal.span {(δ₂ : R)} ∧
     ∃ (hδ2 : (δ₂ : R) ≠ 0) (hsq : Iδ * Iδ = Ideal.span {(δ₂ : R)}),
-      ClassGroup.equivPic R (fracUnitToClass (invertibleIdealToFracUnit Iδ Iδ (δ₂ : R) hδ2 hsq)) =
+      @ClassGroup.equivPic R _ (zsqrtd_neg_q_n_isDomain n) (@fracUnitToClass R _ (zsqrtd_neg_q_n_isDomain n) (@invertibleIdealToFracUnit R _ (zsqrtd_neg_q_n_isDomain n) Iδ Iδ (δ₂ : R) hδ2 hsq)) =
         J_n_pic hn hm := by
   set R := Zsqrtd (-(q_n n : ℤ))
+  letI : IsDomain R := zsqrtd_neg_q_n_isDomain n
   set Iδ : Ideal R := Ideal.span {(δ₂ : R), ⟨0, 1⟩}
   have hq_pos : 0 < q_n n := one_le_q_n n
   have hδ2_pos : 0 < δ₂ := by
@@ -724,7 +734,7 @@ theorem k_eq_1_picard_class_eq {n m δ₁ δ₂ z₁ z₂ : ℕ} (hn : 4 ≤ n)
   have hδ2_ne : (δ₂ : R) ≠ 0 := by
     intro h0
     have := congrArg Zsqrtd.re h0
-    rw [zsqrtd_natCast_re, Zsqrtd.zero_re] at this
+    change (_ : ℤ) = 0 at this
     have hd0 : δ₂ = 0 := by exact_mod_cast this
     omega
   have hcop_δ : IsCoprime (δ₁ : ℤ) (δ₂ : ℤ) := by
@@ -780,7 +790,7 @@ theorem k_eq_1_picard_class_eq {n m δ₁ δ₂ z₁ z₂ : ℕ} (hn : 4 ≤ n)
   have hm_ne : (m : R) ≠ 0 := by
     intro h0
     have := congrArg Zsqrtd.re h0
-    rw [zsqrtd_natCast_re, Zsqrtd.zero_re] at this
+    change (_ : ℤ) = 0 at this
     have hm0 : m = 0 := by exact_mod_cast this
     rw [hm0] at hm; simp at hm
   set uJ := invertibleIdealToFracUnit
@@ -793,17 +803,17 @@ theorem k_eq_1_picard_class_eq {n m δ₁ δ₂ z₁ z₂ : ℕ} (hn : 4 ≤ n)
     refine ⟨Units.mk0 (algebraMap R (FractionRing R) (δ₂ : R)) hδK, ?_⟩
     apply Units.ext
     rw [Units.val_pow_eq_pow_val]
-    change FractionalIdeal.spanSingleton _ _ = ((Iδ : FractionalIdeal _ _) ^ 2)
-    rw [← FractionalIdeal.coeIdeal_pow, sq, hIδ_sq, FractionalIdeal.coeIdeal_span_singleton]
+    simpa [coe_toPrincipalIdeal, invertibleIdealToFracUnit, ← FractionalIdeal.coeIdeal_pow,
+      sq, hIδ_sq, FractionalIdeal.coeIdeal_span_singleton]
   set w : R := ⟨(δ₂ : ℤ) * (z₂ : ℤ), (z₁ : ℤ)⟩
   have hw_sq : w ^ 2 = (δ₂ : R) * ⟨1, (s_n n : ℤ)⟩ := (k_eq_1_picard_identity h1 h2 hq hs).symm
   have hw_conj : w * ⟨(δ₂ : ℤ) * (z₂ : ℤ), -(z₁ : ℤ)⟩ = (δ₂ : R) * (m : R) := by
     ext
-    · simp only [w, zsqrtd_mul_re', zsqrtd_natCast_re, zsqrtd_natCast_im]
+    · simp only [w, R, zsqrtd_mul_re', zsqrtd_natCast_re, zsqrtd_natCast_im]
       have hqz : (q_n n : ℤ) = (δ₁ : ℤ) * (δ₂ : ℤ) := by exact_mod_cast hq.symm
       have hm_sum : (δ₂ : ℤ) * (z₂ : ℤ) ^ 2 + (δ₁ : ℤ) * (z₁ : ℤ) ^ 2 = (m : ℤ) := by linarith
       rw [hqz]; linear_combination (δ₂ : ℤ) * hm_sum
-    · simp only [w, zsqrtd_mul_im', zsqrtd_natCast_re, zsqrtd_natCast_im]; ring
+    · simp only [w, R, zsqrtd_mul_im', zsqrtd_natCast_re, zsqrtd_natCast_im]; ring
   have hprod_eq : Iδ * Ideal.span {(m : R), ⟨1, (s_n n : ℤ)⟩} = Ideal.span {w} := by
     apply le_antisymm
     · rw [Ideal.span_mul_span]
@@ -816,18 +826,18 @@ theorem k_eq_1_picard_class_eq {n m δ₁ δ₂ z₁ z₂ : ℕ} (hn : 4 ≤ n)
       · rw [← hw_sq, sq]; exact Ideal.mem_span_singleton.mpr ⟨w, rfl⟩
       · refine Ideal.mem_span_singleton.mpr ⟨⟨(δ₁ : ℤ) * (z₁ : ℤ), (z₂ : ℤ)⟩, ?_⟩
         ext
-        · simp only [w, zsqrtd_mul_re', zsqrtd_natCast_re, zsqrtd_natCast_im]
+        · simp only [w, R, zsqrtd_mul_re', zsqrtd_natCast_re, zsqrtd_natCast_im]
           have hqz : (q_n n : ℤ) = (δ₁ : ℤ) * (δ₂ : ℤ) := by exact_mod_cast hq.symm
           rw [hqz]; ring
-        · simp only [w, zsqrtd_mul_im', zsqrtd_natCast_re, zsqrtd_natCast_im]
+        · simp only [w, R, zsqrtd_mul_im', zsqrtd_natCast_re, zsqrtd_natCast_im]
           linarith
       · refine Ideal.mem_span_singleton.mpr ⟨⟨-(δ₁ : ℤ) * (z₁ : ℤ), (z₂ : ℤ)⟩, ?_⟩
         ext
-        · simp only [w, zsqrtd_mul_re', zsqrtd_natCast_re, zsqrtd_natCast_im]
+        · simp only [w, R, zsqrtd_mul_re', zsqrtd_natCast_re, zsqrtd_natCast_im]
           have hqz : (q_n n : ℤ) = (δ₁ : ℤ) * (δ₂ : ℤ) := by exact_mod_cast hq.symm
           have hsz : (s_n n : ℤ) = 2 * (z₁ : ℤ) * (z₂ : ℤ) := by exact_mod_cast hs.symm
           rw [hqz, hsz]; ring
-        · simp only [w, zsqrtd_mul_im', zsqrtd_natCast_re, zsqrtd_natCast_im]
+        · simp only [w, R, zsqrtd_mul_im', zsqrtd_natCast_re, zsqrtd_natCast_im]
           linarith
     · rw [Ideal.span_singleton_le_iff_mem]
       have hcop_w : IsCoprime (2 * (δ₂ : ℤ) * (z₂ : ℤ)) (m : ℤ) := by
@@ -841,7 +851,7 @@ theorem k_eq_1_picard_class_eq {n m δ₁ δ₂ z₁ z₂ : ℕ} (hn : 4 ≤ n)
         rw [hsum]
         have hcast : ((c₁ * (2 * (δ₂ : ℤ) * (z₂ : ℤ)) + c₂ * (m : ℤ) : ℤ) : R) =
             (c₁ : R) * ((2 * (δ₂ : ℤ) * (z₂ : ℤ) : ℤ) : R) + (c₂ : R) * (m : R) := by
-          rw [Int.cast_add, Int.cast_mul, Int.cast_mul, Int.cast_natCast]
+          simp only [Int.cast_add, Int.cast_mul, Int.cast_ofNat, Int.cast_natCast]
         rw [← hcast, hc]; simp
       have hw_eq : w = (c₁ : R) * (w ^ 2 + (δ₂ : R) * (m : R)) + (c₂ : R) * (w * (m : R)) := by
         calc w = w * 1 := (mul_one w).symm
@@ -872,7 +882,7 @@ theorem k_eq_1_picard_class_eq {n m δ₁ δ₂ z₁ z₂ : ℕ} (hn : 4 ≤ n)
     have hsq0 : w ^ 2 = 0 := by rw [h0]; ring
     rw [hw_sq] at hsq0
     have hre := congrArg Zsqrtd.re hsq0
-    simp only [zsqrtd_mul_re', zsqrtd_natCast_re, zsqrtd_natCast_im, Zsqrtd.zero_re] at hre
+    change ((δ₂ : ℤ) * 1 + (-(q_n n : ℤ)) * 0 * (s_n n : ℤ)) = 0 at hre
     omega
   have hprod_one : fracUnitToClass uδ * fracUnitToClass uJ = 1 := by
     rw [← map_mul, fracUnitToClass_eq_one_iff_mem]
@@ -881,8 +891,8 @@ theorem k_eq_1_picard_class_eq {n m δ₁ δ₂ z₁ z₂ : ℕ} (hn : 4 ≤ n)
     refine ⟨Units.mk0 (algebraMap R (FractionRing R) w) hwK, ?_⟩
     apply Units.ext
     rw [Units.val_mul]
-    change FractionalIdeal.spanSingleton _ _ = (Iδ : FractionalIdeal _ _) * _
-    rw [← FractionalIdeal.coeIdeal_mul, hprod_eq, FractionalIdeal.coeIdeal_span_singleton]
+    simpa [coe_toPrincipalIdeal, invertibleIdealToFracUnit, ← FractionalIdeal.coeIdeal_mul,
+      hprod_eq, FractionalIdeal.coeIdeal_span_singleton]
   have huδ_eq : fracUnitToClass uδ = (fracUnitToClass uδ)⁻¹ := by
     rw [eq_inv_iff_mul_eq_one, ← sq]; exact huδ_sq
   have hJ_eq : fracUnitToClass uJ = (fracUnitToClass uδ)⁻¹ := by
