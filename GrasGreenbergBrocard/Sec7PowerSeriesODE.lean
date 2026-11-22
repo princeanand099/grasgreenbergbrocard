@@ -145,8 +145,8 @@ theorem psDeriv_quot_eq_zero {a b : PowerSeries ℚ} (hb : b ≠ 0)
       have hk0 : k₀ = 0 := by omega
       simp [hn0, hk0]
     · have hcoeff := congrArg (PowerSeries.coeff (n + k₀ - 1)) hd
-      simp only [PowerSeries.coeff_mul, Finset.Nat.sum_antidiagonal_eq_sum_range_succ,
-        coeff_psDeriv] at hcoeff
+      simp only [PowerSeries.coeff_mul, coeff_psDeriv] at hcoeff
+      rw [Finset.Nat.sum_antidiagonal_eq_sum_range_succ, Finset.Nat.sum_antidiagonal_eq_sum_range_succ] at hcoeff
       have hlhs : ∑ u ∈ Finset.range (n + k₀ - 1 + 1),
           ((u + 1 : ℕ) : ℚ) * PowerSeries.coeff (u + 1) d * PowerSeries.coeff (n + k₀ - 1 - u) b =
           (n : ℚ) * PowerSeries.coeff n d * PowerSeries.coeff k₀ b := by
@@ -173,7 +173,7 @@ theorem psDeriv_quot_eq_zero {a b : PowerSeries ℚ} (hb : b ≠ 0)
           PowerSeries.coeff u d * (((n + k₀ - 1 - u + 1 : ℕ) : ℚ) * PowerSeries.coeff (n + k₀ - 1 - u + 1) b) =
           PowerSeries.coeff n d * ((k₀ : ℚ) * PowerSeries.coeff k₀ b) := by
         by_cases hk0 : k₀ = 0
-        · subst hk0
+        · rw [hk0]
           simp only [Nat.cast_zero, zero_mul, mul_zero]
           apply Finset.sum_eq_zero
           intro u hu
@@ -303,9 +303,8 @@ lemma unscaledFactorSeries_ode {e r j : ℕ} (hr : 1 ≤ r) :
   ext k
   have hlin : (((1 - Polynomial.C (j : ℚ) * Polynomial.X : Polynomial ℚ) : PowerSeries ℚ)) =
       1 - PowerSeries.C (j : ℚ) * PowerSeries.X := by
-    simp
-  rw [hlin, sub_mul, one_mul, map_sub, PowerSeries.coeff_C_mul, PowerSeries.coeff_C_mul]
-  rw [mul_assoc, PowerSeries.coeff_C_mul]
+    simp [Polynomial.coe_sub, Polynomial.coe_mul, Polynomial.coe_C, Polynomial.coe_X]
+  rw [hlin, sub_mul, one_mul, mul_assoc, map_sub, PowerSeries.coeff_C_mul, PowerSeries.coeff_C_mul]
   cases k with
   | zero =>
     simp only [PowerSeries.coeff_zero_X_mul, mul_zero, sub_zero, coeff_psDeriv, hstep 0]
@@ -352,11 +351,11 @@ lemma unscaledMonomialSeries_zero {d : ℕ} (r : ℕ) (β : Fin d → ℕ) :
 `unscaledMonomialSeries` (in `PowerSeries ℚ`). -/
 lemma clearedMonomialSeries_coeff_eq_scaled {d : ℕ} {r : ℕ} (hr : 1 ≤ r)
     (β e : Fin d → ℕ) (k : ℕ) :
-    (PowerSeries.coeff k (clearedMonomialSeries r β e) : ℚ) =
+    (PowerSeries.coeff (R := ℤ) k (clearedMonomialSeries r β e) : ℚ) =
       (r : ℚ) ^ (2 * k) * PowerSeries.coeff k (unscaledMonomialSeries r β e) := by
-  have hprod_scale : ∀ {ι : Type*} (s : Finset ι) (f : ι → PowerSeries ℤ) (g : ι → PowerSeries ℚ),
-      (∀ a ∈ s, ∀ n, (PowerSeries.coeff n (f a) : ℚ) = (r : ℚ) ^ (2 * n) * PowerSeries.coeff n (g a)) →
-      ∀ n, (PowerSeries.coeff n (∏ a ∈ s, f a) : ℚ) = (r : ℚ) ^ (2 * n) * PowerSeries.coeff n (∏ a ∈ s, g a) := by
+  have hprod_scale : ∀ {ι : Type} (s : Finset ι) (f : ι → PowerSeries ℤ) (g : ι → PowerSeries ℚ),
+      (∀ a ∈ s, ∀ n, (PowerSeries.coeff (R := ℤ) n (f a) : ℚ) = (r : ℚ) ^ (2 * n) * PowerSeries.coeff n (g a)) →
+      ∀ n, (PowerSeries.coeff (R := ℤ) n (∏ a ∈ s, f a) : ℚ) = (r : ℚ) ^ (2 * n) * PowerSeries.coeff n (∏ a ∈ s, g a) := by
     classical
     intro ι s f g hfg
     induction s using Finset.induction_on with
@@ -438,7 +437,7 @@ lemma natDegree_T_int_le (r M : ℕ) : (T_int r M).natDegree ≤ M := by
         refine le_trans (Polynomial.natDegree_sub_le _ _) (max_le (by simp) ?_)
         refine le_trans Polynomial.natDegree_mul_le ?_; simp
     _ = (Finset.Ico 1 M).card := by simp
-    _ ≤ M := by simp; omega
+    _ ≤ M := by simp
 
 lemma natDegree_TA_int_le {d : ℕ} (M : ℕ) (β e : Fin d → ℕ) :
     (TA_int M β e).natDegree ≤ M := by
@@ -461,7 +460,14 @@ lemma natDegree_TA_int_le {d : ℕ} (M : ℕ) (β e : Fin d → ℕ) :
         refine le_trans Polynomial.natDegree_mul_le ?_; simp
     _ = ((Finset.Ico 1 M).erase j).card := by simp
     _ ≤ (Finset.Ico 1 M).card := Finset.card_erase_le
-    _ ≤ M := by simp; omega
+    _ ≤ M := by simp
+
+private lemma poly_coe_sum {ι : Type*} (s : Finset ι) (f : ι → Polynomial ℚ) :
+    ((∑ i ∈ s, f i : Polynomial ℚ) : PowerSeries ℚ) = ∑ i ∈ s, (f i : PowerSeries ℚ) := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => simp
+  | insert a s ha ih => rw [Finset.sum_insert ha, Finset.sum_insert ha, Polynomial.coe_add, ih]
 
 /-- **Exact First-Order Rational ODE for `unscaledMonomialSeries`**:
 `T_rat r M * psDeriv (Ω_e) = TA_rat M β e * Ω_e`. -/
@@ -503,12 +509,11 @@ theorem unscaledMonomialSeries_ode {d r M : ℕ} (hr : 1 ≤ r) (β e : Fin d �
           congr 1
           rw [mul_comm _ (Polynomial.C _), ← mul_assoc, ← Polynomial.C_mul]
           congr 1
-          rw [show (r : ℚ) * ((e i : ℚ) * (j : ℚ) / (r : ℚ)) = (e i : ℚ) * (j : ℚ) by field_simp [hr_ne]]
-          simp [Polynomial.C_mul]
+          rw [show (e i : ℚ) * (j : ℚ) / (r : ℚ) * (r : ℚ) = (e i : ℚ) * (j : ℚ) by field_simp [hr_ne], Polynomial.C_mul]
         rw [← mul_assoc, hC_eq])
     rw [hinner]
     congr 1
-    rw [Finset.mul_sum, Polynomial.coe_sum]
+    rw [Finset.mul_sum, poly_coe_sum]
     apply Finset.sum_congr rfl; intro j _
     simp [mul_assoc]
   have houter := psDeriv_finset_prod_ode (Finset.univ : Finset (Fin d)) (T_rat r M : PowerSeries ℚ)
@@ -517,7 +522,7 @@ theorem unscaledMonomialSeries_ode {d r M : ℕ} (hr : 1 ≤ r) (β e : Fin d �
         ∏ ℓ ∈ (Finset.Ico 1 M).erase j, (1 - Polynomial.C (ℓ : ℚ) * Polynomial.X) : Polynomial ℚ) :
       PowerSeries ℚ))
     (fun i _ => h1 i)
-  rw [houter, TA_rat_eq, Polynomial.coe_sum]
+  rw [houter, TA_rat_eq, poly_coe_sum]
 
 /-! ### Part 3: Concrete Lemma 7.2 (`Polynomial ℚ`-Linear Independence of Monomial Products) -/
 
@@ -728,7 +733,7 @@ theorem monomial_series_linear_indep_poly {d E r M : ℕ}
               · subst hi
                 rw [← sub_mul]
                 have hinner : ∑ j ∈ Finset.Ico 1 (β iStar),
-                    (Polynomial.C (j : ℚ) * ∏ ℓ ∈ (Finset.Ico 1 M).erase j,
+                    (j : ℚ) * (∏ ℓ ∈ (Finset.Ico 1 M).erase j,
                       (1 - Polynomial.C (ℓ : ℚ) * Polynomial.X)).eval α =
                     (jStar : ℚ) * P_rest.eval α := by
                   have hj_in : jStar ∈ Finset.Ico 1 (β iStar) :=
@@ -736,10 +741,10 @@ theorem monomial_series_linear_indep_poly {d E r M : ℕ}
                   rw [Finset.sum_eq_single jStar]
                   · simp [P_rest]
                   · intro j hj hne
-                    simp only [Polynomial.eval_mul, Polynomial.eval_C, Polynomial.eval_prod]
+                    rw [Polynomial.eval_prod]
                     have hzero_prod : ∏ ℓ ∈ (Finset.Ico 1 M).erase j,
                         (1 - Polynomial.C (ℓ : ℚ) * Polynomial.X).eval α = 0 := by
-                      apply Finset.prod_eq_zero (i := jStar) (Finset.mem_erase.mpr ⟨hne.symm, hjStar_mem⟩)
+                      apply Finset.prod_eq_zero (i := jStar) (Finset.mem_erase.mpr ⟨Ne.symm hne, hjStar_mem⟩)
                       simp only [Polynomial.eval_sub, Polynomial.eval_one, Polynomial.eval_mul,
                         Polynomial.eval_C, Polynomial.eval_X, α]
                       field_simp [hjStar_q_ne]; ring
@@ -750,12 +755,12 @@ theorem monomial_series_linear_indep_poly {d E r M : ℕ}
                 · have hβ_lt : β i ≤ jStar := by
                     have := hβ_mono hlt; omega
                   have hsum0 : ∑ j ∈ Finset.Ico 1 (β i),
-                      (Polynomial.C (j : ℚ) * ∏ ℓ ∈ (Finset.Ico 1 M).erase j,
+                      (j : ℚ) * (∏ ℓ ∈ (Finset.Ico 1 M).erase j,
                         (1 - Polynomial.C (ℓ : ℚ) * Polynomial.X)).eval α = 0 := by
                     apply Finset.sum_eq_zero; intro j hj
                     have hj_ne : jStar ≠ j := by
                       have := (Finset.mem_Ico.mp hj).2; omega
-                    simp only [Polynomial.eval_mul, Polynomial.eval_C, Polynomial.eval_prod]
+                    rw [Polynomial.eval_prod]
                     have hzero_prod : ∏ ℓ ∈ (Finset.Ico 1 M).erase j,
                         (1 - Polynomial.C (ℓ : ℚ) * Polynomial.X).eval α = 0 := by
                       apply Finset.prod_eq_zero (i := jStar) (Finset.mem_erase.mpr ⟨hj_ne, hjStar_mem⟩)
@@ -797,7 +802,7 @@ theorem monomial_series_linear_indep_poly {d E r M : ℕ}
             mul_ne_zero (mul_ne_zero (mul_ne_zero hjStar_q_ne hP_eval_ne) hR₀_ev) hR₁_ev
           have hrat_eq : (r : ℚ) * ((k₀ : ℚ) - (k₁ : ℚ)) = (e₀ iStar : ℚ) - (e₁ iStar : ℚ) := by
             apply mul_right_cancel₀ hprod_ne
-            linear_combination -hev
+            linear_combination hev
           have hint_eq : (r : ℤ) * ((k₀ : ℤ) - (k₁ : ℤ)) = (e₀ iStar : ℤ) - (e₁ iStar : ℤ) := by
             exact_mod_cast hrat_eq
           have he₀_le : e₀ iStar ≤ E := by
@@ -814,7 +819,7 @@ theorem monomial_series_linear_indep_poly {d E r M : ℕ}
             · have : (r : ℤ) ≤ (r : ℤ) * ((k₀ : ℤ) - (k₁ : ℤ)) := by nlinarith
               omega
           rw [hk_eq, sub_self, mul_zero] at hint_eq
-          exact hiStar_ne (by omega)
+          exfalso; exact hiStar_ne (by omega)
         · have hU_eq : U = {e₀} := by
             ext e
             simp only [Finset.mem_singleton]
@@ -1186,7 +1191,7 @@ private lemma iter_T_psDeriv_expand (T : PowerSeries ℚ) :
       rw [if_pos (Finset.mem_range.mp hx)]
     have hp3 : ∑ r ∈ Finset.range (k + 1), (if 1 ≤ r ∧ r ≤ k then T * c (r - 1) else 0) * psDeriv^[r] g =
         ∑ x ∈ Finset.range k, (T * c x) * psDeriv^[x + 1] g := by
-      rw [Finset.sum_range_succ']; simp only [Nat.not_succ_le_zero, false_and, ↓reduceIte, zero_mul, add_zero]
+      rw [Finset.sum_range_succ']; simp
       apply Finset.sum_congr rfl; intro x hx
       have hxlt : x < k := Finset.mem_range.mp hx
       rw [if_pos ⟨by omega, by omega⟩, Nat.add_sub_cancel]
