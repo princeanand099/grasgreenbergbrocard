@@ -71,8 +71,10 @@ lemma psDeriv_sum {ι : Type*} (s : Finset ι) (f : ι → PowerSeries ℚ) :
 lemma psDeriv_mul (f g : PowerSeries ℚ) :
     psDeriv (f * g) = psDeriv f * g + f * psDeriv g := by
   ext k
-  simp only [coeff_psDeriv, map_add, PowerSeries.coeff_mul,
-    Finset.Nat.sum_antidiagonal_eq_sum_range_succ]
+  simp only [coeff_psDeriv, map_add, PowerSeries.coeff_mul]
+  rw [Finset.Nat.sum_antidiagonal_eq_sum_range_succ (fun a b => PowerSeries.coeff a f * PowerSeries.coeff b g),
+    Finset.Nat.sum_antidiagonal_eq_sum_range_succ (fun a b => ((a + 1 : ℕ) : ℚ) * PowerSeries.coeff (a + 1) f * PowerSeries.coeff b g),
+    Finset.Nat.sum_antidiagonal_eq_sum_range_succ (fun a b => PowerSeries.coeff a f * (((b + 1 : ℕ) : ℚ) * PowerSeries.coeff (b + 1) g))]
   rw [Finset.mul_sum]
   have hsplit : ∀ a ∈ Finset.range (k + 2),
       ((k + 1 : ℕ) : ℚ) * (PowerSeries.coeff a f * PowerSeries.coeff (k + 1 - a) g) =
@@ -146,7 +148,8 @@ theorem psDeriv_quot_eq_zero {a b : PowerSeries ℚ} (hb : b ≠ 0)
       simp [hn0, hk0]
     · have hcoeff := congrArg (PowerSeries.coeff (n + k₀ - 1)) hd
       simp only [PowerSeries.coeff_mul, coeff_psDeriv] at hcoeff
-      rw [Finset.Nat.sum_antidiagonal_eq_sum_range_succ, Finset.Nat.sum_antidiagonal_eq_sum_range_succ] at hcoeff
+      rw [Finset.Nat.sum_antidiagonal_eq_sum_range_succ (fun u v => ((u + 1 : ℕ) : ℚ) * PowerSeries.coeff (u + 1) d * PowerSeries.coeff v b),
+        Finset.Nat.sum_antidiagonal_eq_sum_range_succ (fun u v => PowerSeries.coeff u d * (((v + 1 : ℕ) : ℚ) * PowerSeries.coeff (v + 1) b))] at hcoeff
       have hlhs : ∑ u ∈ Finset.range (n + k₀ - 1 + 1),
           ((u + 1 : ℕ) : ℚ) * PowerSeries.coeff (u + 1) d * PowerSeries.coeff (n + k₀ - 1 - u) b =
           (n : ℚ) * PowerSeries.coeff n d * PowerSeries.coeff k₀ b := by
@@ -303,7 +306,13 @@ lemma unscaledFactorSeries_ode {e r j : ℕ} (hr : 1 ≤ r) :
   ext k
   have hlin : (((1 - Polynomial.C (j : ℚ) * Polynomial.X : Polynomial ℚ) : PowerSeries ℚ)) =
       1 - PowerSeries.C (j : ℚ) * PowerSeries.X := by
-    simp [Polynomial.coe_sub, Polynomial.coe_mul, Polynomial.coe_C, Polynomial.coe_X]
+    ext n
+    cases n with
+    | zero => simp [Polynomial.coeff_coe]
+    | succ n =>
+      cases n with
+      | zero => simp [Polynomial.coeff_coe]
+      | succ n => simp [Polynomial.coeff_coe]
   rw [hlin, sub_mul, one_mul, mul_assoc, map_sub, PowerSeries.coeff_C_mul, PowerSeries.coeff_C_mul]
   cases k with
   | zero =>
@@ -311,10 +320,7 @@ lemma unscaledFactorSeries_ode {e r j : ℕ} (hr : 1 ≤ r) :
     push_cast; ring
   | succ k =>
     rw [PowerSeries.coeff_succ_X_mul, coeff_psDeriv, coeff_psDeriv, hstep (k + 1)]
-    have hk_eq : PowerSeries.coeff k (psDeriv (unscaledFactorSeries e r j)) =
-        ((k + 1 : ℕ) : ℚ) * PowerSeries.coeff (k + 1) (unscaledFactorSeries e r j) := rfl
-    rw [show PowerSeries.coeff k (psDeriv (unscaledFactorSeries e r j)) =
-      ((k + 1 : ℕ) : ℚ) * PowerSeries.coeff (k + 1) (unscaledFactorSeries e r j) from rfl]
+    rw [coeff_psDeriv]
     push_cast
     field_simp [hr_ne]
     ring
@@ -366,7 +372,8 @@ lemma clearedMonomialSeries_coeff_eq_scaled {d : ℕ} {r : ℕ} (hr : 1 ≤ r)
     | @insert a s ha ih =>
       intro n
       rw [Finset.prod_insert ha, Finset.prod_insert ha, PowerSeries.coeff_mul, PowerSeries.coeff_mul,
-        Finset.Nat.sum_antidiagonal_eq_sum_range_succ, Finset.Nat.sum_antidiagonal_eq_sum_range_succ]
+        Finset.Nat.sum_antidiagonal_eq_sum_range_succ (fun u v => PowerSeries.coeff (R := ℤ) u (f a) * PowerSeries.coeff (R := ℤ) v (∏ b ∈ s, f b)),
+        Finset.Nat.sum_antidiagonal_eq_sum_range_succ (fun u v => PowerSeries.coeff u (g a) * PowerSeries.coeff v (∏ b ∈ s, g b))]
       push_cast
       rw [Finset.mul_sum]
       apply Finset.sum_congr rfl
@@ -739,7 +746,6 @@ theorem monomial_series_linear_indep_poly {d E r M : ℕ}
                   have hj_in : jStar ∈ Finset.Ico 1 (β iStar) :=
                     Finset.mem_Ico.mpr ⟨hjStar_pos, by have := hβ_lo iStar; omega⟩
                   rw [Finset.sum_eq_single jStar]
-                  · simp [P_rest]
                   · intro j hj hne
                     rw [Polynomial.eval_prod]
                     have hzero_prod : ∏ ℓ ∈ (Finset.Ico 1 M).erase j,
@@ -1194,7 +1200,7 @@ private lemma iter_T_psDeriv_expand (T : PowerSeries ℚ) :
       rw [Finset.sum_range_succ']; simp
       apply Finset.sum_congr rfl; intro x hx
       have hxlt : x < k := Finset.mem_range.mp hx
-      rw [if_pos ⟨by omega, by omega⟩, Nat.add_sub_cancel]
+      rw [if_pos (by omega)]
     rw [hp1, hp2, hp3]; ring
 
 /-- Non-vanishing of the `T`-weighted Wronskian `det ((T * psDeriv)^[k] (g j))`. -/
