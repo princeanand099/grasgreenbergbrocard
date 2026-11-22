@@ -485,7 +485,8 @@ def canonicalSupportWronskian {d E r D O M B : ℕ}
       by_contra hne; exact Nat.find_min hex_c hu hne
     have hk0_le_D : k0 ≤ D := by
       by_contra hgt
-      have hdeg := le_trans Polynomial.natDegree_map_le (hP_int_deg i₀.succ)
+      have hdeg : ((P_int i₀.succ).map (Int.castRingHom ℚ)).natDegree ≤ D :=
+        le_trans Polynomial.natDegree_map_le (hP_int_deg i₀.succ)
       exact hk0_ne (Polynomial.coeff_eq_zero_of_natDegree_lt (by omega))
     have hcoeff_k0 : PowerSeries.coeff k0 L_0 = ((P_int i₀.succ).map (Int.castRingHom ℚ)).coeff k0 := by
       rw [hL0_sing, PowerSeries.coeff_mul, Finset.Nat.sum_antidiagonal_eq_sum_range_succ (fun u v => PowerSeries.coeff u (((P_int i₀.succ).map (Int.castRingHom ℚ) : Polynomial ℚ) : PowerSeries ℚ) * PowerSeries.coeff v (unscaledMonomialSeries r β (idxToMulti i₀.succ)))]
