@@ -650,7 +650,7 @@ theorem q_n_ne_of_solutions {n₁ n₂ m₁ m₂ : ℕ} (hn₁ : 4 ≤ n₁) (hl
     omega
   have hid : (t * m₁) ^ 2 = m₂ ^ 2 + (t ^ 2 - 1) := by
     have hfac_succ : Nat.factorial (n₁ + 1) = (n₁ + 1) * Nat.factorial n₁ := Nat.factorial_succ n₁
-    have h1 : m₂ ^ 2 = t ^ 2 * Nat.factorial n₁ + 1 := by rw [← hm₂, hfac_succ, ← hn1_sq]; ring
+    have h1 : m₂ ^ 2 = t ^ 2 * Nat.factorial n₁ + 1 := by rw [← hm₂, hfac_succ, ← hn1_sq]
     have h2 : (t * m₁) ^ 2 = t ^ 2 * Nat.factorial n₁ + t ^ 2 := by
       calc (t * m₁) ^ 2 = t ^ 2 * m₁ ^ 2 := by ring
         _ = t ^ 2 * (Nat.factorial n₁ + 1) := by rw [hm₁]

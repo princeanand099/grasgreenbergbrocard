@@ -196,12 +196,12 @@ for `n ≥ 8`, scoped directly to the concrete Mathlib-anchored narrow 4-rank sp
 `Cl4RankVec (q_n n)` (constructed from `NumberField.RingOfIntegers` and `FractionalIdeal` in
 `RealQuadField.lean`), the fundamental Pell solution `(X₁, Y₁)`, and `yMidVec n X₁`. -/
 axiom redei_reichardt_exact_sequence (n X₁ Y₁ : ℕ) (hn : 8 ≤ n)
+    [Fact (¬ IsSquare (q_n n : ℚ))]
     (hfund : IsFundamentalPell (q_n n) X₁ Y₁)
     (hyMid_mem : yMidVec n X₁ ∈ redeiKernel n)
     (hyMid_ne : yMidVec n X₁ ≠ 0) :
-    haveI : Fact (¬ IsSquare (q_n n : ℚ)) := ⟨q_n_not_isSquare_rat hn⟩
     let yMid : redeiKernel n := ⟨yMidVec n X₁, hyMid_mem⟩
-    ∃ psiPlus : redeiKernel n →ₗ[ZMod 2] @Cl4RankVec (q_n n) ⟨q_n_not_isSquare_rat hn⟩,
+    ∃ psiPlus : redeiKernel n →ₗ[ZMod 2] Cl4RankVec (q_n n),
       Function.Surjective psiPlus ∧
       LinearMap.ker psiPlus = Submodule.span (ZMod 2) {yMid}
 
