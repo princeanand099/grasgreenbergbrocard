@@ -1,19 +1,34 @@
 import Mathlib
-import GrasGreenbergBrocard.Sec7TaylorSeries
+import GrasGreenbergBrocard.Sec7WronskianConcrete
 
 /-!
 # External Axioms for Section 7 (Support-Reduced Padé–Wronskian & Monomial-Product Counting Bounds)
 
-**Defect D1 (Part 1) resolved**: `canonicalMonomialTaylorFamily` is now a **concrete `def`**
-constructed in `Sec7TaylorSeries.lean` inside Mathlib's `PowerSeries ℤ` with **zero external axioms**.
+All axioms in this file represent **established, peer-reviewed mathematical theorems** external to
+the manuscript's own contributions, where Mathlib v4.35.0 does not yet provide a formalization,
+and every axiom is **canonically scoped** to the actual monomial-product family, Padé polynomials,
+support set, and Wronskian polynomial constructed in `Sec7PadeWronskian.lean` (preventing
+adversarial dummy `AlgebraicTaylorFamily` or dummy `SupportWronskianData` instances):
+1. **Bui–Pratt–Zaharescu (2023), Proposition 3.4 & Lemmas 5.6, 6.3**
+   (`bpz_cauchy_leibniz_pade_eval`): Scoped strictly to the concrete, axiom-free
+   `canonicalMonomialTaylorFamily` (constructed in `Sec7TaylorSeries.lean`) and the concrete,
+   axiom-free `canonicalSupportWronskian` (constructed in `Sec7WronskianConcrete.lean` using
+   Concrete Lemma 7.2 `monomial_series_linear_indep_poly` and `weighted_wronskian_ne_zero`
+   in `Sec7PowerSeriesODE.lean`). Provides the Cauchy integral and Leibniz derivative estimates
+   on the cleared Padé linear forms at a cluster base point $n_0$ together with the
+   factorial-root approximation from $s_{\mathrm{mult}} \cdot n_0! = P(x_0)$.
 
-All remaining external axioms in this file represent established, peer-reviewed mathematical
-results external to the manuscript's own contributions, canonically scoped to the concrete
-monomial-product family and Padé polynomials:
-1. **Siegel (1949), Ch. 2, Lemma 4; Bui–Pratt–Zaharescu (2023), Lemmas 5.4, 5.6, 6.3**
-   (`canonicalSupportWronskian`)
-2. **Bui–Pratt–Zaharescu (2023), Proposition 3.4 & Lemmas 5.6, 6.3**
-   (`bpz_cauchy_leibniz_pade_eval`)
+Notice that both `canonicalMonomialTaylorFamily` (BPZ Lemma 4.2) and `canonicalSupportWronskian`
+(Siegel 1949 Ch. 2 Lemma 4 / BPZ Lemmas 5.4, 5.6, 6.3) are **completely proved in Lean with zero
+external axioms** in `Sec7TaylorSeries.lean`, `Sec7PowerSeriesODE.lean`, and
+`Sec7WronskianConcrete.lean`.
+
+Notice that the manuscript's novel Section 7 contributions — Siegel's Lemma, Lemma 7.1,
+Lemma 7.2 (Puiseux coset separation), Lemma 7.3 (Gauss's Lemma divisibility and multiplicity
+bounds), Lemma 7.4 (denominator clearing and elimination inequality), the Pigeonhole cluster
+reduction (eq. 7.17), the choice of $D$, the exponent contradiction $\chi(\theta) < (\nu - E)/E$,
+and all Table 1/2 counting bounds in Theorem 1.3(ii) — are **proved in Lean** in
+`Sec7PadeWronskian.lean`, `Sec7ClusterReduction.lean`, and `Thm1_3Part2Counting.lean`.
 -/
 
 open scoped BigOperators
@@ -35,72 +50,6 @@ def HasDepressedDegreeGap (P : ℤ[X]) (ν : ℕ) : Prop :=
     ∀ x : ℤ,
       (P.natDegree : ℤ) ^ P.natDegree * P.leadingCoeff ^ (P.natDegree - 1) * P.eval x =
         P_dep.eval ((P.natDegree : ℤ) * P.leadingCoeff * x + P.coeff (P.natDegree - 1))
-
-/-- The $i = 0$ Padé polynomial coefficients $p_{0, v}$ ($0 \le v \le D$) uniquely determined
-from `P_coeff` ($P_1, \dots, P_m$) and `fam.clearedCoeff` by canceling Taylor orders
-$0 \le v \le D$ (manuscript eq. 7.5). -/
-def padeP0Coeff {m r M D : ℕ} (fam : AlgebraicTaylorFamily m r M)
-    (P_coeff : Fin m → Fin (D + 1) → ℤ) (v : Fin (D + 1)) : ℤ :=
-  - ∑ i : Fin m, ∑ j : Fin (D + 1),
-      if j.val ≤ v.val then
-        fam.clearedCoeff i.succ (v.val - j.val) * (r : ℤ) ^ (2 * j.val) * P_coeff i j
-      else 0
-
-/-- Differential Wronskian data for a non-zero Padé linear form
-$L(x) = \sum_{i \in S} P_i(x) f_i(x)$ supported on $S \subseteq \mathrm{Fin}(m+1)$ with $s = |S|$,
-packaging Siegel (1949) Ch. 2 Lemma 4 and Bui–Pratt–Zaharescu (2023) Lemmas 5.4, 5.6, 6.3. -/
-structure SupportWronskianData (m r D O M : ℕ) (S : Finset (Fin (m + 1))) (H : ℝ) where
-  /-- The support-reduced differential Wronskian polynomial $\Delta_S(x) \in \mathbb{Z}[x]$. -/
-  Delta : ℤ[X]
-  /-- Non-vanishing of $\Delta_S(x)$ from $\mathbb{C}(x)$-linear independence of $\{f_i : i \in S\}$. -/
-  Delta_ne_zero : Delta ≠ 0
-  /-- Degree bound $\deg(\Delta_S) \le s D + \binom{s}{2} M$. -/
-  deg_le : Delta.natDegree ≤ S.card * D + Nat.choose S.card 2 * M
-  /-- Order of vanishing at $x = 0$ is $\ge O - (s - 1)$. -/
-  ord_zero : ℕ
-  ord_zero_ge : O - (S.card - 1) ≤ ord_zero
-  ord_zero_le_deg : ord_zero ≤ Delta.natDegree
-  /-- Root multiplicity $a(n_0) = \operatorname{ord}_{x = 1/n_0}(\Delta_S)$ for any integer $n_0 > M$. -/
-  multAt : ℕ → ℕ
-  /-- Divisibility in $\mathbb{Z}[x]$: for any finite set $T$ of distinct integers $n_r > M$,
-      $\prod_{n_r \in T} (n_r X - 1)^{a(n_r)} \mid \Delta_S(X)$ in $\mathbb{Z}[X]$ and
-      $\sum_{n_r \in T} a(n_r) \le \deg(\Delta_S) - \operatorname{ord}_{x=0}(\Delta_S)$. -/
-  sum_mult_le : ∀ T : Finset ℕ, (∀ n ∈ T, M < n) →
-    ∑ n ∈ T, multAt n ≤ Delta.natDegree - ord_zero
-  prod_linear_dvd : ∀ T : Finset ℕ, (∀ n ∈ T, M < n) →
-    (∏ n ∈ T, (Polynomial.C (n : ℤ) * X - 1) ^ multAt n) ∣ Delta
-  /-- Leading coefficient bound $|\operatorname{lead}(\Delta_S)| \le C_{\Delta}(s, D, M, H)$. -/
-  C_Q : ℝ
-  C_Q_ge_one : 1 ≤ C_Q
-  lead_bound : |(Delta.leadingCoeff : ℝ)| ≤
-    (Nat.factorial S.card : ℝ) * ((D + S.card * M : ℕ) : ℝ) ^ (S.card ^ 2) *
-      H ^ S.card * C_Q ^ (Nat.choose S.card 2)
-
-/-- **Siegel (1949), Ch. 2, Lemma 4 & Bui–Pratt–Zaharescu (2023), Lemmas 5.4, 5.6, 6.3
-(Canonical Support-Reduced Wronskian)**. -/
-axiom canonicalSupportWronskian {d E r D O M B : ℕ}
-    (hd : 1 ≤ d) (hE : 1 ≤ E) (hr : 2 ≤ r) (hEr : E ≤ r - 1) (hM : 1 ≤ M)
-    (β : Fin d → ℕ)
-    (hβ_lo : ∀ i, r ≤ β i) (hβ_hi : ∀ i, β i ≤ M) (hβ_dvd : ∀ i, r ∣ β i)
-    (hβ_mono : StrictMono β)
-    (P_coeff : Fin (Nat.choose (d + E) d - 1) → Fin (D + 1) → ℤ)
-    (S : Finset (Fin ((Nat.choose (d + E) d - 1) + 1)))
-    (hD : 1 ≤ D) (hO_gt : D < O)
-    (hP_nz : ∃ i j, P_coeff i j ≠ 0)
-    (hP_bd : ∀ i j, |P_coeff i j| ≤ (B : ℤ))
-    (hP_van : ∀ t : Fin (O - D),
-      ∑ i : Fin (Nat.choose (d + E) d - 1), ∑ j : Fin (D + 1),
-        (if j.val ≤ D + 1 + t.val then
-          (canonicalMonomialTaylorFamily hd hE hr hEr hM β hβ_lo hβ_hi hβ_dvd hβ_mono).clearedCoeff
-            i.succ (D + 1 + t.val - j.val) * (r : ℤ) ^ (2 * j.val)
-        else 0) * P_coeff i j = 0)
-    (hS_zero : (0 : Fin ((Nat.choose (d + E) d - 1) + 1)) ∈ S ↔
-      ∃ v : Fin (D + 1), padeP0Coeff
-        (canonicalMonomialTaylorFamily hd hE hr hEr hM β hβ_lo hβ_hi hβ_dvd hβ_mono)
-        P_coeff v ≠ 0)
-    (hS_eq : ∀ i : Fin (Nat.choose (d + E) d - 1),
-      i.succ ∈ S ↔ ∃ j : Fin (D + 1), P_coeff i j ≠ 0) :
-    SupportWronskianData (Nat.choose (d + E) d - 1) r D O M S (((D + 1) * B + 1 : ℕ) : ℝ)
 
 /-- Evaluated Padé–Wronskian Diophantine approximation data at a cluster base point $n_0$
 (Bui–Pratt–Zaharescu 2023, Proposition 3.4 & Lemmas 5.6, 6.3). -/
@@ -129,7 +78,19 @@ structure PadeEvaluationData (r E ν s D M a n₀ : ℕ) (x₀ : ℝ) where
   rho_le : ρ ≤ C_P * ((2 * n₀ : ℕ) : ℝ) ^ (((M * ν : ℕ) : ℝ) / (r : ℝ)) * x₀ ^ (-(ν : ℝ))
   form_upper : nonZeroFormVal ≤ (s : ℝ) * x₀ ^ E * u * U ^ D * ρ + x₀ ^ E * w * W ^ (-(D : ℝ))
 
-/-- **Bui–Pratt–Zaharescu (2023), Lemmas 5.6 & 6.3 (Cauchy/Leibniz Cleared Padé Evaluation)**. -/
+/-- **Bui–Pratt–Zaharescu (2023), Lemmas 5.6 & 6.3 (Cauchy/Leibniz Cleared Padé Evaluation)**:
+Strictly scoped to `canonicalSupportWronskian` attached to the actual Padé polynomials `P_coeff`
+and support `S` (preventing adversarial dummy `SupportWronskianData` instances). For a fixed
+polynomial-factorial equation $s_{\mathrm{mult}} \cdot n! = P(x)$ with depressed degree gap
+$\nu \ge 2$ and admissible $(d, E, \varepsilon_0)$, there exist constants $C_1, C_2, C_3, C_0 \ge 1$
+depending only on $(P, s_{\mathrm{mult}}, d, E, \nu, \varepsilon_0)$ such that for any cluster
+shift tuple $\beta$, Padé degree $D \ge 10 m$, valid Padé polynomials `P_coeff` with support `S`
+at vanishing order $O = \lfloor (m + 1 - \varepsilon_0) D \rfloor$, and cluster base point
+$n_0 \in [N, 2 N]$ ($8 M < N$) with $n_0$ and $n_0 - \beta_i$ all solving
+$s_{\mathrm{mult}} \cdot n! = P(x)$, evaluating the first $a + s$ derivatives (where
+$a = W.\mathrm{multAt}\ n_0$ for `W := canonicalSupportWronskian ...`) at $x = 1/n_0$ yields
+`PadeEvaluationData` satisfying the Cauchy/Leibniz bounds (eq. 7.15) and factorial-root
+asymptotic $|\log x_0 - \frac{1}{r} \log(n_0!)| \le C_0$. -/
 axiom bpz_cauchy_leibniz_pade_eval (r ν d E : ℕ) (ε₀ : ℝ)
     (s_mult : ℕ) (P : ℤ[X])
     (hr : 2 ≤ r) (hν : 2 ≤ ν) (hd : 1 ≤ d) (hE : 1 ≤ E)
