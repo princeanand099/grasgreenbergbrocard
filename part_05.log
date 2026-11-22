@@ -1,0 +1,58 @@
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:132:0: 'GrasGreenbergBrocard.thm_1_3_part2_global_6_7' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.bpz_cauchy_leibniz_pade_eval,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:133:0: 'GrasGreenbergBrocard.thm_1_3_part2_global_6_7_general' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.bpz_cauchy_leibniz_pade_eval,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:134:0: 'GrasGreenbergBrocard.thm_1_3_part2_brocard_6_7' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.bpz_cauchy_leibniz_pade_eval,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:135:0: 'GrasGreenbergBrocard.thm_1_3_part2_table1_bounds' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.bpz_cauchy_leibniz_pade_eval,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:136:0: 'GrasGreenbergBrocard.thm_1_3_part2_degree_gap_bounds' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.bpz_cauchy_leibniz_pade_eval,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:139:0: 'GrasGreenbergBrocard.frobeniusTrace_freyCurveE' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:140:0: 'GrasGreenbergBrocard.freyE_p2_minimal_scaling' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:141:0: 'GrasGreenbergBrocard.frobeniusTrace_freyCurveE2' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:142:0: 'GrasGreenbergBrocard.thm_8_1_part1_frey_E' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.IsModular,
+ GrasGreenbergBrocard.bcdt_modularity_theorem,
+ GrasGreenbergBrocard.conductor,
+ GrasGreenbergBrocard.tate_algorithm_semistable_conductor,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:143:0: 'GrasGreenbergBrocard.thm_8_1_part2_level2_cm_reduction' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.HasSurjectiveModLGalRep,
+ GrasGreenbergBrocard.IsModular,
+ GrasGreenbergBrocard.bcdt_modularity_theorem,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.conductor,
+ GrasGreenbergBrocard.mazur_kenku_serre_surjectivity,
+ GrasGreenbergBrocard.tate_algorithm_semistable_conductor,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:144:0: 'GrasGreenbergBrocard.thm_8_1_part2_abc_and_hall_bounds' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:145:0: 'GrasGreenbergBrocard.thm_8_2_tatuzawa_and_narrow_2J_rank' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.canonicalRealQuadClassGroup,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.erdos_selfridge_consecutive_product_not_square,
+ GrasGreenbergBrocard.pnt_pi_asymptotic,
+ GrasGreenbergBrocard.tatuzawa_effective_siegel,
+ Quot.sound]
+Some required targets logged failures:
+- GrasGreenbergBrocard.AuditAxioms
+error: build failed

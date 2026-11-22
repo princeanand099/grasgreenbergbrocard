@@ -1,0 +1,808 @@
+COMMIT=64627f0240b7ed25b9af2b2bfd098b63c5978271
+TIMESTAMP=2026-11-22T06:14:02Z
+⚠ [9047/9097] Replayed GrasGreenbergBrocard.Basic
+warning: GrasGreenbergBrocard/Basic.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9048/9097] Replayed GrasGreenbergBrocard.ChebyshevLucas
+warning: GrasGreenbergBrocard/ChebyshevLucas.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/ChebyshevLucas.lean:46:17: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: GrasGreenbergBrocard/ChebyshevLucas.lean:471:4: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/ChebyshevLucas.lean:567:8: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+⚠ [9049/9097] Replayed GrasGreenbergBrocard.PadicRegulator
+warning: GrasGreenbergBrocard/PadicRegulator.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/PadicRegulator.lean:92:2: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/PadicRegulator.lean:115:2: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/PadicRegulator.lean:286:6: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/PadicRegulator.lean:378:41: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+⚠ [9050/9097] Replayed GrasGreenbergBrocard.RealQuadField
+warning: GrasGreenbergBrocard/RealQuadField.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9051/9097] Replayed GrasGreenbergBrocard.ExternalAxiomsSec3
+warning: GrasGreenbergBrocard/ExternalAxiomsSec3.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9052/9097] Replayed GrasGreenbergBrocard.ExternalAxiomsAnalytic
+warning: GrasGreenbergBrocard/ExternalAxiomsAnalytic.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9053/9097] Replayed GrasGreenbergBrocard.ValuationParityLayer
+warning: GrasGreenbergBrocard/ValuationParityLayer.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9054/9097] Replayed GrasGreenbergBrocard.PellFundamental
+warning: GrasGreenbergBrocard/PellFundamental.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/PellFundamental.lean:76:6: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+⚠ [9055/9097] Replayed GrasGreenbergBrocard.ValuationParityDigits
+warning: GrasGreenbergBrocard/ValuationParityDigits.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9056/9097] Replayed GrasGreenbergBrocard.ValuationParityVaaler
+warning: GrasGreenbergBrocard/ValuationParityVaaler.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/ValuationParityVaaler.lean:195:22: this tactic is never executed
+
+Note: This linter can be disabled with `set_option linter.unreachableTactic false`
+warning: GrasGreenbergBrocard/ValuationParityVaaler.lean:195:36: this tactic is never executed
+
+Note: This linter can be disabled with `set_option linter.unreachableTactic false`
+warning: GrasGreenbergBrocard/ValuationParityVaaler.lean:288:22: this tactic is never executed
+
+Note: This linter can be disabled with `set_option linter.unreachableTactic false`
+warning: GrasGreenbergBrocard/ValuationParityVaaler.lean:288:36: this tactic is never executed
+
+Note: This linter can be disabled with `set_option linter.unreachableTactic false`
+⚠ [9057/9097] Replayed GrasGreenbergBrocard.ExpSumBounds
+warning: GrasGreenbergBrocard/ExpSumBounds.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9058/9097] Replayed GrasGreenbergBrocard.ValuationParityThmHelpers
+warning: GrasGreenbergBrocard/ValuationParityThmHelpers.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/ValuationParityThmHelpers.lean:435:33: this tactic is never executed
+
+Note: This linter can be disabled with `set_option linter.unreachableTactic false`
+warning: GrasGreenbergBrocard/ValuationParityThmHelpers.lean:458:40: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+⚠ [9059/9097] Replayed GrasGreenbergBrocard.ValuationParityThmPart1
+warning: GrasGreenbergBrocard/ValuationParityThmPart1.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/ValuationParityThmPart1.lean:551:10: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/ValuationParityThmPart1.lean:744:36: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+⚠ [9060/9097] Replayed GrasGreenbergBrocard.ValuationParityThmCollar
+warning: GrasGreenbergBrocard/ValuationParityThmCollar.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/ValuationParityThmCollar.lean:472:24: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+⚠ [9061/9097] Replayed GrasGreenbergBrocard.ValuationParityThmInterCollar
+warning: GrasGreenbergBrocard/ValuationParityThmInterCollar.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/ValuationParityThmInterCollar.lean:329:26: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+⚠ [9062/9097] Replayed GrasGreenbergBrocard.ValuationParityThm
+warning: GrasGreenbergBrocard/ValuationParityThm.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9063/9097] Replayed GrasGreenbergBrocard.Thm1_1Collapse
+warning: GrasGreenbergBrocard/Thm1_1Collapse.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/Thm1_1Collapse.lean:77:44: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: GrasGreenbergBrocard/Thm1_1Collapse.lean:378:8: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_1Collapse.lean:485:4: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_1Collapse.lean:638:4: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+⚠ [9064/9097] Replayed GrasGreenbergBrocard.Thm1_2Iwasawa
+warning: GrasGreenbergBrocard/Thm1_2Iwasawa.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/Thm1_2Iwasawa.lean:66:4: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_2Iwasawa.lean:94:4: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_2Iwasawa.lean:492:6: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_2Iwasawa.lean:537:18: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_2Iwasawa.lean:546:19: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+⚠ [9065/9097] Replayed GrasGreenbergBrocard.ExpSumBoundsMod
+warning: GrasGreenbergBrocard/ExpSumBoundsMod.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9066/9097] Replayed GrasGreenbergBrocard.VaalerMod
+warning: GrasGreenbergBrocard/VaalerMod.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9067/9097] Replayed GrasGreenbergBrocard.ValuationParityModWeight
+warning: GrasGreenbergBrocard/ValuationParityModWeight.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9068/9097] Replayed GrasGreenbergBrocard.ValuationParityModCollar
+warning: GrasGreenbergBrocard/ValuationParityModCollar.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9069/9097] Replayed GrasGreenbergBrocard.ValuationParityModInterCollar
+warning: GrasGreenbergBrocard/ValuationParityModInterCollar.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9070/9097] Replayed GrasGreenbergBrocard.ValuationParityMod
+warning: GrasGreenbergBrocard/ValuationParityMod.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/ValuationParityMod.lean:120:10: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+info: GrasGreenbergBrocard/ValuationParityMod.lean:644:35: Try this:
+  [apply] ring_nf
+  
+  The `ring` tactic failed to close the goal. Use `ring_nf` to obtain a normal form.
+    
+  Note that `ring` works primarily in *commutative* rings. If you have a noncommutative ring, abelian group or module, consider using `noncomm_ring`, `abel` or `module` instead.
+⚠ [9071/9097] Replayed GrasGreenbergBrocard.ExternalAxiomsSec4
+warning: GrasGreenbergBrocard/ExternalAxiomsSec4.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9072/9097] Replayed GrasGreenbergBrocard.Picard2Torsion
+warning: GrasGreenbergBrocard/Picard2Torsion.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9073/9097] Replayed GrasGreenbergBrocard.Prop4_1SmoothBiquad
+warning: GrasGreenbergBrocard/Prop4_1SmoothBiquad.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9074/9097] Replayed GrasGreenbergBrocard.Thm4_2QuarticCores
+warning: GrasGreenbergBrocard/Thm4_2QuarticCores.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9075/9097] Replayed GrasGreenbergBrocard.ExternalAxiomsSec5
+warning: GrasGreenbergBrocard/ExternalAxiomsSec5.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9076/9097] Replayed GrasGreenbergBrocard.Prop5_1MidpointBias
+warning: GrasGreenbergBrocard/Prop5_1MidpointBias.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/Prop5_1MidpointBias.lean:311:10: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+⚠ [9077/9097] Replayed GrasGreenbergBrocard.Thm5_2EffectiveCores
+warning: GrasGreenbergBrocard/Thm5_2EffectiveCores.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/Thm5_2EffectiveCores.lean:261:8: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm5_2EffectiveCores.lean:1446:4: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm5_2EffectiveCores.lean:1663:31: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm5_2EffectiveCores.lean:1673:31: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm5_2EffectiveCores.lean:1692:31: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+⚠ [9078/9097] Replayed GrasGreenbergBrocard.Thm5_3RedeiCohomology
+warning: GrasGreenbergBrocard/Thm5_3RedeiCohomology.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+warning: GrasGreenbergBrocard/Thm5_3RedeiCohomology.lean:46:21: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm5_3RedeiCohomology.lean:126:4: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm5_3RedeiCohomology.lean:220:21: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm5_3RedeiCohomology.lean:253:84: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+warning: GrasGreenbergBrocard/Thm5_3RedeiCohomology.lean:428:23: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm5_3RedeiCohomology.lean:610:21: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm5_3RedeiCohomology.lean:614:21: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm5_3RedeiCohomology.lean:732:23: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+⚠ [9081/9097] Replayed GrasGreenbergBrocard.Lem6_3ParityFlipOsc
+warning: GrasGreenbergBrocard/Lem6_3ParityFlipOsc.lean:208:10: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Lem6_3ParityFlipOsc.lean:210:27: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Lem6_3ParityFlipOsc.lean:219:2: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Lem6_3ParityFlipOsc.lean:745:10: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Lem6_3ParityFlipOsc.lean:755:8: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Lem6_3ParityFlipOsc.lean:963:27: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Lem6_3ParityFlipOsc.lean:972:25: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Lem6_3ParityFlipOsc.lean:1085:28: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Lem6_3ParityFlipOsc.lean:1096:28: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Lem6_3ParityFlipOsc.lean:1106:28: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Lem6_3ParityFlipOsc.lean:1604:20: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Lem6_3ParityFlipOsc.lean:1279:37: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+⚠ [9083/9097] Replayed GrasGreenbergBrocard.Thm6_4CapacityDiamond
+warning: GrasGreenbergBrocard/Thm6_4CapacityDiamond.lean:976:19: this tactic is never executed
+
+Note: This linter can be disabled with `set_option linter.unreachableTactic false`
+⚠ [9085/9097] Replayed GrasGreenbergBrocard.Sec7TaylorSeries
+warning: GrasGreenbergBrocard/Sec7TaylorSeries.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9086/9097] Replayed GrasGreenbergBrocard.Sec7PowerSeriesODE
+warning: GrasGreenbergBrocard/Sec7PowerSeriesODE.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9087/9097] Replayed GrasGreenbergBrocard.Sec7ClusterReduction
+warning: GrasGreenbergBrocard/Sec7ClusterReduction.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9091/9097] Built GrasGreenbergBrocard.Sec7WronskianConcrete (10s)
+warning: GrasGreenbergBrocard/Sec7WronskianConcrete.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+⚠ [9092/9097] Built GrasGreenbergBrocard.ExternalAxiomsSec7 (3.5s)
+warning: GrasGreenbergBrocard/ExternalAxiomsSec7.lean: imports `Mathlib` from package `mathlib`, which is designed for use with the module system; consider adding `module` to the start of this file
+✔ [9093/9097] Built GrasGreenbergBrocard.Sec7PadeWronskian (7.1s)
+⚠ [9094/9097] Built GrasGreenbergBrocard.Thm1_3Part2Counting (566s)
+warning: GrasGreenbergBrocard/Thm1_3Part2Counting.lean:254:19: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_3Part2Counting.lean:346:4: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+warning: GrasGreenbergBrocard/Thm1_3Part2Counting.lean:441:23: `push_neg` has been deprecated. Prefer using `push Not` instead.
+If you'd rather continue using `push_neg` in your project, you can implement it as follows:
+```
+open Lean.Parser.Tactic in
+macro "push_neg" cfg:optConfig loc:(location)? : tactic =>
+  `(tactic| push $cfg:optConfig Not $[$loc]?)
+```
+✖ [9095/9097] Building GrasGreenbergBrocard.AuditAxioms (3.6s)
+trace: .> LEAN_PATH=/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/Cli/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/batteries/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/Qq/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/aesop/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/importGraph/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/plausible/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/packages/mathlib/.lake/build/lib/lean:/home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean /home/runner/.elan/toolchains/leanprover--lean4---v4.35.0/bin/lean /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/GrasGreenbergBrocard/AuditAxioms.lean -o /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean/GrasGreenbergBrocard/AuditAxioms.olean -i /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/lib/lean/GrasGreenbergBrocard/AuditAxioms.ilean -c /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/ir/GrasGreenbergBrocard/AuditAxioms.c --setup /home/runner/work/grasgreenbergbrocard/grasgreenbergbrocard/.lake/build/ir/GrasGreenbergBrocard/AuditAxioms.setup.json --json
+info: GrasGreenbergBrocard/AuditAxioms.lean:42:0: 'GrasGreenbergBrocard.log_q_n_asymptotic' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:43:0: 'GrasGreenbergBrocard.log_s_n_asymptotic' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.stirling_log_factorial_remainder,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:44:0: 'GrasGreenbergBrocard.vaaler_parity_approx' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:45:0: 'GrasGreenbergBrocard.prime_exp_sum_bounds' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:46:0: 'GrasGreenbergBrocard.Delta_parity_second_order' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:47:0: 'GrasGreenbergBrocard.S_odd_asymptotic' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:48:0: 'GrasGreenbergBrocard.multi_modulus_power_band_equidistribution' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:51:0: 'GrasGreenbergBrocard.known_k4' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:52:0: 'GrasGreenbergBrocard.known_k5' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:53:0: 'GrasGreenbergBrocard.known_k7' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:54:0: 'GrasGreenbergBrocard.neg_pell_no_rat_sol' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:55:0: 'GrasGreenbergBrocard.exists_unique_fundamentalPell' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:56:0: 'GrasGreenbergBrocard.exists_unique_pell_index' depends on axioms: [propext, Classical.choice, Quot.sound]
+error: GrasGreenbergBrocard/AuditAxioms.lean:57:14: Unknown constant `GrasGreenbergBrocard.log_q_n_gt_point4_ge8`
+error: GrasGreenbergBrocard/AuditAxioms.lean:58:14: Unknown constant `GrasGreenbergBrocard.log_fund_pell_gt_point2_ge8`
+error: GrasGreenbergBrocard/AuditAxioms.lean:59:14: Unknown constant `GrasGreenbergBrocard.pell_index_upper_bound_ge8`
+info: GrasGreenbergBrocard/AuditAxioms.lean:60:0: 'GrasGreenbergBrocard.pell_index_collapse_large' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.rosser_schoenfeld_theta_diff,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:61:0: 'GrasGreenbergBrocard.fundamental_regulator_quantization' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.stirling_log_factorial_remainder,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:62:0: 'GrasGreenbergBrocard.q_n_ne_of_solutions' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.erdos_selfridge_consecutive_product_not_square,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:63:0: 'GrasGreenbergBrocard.thm_1_1_unconditional' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.rosser_schoenfeld_theta_diff,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:64:0: 'GrasGreenbergBrocard.J_n_principal_iff_k_eq_2' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:65:0: 'GrasGreenbergBrocard.k_eq_1_picard_identity' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:66:0: 'GrasGreenbergBrocard.second_stage_nonprincipal_k_eq_2' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:67:0: 'GrasGreenbergBrocard.J_n_pic_sq_eq_one' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:68:0: 'GrasGreenbergBrocard.J_n_pic_eq_one_iff_k_eq_2' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:69:0: 'GrasGreenbergBrocard.k_eq_1_picard_class_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:70:0: 'GrasGreenbergBrocard.nagura_prime_in_band' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.nagura_prime_in_interval,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:71:0: 'GrasGreenbergBrocard.realQuadPadicRegVal_pell_power' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:72:0: 'GrasGreenbergBrocard.thm_1_2_eq_3_6_regulator_valuation' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.erdos_selfridge_consecutive_product_not_square,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:73:0: 'GrasGreenbergBrocard.thm_1_2_wieferich_congruence' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:74:0: 'GrasGreenbergBrocard.brocard_small_solutions_lt_116' depends on axioms: [propext, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:75:0: 'GrasGreenbergBrocard.thm_1_2_part1_valuation_law' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.canonicalRealQuadIwasawa,
+ GrasGreenbergBrocard.erdos_selfridge_consecutive_product_not_square,
+ GrasGreenbergBrocard.iwasawa_main_conjecture_free_rank,
+ GrasGreenbergBrocard.leopoldt_coates_valuation_law,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:76:0: 'GrasGreenbergBrocard.thm_1_2_part2_split_primes' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.canonicalRealQuadIwasawa,
+ GrasGreenbergBrocard.erdos_selfridge_consecutive_product_not_square,
+ GrasGreenbergBrocard.ozaki_taya_split_prime_iwasawa,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:77:0: 'GrasGreenbergBrocard.thm_1_2_part3_conditional_finiteness' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.canonicalRealQuadIwasawa,
+ GrasGreenbergBrocard.erdos_selfridge_consecutive_product_not_square,
+ GrasGreenbergBrocard.iwasawa_main_conjecture_free_rank,
+ GrasGreenbergBrocard.leopoldt_coates_valuation_law,
+ GrasGreenbergBrocard.ozaki_taya_split_prime_iwasawa,
+ GrasGreenbergBrocard.rosser_schoenfeld_theta_diff,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:78:0: 'GrasGreenbergBrocard.thm_1_2_part3_complete_finiteness' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.canonicalRealQuadIwasawa,
+ GrasGreenbergBrocard.erdos_selfridge_consecutive_product_not_square,
+ GrasGreenbergBrocard.iwasawa_main_conjecture_free_rank,
+ GrasGreenbergBrocard.leopoldt_coates_valuation_law,
+ GrasGreenbergBrocard.ozaki_taya_split_prime_iwasawa,
+ GrasGreenbergBrocard.rosser_schoenfeld_theta_diff,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:81:0: 'GrasGreenbergBrocard.prop_4_1_part1' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:82:0: 'GrasGreenbergBrocard.prop_4_1_part1_asymptotic' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:83:0: 'GrasGreenbergBrocard.prop_4_1_part2' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:84:0: 'GrasGreenbergBrocard.thm_4_2_part1_quartic_law' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:85:0: 'GrasGreenbergBrocard.thm_4_2_part1_euclidean_lock' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:86:0: 'GrasGreenbergBrocard.thm_4_2_part2_dual_quartic' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:87:0: 'GrasGreenbergBrocard.thm_4_2_part2_euclidean_locks' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:88:0: 'GrasGreenbergBrocard.thm_4_2_part3_midpoint_core_bounds' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:89:0: 'GrasGreenbergBrocard.thm_4_2_part3_mertens_bound' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.mertens_first_theorem_odd_primes,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:92:0: 'GrasGreenbergBrocard.prop_5_1_part1' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.perron_cf_midpoint_symmetry,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:93:0: 'GrasGreenbergBrocard.prop_5_1_part2_bias' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.perron_cf_midpoint_symmetry,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:94:0: 'GrasGreenbergBrocard.thm_5_2_part1_cross_symmetry' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:95:0: 'GrasGreenbergBrocard.thm_5_2_part1_radical_bounds' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:96:0: 'GrasGreenbergBrocard.thm_5_2_part2_effective_cores' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.davenport_real_char_half_band_upper,
+ GrasGreenbergBrocard.rosser_schoenfeld_theta_diff,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:97:0: 'GrasGreenbergBrocard.thm_5_2_part2_pell_pm2_insoluble' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.davenport_real_char_half_band_upper,
+ GrasGreenbergBrocard.rosser_schoenfeld_theta_diff,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:98:0: 'GrasGreenbergBrocard.yMidVec_ne_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:99:0: 'GrasGreenbergBrocard.yMidVec_mem_redeiKernel' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:100:0: 'GrasGreenbergBrocard.thm_5_3_part1_cohomology_4rank' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.redei_reichardt_exact_sequence,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:101:0: 'GrasGreenbergBrocard.thm_5_3_part2_inert_absorption' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:102:0: 'GrasGreenbergBrocard.thm_5_3_part2_dual_quartic' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:105:0: 'GrasGreenbergBrocard.prop_6_1_part1_sl2_and_four_squares' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:106:0: 'GrasGreenbergBrocard.prop_6_1_part2_zsqrtd_identities' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:107:0: 'GrasGreenbergBrocard.prop_6_1_part3_characters_and_quadrant_iv' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:108:0: 'GrasGreenbergBrocard.prop_6_2_part1_n4_boundary' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:109:0: 'GrasGreenbergBrocard.prop_6_2_part2_consecutive_equipartition' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:110:0: 'GrasGreenbergBrocard.prop_6_2_part3_square_shift_exclusions' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:111:0: 'GrasGreenbergBrocard.prop_6_2_part3_consecutive_squares_k2_exclusion' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:112:0: 'GrasGreenbergBrocard.lem_6_3_parity_flip_uniform' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:113:0: 'GrasGreenbergBrocard.thm_6_4_capacity_diamond' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:114:0: 'GrasGreenbergBrocard.thm_1_3_part1_k2_gap_and_counting' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:115:0: 'GrasGreenbergBrocard.thm_6_4_polarization_concentration' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:118:0: 'GrasGreenbergBrocard.canonicalMonomialTaylorFamily' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:119:0: 'GrasGreenbergBrocard.monomial_series_linear_indep_poly' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:120:0: 'GrasGreenbergBrocard.weighted_wronskian_ne_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:121:0: 'GrasGreenbergBrocard.canonicalSupportWronskian' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:122:0: 'GrasGreenbergBrocard.siegel_lemma_pigeonhole' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:123:0: 'GrasGreenbergBrocard.lem_7_1_initial_pade_polynomials' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:124:0: 'GrasGreenbergBrocard.lem_7_2_monomial_product_puiseux_indep' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:125:0: 'GrasGreenbergBrocard.lem_7_3_support_reduced_wronskian' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:126:0: 'GrasGreenbergBrocard.lem_7_4_denominator_clearing' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:127:0: 'GrasGreenbergBrocard.depressed_poly_asymptotic_core' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:128:0: 'GrasGreenbergBrocard.pade_chi_lt_ratio_iff_theta_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:129:0: 'GrasGreenbergBrocard.pigeonhole_cluster_reduction' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:130:0: 'GrasGreenbergBrocard.poly_has_depressed_gap_two' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:131:0: 'GrasGreenbergBrocard.dyadic_cluster_elimination_proved' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.bpz_cauchy_leibniz_pade_eval,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:132:0: 'GrasGreenbergBrocard.thm_1_3_part2_global_6_7' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.bpz_cauchy_leibniz_pade_eval,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:133:0: 'GrasGreenbergBrocard.thm_1_3_part2_global_6_7_general' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.bpz_cauchy_leibniz_pade_eval,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:134:0: 'GrasGreenbergBrocard.thm_1_3_part2_brocard_6_7' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.bpz_cauchy_leibniz_pade_eval,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:135:0: 'GrasGreenbergBrocard.thm_1_3_part2_table1_bounds' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.bpz_cauchy_leibniz_pade_eval,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:136:0: 'GrasGreenbergBrocard.thm_1_3_part2_degree_gap_bounds' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.bpz_cauchy_leibniz_pade_eval,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:139:0: 'GrasGreenbergBrocard.frobeniusTrace_freyCurveE' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:140:0: 'GrasGreenbergBrocard.freyE_p2_minimal_scaling' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:141:0: 'GrasGreenbergBrocard.frobeniusTrace_freyCurveE2' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:142:0: 'GrasGreenbergBrocard.thm_8_1_part1_frey_E' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.IsModular,
+ GrasGreenbergBrocard.bcdt_modularity_theorem,
+ GrasGreenbergBrocard.conductor,
+ GrasGreenbergBrocard.tate_algorithm_semistable_conductor,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:143:0: 'GrasGreenbergBrocard.thm_8_1_part2_level2_cm_reduction' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.HasSurjectiveModLGalRep,
+ GrasGreenbergBrocard.IsModular,
+ GrasGreenbergBrocard.bcdt_modularity_theorem,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.conductor,
+ GrasGreenbergBrocard.mazur_kenku_serre_surjectivity,
+ GrasGreenbergBrocard.tate_algorithm_semistable_conductor,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:144:0: 'GrasGreenbergBrocard.thm_8_1_part2_abc_and_hall_bounds' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:145:0: 'GrasGreenbergBrocard.thm_8_2_tatuzawa_and_narrow_2J_rank' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.canonicalRealQuadClassGroup,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.erdos_selfridge_consecutive_product_not_square,
+ GrasGreenbergBrocard.pnt_pi_asymptotic,
+ GrasGreenbergBrocard.tatuzawa_effective_siegel,
+ Quot.sound]
+Some required targets logged failures:
+- GrasGreenbergBrocard.AuditAxioms
+error: build failed

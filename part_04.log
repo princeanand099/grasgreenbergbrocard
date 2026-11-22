@@ -1,0 +1,150 @@
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:86:0: 'GrasGreenbergBrocard.thm_4_2_part2_dual_quartic' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:87:0: 'GrasGreenbergBrocard.thm_4_2_part2_euclidean_locks' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:88:0: 'GrasGreenbergBrocard.thm_4_2_part3_midpoint_core_bounds' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:89:0: 'GrasGreenbergBrocard.thm_4_2_part3_mertens_bound' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.mertens_first_theorem_odd_primes,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:92:0: 'GrasGreenbergBrocard.prop_5_1_part1' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.perron_cf_midpoint_symmetry,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:93:0: 'GrasGreenbergBrocard.prop_5_1_part2_bias' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.perron_cf_midpoint_symmetry,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:94:0: 'GrasGreenbergBrocard.thm_5_2_part1_cross_symmetry' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:95:0: 'GrasGreenbergBrocard.thm_5_2_part1_radical_bounds' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:96:0: 'GrasGreenbergBrocard.thm_5_2_part2_effective_cores' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.davenport_real_char_half_band_upper,
+ GrasGreenbergBrocard.rosser_schoenfeld_theta_diff,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:97:0: 'GrasGreenbergBrocard.thm_5_2_part2_pell_pm2_insoluble' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.davenport_real_char_half_band_upper,
+ GrasGreenbergBrocard.rosser_schoenfeld_theta_diff,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:98:0: 'GrasGreenbergBrocard.yMidVec_ne_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:99:0: 'GrasGreenbergBrocard.yMidVec_mem_redeiKernel' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:100:0: 'GrasGreenbergBrocard.thm_5_3_part1_cohomology_4rank' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ GrasGreenbergBrocard.redei_reichardt_exact_sequence,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:101:0: 'GrasGreenbergBrocard.thm_5_3_part2_inert_absorption' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:102:0: 'GrasGreenbergBrocard.thm_5_3_part2_dual_quartic' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.breusch_bertrand_mod4,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:105:0: 'GrasGreenbergBrocard.prop_6_1_part1_sl2_and_four_squares' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:106:0: 'GrasGreenbergBrocard.prop_6_1_part2_zsqrtd_identities' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:107:0: 'GrasGreenbergBrocard.prop_6_1_part3_characters_and_quadrant_iv' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:108:0: 'GrasGreenbergBrocard.prop_6_2_part1_n4_boundary' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:109:0: 'GrasGreenbergBrocard.prop_6_2_part2_consecutive_equipartition' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:110:0: 'GrasGreenbergBrocard.prop_6_2_part3_square_shift_exclusions' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:111:0: 'GrasGreenbergBrocard.prop_6_2_part3_consecutive_squares_k2_exclusion' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:112:0: 'GrasGreenbergBrocard.lem_6_3_parity_flip_uniform' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:113:0: 'GrasGreenbergBrocard.thm_6_4_capacity_diamond' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:114:0: 'GrasGreenbergBrocard.thm_1_3_part1_k2_gap_and_counting' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:115:0: 'GrasGreenbergBrocard.thm_6_4_polarization_concentration' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.chebyshev_pi_upper,
+ GrasGreenbergBrocard.de_la_vallee_poussin_theta,
+ GrasGreenbergBrocard.mertens_first_theorem,
+ GrasGreenbergBrocard.vaaler_extremal_polynomials,
+ GrasGreenbergBrocard.vaughan_van_der_corput_prime_sum,
+ Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:118:0: 'GrasGreenbergBrocard.canonicalMonomialTaylorFamily' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:119:0: 'GrasGreenbergBrocard.monomial_series_linear_indep_poly' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:120:0: 'GrasGreenbergBrocard.weighted_wronskian_ne_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:121:0: 'GrasGreenbergBrocard.canonicalSupportWronskian' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:122:0: 'GrasGreenbergBrocard.siegel_lemma_pigeonhole' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:123:0: 'GrasGreenbergBrocard.lem_7_1_initial_pade_polynomials' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:124:0: 'GrasGreenbergBrocard.lem_7_2_monomial_product_puiseux_indep' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:125:0: 'GrasGreenbergBrocard.lem_7_3_support_reduced_wronskian' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:126:0: 'GrasGreenbergBrocard.lem_7_4_denominator_clearing' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:127:0: 'GrasGreenbergBrocard.depressed_poly_asymptotic_core' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:128:0: 'GrasGreenbergBrocard.pade_chi_lt_ratio_iff_theta_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:129:0: 'GrasGreenbergBrocard.pigeonhole_cluster_reduction' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:130:0: 'GrasGreenbergBrocard.poly_has_depressed_gap_two' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: GrasGreenbergBrocard/AuditAxioms.lean:131:0: 'GrasGreenbergBrocard.dyadic_cluster_elimination_proved' depends on axioms: [propext,
+ Classical.choice,
+ GrasGreenbergBrocard.bpz_cauchy_leibniz_pade_eval,
