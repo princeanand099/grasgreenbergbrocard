@@ -265,8 +265,10 @@ theorem thm_1_2_eq_3_6_regulator_valuation {n m p X₁ Y₁ k : ℕ}
     have hk0 : k = 0 := by omega
     rw [hk0, pow_zero] at hk_eq
     have hs_pos : 0 < s_n n := by
-      by_contra hs0; have : s_n n = 0 := by omega
-      rw [this, padicValNat.zero] at hs_ge1; omega
+      by_contra hs0; have hs0' : s_n n = 0 := by omega
+      have hfac := factorial_eq_q_n_mul_s_n_sq n
+      rw [hs0'] at hfac; simp at hfac
+      exact Nat.factorial_ne_zero n hfac
     have hm_pos : 1 ≤ m := by
       by_contra hm0; have : m = 0 := by omega
       rw [this] at hm; simp at hm

@@ -173,9 +173,9 @@ def yMidVec (n X₁ : ℕ) : ramPrimes n → ZMod 2 :=
   fun p => if p.1 ∣ coreNat (2 * (X₁ + 1)) then 1 else 0
 
 /-- For `n ≥ 8`, `q_n n` is not a rational square (since `q_n n` is squarefree and `≥ 2`, as
-there is a prime `p ≡ 3 [MOD 4]` dividing `q_n n`). -/
+there is a prime `p ∈ (n/2, n]` dividing `q_n n` by Bertrand's postulate). -/
 lemma q_n_not_isSquare_rat {n : ℕ} (hn : 8 ≤ n) : ¬ IsSquare (q_n n : ℚ) := by
-  obtain ⟨p, hp, hpq, _⟩ := q_n_has_prime_mod4 (by omega) (by omega)
+  obtain ⟨p, hp, hpq, _⟩ := q_n_has_prime_mod4 (n := n) (by omega) (by omega)
   have hq_pos : 0 < q_n n := by
     unfold q_n; exact Finset.prod_pos (fun r hr => (Finset.mem_filter.mp hr).2.1.pos)
   have hq2 : 2 ≤ q_n n := le_trans hp.two_le (Nat.le_of_dvd hq_pos hpq)
