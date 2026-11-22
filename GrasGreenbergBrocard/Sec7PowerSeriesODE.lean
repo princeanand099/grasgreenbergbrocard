@@ -672,7 +672,7 @@ theorem monomial_series_linear_indep_poly {d E r M : ℕ}
             apply he₁_ne; funext i
             by_contra hne
             have : i ∈ Finset.univ.filter (fun i : Fin d => e₀ i ≠ e₁ i) :=
-              Finset.mem_filter.mpr ⟨Finset.mem_univ i, hne.symm⟩
+              Finset.mem_filter.mpr ⟨Finset.mem_univ i, Ne.symm hne⟩
             rw [hempty] at this; exact Finset.notMem_empty i this
           let iStar : Fin d := (Finset.univ.filter (fun i : Fin d => e₀ i ≠ e₁ i)).max' hdiff_ne
           have hiStar_mem : iStar ∈ Finset.univ.filter (fun i : Fin d => e₀ i ≠ e₁ i) :=
@@ -681,7 +681,7 @@ theorem monomial_series_linear_indep_poly {d E r M : ℕ}
           have hiStar_max : ∀ i : Fin d, iStar < i → e₀ i = e₁ i := by
             intro i hi
             by_contra hne
-            have hle := Finset.le_max' _ i (Finset.mem_filter.mpr ⟨Finset.mem_univ i, hne⟩)
+            have hle := Finset.le_max' (Finset.univ.filter (fun j : Fin d => e₀ j ≠ e₁ j)) i (Finset.mem_filter.mpr ⟨Finset.mem_univ i, hne⟩)
             exact not_lt_of_ge hle hi
           let jStar : ℕ := β iStar - 1
           have hjStar_pos : 1 ≤ jStar := by have := hβ_lo iStar; omega
@@ -696,10 +696,10 @@ theorem monomial_series_linear_indep_poly {d E r M : ℕ}
                 Polynomial.C (-(jStar : ℚ)) * (Polynomial.X - Polynomial.C α) := by
               rw [mul_sub, ← Polynomial.C_mul]
               have : -(jStar : ℚ) * α = -1 := by dsimp only [α]; field_simp [hjStar_q_ne]
-              rw [this, Polynomial.C_neg, Polynomial.C_1, Polynomial.C_neg]; ring
-            rw [hlin, Polynomial.C_mul, Polynomial.C_neg]
-            ring
-          have hΠ_eval_ne : P_rest.eval α ≠ 0 := by
+              rw [this]; simp only [Polynomial.C_neg, Polynomial.C_1]; ring
+            dsimp only [P_rest]
+            rw [hlin]; simp only [Polynomial.C_mul, Polynomial.C_neg]; ring
+          have hP_eval_ne : P_rest.eval α ≠ 0 := by
             dsimp only [P_rest]
             rw [Polynomial.eval_prod]
             apply Finset.prod_ne_zero_iff.mpr
@@ -794,7 +794,7 @@ theorem monomial_series_linear_indep_poly {d E r M : ℕ}
           simp only [Polynomial.eval_mul, Polynomial.eval_add, Polynomial.eval_C, L,
             Polynomial.eval_sub, Polynomial.eval_X, sub_self, zero_mul, add_zero, hTA_eval] at hev
           have hprod_ne : (jStar : ℚ) * P_rest.eval α * R₀.eval α * R₁.eval α ≠ 0 :=
-            mul_ne_zero (mul_ne_zero (mul_ne_zero hjStar_q_ne hΠ_eval_ne) hR₀_ev) hR₁_ev
+            mul_ne_zero (mul_ne_zero (mul_ne_zero hjStar_q_ne hP_eval_ne) hR₀_ev) hR₁_ev
           have hrat_eq : (r : ℚ) * ((k₀ : ℚ) - (k₁ : ℚ)) = (e₀ iStar : ℚ) - (e₁ iStar : ℚ) := by
             apply mul_right_cancel₀ hprod_ne
             linear_combination -hev
@@ -1207,7 +1207,8 @@ theorem weighted_wronskian_ne_zero {s : ℕ} (T : PowerSeries ℚ) (hT : T ≠ 0
   let W : Matrix (Fin s) (Fin s) (PowerSeries ℚ) :=
     Matrix.of fun r j => psDeriv^[r.val] (g j)
   have hG_eq : Matrix.of (fun k j : Fin s => (fun f => T * psDeriv f)^[k.val] (g j)) = L * W := by
-    ext k j
+    apply Matrix.ext
+    intro k j
     simp only [Matrix.of_apply, Matrix.mul_apply, L, W]
     rw [hcoeffOf k.val (g j)]
     have hsplit : ∑ r : Fin s,
