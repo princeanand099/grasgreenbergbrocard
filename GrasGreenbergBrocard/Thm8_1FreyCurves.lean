@@ -54,7 +54,7 @@ def freyF2_Delta (X₁ : ℕ) : ℤ := 2 ^ 12 * ((X₁ : ℤ) ^ 2 - 1) ^ 2
 /-! ### Concrete Frobenius Trace, `p = 2` Minimality Scaling, and Twist `E_n^{(2)}` (Defect D3(1)–(2)) -/
 
 /-- Affine Weierstrass equation `y^2 + a₁ x y + a₃ y = x^3 + a₂ x^2 + a₄ x + a₆` over a ring `R`. -/
-def weierstrassEq {R : Type*} [CommRing R] (W : WeierstrassCurve R) (x y : R) : Prop :=
+abbrev weierstrassEq {R : Type*} [CommRing R] (W : WeierstrassCurve R) (x y : R) : Prop :=
   y ^ 2 + W.a₁ * x * y + W.a₃ * y = x ^ 3 + W.a₂ * x ^ 2 + W.a₄ * x + W.a₆
 
 /-- Concrete Frobenius trace `a_p(E) = p - #E_aff(𝔽_p)` for a Weierstrass curve `E` over `ℤ`. -/
@@ -148,12 +148,12 @@ private lemma card_nodal_cubic_zmod {p : ℕ} [Fact p.Prime] (hp2 : p ≠ 2) (a 
           field_simp [hxa] }
   have hcomp : Fintype.card {t : ZMod p // t ^ 2 ≠ b - a} +
       Fintype.card {t : ZMod p // t ^ 2 = b - a} = p := by
-    have h1 := Fintype.card_subtype_compl (fun t : ZMod p => t ^ 2 = b - a)
+    have h1 : Fintype.card {t : ZMod p // t ^ 2 ≠ b - a} =
+        Fintype.card (ZMod p) - Fintype.card {t : ZMod p // t ^ 2 = b - a} :=
+      Fintype.card_subtype_compl (fun t : ZMod p => t ^ 2 = b - a)
     have hcard : Fintype.card (ZMod p) = p := ZMod.card p
-    have hle : Fintype.card {t : ZMod p // t ^ 2 = b - a} ≤ p :=
-      (Fintype.card_subtype_le _).trans_eq hcard
-    have h1' : Fintype.card {t : ZMod p // t ^ 2 ≠ b - a} = p - Fintype.card {t : ZMod p // t ^ 2 = b - a} := by
-      rw [← hcard]; exact h1
+    have hle : Fintype.card {t : ZMod p // t ^ 2 = b - a} ≤ Fintype.card (ZMod p) :=
+      Fintype.card_subtype_le _
     omega
   rw [hsplit, hsing, hns]
   have hsq_card := card_sq_eq_zmod hp2 (b - a) hne
@@ -399,6 +399,7 @@ theorem thm_8_1_part2_level2_cm_reduction {n m X₁ Y₁ : ℕ} (hn : 8 ≤ n)
     have hp_ge5 : 5 ≤ p := by omega
     have hv1 : padicValNat p (Nat.factorial n) = 1 := by
       have h2p : n < 2 * p := by omega
+      have hlt2p : n < 2 * p := by omega
       have hlt_sq : n < p ^ 2 := by nlinarith
       have hlog : Nat.log p n < 2 := Nat.log_lt_of_lt_pow (by omega) hlt_sq
       rw [padicValNat_factorial (b := 2) hlog, Finset.sum_Ico_succ_top (by norm_num), Finset.Ico_self, Finset.sum_empty, zero_add, pow_one]
