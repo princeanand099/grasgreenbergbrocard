@@ -468,7 +468,7 @@ theorem J_n_principal_iff_k_eq_2 {n m : ℕ} (hn : 4 ≤ n) (hn6 : n ≠ 6)
         rw [h2u]
         have hcast : ((c₁ * (2 * (u : ℤ)) + c₂ * (m : ℤ) : ℤ) : R) =
             (c₁ : R) * ((2 * (u : ℤ) : ℤ) : R) + (c₂ : R) * (m : R) := by
-          rw [Int.cast_add, Int.cast_mul, Int.cast_mul, Int.cast_natCast]
+          push_cast; ring
         rw [← hcast, hc]; simp
       have hz_eq : z = (c₁ : R) * (z ^ 2 + (m : R)) + (c₂ : R) * (z * (m : R)) := by
         calc z = z * 1 := (mul_one z).symm
@@ -666,7 +666,6 @@ lemma invertibleIdeal_class_sq_eq_one {R : Type*} [CommRing R] [IsDomain R]
   rw [Units.val_pow_eq_pow_val]
   simp only [coe_toPrincipalIdeal, invertibleIdealToFracUnit, ← FractionalIdeal.coeIdeal_pow,
     hI2, FractionalIdeal.coeIdeal_span_singleton, Units.val_mk0]
-  rfl
 
 /-- Generic equality lemma in `ClassGroup R`: if `I₁ * I₁ = (d₁)`, `I₂ * J₂ = (d₂)`, and
 `I₁ * I₂ = (w)` with `d₁, d₂, w ≠ 0`, then `[I₁] = [I₂]` in `ClassGroup R`. -/
@@ -689,7 +688,6 @@ lemma invertibleIdeal_class_eq_of_mul_principal {R : Type*} [CommRing R] [IsDoma
     rw [Units.val_mul]
     simp only [coe_toPrincipalIdeal, invertibleIdealToFracUnit, ← FractionalIdeal.coeIdeal_mul,
       hprod, FractionalIdeal.coeIdeal_span_singleton, Units.val_mk0]
-    rfl
   have h1_inv : fracUnitToClass (invertibleIdealToFracUnit hd₁ hsq₁) =
       (fracUnitToClass (invertibleIdealToFracUnit hd₁ hsq₁))⁻¹ := by
     rw [eq_inv_iff_mul_eq_one, ← sq]; exact h1sq
@@ -704,7 +702,7 @@ lemma m_ne_zero_zsqrtd {n m : ℕ} (hm : Nat.factorial n + 1 = m ^ 2) :
   intro h0
   have hm0 : m = 0 := by
     have hre := congrArg Zsqrtd.re h0
-    rw [zsqrtd_natCast_re] at hre
+    change (m : ℤ) = 0 at hre
     exact_mod_cast hre
   rw [hm0] at hm; simp at hm
 
@@ -716,7 +714,7 @@ def J_n_class {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2) :
 /-- The genuine Picard class `[𝔍_n] ∈ CommRing.Pic (ℤ[√(-q_n)])` via `ClassGroup.equivPic`. -/
 def J_n_pic {n m : ℕ} (hn : 4 ≤ n) (hm : Nat.factorial n + 1 = m ^ 2) :
     CommRing.Pic (Zsqrtd (-(q_n n : ℤ))) :=
-  ClassGroup.equivPic (J_n_class hn hm)
+  ClassGroup.equivPic (Zsqrtd (-(q_n n : ℤ))) (J_n_class hn hm)
 
 /-- **Proposition 3.3 (Picard 2-Torsion)**: `[𝔍_n]^2 = 1` in `ClassGroup (ℤ[√(-q_n)])`
 and in `CommRing.Pic (ℤ[√(-q_n)])`. -/
@@ -855,7 +853,7 @@ lemma I_delta_mul_J_n_eq {n m δ₁ δ₂ z₁ z₂ : ℕ}
       rw [hsum]
       have hcast : ((c₁ * (2 * (δ₂ : ℤ) * (z₂ : ℤ)) + c₂ * (m : ℤ) : ℤ) : R) =
           (c₁ : R) * ((2 * (δ₂ : ℤ) * (z₂ : ℤ) : ℤ) : R) + (c₂ : R) * (m : R) := by
-        rw [Int.cast_add, Int.cast_mul, Int.cast_mul, Int.cast_natCast]
+        push_cast; ring
       rw [← hcast, hc]; simp
     have hw_eq : w = (c₁ : R) * (w ^ 2 + (δ₂ : R) * (m : R)) + (c₂ : R) * (w * (m : R)) := by
       calc w = w * 1 := (mul_one w).symm
@@ -896,7 +894,7 @@ theorem k_eq_1_picard_class_eq {n m δ₁ δ₂ z₁ z₂ : ℕ} (hn : 4 ≤ n)
     let Iδ : Ideal R := Ideal.span {(δ₂ : R), ⟨0, 1⟩}
     Iδ * Iδ = Ideal.span {(δ₂ : R)} ∧
     ∃ (hδ2 : (δ₂ : R) ≠ 0) (hsq : Iδ * Iδ = Ideal.span {(δ₂ : R)}),
-      ClassGroup.equivPic (fracUnitToClass (invertibleIdealToFracUnit hδ2 hsq)) =
+      ClassGroup.equivPic R (fracUnitToClass (invertibleIdealToFracUnit hδ2 hsq)) =
         J_n_pic hn hm := by
   have hq_pos : 0 < q_n n := one_le_q_n n
   have hδ2_pos : 0 < δ₂ := by
@@ -907,7 +905,7 @@ theorem k_eq_1_picard_class_eq {n m δ₁ δ₂ z₁ z₂ : ℕ} (hn : 4 ≤ n)
   have hδ2_ne : (δ₂ : Zsqrtd (-(q_n n : ℤ))) ≠ 0 := by
     intro h0
     have hre := congrArg Zsqrtd.re h0
-    rw [zsqrtd_natCast_re] at hre
+    change (δ₂ : ℤ) = 0 at hre
     have hd0 : δ₂ = 0 := by exact_mod_cast hre
     omega
   have hIδ_sq := I_delta_sq_eq hq
@@ -918,11 +916,11 @@ theorem k_eq_1_picard_class_eq {n m δ₁ δ₂ z₁ z₂ : ℕ} (hn : 4 ≤ n)
       rw [h0]; ring
     rw [← k_eq_1_picard_identity h1 h2 hq hs] at hsq0
     have hre := congrArg Zsqrtd.re hsq0
-    simp only [zsqrtd_mul_re', zsqrtd_natCast_re, zsqrtd_natCast_im] at hre
+    change (δ₂ : ℤ) * 1 + (-(q_n n : ℤ)) * 0 * (s_n n : ℤ) = 0 at hre
     omega
   refine ⟨hIδ_sq, hδ2_ne, hIδ_sq, ?_⟩
   unfold J_n_pic J_n_class
-  exact congrArg ClassGroup.equivPic
+  exact congrArg (ClassGroup.equivPic (Zsqrtd (-(q_n n : ℤ))))
     (invertibleIdeal_class_eq_of_mul_principal hδ2_ne hIδ_sq
       (m_ne_zero_zsqrtd hm) (J_n_mul_conj_eq hn hm) hw_ne hprod_eq)
 
